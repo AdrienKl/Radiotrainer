@@ -1,0 +1,11 @@
+# Cartes OACI sources (~178 Mo) : elles servent à FABRIQUER les tuiles de assets/oaci/,
+# elles n'ont pas à être publiées. À conserver localement : sans elles, impossible de
+# régénérer les tuiles (par exemple pour ajouter le zoom 11).
+originaux/
+500k_*.pdf
+
+# Manuel de référence (2,4 Mo) : source de la phraséologie, pas nécessaire au site.
+Manuel_Phraseologie.pdf
+
+# macOS
+.DS_Store

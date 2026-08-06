@@ -1,34 +1,16 @@
 {
+ "format": "tuiles 1024 px, nommage plat {zoomGrille}_{x}_{y}.webp",
+ "leaflet": {
+  "tileSize": 1024,
+  "zoomOffset": -2,
+  "minZoom": 4,
+  "maxNativeZoom": 10
+ },
  "transform": {
   "ax": 7563.7,
   "kx": 1444.98,
   "ay": 114229.2,
   "ky": -2235.72
  },
- "sheets": [
-  {
-   "tag": "nw",
-   "dx": 0,
-   "dy": 0
-  },
-  {
-   "tag": "ne",
-   "dx": 6370,
-   "dy": 147
-  },
-  {
-   "tag": "sw",
-   "dx": 2041,
-   "dy": 9546
-  },
-  {
-   "tag": "se",
-   "dx": 8893,
-   "dy": 9622
-  }
- ],
- "zooms": [
-  4,
-  10
- ]
+ "source": "Carte OACI 1:500 000 — SIA/DGAC, édition 2026"
 }

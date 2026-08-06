@@ -3962,9 +3962,16 @@ if(!RECO_OK){
     // fournies, calées par points de contrôle et raccordées au milieu des recouvrements.
     // maxNativeZoom (et non maxZoom) : au-delà du zoom 10 Leaflet agrandit les tuiles
     // existantes au lieu de faire disparaître la couche.
-    oaciLayer=L.tileLayer('assets/oaci/{z}/{x}/{y}.webp',{
-      // minZoom 4 : sur un petit conteneur, fitBounds sur la France tombe au zoom 5.
-      // Avec minZoom 6 la couche restait invisible et l'utilisateur ne voyait que l'OSM.
+    /* Tuiles de 1024 px, nommées à plat dans un seul dossier.
+       Une tuile de 1024 px couvre la même zone que 16 tuiles de 256 px, à détail
+       identique : on passe de 1699 fichiers imbriqués à 140 fichiers à plat, ce qui
+       rend le dossier téléversable sur un hébergeur qui limite le nombre de fichiers.
+       tileSize 1024 + zoomOffset -2 : au zoom carte Z, Leaflet demande la grille Z-2,
+       et {z} vaut donc ce zoom de grille (2 à 8) — d'où le nommage {z}_{x}_{y}.
+       minZoom 4 : sur un petit conteneur, fitBounds sur la France tombe au zoom 5 ;
+       une couche démarrant plus haut resterait invisible. */
+    oaciLayer=L.tileLayer('assets/oaci/{z}_{x}_{y}.webp',{
+      tileSize:1024, zoomOffset:-2,
       minZoom:4, maxNativeZoom:10, maxZoom:17, errorTileUrl:TRANSPARENT,
       attribution:'Carte OACI 1:500 000 &mdash; SIA / DGAC, édition 2026'
     });
@@ -3982,7 +3989,7 @@ if(!RECO_OK){
         var h=$v('navZoomHint');
         if(h) h.textContent='Carte OACI indisponible ici : le dossier assets/oaci/ n’est pas publié. Fond OpenStreetMap utilisé.';
       };
-      probe.src='assets/oaci/6/32/22.webp';     // tuile centrale sur la France
+      probe.src='assets/oaci/4_7_5.webp';       // tuile centrale sur la France
     })();
     // OSM reste toujours dessous (repli hors couverture OACI) ; la carte OACI se
     // retire/remet via le bouton unique sous la carte, pas via un panneau de couches.

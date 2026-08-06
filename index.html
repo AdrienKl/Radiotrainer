@@ -3962,16 +3962,18 @@ if(!RECO_OK){
     // fournies, calées par points de contrôle et raccordées au milieu des recouvrements.
     // maxNativeZoom (et non maxZoom) : au-delà du zoom 10 Leaflet agrandit les tuiles
     // existantes au lieu de faire disparaître la couche.
-    /* Tuiles de 1024 px, nommées à plat dans un seul dossier.
-       Une tuile de 1024 px couvre la même zone que 16 tuiles de 256 px, à détail
-       identique : on passe de 1699 fichiers imbriqués à 140 fichiers à plat, ce qui
-       rend le dossier téléversable sur un hébergeur qui limite le nombre de fichiers.
-       tileSize 1024 + zoomOffset -2 : au zoom carte Z, Leaflet demande la grille Z-2,
-       et {z} vaut donc ce zoom de grille (2 à 8) — d'où le nommage {z}_{x}_{y}.
+    /* Tuiles de 2048 px, nommées à plat dans un seul dossier.
+       Une tuile de 2048 px couvre la même zone que 64 tuiles de 256 px, avec le même
+       nombre de pixels au total : le détail est IDENTIQUE, seul le découpage change.
+       On passe ainsi de 1699 fichiers imbriqués à 47 fichiers à plat, ce qui permet
+       de publier le dossier en une seule fois sur un hébergeur qui limite le nombre
+       de fichiers par envoi.
+       tileSize 2048 + zoomOffset -3 : au zoom carte Z, Leaflet demande la grille Z-3,
+       et {z} vaut donc ce zoom de grille (2 à 7) — d'où le nommage {z}_{x}_{y}.
        minZoom 4 : sur un petit conteneur, fitBounds sur la France tombe au zoom 5 ;
        une couche démarrant plus haut resterait invisible. */
     oaciLayer=L.tileLayer('assets/oaci/{z}_{x}_{y}.webp',{
-      tileSize:1024, zoomOffset:-2,
+      tileSize:2048, zoomOffset:-3,
       minZoom:4, maxNativeZoom:10, maxZoom:17, errorTileUrl:TRANSPARENT,
       attribution:'Carte OACI 1:500 000 &mdash; SIA / DGAC, édition 2026'
     });

@@ -730,6 +730,20 @@
     .vf-consigne{ font-size:16px; padding:16px 18px; }
   }
 
+  /* ================= Explications d'erreur =================
+     Placé après les règles .fb-item / .vf-fb d'origine pour les surcharger :
+     l'explication tient sur plusieurs lignes, l'alignement doit partir du haut. */
+  .fb-item, .vf-fb .fb{ align-items:flex-start; }
+  .fb-item .mk, .vf-fb .fb .mk{ flex:none; margin-top:1px; }
+  .fb-why{ display:block; margin-top:3px; font-size:12.5px; line-height:1.5;
+    color:var(--ink-2); font-weight:400; }
+  .fb-piege{ display:flex; gap:9px; align-items:flex-start; margin-top:8px;
+    background:rgba(224,145,42,.10); border:1px solid rgba(224,145,42,.35);
+    border-left:3px solid var(--warn); border-radius:9px; padding:9px 11px;
+    font-size:13px; line-height:1.5; color:var(--ink); }
+  .fb-piege .mk{ flex:none; color:var(--warn); margin-top:1px; }
+  .fb-piege .ic-svg{ width:15px; height:15px; }
+
   /* ================= Page Paramètres ================= */
   .set-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; align-items:start; }
   .set-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
@@ -3146,6 +3160,118 @@ el.restartBtn.addEventListener('click', ()=>{
 // Permettre de taper directement (utile si pas de micro) : activer Valider dès qu'il y a du texte
 el.transText.addEventListener('input', ()=>{ el.validerBtn.disabled = el.transText.value.trim().length===0; });
 
+/* =========================================================================
+   EXPLICATIONS D'ERREUR
+   « manquant » ne dit ni quoi dire ni pourquoi. On produit ici, pour chaque
+   élément non détecté, une phrase qui donne l'exemple concret attendu (avec
+   les valeurs du scénario en cours : piste tirée au sort, QNH, indicatif…)
+   et la raison de la règle. Les références de page renvoient au Manuel de
+   phraséologie DSNA, 10ᵉ édition. Rien n'est inventé.
+   ========================================================================= */
+const AIDE_REF = {
+  callsign:"Votre indicatif identifie votre appareil : sans lui, le contrôleur ne sait pas qui parle. Il se place en fin de message (p. 18).",
+  station: "Nommez d'abord l'organisme appelé : il doit savoir que le message lui est destiné.",
+  terrain: "Nommez le terrain concerné pour lever toute ambiguïté.",
+  piste:   "Le numéro de piste se collationne mot pour mot : c'est un élément critique de sécurité.",
+  qnh:     "Le QNH règle votre altimètre : il se collationne systématiquement.",
+  alt:     "Annoncez l'altitude en pieds : elle situe votre appareil dans le plan vertical.",
+  num:     "Le numéro dans le circuit vous situe par rapport aux autres appareils.",
+  capdep:  "Le cap se transmet toujours sur trois chiffres (p. 17)."
+};
+/* Valeur réellement attendue à cet instant, pour donner un exemple utile
+   plutôt qu'une formule générique. */
+function exempleAttendu(mc){
+  switch(mc.ref){
+    case 'callsign': return state.call;
+    case 'piste':    return 'piste '+state.rwy.id;
+    case 'qnh':      return 'QNH '+state.meteo.qnh;
+    case 'alt':      return state.altCruise+' pieds';
+    case 'num':      return 'numéro '+state.numCircuit;
+    case 'capdep':   return 'cap '+state.capDep;
+    case 'terrain':  return state.activeAd ? state.activeAd.nom : '';
+    default:         return (mc.variantes && mc.variantes[0]) || '';
+  }
+}
+/* Certains mots-clés perdent leur `ref` en cours de route (finalizeStep résout
+   ref:'station' en variantes concrètes). On retombe alors sur le libellé. */
+const AIDE_LABEL = [
+  [/station|organisme/i, AIDE_REF.station],
+  [/indicatif/i,         AIDE_REF.callsign],
+  [/piste/i,             AIDE_REF.piste],
+  [/qnh/i,               AIDE_REF.qnh],
+  [/altitude|pieds/i,    AIDE_REF.alt],
+  [/terrain|a[ée]rodrome/i, AIDE_REF.terrain],
+  [/vent arri[èe]re|base|finale|circuit/i,
+   "Annoncez votre position dans le circuit : c'est ce qui permet au contrôleur de séquencer les appareils (p. 150-151)."],
+  [/collationn|accus/i,
+   "Un collationnement reprend les éléments de la clairance, il ne se résume pas à « reçu »."]
+];
+function expliquerManque(mc){
+  const ex=exempleAttendu(mc);
+  let pourquoi=AIDE_REF[mc.ref]||'';
+  if(!pourquoi){
+    const m=AIDE_LABEL.find(p=>p[0].test(mc.label||''));
+    if(m) pourquoi=m[1];
+  }
+  let t='';
+  // Les variantes sont stockées normalisées (minuscules) : on remet la capitale
+  // pour que l'exemple se lise comme une vraie phrase.
+  if(ex) t+='Il fallait dire « '+ex.charAt(0).toUpperCase()+ex.slice(1)+' ». ';
+  return t+pourquoi;
+}
+/* Pièges explicitement corrigés par le manuel : ces formulations sont réservées
+   au CONTRÔLEUR, un pilote qui les emploie commet une vraie faute — d'où une
+   explication séparée, même si les mots-clés sont par ailleurs tous détectés. */
+const PIEGES = [
+  // `.{0,12}` absorbe les « au », « à l' », apostrophes et espaces que la
+  // reconnaissance vocale intercale (« autorisé a l atterrissage »).
+  { test:/autoris\w{0,3}.{0,12}d[ée]collage/,
+    txt:"« Autorisé décollage » est une clairance : elle appartient au contrôleur. Le pilote collationne par « Piste {PISTE}, je décolle, {CALL} » (p. 59)." },
+  { test:/autoris\w{0,3}.{0,12}atterrissage/,
+    txt:"« Autorisé atterrissage » appartient au contrôleur. Le pilote collationne par « Piste {PISTE}, j'atterris, {CALL} » (p. 154)." }
+];
+function detecterPieges(corrected, results){
+  const out=[];
+  PIEGES.forEach(p=>{ if(p.test.test(corrected)) out.push(fillDisplay(p.txt)); });
+  // ROGER ne remplace jamais un collationnement chiffré (p. 19-21).
+  const chiffreManquant=(results||[]).some(r=>!r.found && /piste|qnh|altitude|cap|num/i.test(r.label));
+  if(/\broger\b/.test(corrected) && chiffreManquant)
+    out.push("« Roger » signifie seulement « message reçu ». Il ne remplace jamais un collationnement chiffré : reprenez la valeur elle-même (p. 19-21).");
+  return out;
+}
+/* Rendu commun aux Exercices et à la Navigation. */
+function rendreFeedback(box, step, results, corrected, cls){
+  box.innerHTML='';
+  results.forEach((r,i)=>{
+    const mc=step.motsCles[i];
+    const div=document.createElement('div');
+    div.className=cls+' '+(r.found?'ok':'ko');
+    let html='<span class="mk">'+(r.found?ICONS.check:ICONS.warn)+'</span><span>'+escapeHtml(r.label);
+    if(!r.found){
+      const why=expliquerManque(mc);
+      html+=' — manquant';
+      if(why) html+='<span class="fb-why">'+escapeHtml(why)+'</span>';
+    }
+    box.appendChild(div);
+    div.innerHTML=html+'</span>';
+  });
+  const pieges=detecterPieges(corrected, results);
+  pieges.forEach(t=>{
+    const d=document.createElement('div');
+    d.className='fb-piege';
+    d.innerHTML='<span class="mk">'+ICONS.warn+'</span><span>'+escapeHtml(t)+'</span>';
+    box.appendChild(d);
+  });
+  // Rien reconnu du tout : c'est le plus souvent le micro, pas la phraséologie.
+  if(results.length && results.every(r=>!r.found)){
+    const d=document.createElement('div');
+    d.className='fb-piege';
+    d.innerHTML='<span class="mk">'+ICONS.warn+'</span><span>'+
+      escapeHtml('Aucun élément reconnu. Vérifiez que le micro vous capte bien, et parlez posément : la reconnaissance vocale peine sur les messages trop rapides.')+'</span>';
+    box.appendChild(d);
+  }
+}
+
 function evaluate(rawText){
   const step=currentStep();
   if(!step || !step.motsCles) return;
@@ -3155,13 +3281,7 @@ function evaluate(rawText){
   const results = step.motsCles.map(mc=>({ label:mc.label, found: mcFound(mc, corrected) }));
   state.results[state.stepIndex] = results;
 
-  el.feedback.innerHTML='';
-  results.forEach(r=>{
-    const div=document.createElement('div');
-    div.className='fb-item '+(r.found?'ok':'ko');
-    div.innerHTML='<span class="mk">'+(r.found?ICONS.check:ICONS.warn)+'</span>'+escapeHtml(r.label)+(r.found?'':' — manquant');
-    el.feedback.appendChild(div);
-  });
+  rendreFeedback(el.feedback, step, results, corrected, 'fb-item');
   const ok=results.filter(r=>r.found).length;
   logRow('sys','Éléments détectés : '+ok+' / '+results.length);
   el.nextBtn.disabled=false;
@@ -4618,12 +4738,8 @@ if(!RECO_OK){
     vfLog('you',raw||'(rien entendu)');
     var res=s.motsCles.map(function(mc){ return {label:mc.label, found:mcFound(mc,corrected)}; });
     F.results[F.i]=res;
-    var fb=$v('vfFb'); fb.innerHTML='';
-    res.forEach(function(r){
-      var d=document.createElement('div'); d.className='fb '+(r.found?'ok':'ko');
-      d.innerHTML=(r.found?ICONS.check:ICONS.warn)+'<span>'+esc(r.label)+(r.found?'':' — manquant')+'</span>';
-      fb.appendChild(d);
-    });
+    // Même moteur d'explications que les Scénarios (défini dans le bloc principal).
+    rendreFeedback($v('vfFb'), s, res, corrected, 'fb');
     var ok=res.filter(function(r){return r.found;}).length;
     vfLog('sys','Éléments détectés : '+ok+' / '+res.length);
     if(s.atcAfter){

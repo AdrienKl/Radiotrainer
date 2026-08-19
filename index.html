@@ -218,6 +218,10 @@
   .trans-actions{display:flex; gap:11px; margin-top:10px; flex-wrap:wrap}
 
   .feedback{margin-top:16px; display:flex; flex-direction:column; gap:8px}
+  /* Indicatif rappelé dans l'en-tête du panneau d'échange. */
+  .scall{ font-family:var(--mono); font-size:13px; font-weight:700; color:var(--violet-dark);
+    background:var(--violet-soft); border:1px solid var(--violet); border-radius:7px;
+    padding:2px 8px; white-space:nowrap; margin-left:10px; }
   .fb-item{display:flex; gap:9px; align-items:center; font-size:14.5px}
   .fb-item .mk{width:20px; text-align:center}
   .fb-item.ok{color:var(--ok)}
@@ -628,6 +632,11 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .vf-freq{ font-family:var(--mono); font-size:15px; font-weight:700; color:#fff; background:var(--violet);
     border-radius:8px; padding:3px 9px; white-space:nowrap; }
+  /* Indicatif du joueur, toujours visible pendant le vol : c'est l'élément qu'on
+     doit prononcer à chaque message, il ne doit jamais être à retrouver ailleurs. */
+  .vf-call{ font-family:var(--mono); font-size:14.5px; font-weight:700; color:var(--violet-dark);
+    background:var(--violet-soft); border:1px solid var(--violet); border-radius:8px;
+    padding:3px 10px; white-space:nowrap; }
   .vf-freq.tuning{ animation:vfTune .5s ease 3; }
   @keyframes vfTune{ 0%,100%{background:var(--violet)} 50%{background:#e0a13a} }
   .vf-prog{ flex:1; height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden; min-width:60px; }
@@ -729,6 +738,20 @@
     .vf-radio{ min-height:0; padding:20px; }
     .vf-consigne{ font-size:16px; padding:16px 18px; }
   }
+
+  /* Champ de recherche avec bouton « dérouler » (choix d'avion). */
+  .ac-combo{ position:relative; display:flex; align-items:center; }
+  .ac-combo input{ flex:1; padding-right:36px !important; }
+  .ac-open{ position:absolute; right:6px; background:none; border:none; cursor:pointer;
+    color:var(--ink-2); padding:4px; display:inline-flex; border-radius:6px; }
+  .ac-open:hover{ color:var(--violet); background:var(--surface-2); }
+  .ac-open .ic-svg{ width:16px; height:16px; }
+  /* En-tête de constructeur dans la liste déroulante. */
+  .ac-fam{ padding:7px 13px 4px; font-family:var(--mono); font-size:10px; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--violet-dark); font-weight:700;
+    background:var(--surface-2); position:sticky; top:0; }
+  /* Champ obligatoire non renseigné. */
+  .champ-requis{ border-color:var(--bad) !important; box-shadow:0 0 0 3px rgba(217,83,79,.16) !important; }
 
   /* ================= Explications d'erreur =================
      Placé après les règles .fb-item / .vf-fb d'origine pour les surcharger :
@@ -1062,6 +1085,7 @@
           <div class="panel-top">
             <div class="stepline">
               <span id="stepLabel">Échange 1</span>
+              <span class="scall" id="scCall" title="Votre indicatif">—</span>
               <span class="dots" id="dots"></span>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end">
@@ -1229,9 +1253,12 @@
               <label for="navAcft">Type d'avion</label>
               <!-- Recherche d'avion : même mécanique que les aérodromes
                    (champ + liste .ac-list filtrée à la frappe). -->
-              <input id="navAcft" type="text" placeholder="Tapez un modèle (ex : DR400, Cessna 172)"
-                     autocomplete="off" spellcheck="false" role="combobox"
-                     aria-expanded="false" aria-controls="navAcftList">
+              <div class="ac-combo">
+                <input id="navAcft" type="text" placeholder="Choisissez un avion…"
+                       autocomplete="off" spellcheck="false" role="combobox"
+                       aria-expanded="false" aria-controls="navAcftList">
+                <button class="ac-open" id="navAcftOpen" type="button" aria-label="Voir tous les modèles"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </div>
               <div class="ac-list" id="navAcftList" role="listbox"></div>
             </div>
             </div>
@@ -1261,6 +1288,7 @@
         <div id="navFlight" class="nav-flight hidden">
           <div class="vf-top">
             <div class="vf-tune">
+              <span class="vf-call" id="vfCall" title="Votre indicatif">—</span>
               <span class="vf-station" id="vfStation">—</span>
               <span class="vf-freq" id="vfFreq">—</span>
             </div>
@@ -2408,6 +2436,20 @@ let recognition=null, listening=false, sessionFinal="", silenceTimer=null;
 let recoSink=null;
 function setRecoSink(s){ recoSink=s; }
 
+/* Messages d'erreur de la reconnaissance vocale, en clair.
+   `lastRecoError` sert à ne PAS noter une réponse vide quand c'est le micro qui a
+   échoué : sans ce garde, un micro refusé se soldait par un score de 0/3 laissant
+   croire à une faute de phraséologie. */
+let lastRecoError=null;
+const RECO_ERREURS={
+  'not-allowed':"Micro refusé. Autorisez le microphone : cliquez sur l'icône à gauche de l'adresse, puis « Microphone → Autoriser ».",
+  'service-not-allowed':"Reconnaissance vocale bloquée par le navigateur. Vérifiez les autorisations du site.",
+  'no-speech':"Aucune parole détectée. Parlez plus près du micro, puis réessayez.",
+  'audio-capture':"Aucun micro détecté. Vérifiez qu'un microphone est branché et sélectionné.",
+  'network':"La reconnaissance vocale de Chrome a besoin d'Internet : vérifiez votre connexion.",
+  'aborted':"Écoute interrompue."
+};
+
 if(RECO_OK){
   // Point 2 : UNE SEULE instance créée au chargement de la page, réutilisée à chaque
   // pression PTT (start()/stop() sur le même objet). On n'appelle jamais `new SR()`
@@ -2456,15 +2498,20 @@ if(RECO_OK){
   // attache donc aucun handler d'arrêt (l'arrêt vient uniquement du minuteur ou du PTT).
   recognition.onspeechend = null;
   recognition.onaudioend = null;
+  /* Les erreurs de reconnaissance doivent être VISIBLES là où l'utilisateur se trouve.
+     Avant, elles partaient toutes dans le journal des Exercices : en Navigation le
+     micro semblait simplement mort, sans le moindre message. */
   recognition.onerror = (e)=>{
-    if(e.error==='not-allowed' || e.error==='service-not-allowed')
-      logRow('sys','Micro refusé. Autorisez le microphone dans le navigateur.');
-    else if(e.error==='no-speech')
-      logRow('sys','Aucune parole détectée.');
+    lastRecoError = e.error || 'unknown';
+    const msg = RECO_ERREURS[lastRecoError] || ('Erreur de reconnaissance vocale ('+lastRecoError+').');
+    if(recoSink && recoSink.error) recoSink.error(msg, lastRecoError);
+    else logRow('sys', msg);
   };
   recognition.onend = ()=>{
     listening=false; pttUI(false); clearTimeout(silenceTimer);
     const _fin = sessionFinal.replace(/\s+/g,' ').trim();
+    // Erreur micro sans un mot capté : ne rien noter, l'erreur est déjà affichée.
+    if(lastRecoError && !_fin){ if(recoSink) return; el.validerBtn.disabled=false; return; }
     if(recoSink){ recoSink.final(_fin); return; }
     el.transText.value = _fin;
     el.validerBtn.disabled = false;
@@ -2479,10 +2526,27 @@ function armSilence(){
   silenceTimer=setTimeout(()=>stopListening(), d);
 }
 function startListening(){
-  if(!RECO_OK) return;
-  sessionFinal="";
+  if(!RECO_OK){
+    const m="Reconnaissance vocale indisponible sur ce navigateur (utilisez Chrome ou Edge).";
+    if(recoSink && recoSink.error) recoSink.error(m,'unsupported'); else logRow('sys',m);
+    return;
+  }
+  sessionFinal=""; lastRecoError=null;
   if(!recoSink){ el.transText.value=""; el.transWrap.classList.add('show'); el.validerBtn.disabled=true; }
-  try{ recognition.start(); }catch(e){ /* déjà démarré */ }
+  try{
+    recognition.start();
+  }catch(e){
+    /* InvalidStateError = une session tourne encore (stop() est asynchrone : onend
+       arrive après coup). On arrête proprement et on relance juste après, sinon le
+       bouton semblait mort au deuxième appui. */
+    if(listening){
+      try{ recognition.stop(); }catch(_){}
+      setTimeout(()=>{ try{ recognition.start(); }catch(_){ } }, 260);
+    }else{
+      const m="Impossible de démarrer le micro. Rechargez la page si le problème persiste.";
+      if(recoSink && recoSink.error) recoSink.error(m,'start-failed'); else logRow('sys',m);
+    }
+  }
 }
 function stopListening(){ clearTimeout(silenceTimer); try{ recognition.stop(); }catch(e){} }
 /* Icônes SVG monochromes réutilisées par le rendu dynamique (feedback, badges, boutons
@@ -2694,7 +2758,7 @@ const el={
   feedback:$('feedback'), hint:$('hint'), hintTxt:$('hintTxt'),
   choiceBox:$('choiceBox'), choiceQ:$('choiceQ'), choiceOpts:$('choiceOpts'),
   recap:$('recap'), scoreNum:$('scoreNum'), recapList:$('recapList'), copyBtn:$('copyBtn'), restartBtn:$('restartBtn'),
-  historyPanel:$('historyPanel'), historyBody:$('historyBody'),
+  historyPanel:$('historyPanel'), historyBody:$('historyBody'), scCall:$('scCall'),
   log:$('log'), noreco:$('noreco'), toast:$('toast')
 };
 
@@ -2739,7 +2803,10 @@ function setupAutocomplete(input, list, onPick, filterFn){
 setupAutocomplete(el.depInput, el.depList, a=>{ state.depAd=a; }, a=> a.ctrl===ctrlOf('dep'));
 setupAutocomplete(el.arrInput, el.arrList, a=>{ state.arrAd=a; }, a=> a.ctrl===ctrlOf('arr'));
 
-el.call.addEventListener('input', ()=>{ state.call = el.call.value.trim() || "F-XXXX"; refreshTexts(); });
+el.call.addEventListener('input', ()=>{ state.call = el.call.value.trim() || "F-XXXX"; majIndicatif(); refreshTexts(); });
+/* Rappel permanent de l'indicatif dans l'en-tête du panneau : c'est l'élément à
+   prononcer dans presque chaque message, il ne doit pas être à rechercher. */
+function majIndicatif(){ if(el.scCall) el.scCall.textContent = state.call; }
 el.voiceRate.addEventListener('change', ()=>{ state.voiceRate = parseFloat(el.voiceRate.value); });
 el.voiceSelect.addEventListener('change', ()=>{
   voicePref = el.voiceSelect.value || null;   // source de vérité lue par pickVoice()
@@ -2961,6 +3028,7 @@ function renderMeteo(){
 function currentStep(){ return state.queue[state.stepIndex]; }
 
 function renderStep(){
+  majIndicatif();
   const sc=SCENARIOS[state.scenarioIndex];
   const step=currentStep();
   if(step && step.onEnter && !step._entered){ step._entered=true; step.onEnter(); } // C3 (ex: vent qui tourne)
@@ -4007,7 +4075,8 @@ if(!RECO_OK){
    ["Planeur (générique)","PLANEUR","Planeur"],["Schleicher ASK 21","ASK21","Planeur"],
    ["Schempp-Hirth Duo Discus","DUO DISCUS","Planeur"],["Motoplaneur","MOTOPLANEUR","Planeur"]
   ].map(function(a){ return {nom:a[0], abbr:a[1], fam:a[2]}; });
-  var acChoice=AIRCRAFT[13];   // Cessna 172 par défaut
+  // Aucun avion présélectionné : le champ reste vide tant que l'élève n'a pas choisi.
+  var acChoice=null;
 
   /* Autocomplétion générique, calquée sur setupAutocomplete() des aérodromes :
      même markup (.ac-list / .ac-item), même comportement clavier. */
@@ -4042,19 +4111,37 @@ if(!RECO_OK){
       opts.forEach(function(o,i){ o.classList.toggle('active',i===active); });
       if(opts[active]) opts[active].scrollIntoView({block:'nearest'});
     });
-    // Un champ vide au clic montre toute la liste (comportement attendu d'un sélecteur).
-    input.addEventListener('click',function(){ if(!input.value) { items=data.slice(0,40);
-      list.innerHTML=items.map(function(d){ return '<div class="ac-item" role="option"><span class="code">'+
-        esc(code(d))+'</span> — '+esc(label(d))+'</div>'; }).join('');
+    // Champ vide au clic : on déroule TOUTE la liste, groupée par constructeur,
+    // pour pouvoir choisir à la souris sans rien taper.
+    input.addEventListener('click',function(){ if(!input.value) ouvrirTout(); });
+    function ouvrirTout(){
+      items=data.slice();
+      var html='', famPrec=null;
+      items.forEach(function(d){
+        if(d.fam && d.fam!==famPrec){ famPrec=d.fam; html+='<div class="ac-fam">'+esc(d.fam)+'</div>'; }
+        html+='<div class="ac-item" role="option"><span class="code">'+esc(code(d))+'</span> — '+esc(label(d))+'</div>';
+      });
+      list.innerHTML=html;
       [].slice.call(list.querySelectorAll('.ac-item')).forEach(function(el,i){
-        el.addEventListener('mousedown',function(ev){ ev.preventDefault(); pick(items[i]); }); });
-      list.classList.add('open'); } });
+        el.addEventListener('mousedown',function(ev){ ev.preventDefault(); pick(items[i]); });
+      });
+      active=-1; list.classList.add('open'); input.setAttribute('aria-expanded','true');
+    }
+    input.__ouvrirTout=ouvrirTout;
   }
   var acInput=document.getElementById('navAcft');
-  acInput.value=acChoice.nom;
+  acInput.value='';                       // aucun avion par défaut
   autocomplete(acInput, document.getElementById('navAcftList'), AIRCRAFT,
                function(d){return d.nom;}, function(d){return d.abbr;},
-               function(d){ acChoice=d; });
+               function(d){ acChoice=d; acInput.classList.remove('champ-requis'); });
+  // Le champ est vidé à la main : on oublie la sélection précédente.
+  acInput.addEventListener('input',function(){ if(!acInput.value.trim()) acChoice=null; });
+  // Petit bouton « dérouler » : rend le choix évident sans avoir à taper.
+  var acOpen=document.getElementById('navAcftOpen');
+  if(acOpen) acOpen.addEventListener('click',function(){
+    if(acInput.value){ acInput.value=''; acChoice=null; }
+    acInput.focus(); if(acInput.__ouvrirTout) acInput.__ouvrirTout();
+  });
 
   // Niveau : 'debutant' (la consigne dit quoi transmettre) ou 'reel' (on indique
   // seulement qui appeler, comme dans les scénarios en mode Réel).
@@ -4415,6 +4502,50 @@ if(!RECO_OK){
   var F={ steps:[], i:0, results:[], ctx:null, running:false, planeMk:null, animT:null };
   var $v=function(id){ return document.getElementById(id); };
 
+  /* ---- Services d'information de vol (SIV) ----
+     FRÉQUENCES : relevées sur la carte OACI 1:500 000 du SIA (édition 2026), boîtes
+     vertes « SIV … ». Ce sont des valeurs officielles, lues une par une.
+     POSITIONS : centres approximatifs du secteur desservi. La carte ne fournit pas les
+     contours des SIV sous forme exploitable (le jeu SIA converti n'en contient aucun),
+     on retient donc le SIV dont le centre est le plus proche du point survolé.
+     La découpe réelle est plus fine — c'est une approximation assumée, qui reste
+     infiniment plus juste que de garder l'approche du terrain de départ sur 700 km. */
+  var SIV=[
+    {n:'Lille Information',      f:'126.480', lat:50.45, lon:3.10},
+    {n:'Beauvais Information',   f:'119.800', lat:49.40, lon:2.55},
+    {n:'Seine Information',      f:'120.325', lat:48.90, lon:3.45},
+    {n:'Seine Information',      f:'127.815', lat:47.35, lon:1.50},
+    {n:'Poitiers Information',   f:'124.000', lat:46.60, lon:0.30},
+    {n:'Limoges Information',    f:'124.050', lat:45.90, lon:1.40},
+    {n:'Aquitaine Information',  f:'120.575', lat:44.60, lon:0.40},
+    {n:'Toulouse Information',   f:'121.250', lat:43.80, lon:1.30},
+    {n:'Nantes Information',     f:'122.800', lat:47.20, lon:-1.60},
+    {n:'Iroise Information',     f:'119.575', lat:48.30, lon:-4.30},
+    {n:'Clermont Information',   f:'119.375', lat:45.50, lon:3.20},
+    {n:'Marseille Information',  f:'124.500', lat:44.00, lon:4.50},
+    {n:'Provence Information',   f:'126.260', lat:43.70, lon:5.50}
+  ];
+  function sivLePlusProche(lat,lon){
+    var best=null,bd=1e9;
+    SIV.forEach(function(s){
+      var dx=(s.lon-lon)*Math.cos(lat*Math.PI/180), dy=s.lat-lat;
+      var d=dx*dx+dy*dy;
+      if(d<bd){ bd=d; best=s; }
+    });
+    return best;
+  }
+  /* Suite ordonnée des SIV traversés, sans doublon consécutif : c'est elle qui
+     produit les changements de fréquence en route. */
+  function sivSurRoute(a,b){
+    var out=[];
+    for(var i=0;i<=24;i++){
+      var t=i/24;
+      var s=sivLePlusProche(a.lat+(b.lat-a.lat)*t, a.lon+(b.lon-a.lon)*t);
+      if(!out.length || out[out.length-1].f!==s.f) out.push(s);
+    }
+    return out;
+  }
+
   function freqOf(a,kinds){ for(var i=0;i<kinds.length;i++){ if(a.freq&&a.freq[kinds[i]]) return {k:kinds[i],f:a.freq[kinds[i]]}; } return null; }
   // Nom d'organisme déduit du TYPE de fréquence réellement publié pour ce terrain.
   function stnName(a,kind){
@@ -4437,8 +4568,12 @@ if(!RECO_OK){
     // Organisme en route : on n'invente AUCUNE fréquence FIS. On n'utilise le segment
     // « information de vol » que si une fréquence d'approche réelle existe au départ
     // ou à l'arrivée ; sinon ce segment est simplement omis du vol.
-    var infoSrc=(dep.freq&&dep.freq.APP)?dep:((arr&&arr.freq&&arr.freq.APP)?arr:null);
-    var infoF=infoSrc?{k:'APP',f:infoSrc.freq.APP}:null;
+    /* Service d'information en route : suite des SIV réellement survolés, et non
+       plus l'approche du terrain de départ (qui restait affichée sur tout le trajet,
+       même sur 700 km — cf. Valenciennes → Agen). */
+    var chaineSiv = arr ? sivSurRoute(dep,arr) : [];
+    var infoSrc=chaineSiv.length?chaineSiv[0]:null;
+    var infoF=infoSrc?{k:'FIS',f:infoSrc.f}:null;
 
     // --- État moteur : on réutilise `state` (comme le fait launchScenario). ---
     state.activeAd=dep; state.activeSide='dep';
@@ -4449,7 +4584,7 @@ if(!RECO_OK){
     F.ctx={ dep:dep, arr:arr, cruise:cruise, ac:acLabel, acShort:acShort,
             depF:depF, arrF:arrF, infoF:infoF, infoSrc:infoSrc,
             depStn:stnName(dep,depF.k), arrStn:arr?stnName(arr,arrF.k):null,
-            infoStn:infoSrc?stnName(infoSrc,'APP'):null, depRwy:depRwy };
+            infoStn:infoSrc?infoSrc.n:null, chaineSiv:chaineSiv, depRwy:depRwy };
 
     var S=[], C=F.ctx;
     function push(o){ S.push(o); }
@@ -4541,7 +4676,7 @@ if(!RECO_OK){
           reel:'Collationnez la fréquence.',
       consigne:'Collationnez : le nom de l\'organisme, la fréquence, puis votre indicatif.',
           attendu:C.infoStn+' '+fq(C.infoF.f)+', {CALL}.',
-          motsCles:[ {label:'Organisme',variantes:stnVars(C.infoStn,'APP')},
+          motsCles:[ {label:'Organisme',variantes:stnVars(C.infoStn,'AFIS')},
                      {label:'Nouvelle fréquence',variantes:freqVars(C.infoF.f)},
                      {label:'Votre indicatif',ref:'callsign'} ],
           tuneTo:{stn:C.infoStn, freq:C.infoF.f} });
@@ -4551,7 +4686,7 @@ if(!RECO_OK){
           reel:'Appelez '+C.infoStn+'.',
       consigne:'Contactez '+C.infoStn+' : indicatif, demande de transit VFR, votre altitude, et votre route.',
           attendu:C.infoStn+', {CALL}, demande transit VFR, {ALT} pieds, de '+C.dep.nom+' à '+C.arr.nom+'.',
-          motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.infoStn,'APP')},
+          motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.infoStn,'AFIS')},
                      {label:'Votre indicatif',ref:'callsign'},
                      {label:'Demande de transit VFR',variantes:['transit','demande transit','transit vfr']},
                      {label:'Altitude',ref:'alt'},
@@ -4576,10 +4711,31 @@ if(!RECO_OK){
           motsCles:[ {label:'Accusé de réception',variantes:['roger','trafic en vue','en vue','recu','bien recu','negatif','pas en vue']},
                      {label:'Votre indicatif',ref:'callsign'} ] });
 
+        /* 12 bis — Traversée des SIV suivants : un passage de frequence par secteur
+           réellement survolé (manuel DSNA p. 182). C'est ce qui manquait : sur un long
+           trajet on restait sur le premier organisme du départ à l'autre bout du pays. */
+        var precSiv=C.infoStn, precF=C.infoF.f;
+        for(var si=1; si<C.chaineSiv.length; si++){
+          (function(s,idx){
+            var part=0.56+(0.14*idx/Math.max(1,C.chaineSiv.length-1));
+            push({ ph:'Changement de fréquence', src:'p. 182', stn:precSiv, freq:precF, leg:part,
+              atcBefore:'{CALL}, contactez '+s.n+' '+fq(s.f)+'.',
+              reel:'Collationnez la fréquence.',
+              consigne:'Collationnez : le nom de l\'organisme, la fréquence, puis votre indicatif.',
+              attendu:s.n+' '+fq(s.f)+', {CALL}.',
+              motsCles:[ {label:'Organisme',variantes:stnVars(s.n,'AFIS')},
+                         {label:'Nouvelle fréquence',variantes:freqVars(s.f)},
+                         {label:'Votre indicatif',ref:'callsign'} ],
+              tuneTo:{stn:s.n, freq:s.f} });
+            precSiv=s.n; precF=s.f;
+          })(C.chaineSiv[si], si);
+        }
+        C.dernierSiv=precSiv; C.dernierSivF=precF;
+
         // 13 — Changement de fréquence vers l'arrivée (p. 182) — seulement si l'arrivée
         // publie une fréquence réelle ; sinon on passe directement à l'intégration.
         if(C.arrF && C.arrF.f)
-        push({ ph:'Changement de fréquence', src:'p. 182', stn:C.infoStn, freq:C.infoF.f, leg:0.7,
+        push({ ph:'Changement de fréquence', src:'p. 182', stn:C.dernierSiv||C.infoStn, freq:C.dernierSivF||C.infoF.f, leg:0.72,
           atcBefore:'{CALL}, contactez '+C.arrStn+' '+fq(C.arrF.f)+'.',
           reel:'Collationnez la fréquence.',
       consigne:'Collationnez le changement de fréquence.',
@@ -4785,12 +4941,21 @@ if(!RECO_OK){
     $v('navFlight').classList.remove('hidden');
     $v('vfMapSlot').appendChild(sec.querySelector('.nav-mapwrap'));   // la carte suit le vol
     document.body.classList.add('in-flight');   // carte réduite + libellés de config masqués
+    $v('vfCall').textContent=state.call;        // indicatif rappelé en permanence
     $v('vfLog').innerHTML='';
     F.running=true;
     setRecoSink({ interim:function(t){ $v('vfTrans').textContent=t?('« '+t+' »'):''; },
                   final:function(t){ answer(t); },
+                  // Erreurs micro affichées DANS la page de vol (avant, elles partaient
+                  // dans le journal des Exercices et restaient donc invisibles ici).
+                  error:function(msg){
+                    var n=$v('vfNoreco');
+                    n.textContent=msg; n.classList.remove('hidden');
+                    $v('vfTrans').textContent='';
+                  },
                   ui:function(on){ var b=$v('vfPtt');
                     b.classList.toggle('listening',on);
+                    if(on) $v('vfNoreco').classList.add('hidden');   // on retente : on efface l'erreur
                     b.querySelector('span').textContent=on?'Écoute… relâchez pour terminer':'Maintenir pour parler'; } });
     if(!RECO_OK){ $v('vfNoreco').classList.remove('hidden'); $v('vfPtt').disabled=true; }
     if(map) setTimeout(function(){
@@ -4833,6 +4998,14 @@ if(!RECO_OK){
   $v('navStart').addEventListener('click',function(){
     if(!sel.dep){ setTarget('dep'); IN.dep.focus(); return; }
     if(mode==='voyage'&&!sel.arr){ setTarget('arr'); IN.arr.focus(); return; }
+    // Le type d'avion n'est plus présélectionné : il fait partie de l'appel initial
+    // (manuel DSNA p. 18 et p. 149), on ne peut donc pas démarrer sans lui.
+    if(!acChoice){
+      acInput.classList.add('champ-requis');
+      acInput.focus(); if(acInput.__ouvrirTout) acInput.__ouvrirTout();
+      showToast('Choisissez d’abord un type d’avion.');
+      return;
+    }
     startFlight();
   });
   bindPushToTalk($v('vfPtt'), function(){ if(F.running) startListening(); }, function(){ stopListening(); });

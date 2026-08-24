@@ -585,6 +585,19 @@
   .nav-start{ width:100%; margin-top:6px; }
   body.volmode-local .nav-only-voyage{ display:none; }
 
+  /* Bandeau distance / cap / durée estimée. */
+  /* Bandeau « vol interrompu ». */
+  .nav-resume{ display:flex; align-items:center; justify-content:space-between; gap:14px;
+    flex-wrap:wrap; background:var(--violet-soft); border:1px solid var(--violet);
+    border-radius:12px; padding:11px 15px; margin:0 0 14px; font-size:13.5px; color:var(--violet-dark); }
+  .nav-resume-act{ display:flex; gap:8px; }
+  .nav-navlog{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0 0;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:11px 13px; }
+  .nav-navlog div{ display:flex; flex-direction:column; gap:2px; }
+  .nav-navlog dt{ font-family:var(--mono); font-size:9.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-2); margin:0; }
+  .nav-navlog dd{ margin:0; font-size:15px; font-weight:700; color:var(--ink); font-family:var(--mono); }
+  .nav-navlog small{ font-size:10.5px; color:var(--ink-2); font-weight:400; font-family:var(--sans); }
   .nav-zones{ margin:16px 0 14px; border-top:1px solid var(--border); padding-top:14px; }
   .nav-zones h3{ font-family:var(--sans); font-size:13px; font-weight:700; color:var(--ink); margin:0 0 9px; }
   .nav-zonelist{ max-height:210px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
@@ -1194,6 +1207,14 @@
           pour un vol réel, référez-vous aux publications officielles du SIA.
         </div>
 
+        <div class="nav-resume hidden" id="navResume">
+          <span id="navResumeTxt">Un vol est en cours.</span>
+          <span class="nav-resume-act">
+            <button class="btn small cta" id="navResumeGo" type="button">Reprendre</button>
+            <button class="btn small" id="navResumeDrop" type="button">Abandonner</button>
+          </span>
+        </div>
+
         <div class="nav-mode" role="group" aria-label="Type de vol">
           <button class="nav-mode-opt active" type="button" data-volmode="voyage">Voyage</button>
           <button class="nav-mode-opt" type="button" data-volmode="local">Vol local</button>
@@ -1271,6 +1292,8 @@
             </div>
             <p class="nav-diff-note" id="navDiffNote">La consigne détaille ce que vous devez dire.</p>
             </div>
+
+            <div class="nav-navlog" id="navNavlog" hidden></div>
 
             <div class="nav-zones">
               <h3>Espaces aériens sur la route</h3>
@@ -4045,6 +4068,12 @@ if(!RECO_OK){
 
   /* --- Types d'avion : {nom affiché, abrégé prononcé à la radio, famille} ---
      L'abrégé suit le manuel DSNA p. 18 : le type peut préfixer l'indicatif. */
+  /* Vitesse de croisière indicative (kt vrai) par famille, pour l'estimation de
+     durée de vol. Ordres de grandeur usuels — sert à afficher un temps réaliste,
+     pas à préparer une navigation. */
+  var VITESSE={Robin:115, Cessna:110, Piper:110, Socata:120, Aquila:110, Grumman:120,
+               Diamond:130, Cirrus:155, Tecnam:110, ULM:95, Classique:95,
+               Voltige:120, Planeur:60};
   var AIRCRAFT=[
    ["Robin DR400-108 Dauphin 2+2","DR400","Robin"],["Robin DR400-120 Petit Prince","DR400","Robin"],
    ["Robin DR400-140B Major","DR400","Robin"],["Robin DR400-160 Chevalier","DR400","Robin"],
@@ -4074,7 +4103,7 @@ if(!RECO_OK){
    ["Extra 330","EXTRA 330","Voltige"],["Pitts Special S-2","PITTS","Voltige"],
    ["Planeur (générique)","PLANEUR","Planeur"],["Schleicher ASK 21","ASK21","Planeur"],
    ["Schempp-Hirth Duo Discus","DUO DISCUS","Planeur"],["Motoplaneur","MOTOPLANEUR","Planeur"]
-  ].map(function(a){ return {nom:a[0], abbr:a[1], fam:a[2]}; });
+  ].map(function(a){ return {nom:a[0], abbr:a[1], fam:a[2], kt:VITESSE[a[2]]||100}; });
   // Aucun avion présélectionné : le champ reste vide tant que l'élève n'a pas choisi.
   var acChoice=null;
 
@@ -4133,7 +4162,8 @@ if(!RECO_OK){
   acInput.value='';                       // aucun avion par défaut
   autocomplete(acInput, document.getElementById('navAcftList'), AIRCRAFT,
                function(d){return d.nom;}, function(d){return d.abbr;},
-               function(d){ acChoice=d; acInput.classList.remove('champ-requis'); });
+               function(d){ acChoice=d; acInput.classList.remove('champ-requis');
+                            try{ renderNavlog(); }catch(e){} });
   // Le champ est vidé à la main : on oublie la sélection précédente.
   acInput.addEventListener('input',function(){ if(!acInput.value.trim()) acChoice=null; });
   // Petit bouton « dérouler » : rend le choix évident sans avoir à taper.
@@ -4414,7 +4444,39 @@ if(!RECO_OK){
     return null;
   }
 
+  /* Distance orthodromique, route vraie et durée estimée à la vitesse de croisière
+     du modèle choisi. Purement indicatif : pas de vent, pas de déclinaison. */
+  function distNM(a,b){
+    var R=3440.065, r=function(x){return x*Math.PI/180;};
+    var dl=r(b.lat-a.lat), dg=r(b.lon-a.lon);
+    var x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dg/2)*Math.sin(dg/2);
+    return 2*R*Math.asin(Math.sqrt(x));
+  }
+  function routeVraie(a,b){
+    var r=function(x){return x*Math.PI/180;}, d=function(x){return x*180/Math.PI;};
+    var dg=r(b.lon-a.lon);
+    var y=Math.sin(dg)*Math.cos(r(b.lat));
+    var x=Math.cos(r(a.lat))*Math.sin(r(b.lat))-Math.sin(r(a.lat))*Math.cos(r(b.lat))*Math.cos(dg);
+    return (d(Math.atan2(y,x))+360)%360;
+  }
+  function renderNavlog(){
+    var box=$v('navNavlog');
+    if(mode!=='voyage'||!sel.dep||!sel.arr||!BY[sel.dep]||!BY[sel.arr]){ box.hidden=true; return; }
+    var a=BY[sel.dep], b=BY[sel.arr];
+    var nm=distNM(a,b), cap=Math.round(routeVraie(a,b));
+    var kt=acChoice?acChoice.kt:110;
+    var min=Math.round(nm/kt*60);
+    var hh=Math.floor(min/60), mm=min%60;
+    box.hidden=false;
+    box.innerHTML=
+      '<div><dt>Distance</dt><dd>'+Math.round(nm)+' <small>NM</small></dd></div>'+
+      '<div><dt>Route vraie</dt><dd>'+String(cap).padStart(3,'0')+'°</dd></div>'+
+      '<div><dt>Durée estimée</dt><dd>'+(hh?hh+' h ':'')+mm+' <small>min'+
+        (acChoice?' à '+kt+' kt':' (choisissez un avion)')+'</small></dd></div>';
+  }
+
   function renderZones(){
+    renderNavlog();
     var box=document.getElementById('navZones');
     if(!sel.dep){ box.innerHTML='<p class="nav-empty">Choisissez un aérodrome de départ.</p>'; return; }
     if(mode==='voyage'&&!sel.arr){ box.innerHTML='<p class="nav-empty">Choisissez un aérodrome d\'arrivée.</p>'; return; }
@@ -4511,20 +4573,85 @@ if(!RECO_OK){
      La découpe réelle est plus fine — c'est une approximation assumée, qui reste
      infiniment plus juste que de garder l'approche du terrain de départ sur 700 km. */
   var SIV=[
-    {n:'Lille Information',      f:'126.480', lat:50.45, lon:3.10},
-    {n:'Beauvais Information',   f:'119.800', lat:49.40, lon:2.55},
-    {n:'Seine Information',      f:'120.325', lat:48.90, lon:3.45},
-    {n:'Seine Information',      f:'127.815', lat:47.35, lon:1.50},
-    {n:'Poitiers Information',   f:'124.000', lat:46.60, lon:0.30},
-    {n:'Limoges Information',    f:'124.050', lat:45.90, lon:1.40},
-    {n:'Aquitaine Information',  f:'120.575', lat:44.60, lon:0.40},
-    {n:'Toulouse Information',   f:'121.250', lat:43.80, lon:1.30},
-    {n:'Nantes Information',     f:'122.800', lat:47.20, lon:-1.60},
-    {n:'Iroise Information',     f:'119.575', lat:48.30, lon:-4.30},
-    {n:'Clermont Information',   f:'119.375', lat:45.50, lon:3.20},
-    {n:'Marseille Information',  f:'124.500', lat:44.00, lon:4.50},
-    {n:'Provence Information',   f:'126.260', lat:43.70, lon:5.50}
+    {n:'Lille Information',       f:'126.480', lat:50.45, lon:3.10},
+    {n:'Cotentin Information',    f:'120.350', lat:49.10, lon:-0.80},
+    {n:'Beauvais Information',    f:'119.800', lat:49.40, lon:2.55},
+    {n:'Seine Information',       f:'120.325', lat:48.90, lon:3.45},
+    {n:'Seine Information',       f:'120.325', lat:48.85, lon:4.40},
+    {n:'Strasbourg Information',  f:'119.450', lat:48.70, lon:6.90},
+    {n:'Nord Rennes Information', f:'126.950', lat:48.30, lon:-1.70},
+    {n:'Iroise Information',      f:'119.575', lat:48.30, lon:-4.30},
+    {n:'Sud Rennes Information',  f:'134.000', lat:47.85, lon:-1.20},
+    {n:'Bâle Information',        f:'135.850', lat:47.40, lon:5.60},
+    {n:'Seine Information',       f:'127.815', lat:47.35, lon:1.50},
+    {n:'Nantes Information',      f:'122.800', lat:47.20, lon:-1.60},
+    {n:'Poitiers Information',    f:'124.000', lat:46.60, lon:0.30},
+    {n:'Limoges Information',     f:'124.050', lat:45.90, lon:1.40},
+    {n:'Lyon Information',        f:'135.200', lat:45.85, lon:4.60},
+    {n:'Lyon Information',        f:'135.530', lat:45.85, lon:5.40},
+    {n:'Clermont Information',    f:'119.375', lat:45.50, lon:3.20},
+    {n:'Aquitaine Information',   f:'120.575', lat:44.60, lon:0.40},
+    {n:'Marseille Information',   f:'124.500', lat:44.00, lon:4.50},
+    {n:'Toulouse Information',    f:'121.250', lat:43.80, lon:1.30},
+    {n:'Provence Information',    f:'126.260', lat:43.70, lon:5.50},
+    {n:'Nice Information',        f:'120.850', lat:43.60, lon:7.00},
+    {n:'Nice Information',        f:'124.425', lat:43.50, lon:6.30},
+    {n:'Biarritz Information',    f:'119.175', lat:43.35, lon:-1.40},
+    {n:'Pyrénées Information',    f:'126.525', lat:43.15, lon:-0.90}
   ];
+  /* ---- Aléas en croisière (manuel DSNA, chapitre Information de vol p. 205-213) ----
+     Messages repris du manuel ; seuls les noms de lieux sont adaptés à la route.
+     {LIEU} est remplacé par une localité proche du point survolé. */
+  var ALEAS=[
+    { ph:'Météo en route', src:'p. 209',
+      atc:"{CALL}, stratus signalés dans la région de {LIEU}.",
+      consigne:"Accusez réception de l'information météo.",
+      reel:"Accusez réception.",
+      attendu:"Roger, {CALL}.",
+      mots:[{label:'Accusé de réception',variantes:['roger','recu','bien recu','copie']},
+            {label:'Votre indicatif',ref:'callsign'}] },
+    { ph:'Zone réglementée', src:'p. 208',
+      atc:"{CALL}, {ZONE} active.",
+      consigne:"Accusez réception : la zone est active, vous devrez la contourner.",
+      reel:"Accusez réception.",
+      attendu:"Roger, {CALL}.",
+      mots:[{label:'Accusé de réception',variantes:['roger','recu','bien recu','copie','evite','contourne']},
+            {label:'Votre indicatif',ref:'callsign'}] },
+    { ph:'Trafic inconnu', src:'p. 211',
+      atc:"{CALL}, trafic lent, inconnu, 1 heure, 8 nautiques, route nord-est, altitude inconnue.",
+      consigne:"Répondez : « trafic en vue » si vous le voyez, sinon « négatif » ou « pas en vue ».",
+      reel:"Répondez à l'information de trafic.",
+      attendu:"Trafic en vue, {CALL}.",
+      mots:[{label:'Réponse trafic',variantes:['trafic en vue','en vue','negatif','pas en vue','je cherche','roger']},
+            {label:'Votre indicatif',ref:'callsign'}] },
+    { ph:'Aide à la navigation', src:'p. 207',
+      atc:"{CALL}, V-O-R {BAL} en panne.",
+      consigne:"Accusez réception de l'indisponibilité.",
+      reel:"Accusez réception.",
+      attendu:"Roger, {CALL}.",
+      mots:[{label:'Accusé de réception',variantes:['roger','recu','bien recu','copie']},
+            {label:'Votre indicatif',ref:'callsign'}] },
+    { ph:'Renseignement SIGMET', src:'p. 205',
+      atc:"{CALL}, renseignement SIGMET, givrage modéré à fort entre niveau 90 et niveau 130 sur votre route.",
+      consigne:"Accusez réception du SIGMET.",
+      reel:"Accusez réception.",
+      attendu:"Roger, {CALL}.",
+      mots:[{label:'Accusé de réception',variantes:['roger','recu','bien recu','copie']},
+            {label:'Votre indicatif',ref:'callsign'}] }
+  ];
+  var ZONES_R=['R 45','R 138','R 162','R 205','R 46'];
+  var BALISES=['CAN','BSN','PTV','LSE','DJL'];
+  // Localité connue la plus proche d'un point : on réutilise la base d'aérodromes,
+  // dont le nom porte celui de la ville — aucune donnée inventée.
+  function lieuProche(lat,lon){
+    var best=null,bd=1e9;
+    ADS.forEach(function(a){
+      var dx=(a.lon-lon)*Math.cos(lat*Math.PI/180), dy=a.lat-lat, d=dx*dx+dy*dy;
+      if(d<bd){ bd=d; best=a; }
+    });
+    return best? best.nom.split(/[\-–(]/)[0].trim() : 'la région';
+  }
+
   function sivLePlusProche(lat,lon){
     var best=null,bd=1e9;
     SIV.forEach(function(s){
@@ -4537,13 +4664,24 @@ if(!RECO_OK){
   /* Suite ordonnée des SIV traversés, sans doublon consécutif : c'est elle qui
      produit les changements de fréquence en route. */
   function sivSurRoute(a,b){
-    var out=[];
+    // 1) échantillonnage : secteur le plus proche en chaque point
+    var brut=[];
     for(var i=0;i<=24;i++){
       var t=i/24;
-      var s=sivLePlusProche(a.lat+(b.lat-a.lat)*t, a.lon+(b.lon-a.lon)*t);
-      if(!out.length || out[out.length-1].f!==s.f) out.push(s);
+      brut.push(sivLePlusProche(a.lat+(b.lat-a.lat)*t, a.lon+(b.lon-a.lon)*t));
     }
-    return out;
+    // 2) lissage : un secteur effleuré sur un seul échantillon est un artefact du
+    //    choix par centre (il produisait des zigzags du type Seine → Bâle → Seine).
+    //    On exige deux échantillons consécutifs pour retenir un changement.
+    var out=[];
+    for(var j=0;j<brut.length;j++){
+      var s=brut[j];
+      if(out.length && out[out.length-1].f===s.f) continue;
+      var suivant=brut[j+1];
+      if(suivant && suivant.f!==s.f && out.length) continue;   // passage furtif : ignoré
+      out.push(s);
+    }
+    return out.length?out:[brut[0]];
   }
 
   function freqOf(a,kinds){ for(var i=0;i<kinds.length;i++){ if(a.freq&&a.freq[kinds[i]]) return {k:kinds[i],f:a.freq[kinds[i]]}; } return null; }
@@ -4729,6 +4867,21 @@ if(!RECO_OK){
               tuneTo:{stn:s.n, freq:s.f} });
             precSiv=s.n; precF=s.f;
           })(C.chaineSiv[si], si);
+
+          /* Un aléa après chaque changement de secteur : c'est le rôle même du
+             service d'information de vol (manuel DSNA p. 205-213), et cela évite
+             qu'une longue croisière se réduise à une suite de collationnements. */
+          (function(s,idx){
+            var al=ALEAS[(idx-1)%ALEAS.length];
+            var t=(idx)/Math.max(1,C.chaineSiv.length);
+            var lat=C.dep.lat+(C.arr.lat-C.dep.lat)*t, lon=C.dep.lon+(C.arr.lon-C.dep.lon)*t;
+            var txt=al.atc.replace('{LIEU}',lieuProche(lat,lon))
+                          .replace('{ZONE}',ZONES_R[idx%ZONES_R.length])
+                          .replace('{BAL}',BALISES[idx%BALISES.length]);
+            push({ ph:al.ph, src:al.src, stn:s.n, freq:s.f, leg:0.56+(0.14*idx/Math.max(1,C.chaineSiv.length-1)),
+              atcBefore:txt, reel:al.reel, consigne:al.consigne, attendu:al.attendu,
+              motsCles:al.mots });
+          })(C.chaineSiv[si], si);
         }
         C.dernierSiv=precSiv; C.dernierSivF=precF;
 
@@ -4748,8 +4901,17 @@ if(!RECO_OK){
 
       // 14 — Intégration : appel initial complet (p. 149)
       push({ ph:'Intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.82,
-        onEnter:function(){ state.activeAd=C.arr; state.activeSide='arr';
-                            state.rwy=runwayInService(C.arr, state.meteo.windDir); },
+        /* Météo propre à l'arrivée : sur plusieurs centaines de kilomètres, garder le
+           vent et le QNH du départ n'a aucun sens. On retire un vent à destination
+           et on en déduit la piste en service et le QNH annoncés à l'intégration. */
+        onEnter:function(){
+          state.activeAd=C.arr; state.activeSide='arr';
+          state.meteo.windDir  = Math.floor(Math.random()*36)*10;
+          state.meteo.windForce= 3 + Math.floor(Math.random()*13);
+          state.meteo.qnh      = 995 + Math.floor(Math.random()*36);
+          state.ventPhrase     = state.meteo.windDir+' degrés, '+state.meteo.windForce+' nœuds';
+          state.rwy = runwayInService(C.arr, state.meteo.windDir);
+        },
         reel:'Appelez '+C.arrStn+'.',
       consigne:'Appel initial à '+C.arrStn+' : indicatif complet, type d\'avion, VFR de '+C.dep.nom+' à '+C.arr.nom+', votre altitude.',
         attendu:C.arrStn+', {CALL}, '+C.acShort+', VFR de '+C.dep.nom+' à '+C.arr.nom+', {ALT} pieds.',
@@ -4905,6 +5067,7 @@ if(!RECO_OK){
     $v('vfNext').disabled=false;
   }
   function nextStep(){
+    sauverVol();
     var s=F.steps[F.i];
     if(s && s.tuneTo) tune(s.tuneTo.stn,s.tuneTo.freq,true);   // changement de fréquence effectif
     F.i++;
@@ -4964,10 +5127,58 @@ if(!RECO_OK){
       if(F.ctx&&F.ctx.dep) map.setView([F.ctx.dep.lat,F.ctx.dep.lon],11,{animate:false});
     },40);
     renderStep();
+    sauverVol();
     window.scrollTo(0,0);
   }
+  /* ---- Reprise d'un vol interrompu ----
+     On ne sauvegarde que ce qui est reproductible (terrains, réglages, position dans
+     le déroulé, résultats) : le tableau d'étapes est reconstruit par buildFlight(),
+     jamais sérialisé. */
+  var VOL_KEY='rt-vol-en-cours';
+  function sauverVol(){
+    if(!F.running||!F.ctx) return;
+    try{
+      localStorage.setItem(VOL_KEY, JSON.stringify({
+        dep:sel.dep, arr:sel.arr, alt:sel.alt, mode:mode, level:level,
+        acft:acChoice?acChoice.nom:null, fl:$v('navFl').value, pax:$v('navPax').value,
+        i:F.i, results:F.results, call:state.call,
+        meteo:state.meteo, rwy:state.rwy, ventPhrase:state.ventPhrase, altCruise:state.altCruise,
+        date:new Date().toISOString()
+      }));
+    }catch(e){}
+  }
+  function oublierVol(){ try{ localStorage.removeItem(VOL_KEY); }catch(e){} }
+  function volSauvegarde(){
+    try{ var v=JSON.parse(localStorage.getItem(VOL_KEY)||'null');
+         return (v && v.dep && typeof v.i==='number') ? v : null; }catch(e){ return null; }
+  }
+  function reprendreVol(v){
+    IN.dep.value=v.dep; sel.dep=v.dep;
+    if(v.arr){ IN.arr.value=v.arr; sel.arr=v.arr; }
+    if(v.alt){ IN.alt.value=v.alt; sel.alt=v.alt; }
+    mode=v.mode||'voyage';
+    sec.querySelectorAll('[data-volmode]').forEach(function(b){ b.classList.toggle('active',b.dataset.volmode===mode); });
+    document.body.classList.toggle('volmode-local',mode==='local');
+    level=v.level||'debutant';
+    sec.querySelectorAll('[data-diff]').forEach(function(b){ b.classList.toggle('active',b.dataset.diff===level); });
+    if(v.acft){ var m=AIRCRAFT.filter(function(a){return a.nom===v.acft;})[0];
+                if(m){ acChoice=m; acInput.value=m.nom; } }
+    if(v.fl)  $v('navFl').value=v.fl;
+    if(v.pax) $v('navPax').value=v.pax;
+    if(v.call) state.call=v.call;
+    startFlight();
+    // Restaurer la météo tirée au sort et la position dans le déroulé.
+    if(v.meteo) state.meteo=v.meteo;
+    if(v.rwy) state.rwy=v.rwy;
+    if(v.ventPhrase) state.ventPhrase=v.ventPhrase;
+    if(v.altCruise) state.altCruise=v.altCruise;
+    F.results=v.results||[];
+    F.i=Math.min(v.i, F.steps.length-1);
+    renderStep();
+  }
+
   function endFlight(){
-    F.running=false; setRecoSink(null);
+    F.running=false; setRecoSink(null); oublierVol();
     var tot=0, ok=0;
     F.results.forEach(function(r){ if(r) r.forEach(function(x){ tot++; if(x.found) ok++; }); });
     var pct=tot?Math.round(ok/tot*100):0;
@@ -5036,8 +5247,26 @@ if(!RECO_OK){
 
   // ---- Init différé : la carte n'est construite qu'à la 1re visite de la page.
   // Un conteneur en display:none a une taille nulle → Leaflet doit être recalculé.
+  // Bandeau de reprise : proposé à l'entrée sur la page si un vol a été interrompu.
+  function majReprise(){
+    var v=volSauvegarde(), box=$v('navResume');
+    if(!box) return;
+    if(!v || F.running){ box.classList.add('hidden'); return; }
+    var d=BY[v.dep], a=v.arr?BY[v.arr]:null;
+    $v('navResumeTxt').textContent='Vol interrompu : '+(d?d.icao:v.dep)+
+      (a?' → '+a.icao:' (vol local)')+' — repris à l’échange '+(v.i+1)+'.';
+    box.classList.remove('hidden');
+  }
+  $v('navResumeGo').addEventListener('click',function(){
+    var v=volSauvegarde(); if(v){ $v('navResume').classList.add('hidden'); reprendreVol(v); }
+  });
+  $v('navResumeDrop').addEventListener('click',function(){
+    oublierVol(); $v('navResume').classList.add('hidden');
+  });
+
   window.addEventListener('rt:page',function(e){
     if(e.detail.page!=='navigation') return;
+    majReprise();
     initMap();
     setTimeout(function(){ map.invalidateSize(); if(!sel.dep) setTarget('dep'); },30);
   });

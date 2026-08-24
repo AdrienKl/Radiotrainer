@@ -698,6 +698,16 @@
   .vf-noreco{ font-size:12px; color:#8a5a1d; background:#fff6ed; border:1px solid #f0c9a6;
     border-radius:9px; padding:8px 10px; margin:9px 0 0; line-height:1.45; }
 
+  /* Zone de transcription éditable (Navigation) — calquée sur celle des Scénarios. */
+  .vf-transwrap{ margin-top:13px; }
+  .vf-transwrap label{ display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-2); margin-bottom:6px; }
+  .vf-transwrap textarea{ width:100%; box-sizing:border-box; resize:vertical; min-height:56px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 13px;
+    font-family:var(--mono); font-size:14px; line-height:1.5; color:var(--ink); }
+  .vf-transwrap textarea:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+  .vf-transact{ display:flex; gap:8px; margin-top:9px; flex-wrap:wrap; }
+  .vf-transact .btn{ flex:1; }
   .vf-trans{ font-family:var(--mono); font-size:12.5px; color:var(--ink-2); background:var(--surface-2);
     border:1px dashed var(--border); border-radius:9px; padding:9px 11px; margin-top:11px; min-height:16px;
     word-break:break-word; }
@@ -1333,6 +1343,17 @@
               </button>
               <p class="vf-noreco hidden" id="vfNoreco">Reconnaissance vocale indisponible (utilisez Chrome ou Edge). Vous pouvez suivre le vol avec « Passer ».</p>
 
+              <!-- Transcription MODIFIABLE avant envoi, comme dans les Scénarios :
+                   la reconnaissance vocale se trompe (surtout sur l'alphabet
+                   aéronautique), il faut pouvoir corriger avant d'être noté. -->
+              <div class="vf-transwrap" id="vfTransWrap">
+                <label for="vfTransText">Transcription (modifiable avant validation)</label>
+                <textarea id="vfTransText" rows="2" placeholder="Ce que le micro a entendu s'affiche ici — corrigez si besoin, puis validez."></textarea>
+                <div class="vf-transact">
+                  <button class="btn small valider" id="vfValider" type="button" disabled><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Valider ma réponse</button>
+                  <button class="btn small" id="vfRerec" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v5h-5"/></svg>Réenregistrer</button>
+                </div>
+              </div>
               <div class="vf-trans" id="vfTrans"></div>
               <div class="vf-fb" id="vfFb"></div>
 
@@ -1826,10 +1847,43 @@ function normalize(s){
     .replace(/\s+/g,' ').trim();
 }
 
+/* Groupes de DEUX mots à recoller avant la correction par token.
+   normalize() transforme « X-ray » en « x ray » : aucun token isolé ne peut alors
+   correspondre. Et la reconnaissance découpe souvent les mots de l'alphabet OACI
+   (« fox trot », « zou lou », « uni forme »). On les réunit d'abord. */
+const BIGRAMS = {
+  'x ray':'xray', 'ix ray':'xray', 'iks ray':'xray', 'x rai':'xray',
+  'fox trot':'foxtrot', 'fox trotte':'foxtrot', 'foxe trot':'foxtrot',
+  'zou lou':'zulu', 'zoo lou':'zulu',
+  'uni forme':'uniform', 'uni form':'uniform',
+  'no vembre':'november', 'no vember':'november',
+  'si erra':'sierra', 'si era':'sierra',
+  'yan kee':'yankee', 'yan ki':'yankee',
+  'que bec':'quebec', 'ke bec':'quebec',
+  'ju liette':'juliett', 'ju liet':'juliett',
+  'in dia':'india',
+  'char lie':'charlie',
+  'o scar':'oscar',
+  'vent arriere':'vent arriere'
+};
+function joinBigrams(tokens){
+  const out=[];
+  for(let i=0;i<tokens.length;i++){
+    const pair=tokens[i]+' '+(tokens[i+1]||'');
+    if(tokens[i+1] && BIGRAMS[pair]){ out.push(BIGRAMS[pair]); i++; }
+    else out.push(tokens[i]);
+  }
+  return out;
+}
+/* Canonise une phrase de RÉFÉRENCE exactement comme le texte reconnu (normalisation
+   + recollage des groupes). Indispensable : sans cela « x ray » côté attendu ne
+   correspondrait plus à « xray » côté transcription recollée. */
+function canonPhrase(s){ return joinBigrams(normalize(s).split(' ').filter(Boolean)).join(' '); }
+
 /* Vocabulaire de référence pour la correction floue (mots NATO + chiffres + aviation
    issus de la référence §3). Un token reconnu proche d'un de ces mots est corrigé. */
 const REF_WORDS = [
-  ...Object.values(NATO).map(w=>normalize(w)),
+  ...Object.values(NATO).map(w=>canonPhrase(w)), 'xray',
   'zero','unite','un','une','deux','trois','quatre','cinq','six','sept','huit','neuf',
   'dix','onze','douze','treize','quatorze','quinze','seize','vingt','trente','quarante',
   'cinquante','soixante','cent','cents','mille',
@@ -1882,7 +1936,40 @@ const MISHEARD = {
   kunh:'qnh', quenn:'qnh', cunh:'qnh', kelnh:'qnh',
   numeros:'numero', pistes:'piste',
   // Chrome transcrit souvent le chiffre "1" énoncé en aéro comme "unité" → on ramène à "un".
-  unite:'un'
+  unite:'un',
+
+  /* ---- Alphabet aéronautique : mots français produits par la reconnaissance ----
+     Chrome transcrit en français courant ; il rend donc l'alphabet OACI par des mots
+     ordinaires parfois très éloignés (« matelas » pour Sierra). La distance de
+     Levenshtein ne peut pas rattraper ces cas : il faut une table explicite. */
+  alfa:'alpha', alpah:'alpha', alfaa:'alpha', alphat:'alpha',
+  bravos:'bravo', brava:'bravo', bravau:'bravo',
+  charlie:'charlie', charlot:'charlie', charlies:'charlie', chali:'charlie',
+  deltas:'delta', delt:'delta',
+  ekot:'echo', ekos:'echo', ecot:'echo', ecco:'echo', eko:'echo',
+  fokstrot:'foxtrot', foxtro:'foxtrot', foxtrotte:'foxtrot', fokstro:'foxtrot',
+  gaulf:'golf', gulf:'golf', golfes:'golf',
+  hotels:'hotel', otel:'hotel', hottel:'hotel',
+  indias:'india', indya:'india', indien:'india', indiat:'india', indiana:'india',
+  julliet:'juliett', juliete:'juliett', juliets:'juliett', julia:'juliett',
+  quilo:'kilo', kilot:'kilo',
+  limas:'lima', lyma:'lima', limaa:'lima',
+  maique:'mike', mick:'mike', micke:'mike', maick:'mike', mik:'mike',
+  novembres:'november', novanbre:'november', novembe:'november',
+  oskart:'oscar', oscart:'oscar', oskars:'oscar',
+  papas:'papa', papate:'papa',
+  quebecq:'quebec', kebek:'quebec', quebecs:'quebec',
+  romeot:'romeo', romeos:'romeo', romeau:'romeo',
+  // Sierra : cas signalé par l'usage — Chrome rend souvent des mots sans rapport.
+  matelas:'sierra', ciera:'sierra', cierra:'sierra', sierras:'sierra',
+  sierrat:'sierra', siarra:'sierra', sierra:'sierra',
+  tangau:'tango', tangoo:'tango',
+  uniformes:'uniform', unifor:'uniform', uniformt:'uniform',
+  victeur:'victor', victors:'victor', victo:'victor',
+  ouisky:'whiskey', ouiski:'whiskey', whiskeys:'whiskey', whiskys:'whiskey',
+  ixray:'xray', iksray:'xray', xrai:'xray', exray:'xray',
+  yankees:'yankee', yankey:'yankee', yanke:'yankee', yankis:'yankee',
+  zoulous:'zulu', zulou:'zulu', zoulo:'zulu'
 };
 
 function lev(a,b){
@@ -1916,7 +2003,7 @@ function correctToken(w){
 }
 /* Renvoie du texte déjà normalisé + corrigé, prêt pour la vérification. */
 function fuzzyCorrect(text){
-  return normalize(text).split(' ').filter(Boolean).map(correctToken).join(' ');
+  return joinBigrams(normalize(text).split(' ').filter(Boolean)).map(correctToken).join(' ');
 }
 
 /* Variantes de reconnaissance pour un nombre (brut + chiffre-par-chiffre + cardinal) */
@@ -1946,7 +2033,7 @@ function digitCanon(normText){
 function callsignVariants(call){
   const compact=(call||"").toUpperCase().replace(/[^A-Z0-9]/g,'');
   const letters=compact.split('');
-  const toPhon=arr=>normalize(arr.map(l=>NATO[l]||l).join(' '));
+  const toPhon=arr=>canonPhrase(arr.map(l=>NATO[l]||l).join(' '));
   return [toPhon(letters), toPhon(letters.slice(1)), toPhon(letters.slice(-3)),
           toPhon(letters.slice(-2)), normalize(compact),
           normalize(call),                 // forme écrite "f abcd"
@@ -2697,7 +2784,7 @@ function resolveVariants(mc){
     case 'capdep':   return numVariants(String(state.capDep));
     case 'num':      return numVariants(String(state.numCircuit));
     case 'alt':      return numVariants(String(state.altCruise));
-    default:         return (mc.variantes||[]).map(normalize).filter(Boolean);
+    default:         return (mc.variantes||[]).map(canonPhrase).filter(Boolean);
   }
 }
 
@@ -5040,6 +5127,7 @@ if(!RECO_OK){
     $v('vfSrc').textContent='Manuel DSNA '+s.src;
     $v('vfBar').style.width=Math.round((F.i/F.steps.length)*100)+'%';
     $v('vfTrans').textContent=''; $v('vfFb').innerHTML=''; $v('vfNext').disabled=true;
+    $v('vfTransText').value=''; $v('vfValider').disabled=true;
     movePlane(s.leg);
     var atc=$v('vfAtc');
     if(s.atcBefore){ atc.innerHTML='<b>'+esc(s.stn)+' :</b> '+esc(fillDisplay(s.atcBefore));
@@ -5052,7 +5140,7 @@ if(!RECO_OK){
   function answer(raw){
     var s=F.steps[F.i]; if(!s) return;
     var corrected=fuzzyCorrect(raw||'');
-    $v('vfTrans').textContent=raw?('« '+raw+' »'):'(rien entendu)';
+    // Le texte validé reste visible dans le champ éditable : pas de second affichage.
     vfLog('you',raw||'(rien entendu)');
     var res=s.motsCles.map(function(mc){ return {label:mc.label, found:mcFound(mc,corrected)}; });
     F.results[F.i]=res;
@@ -5107,8 +5195,16 @@ if(!RECO_OK){
     $v('vfCall').textContent=state.call;        // indicatif rappelé en permanence
     $v('vfLog').innerHTML='';
     F.running=true;
-    setRecoSink({ interim:function(t){ $v('vfTrans').textContent=t?('« '+t+' »'):''; },
-                  final:function(t){ answer(t); },
+    setRecoSink({ // Aperçu pendant qu'on parle, dans le champ éditable.
+                  interim:function(t){ $v('vfTransText').value=t; $v('vfValider').disabled=!t.trim(); },
+                  /* Fin d'écoute : on REMPLIT le champ, on ne note pas encore.
+                     L'élève relit, corrige une éventuelle erreur de transcription,
+                     puis valide lui-même. */
+                  final:function(t){
+                    $v('vfTransText').value=t;
+                    $v('vfValider').disabled=!t.trim();
+                    if(t.trim()) $v('vfTransText').focus();
+                  },
                   // Erreurs micro affichées DANS la page de vol (avant, elles partaient
                   // dans le journal des Exercices et restaient donc invisibles ici).
                   error:function(msg){
@@ -5220,6 +5316,22 @@ if(!RECO_OK){
     startFlight();
   });
   bindPushToTalk($v('vfPtt'), function(){ if(F.running) startListening(); }, function(){ stopListening(); });
+  bindPushToTalk($v('vfRerec'), function(){ if(F.running) startListening(); }, function(){ stopListening(); });
+  // La notation n'a lieu qu'à la validation explicite.
+  $v('vfValider').addEventListener('click',function(){
+    var t=$v('vfTransText').value.trim();
+    if(!t) return;
+    $v('vfValider').disabled=true;
+    answer(t);
+  });
+  // Saisie au clavier possible sans micro (utile si la reconnaissance est indisponible).
+  $v('vfTransText').addEventListener('input',function(){
+    $v('vfValider').disabled = !$v('vfTransText').value.trim();
+  });
+  // Entrée valide, Maj+Entrée passe à la ligne.
+  $v('vfTransText').addEventListener('keydown',function(e){
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); if(!$v('vfValider').disabled) $v('vfValider').click(); }
+  });
   $v('vfNext').addEventListener('click',nextStep);
   $v('vfSkip').addEventListener('click',function(){ vfLog('sys','Échange passé.'); F.results[F.i]=null; nextStep(); });
   $v('vfHint').addEventListener('click',function(){

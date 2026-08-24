@@ -361,6 +361,15 @@
   .spell-verdict.good{background:var(--violet-tint); color:var(--violet-dark); border:1px solid var(--violet)}
   .spell-verdict.bad{background:#fdecec; color:#c0392b; border:1px solid #e7b3b3}
   .spell-verdict .ic-svg{width:20px; height:20px}
+  /* La transcription étant masquée, le verdict est le seul retour : on lui donne
+     du poids visuel. */
+  /* .field impose display:flex, ce qui neutralise l'attribut [hidden] : il faut
+     une règle explicite pour masquer la transcription. */
+  .spell-hidden-user{display:none !important}
+  .spell-verdict{font-size:17px; padding:16px 19px; margin-top:4px}
+  .spell-verdict .ic-svg{width:24px; height:24px}
+  .spell-verdict.none{background:var(--surface-2); color:var(--ink-2); border:1px solid var(--border)}
+  :root[data-theme="dark"] .spell-verdict.bad{background:#301a19; color:#f3b4b0; border-color:#6b3330}
   .spell-status{margin-top:12px; padding:10px 14px; border-radius:12px; font-size:13.5px; font-weight:600;
     background:var(--violet-soft); color:var(--violet-dark); border:1px solid var(--violet)}
   .spell-status.err{background:#fdecec; color:#c0392b; border-color:#e7b3b3}
@@ -1405,7 +1414,10 @@
 
           <div class="spell-status hidden" id="spellStatus" role="status" aria-live="polite"></div>
 
-          <div class="field" style="margin-top:16px">
+          <!-- Transcription masquée : sur l'épellation la reconnaissance est fiable,
+               seul le verdict compte. L'élément reste dans le DOM car evaluate() en
+               lit le contenu pour découper les tokens. -->
+          <div class="field spell-hidden-user">
             <label>Votre réponse</label>
             <div class="spell-user" id="spellUser">—</div>
           </div>
@@ -3963,10 +3975,20 @@ if(!RECO_OK){
       spans[i].className = oki?'ok':'ko';
     }
     var C=(typeof ICONS!=='undefined')?ICONS:{check:'✓',warn:'✗'};
+    // Rien capté : ce n'est pas une faute d'épellation, on le dit distinctement.
+    if(!userJoin){
+      fbEl.innerHTML='<div class="spell-verdict none">'+C.warn+
+        '<span>Rien entendu — réessayez en parlant plus près du micro.</span></div>';
+      return;
+    }
     fbEl.innerHTML='<div class="spell-verdict '+(correct?'good':'bad')+'">'+
-      (correct?C.check:C.warn)+'<span>'+(correct?'Correct — bien épelé !':'À revoir — comparez avec la réponse attendue.')+'</span></div>';
-    expEl.classList.remove('blurred');
-    if(revealBtn) revealBtn.textContent='Masquer la réponse';
+      (correct?C.check:C.warn)+'<span>'+(correct?'Correct — bien épelé !':'Raté — comparez avec la réponse attendue.')+'</span></div>';
+    // La réponse attendue n'est dévoilée qu'en cas d'échec : sur un sans-faute,
+    // l'afficher n'apprend rien et gâche l'exercice suivant.
+    if(!correct){
+      expEl.classList.remove('blurred');
+      if(revealBtn) revealBtn.textContent='Masquer la réponse';
+    }
   }
 
   /* --- Micro : reconnaissance vocale (prioritaire) + capture audio (secondaire) --- */

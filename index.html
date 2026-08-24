@@ -131,7 +131,7 @@
   .valider:hover{border-color:var(--violet)}
 
   /* ---------- Feature cards / reveal ---------- */
-  .feature-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px; margin-top:8px}
+  .feature-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr)); gap:18px; margin-top:8px}
   .feature{padding:22px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:transform .18s, box-shadow .18s}
   .feature:hover{transform:translateY(-3px); box-shadow:var(--shadow-md)}
   .feature .fic{width:46px; height:46px; border-radius:13px; display:grid; place-items:center; font-size:23px; background:var(--violet-soft); margin-bottom:14px}
@@ -179,7 +179,7 @@
   .exam-note{color:var(--ink-2); font-size:13px}
 
   /* ---------- Scenarios ---------- */
-  .scenarios{display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:14px; margin:6px 0 20px}
+  .scenarios{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(185px,100%),1fr)); gap:14px; margin:6px 0 20px}
   .sc-btn{text-align:left; cursor:pointer; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--ink); padding:17px; font-size:14.5px; font-weight:600; box-shadow:var(--shadow-sm); transition:transform .16s, box-shadow .18s, border-color .18s}
   .sc-btn .num{display:block; font-family:var(--mono); color:var(--violet); font-size:11.5px; font-weight:700; margin-bottom:7px}
   .sc-btn:hover{transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:#d3d6e2}
@@ -260,7 +260,7 @@
 
   .badges{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow-sm); margin:16px 0}
   .badges h3{color:var(--ink); font-size:15.5px; margin-bottom:12px}
-  .badge-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(205px,1fr)); gap:12px}
+  .badge-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(205px,100%),1fr)); gap:12px}
   .badge{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--border); border-radius:14px; padding:13px 15px; background:var(--surface-2); transition:transform .16s, box-shadow .18s}
   .badge:hover{transform:translateY(-2px); box-shadow:var(--shadow-sm)}
   .badge .ic{font-size:22px; line-height:1}
@@ -302,10 +302,11 @@
     .choice .opts{grid-template-columns:1fr}
     .ptt{min-width:100%}
     .navlinks .navlink{padding:8px 10px; font-size:13.5px}
-    .brand span{display:none}
-    /* …sauf dans la barre applicative mobile, qui ne contient qu'un hamburger :
-       la place ne manque pas et masquer le nom laissait un logo orphelin. */
+    /* Le nom du site reste affiché : un logo seul, sans texte, passe pour un bug.
+       Il tient largement à 390 px une fois le CTA d'en-tête retiré. */
     .app-topbar .brand span{display:inline}
+    /* « S'inscrire » disparaît de l'en-tête sur mobile, mais reste accessible :
+       le hero propose les deux boutons en pleine largeur. */
     .nav-cta{display:none}
   }
   @media(prefers-reduced-motion:reduce){
@@ -387,7 +388,7 @@
   /* ============ Catalogue de cours ============ */
   /* 320px mini : à 260px, l'icône de 44px laissait une colonne de texte trop étroite
      et la description se brisait sur 4 lignes. */
-  .course-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px}
+  .course-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr)); gap:14px}
   .course-card{display:flex; gap:14px; align-items:flex-start; text-align:left; cursor:pointer;
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px;
     box-shadow:var(--shadow-sm); transition:transform .16s, box-shadow .18s, border-color .18s; font-family:inherit}
@@ -403,12 +404,12 @@
   /* ============ Cours : alphabet + chiffres ============ */
   .cours-h{font-size:18px; margin:28px 0 12px; color:var(--ink)}
   .cours-note{color:var(--ink-2); font-size:13.5px; margin:-4px 0 14px}
-  .alpha-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px}
+  .alpha-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr)); gap:10px}
   .alpha-card{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border);
     border-radius:12px; padding:11px 14px; box-shadow:var(--shadow-sm)}
   .alpha-card .ltr{font-family:var(--mono); font-weight:800; font-size:22px; color:var(--violet); width:26px; text-align:center; flex:none}
   .alpha-card .wrd{font-weight:600; font-size:15.5px; color:var(--ink)}
-  .digit-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px}
+  .digit-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(190px,100%),1fr)); gap:10px}
   .digit-card{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border);
     border-radius:12px; padding:11px 14px; box-shadow:var(--shadow-sm)}
   .digit-card .num{font-family:var(--mono); font-weight:800; font-size:22px; color:var(--violet); width:26px; text-align:center; flex:none}
@@ -800,7 +801,9 @@
   .fb-piege .ic-svg{ width:15px; height:15px; }
 
   /* ================= Page Paramètres ================= */
-  .set-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; align-items:start; }
+  /* min(…,100%) : sans cela, une colonne à minimum fixe (340 px) reste plus large que
+     l'écran sur un petit mobile et fait déborder toute la page horizontalement. */
+  .set-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr)); gap:16px; align-items:start; }
   .set-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     padding:20px 22px; box-shadow:var(--shadow-sm); }
   .set-card.set-wide{ grid-column:1/-1; }
@@ -907,6 +910,49 @@
     :root[data-theme="dark"] .leaflet-tile-pane{ filter:brightness(.86) contrast(1.04); }
     /* Étiquettes de zone : le halo blanc reste correct, la carte dessous est claire. */
     :root[data-theme="dark"] .badge.locked, :root[data-theme="dark"] .badge{ background:var(--surface-2); }
+
+  /* ================= Optimisations mobile =================
+     Regroupées ici, après toutes les règles de base, pour qu'elles gagnent sans
+     recourir à !important. */
+  @media (max-width:560px){
+    /* --- Vue de vol : la barre de progression passait sur une 2e ligne, seule et
+       tronquée à gauche du bouton. On la met en pleine largeur sous les infos. --- */
+    .vf-top{ flex-wrap:wrap; gap:10px 12px; padding:11px 13px; }
+    .vf-tune{ flex:1 1 auto; min-width:0; flex-wrap:wrap; }
+    .vf-quit{ flex:0 0 auto; order:2; }
+    .vf-prog{ order:3; flex-basis:100%; min-width:0; }
+
+    /* Le libellé « Valider ma réponse » se coupait sur deux lignes pendant que
+       « Réenregistrer » tenait sur une : on empile pour des boutons homogènes. */
+    .vf-transact{ flex-direction:column; }
+    .vf-transact .btn{ width:100%; }
+    /* Placeholder tronqué : il tient sur 3 lignes à cette largeur. */
+    .vf-transwrap textarea{ min-height:84px; }
+
+    /* Confort tactile : cibles d'au moins 44 px de haut (recommandation Apple/WCAG). */
+    .btn, .sidelink, .seg3-opt, .nav-tgl, .nav-mode-opt, .nav-diff-opt,
+    .seg-opt, .navlink, .ac-item{ min-height:44px; }
+    .btn.small{ padding-top:11px; padding-bottom:11px; }
+    .ac-item{ display:flex; align-items:center; }
+
+    /* Les 3 colonnes du bandeau distance/route/durée deviennent illisibles :
+       on passe à 2 colonnes, la durée occupant la 2e ligne entière. */
+    .nav-navlog{ grid-template-columns:1fr 1fr; gap:10px 12px; }
+    .nav-navlog div:last-child{ grid-column:1 / -1; }
+
+    /* Marges de page resserrées : à 390 px, 30 px de chaque côté mangent la lecture. */
+    .container{ padding-left:16px; padding-right:16px; }
+
+    /* Le hero occupait presque deux écrans avant le premier contenu. */
+    .hero__title{ font-size:clamp(28px,8.5vw,40px); }
+    .hero__cta{ flex-wrap:wrap; gap:10px; }
+    .hero__cta .btn{ flex:1 1 auto; }
+  }
+
+  /* Appareils sans survol : « Survoler pour démasquer » n'a aucun sens au doigt. */
+  @media (hover:none){
+    .switch-line{ display:none; }
+  }
 
   /* Règle .hidden générique : les toggles JS classList.toggle('hidden') sur des éléments
      sans variante scopée (#coursCatalog / #coursDetail, #spellStatus.spell-status, …) n'avaient
@@ -4319,8 +4365,20 @@ if(!RECO_OK){
        minZoom 4 : sur un petit conteneur, fitBounds sur la France tombe au zoom 5 ;
        une couche démarrant plus haut resterait invisible. */
     oaciLayer=L.tileLayer('assets/oaci/{z}_{x}_{y}.webp',{
+      /* min/maxNativeZoom sont exprimés dans le repère de la GRILLE (après zoomOffset).
+         ATTENTION : min/maxNativeZoom s'expriment dans le zoom de la CARTE, pas dans
+         celui de la grille. Les fichiers couvrent les grilles 2 à 7, soit les zooms
+         carte 5 à 10 — d'où 5 et 10 ici. Hors de cette plage Leaflet demandait des
+         tuiles inexistantes et la couche restait blanche : au zoom fort, et surtout
+         sur mobile où fitBounds descend au zoom 4 (grille 1, absente).
+         Avec ces bornes, Leaflet rééchelonne les tuiles existantes. */
       tileSize:2048, zoomOffset:-3,
-      minZoom:4, maxNativeZoom:10, maxZoom:17, errorTileUrl:TRANSPARENT,
+      /* minZoom 5 : en dessous, une tuile de 2048 px réduite 16 fois n'est plus qu'un
+         bruit gris — sur mobile la vue France entière tombe au zoom 4. On laisse
+         alors le fond OpenStreetMap, net et lisible ; la carte OACI réapparaît dès
+         qu'on zoome assez pour la déchiffrer. */
+      minNativeZoom:5, maxNativeZoom:10,
+      minZoom:5, maxZoom:17, errorTileUrl:TRANSPARENT,
       attribution:'Carte OACI 1:500 000 &mdash; SIA / DGAC, édition 2026'
     });
     /* Si les tuiles OACI ne sont pas publiées (téléversement incomplet), Leaflet
@@ -4446,8 +4504,12 @@ if(!RECO_OK){
       }
     }).addTo(zoneLayer);
     var h=$v('navZoomHint');
-    if(h) h.textContent=shown+' zone'+(shown>1?'s':'')+' affichée'+(shown>1?'s':'')+
-      (z<9?' · zoomez pour en voir davantage':'');
+    if(h){
+      var t=shown+' zone'+(shown>1?'s':'')+' affichée'+(shown>1?'s':'');
+      if(z<5 && map.hasLayer(oaciLayer)) t+=' · zoomez pour afficher la carte OACI';
+      else if(z<9) t+=' · zoomez pour en voir davantage';
+      h.textContent=t;
+    }
   }
 
   // ---- Sélection ----
@@ -5214,6 +5276,7 @@ if(!RECO_OK){
     $v('navFlight').classList.remove('hidden');
     $v('vfMapSlot').appendChild(sec.querySelector('.nav-mapwrap'));   // la carte suit le vol
     document.body.classList.add('in-flight');   // carte réduite + libellés de config masqués
+    var br=$v('navResume'); if(br) br.classList.add('hidden');   // un vol tourne : plus de proposition de reprise
     $v('vfCall').textContent=state.call;        // indicatif rappelé en permanence
     $v('vfLog').innerHTML='';
     F.running=true;

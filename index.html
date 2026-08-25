@@ -2206,7 +2206,14 @@ const REF_WORDS = [
   'toucher','touche','pan','roger','wilco','recu','degage','degagee','degagees','liberee',
   'assistance','premiere','aviation','generale','rappelle','rappelez','attends','aligne',
   'verticale','service','vol','vfr','transpondeur','trafic','vue','convergent','terrain',
-  'transitez','transite','maintiens','maintenez','maintenons','meme'
+  'transitez','transite','maintiens','maintenez','maintenons','meme',
+  /* Mots courants absents du lexique : sans eux, une faute d'une lettre n'était pas
+     rattrapée (« air » restait « air » au lieu de « aire d'attente »). */
+  'aire','aires','bord','personne','personnes','navigation','local','locale',
+  'entre','entrons','sortie','circuit','quittons','estime','estimons','indicatif',
+  'altitude','niveau','descends','descendons','monte','montons','virage','tour',
+  'travers','mi','longue','courte','dernier','avant','apres','prets','stationnement',
+  'club','avion','machine','bimoteur','monomoteur','ulm','planeur','remorquage'
 ];
 const REF_SET = new Set(REF_WORDS);
 
@@ -3125,6 +3132,14 @@ const NUM_REF_VALUE = {
 function mcFound(mc, corrected){
   const vars = resolveVariants(mc);
   if(vars.some(v => v && corrected.includes(v))) return true;
+  /* Indicatif tapé au clavier plutôt qu'épelé : « F-CH », « F CH », « f.ch » donnent
+     tous « f ch » après normalisation, alors que la variante canonique est « fch ».
+     On compare donc aussi en retirant les espaces des deux côtés. Limité à
+     l'indicatif : ailleurs, coller les mots créerait de fausses correspondances. */
+  if(mc.ref==='callsign'){
+    const colle = corrected.replace(/\s+/g,'');
+    if(vars.some(v => v && colle.includes(v.replace(/\s+/g,'')))) return true;
+  }
   if(mc.ref && NUM_REF_VALUE[mc.ref]){
     const target = String(NUM_REF_VALUE[mc.ref]()).replace(/\D/g,'');
     if(target && digitCanon(corrected).includes(target)) return true;
@@ -3807,6 +3822,12 @@ function refreshTexts(){
 /* =========================================================================
    11) RÉCAP + HISTORIQUE (localStorage) + EXPORT
    ========================================================================= */
+/* Taux de réussite formulé explicitement : « 69 % de réussite » plutôt qu'un
+   pourcentage nu, qu'on peut confondre avec une autre grandeur. */
+function tauxReussite(found,total){
+  if(!total) return '';
+  return Math.round(found/total*100)+' % de réussite';
+}
 function showRecap(){
   if(listening) stopListening();
   stopScope();                  // fin du scénario : on arrête le radar
@@ -3842,10 +3863,11 @@ function showRecap(){
     el.panel.classList.add('hidden');
     el.recapList.innerHTML='';
     per.forEach(t=>{ const li=document.createElement('li'); li.textContent=t; el.recapList.appendChild(li); });
-    el.scoreNum.innerHTML = F+' <small>/ '+T+' éléments corrects (examen blanc cumulé)</small>';
+    el.scoreNum.innerHTML = F+' <small>/ '+T+' éléments corrects (examen blanc cumulé) — '
+      +tauxReussite(F,T)+'</small>';
     el.recap.classList.remove('hidden');
     el.recap.scrollIntoView({behavior:'smooth', block:'nearest'});
-    logRow('sys','━━ EXAMEN BLANC terminé : '+F+' / '+T+' ━━');
+    logRow('sys','━━ EXAMEN BLANC terminé : '+F+' / '+T+' — '+tauxReussite(F,T)+' ━━');
     saveHistory({ date:new Date().toISOString(), scenario:'Examen blanc',
       terrain: state.activeAd?state.activeAd.icao:'', piste:'', found:F, total:T,
       missed:miss, mode:state.difficulty, exam:true });
@@ -3860,7 +3882,8 @@ function showRecap(){
   el.panel.classList.add('hidden');
   el.recapList.innerHTML='';
   lines.forEach(t=>{ const li=document.createElement('li'); li.textContent=t; el.recapList.appendChild(li); });
-  el.scoreNum.innerHTML = totalFound+' <small>/ '+totalAll+' éléments corrects</small>';
+  el.scoreNum.innerHTML = totalFound+' <small>/ '+totalAll+' éléments corrects — '
+    +tauxReussite(totalFound,totalAll)+'</small>';
   el.recap.classList.remove('hidden');
   el.recap.scrollIntoView({behavior:'smooth', block:'nearest'});
   saveHistory({
@@ -5706,7 +5729,7 @@ if(!RECO_OK){
     var C=F.ctx;
     var rows=[['Vol', C.arr?(C.dep.icao+' → '+C.arr.icao):(C.dep.icao+' — vol local')],
               ['Échanges', F.results.filter(Boolean).length+' / '+F.steps.length],
-              ['Score', tot?(ok+' / '+tot+' éléments — <b>'+pct+' %</b>'):'—'],
+              ['Score', tot?(ok+' / '+tot+' éléments — <b>'+pct+' % de réussite</b>'):'—'],
               ['Altitude', C.cruise+' ft'], ['Avion', esc(C.ac)]];
     if(mk.length) rows.push(['À retravailler','<span class="rz">'+mk.map(function(k){return esc(k)+' ('+manques[k]+')';}).join(' · ')+'</span>']);
     $v('navRecapTitle').textContent='Débriefing du vol';

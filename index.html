@@ -1719,148 +1719,393 @@ function frenchCardinal(n){
    // parallèles ("gauche/droite") n'est pas couverte par la référence, donc omise ici.
    ========================================================================= */
 const AERODROMES = [
-  // Étape 4 — grands aéroports commerciaux ajoutés (absents de la liste régionale d'origine).
-  { icao:"LFPG", nom:"Paris-Charles-de-Gaulle", pistes:[{ids:["08L","26R"],caps:[83,263]}, {ids:["09R","27L"],caps:[88,268]}] },
-  { icao:"LFPO", nom:"Paris-Orly", pistes:[{ids:["06","24"],caps:[63,243]}, {ids:["07","25"],caps:[68,248]}] },
-  { icao:"LFPB", nom:"Paris-Le Bourget", pistes:[{ids:["07","25"],caps:[70,250]}, {ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFQQ", nom:"Lille-Lesquin", pistes:[{ids:["08","26"],caps:[83,263]}] },
-  { icao:"LFRB", nom:"Brest Bretagne", pistes:[{ids:["07","25"],caps:[72,252]}] },
-  { icao:"LFKB", nom:"Bastia-Poretta", pistes:[{ids:["16","34"],caps:[162,342]}] },
-  { icao:"LFKF", nom:"Figari Sud-Corse", pistes:[{ids:["05","23"],caps:[52,232]}] },
-  { icao:"LFLC", nom:"Clermont-Ferrand Auvergne", pistes:[{ids:["08","26"],caps:[83,263]}] },
-  { icao:"LFAC", nom:"Calais Marck", pistes:[{ids:["06","24"],caps:[60,240]}] },
-  { icao:"LFAG", nom:"Péronne Saint-Quentin", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFAT", nom:"Le Touquet-Côte d'Opale", pistes:[{ids:["13","31"],caps:[130,310]}] },
-  { icao:"LFAV", nom:"Valenciennes-Denain", pistes:[{ids:["06","24"],caps:[60,240]}, {ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFAY", nom:"Amiens Glisy", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFBA", nom:"Agen La Garenne", pistes:[{ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFBC", nom:"Cazaux", pistes:[{ids:["06","24"],caps:[60,240]}] },
-  { icao:"LFBD", nom:"Bordeaux–Mérignac", pistes:[{ids:["05","23"],caps:[50,230]}, {ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFBE", nom:"Bergerac Dordogne-Périgord", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFBF", nom:"Toulouse-Francazal", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFBG", nom:"Cognac-Châteaubernard", pistes:[{ids:["05","23"],caps:[50,230]}, {ids:["08","26"],caps:[80,260]}] },
-  { icao:"LFBH", nom:"La Rochelle Île de Ré", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFBI", nom:"Poitiers-Biard", pistes:[{ids:["03","21"],caps:[30,210]}] },
-  { icao:"LFBK", nom:"Montluçon-Guéret", pistes:[{ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFBL", nom:"Limoges", pistes:[{ids:["03","21"],caps:[30,210]}] },
-  { icao:"LFBM", nom:"Mont-de-Marsan", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFBN", nom:"Niort - Marais Poitevin", pistes:[{ids:["07","25"],caps:[70,250]}] },
-  { icao:"LFBO", nom:"Toulouse-Blagnac", pistes:[{ids:["14","32"],caps:[140,320]}] },
-  { icao:"LFBP", nom:"Pau Pyrénées", pistes:[{ids:["13","31"],caps:[130,310]}] },
+  { icao:"LF50", nom:"privé de Soucelles", pistes:[{ids:["07","25"],caps:[65,245]}] },
+  { icao:"LF51", nom:"Plan-de-Dieu-Orange", pistes:[{ids:["17","35"],caps:[161,341]}] },
+  { icao:"LFAB", nom:"Dieppe-Saint-Aubin", pistes:[{ids:["13","31"],caps:[130,310]}] },
+  { icao:"LFAC", nom:"Calais Marck", pistes:[{ids:["06","24"],caps:[61,241]}] },
+  { icao:"LFAD", nom:"Compiègne Margny", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFAE", nom:"Eu Mers-Le Tréport", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFAF", nom:"Laon-Chambry", pistes:[{ids:["17","35"],caps:[170,350]}] },
+  { icao:"LFAG", nom:"Péronne Saint-Quentin", pistes:[{ids:["09","27"],caps:[91,271]}] },
+  { icao:"LFAI", nom:"Nangis-Les Loges", pistes:[{ids:["05","23"],caps:[53,233]}] },
+  { icao:"LFAJ", nom:"Argentan", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFAK", nom:"Dunkerque-Les Moëres", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFAL", nom:"La Flèche-Thorée-les-Pins", pistes:[{ids:["08","26"],caps:[84,264]}] },
+  { icao:"LFAM", nom:"Berck-sur-Mer", pistes:[{ids:["06","24"],caps:[57,237]}] },
+  { icao:"LFAO", nom:"Bagnoles-Couterne", pistes:[{ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFAP", nom:"Rethel-Perthes", pistes:[{ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFAQ", nom:"Albert Bray airport", pistes:[{ids:["08","26"],caps:[90,270]}, {ids:["08R","26L"],caps:[80,260]}] },
+  { icao:"LFAS", nom:"Falaise-Mont d'Eraines", pistes:[{ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFAT", nom:"Le Touquet-Côte d'Opale", pistes:[{ids:["13","31"],caps:[133,313]}] },
+  { icao:"LFAV", nom:"Valenciennes-Denain", pistes:[{ids:["06","24"],caps:[60,240]}, {ids:["11","29"],caps:[110,290]}, {ids:["11L","29R"],caps:[110,290]}] },
+  { icao:"LFAY", nom:"Amiens Glisy", pistes:[{ids:["12","30"],caps:[116,296]}] },
+  { icao:"LFBA", nom:"Agen La Garenne", pistes:[{ids:["11","29"],caps:[112,292]}] },
+  { icao:"LFBC", nom:"Cazaux", pistes:[{ids:["06","24"],caps:[57,237]}] },
+  { icao:"LFBD", nom:"Bordeaux–Mérignac", pistes:[{ids:["05","23"],caps:[46,226]}, {ids:["11","29"],caps:[107,287]}] },
+  { icao:"LFBE", nom:"Bergerac Dordogne-Périgord", pistes:[{ids:["09","27"],caps:[94,274]}] },
+  { icao:"LFBF", nom:"Toulouse-Francazal", pistes:[{ids:["12","30"],caps:[115,295]}] },
+  { icao:"LFBG", nom:"Cognac-Châteaubernard", pistes:[{ids:["05","23"],caps:[50,230]}, {ids:["08","26"],caps:[84,264]}] },
+  { icao:"LFBH", nom:"La Rochelle Île de Ré", pistes:[{ids:["09","27"],caps:[93,273]}] },
+  { icao:"LFBI", nom:"Poitiers-Biard", pistes:[{ids:["03","21"],caps:[32,212]}] },
+  { icao:"LFBK", nom:"Montluçon-Guéret", pistes:[{ids:["17","35"],caps:[167,347]}] },
+  { icao:"LFBL", nom:"Limoges", pistes:[{ids:["03","21"],caps:[34,214]}] },
+  { icao:"LFBM", nom:"Mont-de-Marsan", pistes:[{ids:["09","27"],caps:[87,267]}] },
+  { icao:"LFBN", nom:"Niort - Marais Poitevin", pistes:[{ids:["07","25"],caps:[68,248]}] },
+  { icao:"LFBO", nom:"Toulouse-Blagnac", pistes:[{ids:["14L","32R"],caps:[143,323]}, {ids:["14R","32L"],caps:[143,323]}] },
+  { icao:"LFBP", nom:"Pau Pyrénées", pistes:[{ids:["13","31"],caps:[125,305]}] },
+  { icao:"LFBR", nom:"Muret - Lherm", pistes:[{ids:["12","30"],caps:[117,297]}] },
+  { icao:"LFBS", nom:"Biscarrosse Parentis", pistes:[{ids:["09","27"],caps:[90,270]}] },
   { icao:"LFBT", nom:"Tarbes-Lourdes-Pyrénées", pistes:[{ids:["02","20"],caps:[20,200]}] },
-  { icao:"LFBU", nom:"Angoulême Brie-Champniers", pistes:[{ids:["10","28"],caps:[100,280]}] },
-  { icao:"LFBX", nom:"Périgueux-Bassillac", pistes:[{ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFBZ", nom:"Biarritz Pays Basque", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFCC", nom:"Cahors Lalbenque", pistes:[{ids:["13","31"],caps:[130,310]}] },
-  { icao:"LFCG", nom:"Saint-Girons - Antichan", pistes:[{ids:["15","33"],caps:[150,330]}] },
-  { icao:"LFCH", nom:"Arcachon-La Teste-de-Buch", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFBU", nom:"Angoulême Brie-Champniers", pistes:[{ids:["10","28"],caps:[97,277]}] },
+  { icao:"LFBX", nom:"Périgueux-Bassillac", pistes:[{ids:["11","29"],caps:[114,294]}] },
+  { icao:"LFBY", nom:"Dax Seyresse", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFBZ", nom:"Biarritz Pays Basque", pistes:[{ids:["09","27"],caps:[89,269]}] },
+  { icao:"LFCA", nom:"Châtellerault-Targé", pistes:[{ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFCB", nom:"Bagnères de Luchon", pistes:[{ids:["01","19"],caps:[10,190]}] },
+  { icao:"LFCC", nom:"Cahors Lalbenque", pistes:[{ids:["13","31"],caps:[129,309]}] },
+  { icao:"LFCD", nom:"Andernos", pistes:[{ids:["13","31"],caps:[130,310]}] },
+  { icao:"LFCE", nom:"Guéret Saint-Laurent", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFCF", nom:"Figeac - Livernon", pistes:[{ids:["11","29"],caps:[111,291]}] },
+  { icao:"LFCG", nom:"Saint-Girons - Antichan", pistes:[{ids:["15","33"],caps:[154,334]}] },
+  { icao:"LFCH", nom:"Arcachon-La Teste-de-Buch", pistes:[{ids:["07L","25R"],caps:[74,254]}, {ids:["07R","25L"],caps:[74,254]}] },
   { icao:"LFCI", nom:"Albi Le Sequestre", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFCK", nom:"Castres Mazamet", pistes:[{ids:["14","32"],caps:[140,320]}] },
+  { icao:"LFCJ", nom:"Jonzac Neulles", pistes:[{ids:["14L","32R"],caps:[140,320]}, {ids:["14R","32L"],caps:[140,320]}] },
+  { icao:"LFCK", nom:"Castres Mazamet", pistes:[{ids:["14","32"],caps:[141,321]}] },
+  { icao:"LFCL", nom:"Toulouse-Lasbordes", pistes:[{ids:["15","33"],caps:[155,335]}] },
+  { icao:"LFCM", nom:"Millau-Larzac", pistes:[{ids:["14","32"],caps:[142,322]}] },
+  { icao:"LFCN", nom:"Nogaro", pistes:[{ids:["14L","32R"],caps:[140,320]}, {ids:["14R","32L"],caps:[140,320]}] },
+  { icao:"LFCO", nom:"Oloron Herrere", pistes:[{ids:["07L","25R"],caps:[70,250]}, {ids:["07R","25L"],caps:[70,250]}] },
+  { icao:"LFCP", nom:"Pons Avy", pistes:[{ids:["13","31"],caps:[130,310]}] },
+  { icao:"LFCQ", nom:"Graulhet-Montdragon", pistes:[{ids:["09","27"],caps:[97,277]}] },
   { icao:"LFCR", nom:"Rodez–Aveyron", pistes:[{ids:["13","31"],caps:[130,310]}] },
-  { icao:"LFCY", nom:"Royan-Médis", pistes:[{ids:["10","28"],caps:[100,280]}] },
-  { icao:"LFDH", nom:"Auch Gers", pistes:[{ids:["18","36"],caps:[180,360]}] },
-  { icao:"LFDN", nom:"Rochefort-Saint-Agnant", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFGA", nom:"Colmar Houssen", pistes:[{ids:["01","19"],caps:[10,190]}] },
-  { icao:"LFGJ", nom:"Dole Tavaux", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFCS", nom:"Bordeaux-Léognan-Saucats", pistes:[{ids:["03","21"],caps:[30,210]}] },
+  { icao:"LFCT", nom:"Thouars", pistes:[{ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFCU", nom:"Ussel-Thalamy", pistes:[{ids:["10","28"],caps:[100,280]}, {ids:["10R","28L"],caps:[100,280]}] },
+  { icao:"LFCV", nom:"Villefranche de Rouergue", pistes:[{ids:["13","31"],caps:[130,310]}] },
+  { icao:"LFCW", nom:"Villeneuve-sur-Lot", pistes:[{ids:["10","28"],caps:[103,283]}] },
+  { icao:"LFCX", nom:"Castelsarrasin Moissac", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFCY", nom:"Royan-Médis", pistes:[{ids:["10","28"],caps:[102,282]}] },
+  { icao:"LFCZ", nom:"Mimizan", pistes:[{ids:["08","26"],caps:[82,262]}] },
+  { icao:"LFDA", nom:"Aire-sur-l'Adour", pistes:[{ids:["12","30"],caps:[115,295]}] },
+  { icao:"LFDB", nom:"Morin - Védrines", pistes:[{ids:["13","31"],caps:[135,315]}] },
+  { icao:"LFDC", nom:"Montendre-Marcillac", pistes:[{ids:["15","33"],caps:[153,333]}] },
+  { icao:"LFDE", nom:"Égletons", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFDF", nom:"Sainte-Foy-la-Grande", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFDG", nom:"Gaillac - Lisle-sur-Tarn", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFDH", nom:"Auch Gers", pistes:[{ids:["18","36"],caps:[184,4]}, {ids:["36","18"],caps:[4,184]}] },
+  { icao:"LFDI", nom:"Libourne-Artigues-de-Lussac", pistes:[{ids:["04","22"],caps:[35,215]}] },
+  { icao:"LFDJ", nom:"Pamiers - Les Pujols", pistes:[{ids:["09","27"],caps:[92,272]}] },
+  { icao:"LFDK", nom:"Soulac Sur Mer", pistes:[{ids:["14","32"],caps:[136,316]}] },
+  { icao:"LFDL", nom:"Loudun", pistes:[{ids:["08","26"],caps:[83,263]}] },
+  { icao:"LFDM", nom:"Marmande – Virazeil", pistes:[{ids:["11","29"],caps:[107,287]}] },
+  { icao:"LFDN", nom:"Rochefort-Saint-Agnant", pistes:[{ids:["12","30"],caps:[123,303]}] },
+  { icao:"LFDP", nom:"St Pierre d'Oléron", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFDR", nom:"La Réole Floudes", pistes:[{ids:["08","26"],caps:[80,260]}] },
+  { icao:"LFDT", nom:"Tarbes Laloubère", pistes:[{ids:["08","26"],caps:[80,260]}] },
+  { icao:"LFDU", nom:"Lesparre St Laurent Medoc", pistes:[{ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFDV", nom:"Couhé Vérac", pistes:[{ids:["02","20"],caps:[20,200]}] },
+  { icao:"LFDX", nom:"Fumel Montayral", pistes:[{ids:["17","35"],caps:[170,350]}] },
+  { icao:"LFEA", nom:"Belle Île", pistes:[{ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFEB", nom:"Dinan-Trélivan", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFEC", nom:"Ouessant", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFED", nom:"Pontivy", pistes:[{ids:["10","28"],caps:[94,274]}] },
+  { icao:"LFEF", nom:"Amboise Dierre", pistes:[{ids:["10","28"],caps:[100,280]}, {ids:["10L","28R"],caps:[100,280]}] },
+  { icao:"LFEG", nom:"Argenton-sur-Creuse", pistes:[{ids:["03L","21R"],caps:[30,210]}, {ids:["03R","21L"],caps:[30,210]}] },
+  { icao:"LFEH", nom:"Aubigny-sur-Nère", pistes:[{ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFEI", nom:"Briare Châtillon", pistes:[{ids:["14","32"],caps:[140,320]}] },
+  { icao:"LFEJ", nom:"Châteauroux Villers", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFEK", nom:"Issoudun Le Fay", pistes:[{ids:["11","29"],caps:[110,290]}, {ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFEL", nom:"Le Blanc", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFEM", nom:"Montargis Vimory", pistes:[{ids:["05","23"],caps:[50,230]}, {ids:["05C","23C"],caps:[50,230]}, {ids:["05L","23R"],caps:[50,230]}] },
+  { icao:"LFEN", nom:"Tours Sorigny", pistes:[{ids:["04","22"],caps:[35,215]}, {ids:["04R","22L"],caps:[35,213]}] },
+  { icao:"LFEP", nom:"Pouilly-Maconge", pistes:[{ids:["03","21"],caps:[30,210]}] },
+  { icao:"LFEQ", nom:"Quiberon", pistes:[{ids:["11","29"],caps:[112,292]}] },
+  { icao:"LFER", nom:"Redon Bains-sur-Oust", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFES", nom:"Guiscriff Scaer", pistes:[{ids:["02","20"],caps:[23,203]}] },
+  { icao:"LFET", nom:"Til Châtel", pistes:[{ids:["01","19"],caps:[13,193]}, {ids:["11","29"],caps:[107,287]}] },
+  { icao:"LFEU", nom:"Bar-le-Duc", pistes:[{ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFEV", nom:"Gray Saint-Adrien", pistes:[{ids:["07L","25R"],caps:[75,255]}, {ids:["07R","25L"],caps:[75,255]}] },
+  { icao:"LFEW", nom:"Saulieu-Liernais", pistes:[{ids:["05","23"],caps:[54,234]}] },
+  { icao:"LFEX", nom:"Nancy Azelot", pistes:[{ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFEY", nom:"Île d'Yeu", pistes:[{ids:["04","22"],caps:[36,216]}, {ids:["14","32"],caps:[143,323]}] },
+  { icao:"LFEZ", nom:"Nancy-Malzéville", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["09","27"],caps:[90,270]}, {ids:["14","32"],caps:[140,320]}] },
+  { icao:"LFFB", nom:"Buno-Bonnevaux", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFFC", nom:"Mantes-Chérence", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFFD", nom:"Saint-André-de-l'Eure", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFFG", nom:"La Ferté-Gaucher", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFFH", nom:"Château-Thierry-Belleau", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFFI", nom:"Ancenis", pistes:[{ids:["07","25"],caps:[73,254]}] },
+  { icao:"LFFJ", nom:"Joinville Mussey", pistes:[{ids:["09","27"],caps:[93,273]}] },
+  { icao:"LFFK", nom:"Fontenay Le Comte", pistes:[{ids:["08","26"],caps:[80,260]}] },
+  { icao:"LFFL", nom:"Bailleau Armenonville", pistes:[{ids:["08","26"],caps:[80,260]}, {ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFFN", nom:"Brienne-le-Château", pistes:[{ids:["10","28"],caps:[99,279]}] },
+  { icao:"LFFO", nom:"Beauvoir Fromentine", pistes:[{ids:["10","28"],caps:[98,278]}] },
+  { icao:"LFFP", nom:"Pithiviers", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFFQ", nom:"Cerny-La Ferté Alais", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFFR", nom:"Bar-sur-Seine", pistes:[{ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFFT", nom:"Neufchâteau", pistes:[{ids:["01","19"],caps:[10,190]}] },
+  { icao:"LFFU", nom:"Châteauneuf Sur Cher", pistes:[{ids:["08","26"],caps:[80,260]}] },
+  { icao:"LFFV", nom:"Vierzon-Méreau", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFFW", nom:"Montaigu St Georges", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFFZ", nom:"Sézanne-Saint-Remy", pistes:[{ids:["06L","24R"],caps:[57,257]}] },
+  { icao:"LFGA", nom:"Colmar Houssen", pistes:[{ids:["01","19"],caps:[11,191]}] },
+  { icao:"LFGB", nom:"Mulhouse-Habsheim", pistes:[{ids:["02","20"],caps:[21,201]}, {ids:["02R","20L"],caps:[21,201]}, {ids:["16","34"],caps:[160,340]}] },
+  { icao:"LFGC", nom:"Strasbourg Neuhof", pistes:[{ids:["17","35"],caps:[170,350]}] },
+  { icao:"LFGF", nom:"Beaune-Challanges", pistes:[{ids:["03","21"],caps:[25,205]}] },
+  { icao:"LFGG", nom:"Belfort Chaux", pistes:[{ids:["18L","36R"],caps:[180,0]}, {ids:["18R","36L"],caps:[180,0]}] },
+  { icao:"LFGH", nom:"Cosne-sur-Loire", pistes:[{ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFGI", nom:"Dijon Darois", pistes:[{ids:["02","20"],caps:[17,197]}, {ids:["02R","20L"],caps:[17,197]}] },
+  { icao:"LFGJ", nom:"Dole Tavaux", pistes:[{ids:["05","23"],caps:[55,235]}] },
+  { icao:"LFGK", nom:"Joigny", pistes:[{ids:["08","26"],caps:[79,259]}, {ids:["08R","26L"],caps:[79,259]}] },
+  { icao:"LFGL", nom:"Lons-le-Saunier Courlaoux", pistes:[{ids:["08","26"],caps:[80,260]}] },
+  { icao:"LFGM", nom:"Montceau-les-Mines Pouilloux", pistes:[{ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFGN", nom:"Paray-le-Monial", pistes:[{ids:["13","31"],caps:[132,312]}] },
+  { icao:"LFGO", nom:"Pont-sur-Yonne", pistes:[{ids:["14L","32R"],caps:[140,320]}, {ids:["14R","32L"],caps:[140,320]}] },
+  { icao:"LFGP", nom:"Saint-Florentin - Chéu", pistes:[{ids:["07C","25C"],caps:[70,250]}, {ids:["07L","25R"],caps:[70,250]}] },
+  { icao:"LFGQ", nom:"Semur-en-Auxois", pistes:[{ids:["04","22"],caps:[42,222]}, {ids:["04L","22R"],caps:[42,222]}] },
+  { icao:"LFGR", nom:"Doncourt-lès-Conflans", pistes:[{ids:["08","26"],caps:[80,260]}] },
+  { icao:"LFGS", nom:"Longuyon Villette", pistes:[{ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFGU", nom:"Sarreguemines Neunkirch", pistes:[{ids:["05L","23R"],caps:[50,230]}, {ids:["05R","23L"],caps:[50,230]}] },
   { icao:"LFGW", nom:"Verdun-Le Rozelier", pistes:[{ids:["10","28"],caps:[100,280]}] },
-  { icao:"LFHO", nom:"Aubenas-South Ardèche", pistes:[{ids:["18","36"],caps:[180,360]}] },
-  { icao:"LFJL", nom:"Metz-Nancy-Lorraine", pistes:[{ids:["04","22"],caps:[40,220]}] },
-  { icao:"LFJR", nom:"Angers Marcé", pistes:[{ids:["08","26"],caps:[80,260]}] },
-  { icao:"LFKC", nom:"Calvi Sainte Catherine", pistes:[{ids:["18","36"],caps:[180,360]}] },
-  { icao:"LFKJ", nom:"Ajaccio Napoléon Bonaparte", pistes:[{ids:["02","20"],caps:[20,200]}] },
-  { icao:"LFKS", nom:"Solenzara", pistes:[{ids:["18","36"],caps:[180,360]}] },
-  { icao:"LFLA", nom:"Auxerre Branches", pistes:[{ids:["18","36"],caps:[180,360]}] },
-  { icao:"LFLB", nom:"Chambéry Aix les Bains", pistes:[{ids:["18","36"],caps:[180,360]}] },
-  { icao:"LFLD", nom:"Bourges", pistes:[{ids:["06","24"],caps:[60,240]}] },
-  { icao:"LFLI", nom:"Annemasse", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFLL", nom:"Lyon Saint-Exupéry", pistes:[{ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFLM", nom:"Mâcon-Charnay", pistes:[{ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFLN", nom:"Saint-Yan", pistes:[{ids:["15","33"],caps:[150,330]}] },
-  { icao:"LFLO", nom:"Roanne-Renaison", pistes:[{ids:["02","20"],caps:[20,200]}] },
-  { icao:"LFLP", nom:"Annecy Meythet", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFGY", nom:"Saint-Dié-Remomeix", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFGZ", nom:"Nuits-Saint-Georges", pistes:[{ids:["11","29"],caps:[110,290]}] },
+  { icao:"LFHA", nom:"Issoire-Le Broc", pistes:[{ids:["18L","36R"],caps:[176,356]}, {ids:["18R","36L"],caps:[176,356]}] },
+  { icao:"LFHD", nom:"Pierrelatte", pistes:[{ids:["18R","36L"],caps:[180,0]}] },
+  { icao:"LFHE", nom:"Romans - Saint-Paul", pistes:[{ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFHF", nom:"Ruoms", pistes:[{ids:["18","36"],caps:[181,3]}] },
+  { icao:"LFHH", nom:"Vienne Reventin", pistes:[{ids:["01","19"],caps:[10,190]}] },
+  { icao:"LFHI", nom:"Morestel", pistes:[{ids:["13","31"],caps:[130,310]}] },
+  { icao:"LFHJ", nom:"Lyon Corbas", pistes:[{ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFHL", nom:"Langogne-Lespéron", pistes:[{ids:["04","22"],caps:[36,216]}] },
+  { icao:"LFHM", nom:"Megève Altiport", pistes:[{ids:["15","33"],caps:[153,333]}] },
+  { icao:"LFHN", nom:"Bellegarde-Vouvray", pistes:[{ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFHO", nom:"Aubenas-South Ardèche", pistes:[{ids:["18","36"],caps:[184,4]}] },
+  { icao:"LFHP", nom:"Le Puy-Loudes", pistes:[{ids:["15","33"],caps:[151,331]}, {ids:["15R","33L"],caps:[151,331]}] },
+  { icao:"LFHQ", nom:"Saint-Flour-Coltines", pistes:[{ids:["01","19"],caps:[9,189]}] },
+  { icao:"LFHR", nom:"Brioude Beaumont", pistes:[{ids:["15L","33R"],caps:[154,334]}] },
+  { icao:"LFHS", nom:"Bourg-Ceyzériat", pistes:[{ids:["18","36"],caps:[180,0]}, {ids:["18R","36L"],caps:[180,0]}] },
+  { icao:"LFHT", nom:"Ambert - Le Poyet", pistes:[{ids:["02","20"],caps:[16,196]}] },
+  { icao:"LFHU", nom:"L'Alpe d'Huez - Henri Giraud Altiport", pistes:[{ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFHV", nom:"Villefranche-Tarare", pistes:[{ids:["18","36"],caps:[181,1]}, {ids:["18L","36R"],caps:[182,2]}] },
+  { icao:"LFHX", nom:"Lapalisse - Périgny", pistes:[{ids:["05","23"],caps:[51,231]}] },
+  { icao:"LFHY", nom:"Moulins-Montbeugny", pistes:[{ids:["08","26"],caps:[83,263]}, {ids:["08L","26R"],caps:[80,260]}, {ids:["08R","26L"],caps:[80,260]}] },
+  { icao:"LFIB", nom:"Belvès Saint-Pardoux", pistes:[{ids:["11","29"],caps:[110,290]}] },
+  { icao:"LFID", nom:"Condom - Valence-sur-Baïse", pistes:[{ids:["11","29"],caps:[110,290]}] },
+  { icao:"LFIF", nom:"Saint-Affrique-Belmont", pistes:[{ids:["12","30"],caps:[118,298]}] },
+  { icao:"LFIG", nom:"Cassagnes-Bégonhès", pistes:[{ids:["10","28"],caps:[93,273]}] },
+  { icao:"LFIH", nom:"Chalais", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFIK", nom:"Ribérac-Tourette", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFIL", nom:"Rion Des Landes", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFIP", nom:"Altiport de Peyresourde Balestas", pistes:[{ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFIS", nom:"Saint-Inglevert", pistes:[{ids:["03","21"],caps:[29,209]}] },
+  { icao:"LFIV", nom:"Vendays-Montalivet", pistes:[{ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFIY", nom:"St Jean d'Angély", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFJA", nom:"Chaumont-Semoutiers", pistes:[{ids:["01","19"],caps:[5,185]}] },
+  { icao:"LFJB", nom:"Mauléon", pistes:[{ids:["04","22"],caps:[36,216]}] },
+  { icao:"LFJC", nom:"Clamecy-Rix", pistes:[{ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFJE", nom:"Altiport de La Motte Chalancon", pistes:[{ids:["03","21"],caps:[30,210]}] },
+  { icao:"LFJF", nom:"Aubenasson", pistes:[{ids:["08","26"],caps:[80,260]}] },
+  { icao:"LFJH", nom:"Cazères - Palaminy", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFJL", nom:"Metz-Nancy-Lorraine", pistes:[{ids:["04","22"],caps:[39,219]}] },
+  { icao:"LFJR", nom:"Angers Marcé", pistes:[{ids:["08","26"],caps:[80,260]}, {ids:["08L","26R"],caps:[80,260]}, {ids:["08R","26L"],caps:[80,260]}] },
+  { icao:"LFJS", nom:"Soissons-Courmelles", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFJT", nom:"Tours Le Louroux", pistes:[{ids:["03","21"],caps:[30,210]}] },
+  { icao:"LFJU", nom:"Lurcy-Lévis", pistes:[{ids:["06","24"],caps:[56,236]}, {ids:["06R","24L"],caps:[58,238]}] },
+  { icao:"LFJY", nom:"Chambley airfield", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFKA", nom:"Albertville General Pierre Delachenal", pistes:[{ids:["05","23"],caps:[51,231]}] },
+  { icao:"LFKB", nom:"Bastia-Poretta", pistes:[{ids:["16","34"],caps:[163,343]}] },
+  { icao:"LFKC", nom:"Calvi Sainte Catherine", pistes:[{ids:["18","36"],caps:[179,359]}] },
+  { icao:"LFKF", nom:"Figari Sud-Corse", pistes:[{ids:["05","23"],caps:[48,228]}] },
+  { icao:"LFKG", nom:"Ghisonaccia - Alzitone", pistes:[{ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFKH", nom:"St Jean D'avelanne", pistes:[{ids:["02","20"],caps:[20,200]}] },
+  { icao:"LFKJ", nom:"Ajaccio Napoléon Bonaparte", pistes:[{ids:["02","20"],caps:[25,205]}] },
+  { icao:"LFKM", nom:"St Galmier", pistes:[{ids:["16","34"],caps:[160,340]}] },
+  { icao:"LFKO", nom:"Propriano", pistes:[{ids:["09","27"],caps:[95,275]}] },
+  { icao:"LFKP", nom:"La Tour-de-Pin", pistes:[{ids:["11","29"],caps:[110,290]}] },
+  { icao:"LFKS", nom:"Solenzara", pistes:[{ids:["18","36"],caps:[179,359]}] },
+  { icao:"LFKT", nom:"Corte", pistes:[{ids:["12","30"],caps:[124,304]}] },
+  { icao:"LFKX", nom:"Méribel Altiport", pistes:[{ids:["15","33"],caps:[150,330]}] },
+  { icao:"LFKY", nom:"Belley-Peyrieu", pistes:[{ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFLA", nom:"Auxerre Branches", pistes:[{ids:["18","36"],caps:[184,4]}] },
+  { icao:"LFLB", nom:"Chambéry Aix les Bains", pistes:[{ids:["18","36"],caps:[176,356]}] },
+  { icao:"LFLC", nom:"Clermont-Ferrand Auvergne", pistes:[{ids:["01","19"],caps:[8,188]}, {ids:["08","26"],caps:[82,262]}, {ids:["08L","26R"],caps:[82,262]}] },
+  { icao:"LFLD", nom:"Bourges", pistes:[{ids:["06","24"],caps:[59,239]}] },
+  { icao:"LFLE", nom:"Chambéry Challes-les-Eaux", pistes:[{ids:["14","32"],caps:[142,322]}] },
+  { icao:"LFLG", nom:"Grenoble Le Versoud", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFLH", nom:"Chalon Champforgeuil", pistes:[{ids:["17","35"],caps:[171,351]}] },
+  { icao:"LFLI", nom:"Annemasse", pistes:[{ids:["12","30"],caps:[117,297]}] },
+  { icao:"LFLJ", nom:"Courchevel Altiport", pistes:[{ids:["04","22"],caps:[42,222]}] },
+  { icao:"LFLL", nom:"Lyon Saint-Exupéry", pistes:[{ids:["17L","35R"],caps:[175,355]}, {ids:["17R","35L"],caps:[175,355]}] },
+  { icao:"LFLM", nom:"Mâcon-Charnay", pistes:[{ids:["17","35"],caps:[174,354]}] },
+  { icao:"LFLN", nom:"Saint-Yan", pistes:[{ids:["15L","33R"],caps:[148,328]}, {ids:["15R","33L"],caps:[148,328]}] },
+  { icao:"LFLO", nom:"Roanne-Renaison", pistes:[{ids:["02","20"],caps:[15,195]}] },
+  { icao:"LFLP", nom:"Annecy Meythet", pistes:[{ids:["04","22"],caps:[39,219]}, {ids:["04R","22L"],caps:[40,220]}] },
+  { icao:"LFLQ", nom:"Montélimar-Ancône", pistes:[{ids:["02","20"],caps:[20,200]}] },
+  { icao:"LFLR", nom:"Saint-Rambert-d'Albon", pistes:[{ids:["01L","19R"],caps:[7,187]}, {ids:["01R","19L"],caps:[7,187]}] },
   { icao:"LFLS", nom:"Grenoble Alpes Isère", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFLU", nom:"Valence-Chabeuil", pistes:[{ids:["01","19"],caps:[10,190]}] },
-  { icao:"LFLV", nom:"Vichy-Charmeil", pistes:[{ids:["01","19"],caps:[10,190]}] },
+  { icao:"LFLT", nom:"Montluçon-Domérat", pistes:[{ids:["11","29"],caps:[110,290]}] },
+  { icao:"LFLU", nom:"Valence-Chabeuil", pistes:[{ids:["01","19"],caps:[7,187]}, {ids:["01L","19R"],caps:[8,188]}, {ids:["01R","19L"],caps:[10,190]}] },
+  { icao:"LFLV", nom:"Vichy-Charmeil", pistes:[{ids:["01","19"],caps:[8,188]}] },
   { icao:"LFLW", nom:"Aurillac", pistes:[{ids:["15","33"],caps:[150,330]}] },
-  { icao:"LFLX", nom:"Châteauroux Déols", pistes:[{ids:["03","21"],caps:[30,210]}] },
-  { icao:"LFLY", nom:"Lyon Bron", pistes:[{ids:["16","34"],caps:[160,340]}] },
-  { icao:"LFMC", nom:"Le Luc-Le Cannet", pistes:[{ids:["09","27"],caps:[90,270]}, {ids:["13","31"],caps:[130,310]}] },
-  { icao:"LFMD", nom:"Cannes Mandelieu", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFMH", nom:"Saint-Étienne-Bouthéon", pistes:[{ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFMI", nom:"Istres-Le Tubé", pistes:[{ids:["15","33"],caps:[150,330]}] },
-  { icao:"LFMK", nom:"Carcassonne Salvaza", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFML", nom:"Marseille Provence", pistes:[{ids:["13","31"],caps:[130,310]}] },
-  { icao:"LFMN", nom:"Nice-Côte d'Azur", pistes:[{ids:["04","22"],caps:[40,220]}] },
-  { icao:"LFMO", nom:"Orange-Caritat", pistes:[{ids:["14","32"],caps:[140,320]}, {ids:["15","33"],caps:[150,330]}] },
-  { icao:"LFMP", nom:"Perpignan-Rivesaltes", pistes:[{ids:["13","31"],caps:[130,310]}, {ids:["15","33"],caps:[150,330]}] },
-  { icao:"LFMQ", nom:"Le Castellet", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFMS", nom:"Alès Cévennes", pistes:[{ids:["01","19"],caps:[10,190]}] },
-  { icao:"LFMT", nom:"Montpellier-Méditerranée", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFMU", nom:"Béziers Vias", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFMV", nom:"Avignon Caumont", pistes:[{ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFMY", nom:"Salon-de-Provence", pistes:[{ids:["09","27"],caps:[90,270]}, {ids:["16","34"],caps:[160,340]}, {ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFNB", nom:"Mende-Brenoux", pistes:[{ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFLX", nom:"Châteauroux Déols", pistes:[{ids:["03","21"],caps:[33,213]}] },
+  { icao:"LFLY", nom:"Lyon Bron", pistes:[{ids:["16","34"],caps:[163,343]}] },
+  { icao:"LFLZ", nom:"Feurs - Chambéon", pistes:[{ids:["15","33"],caps:[153,333]}] },
+  { icao:"LFMA", nom:"Aix Les Milles airport", pistes:[{ids:["14","32"],caps:[146,326]}] },
+  { icao:"LFMC", nom:"Le Luc-Le Cannet", pistes:[{ids:["09","27"],caps:[88,268]}, {ids:["13","31"],caps:[130,310]}] },
+  { icao:"LFMD", nom:"Cannes Mandelieu", pistes:[{ids:["04","22"],caps:[43,223]}, {ids:["17","35"],caps:[170,350]}, {ids:["17L","35R"],caps:[170,350]}] },
+  { icao:"LFME", nom:"Nîmes Courbessac", pistes:[{ids:["18L","36R"],caps:[180,0]}, {ids:["18R","36L"],caps:[180,0]}] },
+  { icao:"LFMF", nom:"Fayence-Tourrettes", pistes:[{ids:["10L","28R"],caps:[100,280]}, {ids:["10R","28L"],caps:[100,280]}] },
+  { icao:"LFMH", nom:"Saint-Étienne-Bouthéon", pistes:[{ids:["17","35"],caps:[175,355]}] },
+  { icao:"LFMI", nom:"Istres-Le Tubé", pistes:[{ids:["15","33"],caps:[153,333]}] },
+  { icao:"LFMK", nom:"Carcassonne Salvaza", pistes:[{ids:["09","27"],caps:[97,277]}] },
+  { icao:"LFML", nom:"Marseille Provence", pistes:[{ids:["13L","31R"],caps:[134,314]}, {ids:["13R","31L"],caps:[134,314]}] },
+  { icao:"LFMN", nom:"Nice-Côte d'Azur", pistes:[{ids:["04L","22R"],caps:[45,225]}, {ids:["04R","22L"],caps:[45,225]}] },
+  { icao:"LFMO", nom:"Orange-Caritat", pistes:[{ids:["14","32"],caps:[140,320]}, {ids:["15","33"],caps:[144,324]}] },
+  { icao:"LFMP", nom:"Perpignan-Rivesaltes", pistes:[{ids:["13","31"],caps:[128,308]}, {ids:["15","33"],caps:[148,328]}] },
+  { icao:"LFMQ", nom:"Le Castellet", pistes:[{ids:["12","30"],caps:[127,307]}] },
+  { icao:"LFMR", nom:"Barcelonnette - Saint-Pons", pistes:[{ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFMS", nom:"Alès Cévennes", pistes:[{ids:["01","19"],caps:[13,193]}] },
+  { icao:"LFMT", nom:"Montpellier-Méditerranée", pistes:[{ids:["12L","30R"],caps:[124,304]}, {ids:["12R","30L"],caps:[124,304]}] },
+  { icao:"LFMU", nom:"Béziers Vias", pistes:[{ids:["09","27"],caps:[94,274]}] },
+  { icao:"LFMV", nom:"Avignon Caumont", pistes:[{ids:["17","35"],caps:[169,349]}] },
+  { icao:"LFMW", nom:"Castelnaudary-Villeneuve", pistes:[{ids:["11","29"],caps:[110,290]}] },
+  { icao:"LFMY", nom:"Salon-de-Provence", pistes:[{ids:["09","27"],caps:[91,271]}, {ids:["16","34"],caps:[160,340]}, {ids:["16L","34R"],caps:[160,344]}, {ids:["16R","34L"],caps:[164,344]}] },
+  { icao:"LFMZ", nom:"Lézignan-Corbières", pistes:[{ids:["08","26"],caps:[78,258]}] },
+  { icao:"LFNA", nom:"Gap-Tallard", pistes:[{ids:["02L","20R"],caps:[26,206]}, {ids:["02R","20L"],caps:[26,206]}] },
+  { icao:"LFNB", nom:"Mende-Brenoux", pistes:[{ids:["12","30"],caps:[125,305]}] },
+  { icao:"LFNC", nom:"Mont-Dauphin Saint-Crépin", pistes:[{ids:["16","34"],caps:[160,340]}, {ids:["16G","34G"],caps:[160,340]}] },
+  { icao:"LFNE", nom:"Eyguières", pistes:[{ids:["09","27"],caps:[90,270]}, {ids:["15","33"],caps:[150,330]}] },
+  { icao:"LFNF", nom:"Vinon", pistes:[{ids:["02","20"],caps:[20,200]}, {ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFNG", nom:"Montpellier - Candillargues", pistes:[{ids:["14","32"],caps:[140,320]}] },
+  { icao:"LFNH", nom:"Edgar Soumille", pistes:[{ids:["13","31"],caps:[132,312]}] },
+  { icao:"LFNJ", nom:"Aspres-sur-Buëch", pistes:[{ids:["18","36"],caps:[180,0]}] },
+  { icao:"LFNL", nom:"Saint-Martin-de-Londres", pistes:[{ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFNO", nom:"Florac Ste Enimie", pistes:[{ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFNQ", nom:"Mont Louis La Quillane", pistes:[{ids:["14","32"],caps:[140,320]}] },
+  { icao:"LFNR", nom:"Berre-la-Fare", pistes:[{ids:["08","26"],caps:[84,264]}, {ids:["16","34"],caps:[158,338]}] },
+  { icao:"LFNS", nom:"Sistéron-Vaumeilh", pistes:[{ids:["17","35"],caps:[170,350]}] },
+  { icao:"LFNT", nom:"Avignon-Pujaut", pistes:[{ids:["13","31"],caps:[130,310]}, {ids:["17R","35L"],caps:[170,350]}] },
+  { icao:"LFNU", nom:"Uzès-Belvezet", pistes:[{ids:["17","35"],caps:[170,350]}] },
+  { icao:"LFNV", nom:"Valréas Visan", pistes:[{ids:["02","20"],caps:[20,200]}] },
+  { icao:"LFNX", nom:"Bédarieux La Tour", pistes:[{ids:["18","36"],caps:[180,0]}] },
   { icao:"LFOA", nom:"Avord", pistes:[{ids:["06","24"],caps:[60,240]}] },
-  { icao:"LFOB", nom:"Beauvais-Tillé", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["12","30"],caps:[120,300]}, {ids:["13","31"],caps:[130,310]}] },
-  { icao:"LFOC", nom:"Châteaudun", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFOB", nom:"Beauvais-Tillé", pistes:[{ids:["04","22"],caps:[42,222]}, {ids:["12","30"],caps:[125,305]}, {ids:["13R","31L"],caps:[130,310]}] },
+  { icao:"LFOC", nom:"Châteaudun", pistes:[{ids:["10","28"],caps:[98,278]}] },
+  { icao:"LFOD", nom:"Saumur - Saint-Florent", pistes:[{ids:["10","28"],caps:[96,276]}] },
   { icao:"LFOE", nom:"Évreux-Fauville", pistes:[{ids:["04","22"],caps:[40,220]}] },
-  { icao:"LFOH", nom:"Le Havre-Octeville", pistes:[{ids:["04","22"],caps:[40,220]}] },
-  { icao:"LFOI", nom:"Abbeville-Buigny Baie de Somme", pistes:[{ids:["02","20"],caps:[20,200]}, {ids:["13","31"],caps:[130,310]}] },
-  { icao:"LFOJ", nom:"Orléans-Bricy", pistes:[{ids:["07","25"],caps:[70,250]}] },
-  { icao:"LFOK", nom:"Chalons Vatry", pistes:[{ids:["10","28"],caps:[100,280]}] },
-  { icao:"LFOP", nom:"Rouen Vallée de Seine", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["05","23"],caps:[50,230]}] },
-  { icao:"LFOT", nom:"Tours Val de Loire", pistes:[{ids:["02","20"],caps:[20,200]}] },
-  { icao:"LFOV", nom:"Laval-Entrammes", pistes:[{ids:["14","32"],caps:[140,320]}] },
-  { icao:"LFPC", nom:"Creil", pistes:[{ids:["07","25"],caps:[70,250]}] },
-  { icao:"LFPE", nom:"Meaux-Esbly", pistes:[{ids:["07","25"],caps:[70,250]}, {ids:["16","34"],caps:[160,340]}] },
-  { icao:"LFPK", nom:"Coulommiers-Voisins", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFPM", nom:"Melun-Villaroche", pistes:[{ids:["01","19"],caps:[10,190]}, {ids:["10","28"],caps:[100,280]}] },
-  { icao:"LFPN", nom:"Toussus-le-Noble", pistes:[{ids:["07","25"],caps:[70,250]}] },
-  { icao:"LFPT", nom:"Pontoise-Cormeilles", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFOF", nom:"Alençon-Valframbert", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFOG", nom:"Flers Saint-Paul", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFOH", nom:"Le Havre-Octeville", pistes:[{ids:["04","22"],caps:[44,224]}] },
+  { icao:"LFOI", nom:"Abbeville-Buigny Baie de Somme", pistes:[{ids:["02","20"],caps:[22,202]}, {ids:["02L","20R"],caps:[24,204]}, {ids:["13","31"],caps:[134,314]}] },
+  { icao:"LFOJ", nom:"Orléans-Bricy", pistes:[{ids:["07","25"],caps:[69,249]}] },
+  { icao:"LFOK", nom:"Chalons Vatry", pistes:[{ids:["10","28"],caps:[102,282]}] },
+  { icao:"LFOL", nom:"L'Aigle-Saint-Michel", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFOM", nom:"Lessay", pistes:[{ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFON", nom:"Dreux Vernouillet", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFOP", nom:"Rouen Vallée de Seine", pistes:[{ids:["04","22"],caps:[41,221]}, {ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFOQ", nom:"Blois Le Breuil", pistes:[{ids:["02","20"],caps:[20,200]}, {ids:["12","30"],caps:[122,302]}] },
+  { icao:"LFOR", nom:"Chartres-Métropole", pistes:[{ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFOS", nom:"Saint-Valery-Vittefleur", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFOT", nom:"Tours Val de Loire", pistes:[{ids:["02","20"],caps:[15,195]}] },
+  { icao:"LFOU", nom:"Cholet Le Pontreau airfield", pistes:[{ids:["02","20"],caps:[25,205]}, {ids:["02R","20L"],caps:[25,205]}] },
+  { icao:"LFOV", nom:"Laval-Entrammes", pistes:[{ids:["14","32"],caps:[142,322]}] },
+  { icao:"LFOX", nom:"Étampes-Mondésir", pistes:[{ids:["06","24"],caps:[60,240]}, {ids:["06L","24R"],caps:[60,240]}] },
+  { icao:"LFOY", nom:"Havre-Saint-Romain-de-Colbosc", pistes:[{ids:["01","19"],caps:[10,190]}, {ids:["06","24"],caps:[60,240]}] },
+  { icao:"LFOZ", nom:"Orléans–Saint-Denis-de-l'Hôtel", pistes:[{ids:["05","23"],caps:[53,233]}] },
+  { icao:"LFPA", nom:"Persan-Beaumont", pistes:[{ids:["05","23"],caps:[53,233]}, {ids:["10L","28R"],caps:[100,280]}, {ids:["10R","28L"],caps:[100,280]}] },
+  { icao:"LFPB", nom:"Paris-Le Bourget", pistes:[{ids:["03","21"],caps:[26,206]}, {ids:["07","25"],caps:[69,249]}, {ids:["09","27"],caps:[86,266]}] },
+  { icao:"LFPC", nom:"Creil", pistes:[{ids:["07","25"],caps:[65,245]}] },
+  { icao:"LFPD", nom:"Bernay-Saint-Martin", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFPE", nom:"Meaux-Esbly", pistes:[{ids:["07L","25R"],caps:[70,250]}, {ids:["07R","25L"],caps:[70,250]}, {ids:["16L","34R"],caps:[160,340]}, {ids:["16R","34L"],caps:[160,340]}] },
+  { icao:"LFPF", nom:"Beynes Thiverval", pistes:[{ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFPG", nom:"Paris-Charles-de-Gaulle", pistes:[{ids:["08H","26H"],caps:[85,265]}, {ids:["08L","26R"],caps:[85,265]}, {ids:["08R","26L"],caps:[85,265]}, {ids:["09L","27R"],caps:[85,265]}, {ids:["09R","27L"],caps:[86,266]}] },
+  { icao:"LFPH", nom:"Chelles-le-Pin", pistes:[{ids:["04","22"],caps:[37,217]}, {ids:["11","29"],caps:[107,287]}] },
+  { icao:"LFPK", nom:"Coulommiers-Voisins", pistes:[{ids:["09","27"],caps:[91,271]}, {ids:["09C","27C"],caps:[90,270]}, {ids:["09L","27R"],caps:[91,271]}, {ids:["09R","27L"],caps:[91,271]}] },
+  { icao:"LFPL", nom:"Lognes Emerainville", pistes:[{ids:["08","26"],caps:[82,262]}, {ids:["08R","26L"],caps:[82,262]}] },
+  { icao:"LFPM", nom:"Melun-Villaroche", pistes:[{ids:["01","19"],caps:[13,193]}, {ids:["10","28"],caps:[103,283]}] },
+  { icao:"LFPN", nom:"Toussus-le-Noble", pistes:[{ids:["07L","25R"],caps:[70,250]}, {ids:["07R","25L"],caps:[70,250]}] },
+  { icao:"LFPO", nom:"Paris-Orly", pistes:[{ids:["02","20"],caps:[18,198]}, {ids:["06","24"],caps:[62,242]}, {ids:["07","25"],caps:[74,254]}] },
+  { icao:"LFPP", nom:"Le Plessis-Belleville", pistes:[{ids:["07","25"],caps:[67,247]}, {ids:["07R","25L"],caps:[67,247]}] },
+  { icao:"LFPQ", nom:"Fontenay-Trésigny", pistes:[{ids:["12L","30R"],caps:[119,299]}, {ids:["12R","30L"],caps:[119,299]}] },
+  { icao:"LFPT", nom:"Pontoise-Cormeilles", pistes:[{ids:["04","22"],caps:[45,225]}, {ids:["12","30"],caps:[118,298]}] },
   { icao:"LFPU", nom:"Moret-Episy", pistes:[{ids:["06","24"],caps:[60,240]}] },
-  { icao:"LFPV", nom:"Vélizy-Villacoublay", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFPZ", nom:"Saint-Cyr-l'École", pistes:[{ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFQA", nom:"Reims-Prunay", pistes:[{ids:["07","25"],caps:[70,250]}] },
-  { icao:"LFQB", nom:"Troyes-Barberey", pistes:[{ids:["05","23"],caps:[50,230]}, {ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFQE", nom:"Lieutenant Étienne Mantoux", pistes:[{ids:["01","19"],caps:[10,190]}, {ids:["02","20"],caps:[20,200]}] },
-  { icao:"LFQG", nom:"Nevers-Fourchambault", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFQP", nom:"Phalsbourg-Bourscheid", pistes:[{ids:["06","24"],caps:[60,240]}] },
-  { icao:"LFQT", nom:"Merville-Calonne", pistes:[{ids:["04","22"],caps:[40,220]}] },
-  { icao:"LFQV", nom:"Charleville-Mézières Ardennes-Etienne Riché", pistes:[{ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFQW", nom:"Vesoul-Frotey", pistes:[{ids:["08","26"],caps:[80,260]}] },
-  { icao:"LFRC", nom:"Cherbourg Manche", pistes:[{ids:["10","28"],caps:[100,280]}] },
-  { icao:"LFRD", nom:"Dinard Pleurtuit Saint-Malo", pistes:[{ids:["12","30"],caps:[120,300]}, {ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFRE", nom:"La Baule-Escoublac", pistes:[{ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFRF", nom:"Granville", pistes:[{ids:["06","24"],caps:[60,240]}] },
-  { icao:"LFRG", nom:"Deauville Normandie", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFRH", nom:"Lorient South Brittany", pistes:[{ids:["02","20"],caps:[20,200]}, {ids:["07","25"],caps:[70,250]}] },
-  { icao:"LFRI", nom:"La Roche-sur-Yon Les Ajoncs", pistes:[{ids:["10","28"],caps:[100,280]}] },
-  { icao:"LFRJ", nom:"Landivisiau", pistes:[{ids:["07","25"],caps:[70,250]}] },
-  { icao:"LFRK", nom:"Caen Carpiquet", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFRL", nom:"Lanvéoc-Poulmic", pistes:[{ids:["05","23"],caps:[50,230]}, {ids:["06","24"],caps:[60,240]}, {ids:["13","31"],caps:[130,310]}] },
-  { icao:"LFRM", nom:"Le Mans-Arnage", pistes:[{ids:["02","20"],caps:[20,200]}] },
-  { icao:"LFRN", nom:"Rennes-Saint-Jacques", pistes:[{ids:["10","28"],caps:[100,280]}, {ids:["14","32"],caps:[140,320]}] },
-  { icao:"LFRO", nom:"Lannion", pistes:[{ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFRQ", nom:"Quimper-Cornouaille", pistes:[{ids:["09","27"],caps:[90,270]}] },
-  { icao:"LFRS", nom:"Nantes Atlantique", pistes:[{ids:["03","21"],caps:[30,210]}] },
-  { icao:"LFRT", nom:"Saint-Brieuc-Armor", pistes:[{ids:["06","24"],caps:[60,240]}] },
-  { icao:"LFRU", nom:"Morlaix-Ploujean", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["09","27"],caps:[90,270]}, {ids:["15","33"],caps:[150,330]}] },
-  { icao:"LFRV", nom:"Vannes-Meucon", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["08","26"],caps:[80,260]}] },
-  { icao:"LFRZ", nom:"Saint-Nazaire-Montoir", pistes:[{ids:["07","25"],caps:[70,250]}] },
-  { icao:"LFSB", nom:"EuroAirport Basel–Mulhouse–Freiburg", pistes:[{ids:["07","25"],caps:[70,250]}, {ids:["15","33"],caps:[150,330]}] },
-  { icao:"LFSD", nom:"Dijon Longvic", pistes:[{ids:["01","19"],caps:[10,190]}, {ids:["17","35"],caps:[170,350]}] },
-  { icao:"LFSG", nom:"Épinal Mirecourt", pistes:[{ids:["08","26"],caps:[80,260]}] },
-  { icao:"LFSI", nom:"Saint-Dizier – Robinson", pistes:[{ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFSL", nom:"Brive Souillac", pistes:[{ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFSM", nom:"Montbéliard-Courcelles", pistes:[{ids:["08","26"],caps:[80,260]}] },
-  { icao:"LFSN", nom:"Nancy-Essey", pistes:[{ids:["03","21"],caps:[30,210]}] },
-  { icao:"LFSO", nom:"Nancy-Ochey", pistes:[{ids:["02","20"],caps:[20,200]}] },
-  { icao:"LFST", nom:"Strasbourg", pistes:[{ids:["05","23"],caps:[50,230]}] },
-  { icao:"LFSX", nom:"Luxeuil-Saint-Sauveur", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["11","29"],caps:[110,290]}] },
-  { icao:"LFTH", nom:"Toulon-Hyères", pistes:[{ids:["05","23"],caps:[50,230]}, {ids:["13","31"],caps:[130,310]}] },
-  { icao:"LFTW", nom:"Nîmes-Arles-Camargue", pistes:[{ids:["18","36"],caps:[180,360]}] },
-  { icao:"LFXA", nom:"Ambérieu", pistes:[{ids:["01","19"],caps:[10,190]}, {ids:["02","20"],caps:[20,200]}] },
-  { icao:"LFXU", nom:"Les Mureaux", pistes:[{ids:["10","28"],caps:[100,280]}] }
+  { icao:"LFPV", nom:"Vélizy-Villacoublay", pistes:[{ids:["09","27"],caps:[88,268]}] },
+  { icao:"LFPX", nom:"Chavenay-Villepreux", pistes:[{ids:["05","23"],caps:[50,230]}, {ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFPZ", nom:"Saint-Cyr-l'École", pistes:[{ids:["11L","29R"],caps:[113,293]}, {ids:["11R","29L"],caps:[113,293]}] },
+  { icao:"LFQA", nom:"Reims-Prunay", pistes:[{ids:["07","25"],caps:[66,246]}] },
+  { icao:"LFQB", nom:"Troyes-Barberey", pistes:[{ids:["05","23"],caps:[52,232]}, {ids:["17","35"],caps:[174,354]}, {ids:["17R","35L"],caps:[174,354]}] },
+  { icao:"LFQC", nom:"Lunéville-Croismare", pistes:[{ids:["09","27"],caps:[92,272]}, {ids:["09R","27L"],caps:[91,271]}] },
+  { icao:"LFQD", nom:"Arras-Roclincourt", pistes:[{ids:["04","22"],caps:[40,220]}] },
+  { icao:"LFQE", nom:"Lieutenant Étienne Mantoux", pistes:[{ids:["01","19"],caps:[14,194]}, {ids:["02","20"],caps:[20,200]}] },
+  { icao:"LFQF", nom:"Autun-Bellevue", pistes:[{ids:["18","36"],caps:[180,0]}, {ids:["18L","36R"],caps:[180,0]}] },
+  { icao:"LFQG", nom:"Nevers-Fourchambault", pistes:[{ids:["12","30"],caps:[122,302]}] },
+  { icao:"LFQH", nom:"Châtillon-sur-Seine", pistes:[{ids:["02","20"],caps:[17,197]}] },
+  { icao:"LFQJ", nom:"Maubeuge-Élesmes", pistes:[{ids:["05L","23R"],caps:[50,230]}, {ids:["05R","23L"],caps:[48,228]}] },
+  { icao:"LFQK", nom:"Châlons - Écury-sur-Coole", pistes:[{ids:["04L","22R"],caps:[40,220]}, {ids:["04R","22L"],caps:[40,220]}] },
+  { icao:"LFQL", nom:"Lens-Bénifontaine", pistes:[{ids:["03","21"],caps:[30,210]}, {ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFQM", nom:"Besançon La Vèze", pistes:[{ids:["05","23"],caps:[53,233]}] },
+  { icao:"LFQN", nom:"Saint-Omer Wizernes", pistes:[{ids:["03","21"],caps:[30,210]}, {ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFQO", nom:"Marcq-en-Baroeul", pistes:[{ids:["07L","25R"],caps:[70,250]}, {ids:["07R","25L"],caps:[70,250]}, {ids:["17L","35R"],caps:[170,350]}, {ids:["17R","35L"],caps:[170,350]}] },
+  { icao:"LFQP", nom:"Phalsbourg-Bourscheid", pistes:[{ids:["06","24"],caps:[57,237]}] },
+  { icao:"LFQQ", nom:"Lille-Lesquin", pistes:[{ids:["01","19"],caps:[15,195]}, {ids:["08","26"],caps:[78,258]}] },
+  { icao:"LFQS", nom:"Vitry-en-Artois", pistes:[{ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFQT", nom:"Merville-Calonne", pistes:[{ids:["04","22"],caps:[37,217]}] },
+  { icao:"LFQU", nom:"Sarre-Union", pistes:[{ids:["09","27"],caps:[90,270]}] },
+  { icao:"LFQV", nom:"Charleville-Mézières Ardennes-Etienne Riché", pistes:[{ids:["11","29"],caps:[112,292]}] },
+  { icao:"LFQW", nom:"Vesoul-Frotey", pistes:[{ids:["08","26"],caps:[82,262]}] },
+  { icao:"LFQX", nom:"Juvancourt", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFQZ", nom:"Dieuze-Guéblange", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFRB", nom:"Brest Bretagne", pistes:[{ids:["07L","25R"],caps:[71,251]}, {ids:["07R","25L"],caps:[71,251]}] },
+  { icao:"LFRC", nom:"Cherbourg Manche", pistes:[{ids:["10","28"],caps:[101,281]}] },
+  { icao:"LFRD", nom:"Dinard Pleurtuit Saint-Malo", pistes:[{ids:["12","30"],caps:[115,295]}, {ids:["17","35"],caps:[170,350]}] },
+  { icao:"LFRE", nom:"La Baule-Escoublac", pistes:[{ids:["11","29"],caps:[107,287]}] },
+  { icao:"LFRF", nom:"Granville", pistes:[{ids:["06","24"],caps:[65,245]}] },
+  { icao:"LFRG", nom:"Deauville Normandie", pistes:[{ids:["12","30"],caps:[117,297]}] },
+  { icao:"LFRH", nom:"Lorient South Brittany", pistes:[{ids:["02","20"],caps:[16,196]}, {ids:["07","25"],caps:[72,252]}] },
+  { icao:"LFRI", nom:"La Roche-sur-Yon Les Ajoncs", pistes:[{ids:["10","28"],caps:[102,282]}] },
+  { icao:"LFRJ", nom:"Landivisiau", pistes:[{ids:["07","25"],caps:[73,253]}] },
+  { icao:"LFRK", nom:"Caen Carpiquet", pistes:[{ids:["12","30"],caps:[124,304]}, {ids:["12L","30R"],caps:[125,305]}] },
+  { icao:"LFRL", nom:"Lanvéoc-Poulmic", pistes:[{ids:["05","23"],caps:[51,231]}, {ids:["06","24"],caps:[60,240]}, {ids:["13","31"],caps:[128,308]}] },
+  { icao:"LFRM", nom:"Le Mans-Arnage", pistes:[{ids:["02","20"],caps:[20,200]}, {ids:["02R","20L"],caps:[20,200]}] },
+  { icao:"LFRN", nom:"Rennes-Saint-Jacques", pistes:[{ids:["10","28"],caps:[101,281]}, {ids:["14","32"],caps:[142,322]}] },
+  { icao:"LFRO", nom:"Lannion", pistes:[{ids:["11","29"],caps:[107,287]}] },
+  { icao:"LFRP", nom:"Ploërmel Loyat", pistes:[{ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFRQ", nom:"Quimper-Cornouaille", pistes:[{ids:["09","27"],caps:[94,274]}] },
+  { icao:"LFRS", nom:"Nantes Atlantique", pistes:[{ids:["03","21"],caps:[28,208]}] },
+  { icao:"LFRT", nom:"Saint-Brieuc-Armor", pistes:[{ids:["06","24"],caps:[59,239]}] },
+  { icao:"LFRU", nom:"Morlaix-Ploujean", pistes:[{ids:["04","22"],caps:[41,221]}, {ids:["09","27"],caps:[90,270]}, {ids:["15","33"],caps:[153,333]}] },
+  { icao:"LFRV", nom:"Vannes-Meucon", pistes:[{ids:["04","22"],caps:[39,219]}, {ids:["08","26"],caps:[82,262]}] },
+  { icao:"LFRZ", nom:"Saint-Nazaire-Montoir", pistes:[{ids:["07","25"],caps:[73,253]}] },
+  { icao:"LFSA", nom:"Besançon-Thise", pistes:[{ids:["07","25"],caps:[70,250]}] },
+  { icao:"LFSB", nom:"EuroAirport Basel–Mulhouse–Freiburg", pistes:[{ids:["07","25"],caps:[77,257]}, {ids:["15","33"],caps:[155,335]}] },
+  { icao:"LFSD", nom:"Dijon Longvic", pistes:[{ids:["01","19"],caps:[15,195]}, {ids:["17","35"],caps:[175,355]}] },
+  { icao:"LFSE", nom:"Épinal Dogneville", pistes:[{ids:["02","20"],caps:[20,200]}] },
+  { icao:"LFSG", nom:"Épinal Mirecourt", pistes:[{ids:["08","26"],caps:[85,265]}] },
+  { icao:"LFSH", nom:"Haguenau", pistes:[{ids:["03","21"],caps:[29,209]}, {ids:["03L","21R"],caps:[29,209]}] },
+  { icao:"LFSI", nom:"Saint-Dizier – Robinson", pistes:[{ids:["11","29"],caps:[113,293]}] },
+  { icao:"LFSJ", nom:"Sédan Douzy", pistes:[{ids:["08L","26R"],caps:[80,260]}, {ids:["08R","26L"],caps:[80,260]}] },
+  { icao:"LFSK", nom:"Vitry-le-François Vauclerc", pistes:[{ids:["05","23"],caps:[50,230]}, {ids:["11","29"],caps:[110,290]}] },
+  { icao:"LFSL", nom:"Brive Souillac", pistes:[{ids:["11","29"],caps:[115,295]}] },
+  { icao:"LFSM", nom:"Montbéliard-Courcelles", pistes:[{ids:["08","26"],caps:[79,259]}] },
+  { icao:"LFSN", nom:"Nancy-Essey", pistes:[{ids:["03","21"],caps:[29,209]}] },
+  { icao:"LFSO", nom:"Nancy-Ochey", pistes:[{ids:["02","20"],caps:[19,199]}] },
+  { icao:"LFSP", nom:"Pontarlier", pistes:[{ids:["02","20"],caps:[21,201]}] },
+  { icao:"LFST", nom:"Strasbourg", pistes:[{ids:["05","23"],caps:[49,229]}] },
+  { icao:"LFSU", nom:"Langres-Rolampont", pistes:[{ids:["18","36"],caps:[181,1]}] },
+  { icao:"LFSV", nom:"Pont-Saint-Vincent", pistes:[{ids:["06","24"],caps:[60,240]}, {ids:["13","31"],caps:[130,310]}] },
+  { icao:"LFSW", nom:"Épernay Plivot", pistes:[{ids:["04","22"],caps:[40,220]}, {ids:["10","28"],caps:[100,280]}] },
+  { icao:"LFSX", nom:"Luxeuil-Saint-Sauveur", pistes:[{ids:["04","22"],caps:[38,218]}, {ids:["11","29"],caps:[113,293]}] },
+  { icao:"LFTF", nom:"Cuers-Pierrefeu", pistes:[{ids:["11","29"],caps:[110,290]}] },
+  { icao:"LFTH", nom:"Toulon-Hyères", pistes:[{ids:["05","23"],caps:[51,231]}, {ids:["13","31"],caps:[135,315]}] },
+  { icao:"LFTP", nom:"Puimoisson", pistes:[{ids:["08","26"],caps:[80,260]}] },
+  { icao:"LFTW", nom:"Nîmes-Arles-Camargue", pistes:[{ids:["18","36"],caps:[177,357]}] },
+  { icao:"LFTZ", nom:"La Môle", pistes:[{ids:["06","24"],caps:[62,242]}] },
+  { icao:"LFXA", nom:"Ambérieu", pistes:[{ids:["01","19"],caps:[7,187]}, {ids:["02","20"],caps:[15,195]}] },
+  { icao:"LFXB", nom:"Saintes Thénac", pistes:[{ids:["06","24"],caps:[60,240]}, {ids:["06L","24R"],caps:[60,240]}, {ids:["06R","24L"],caps:[60,240]}, {ids:["12","30"],caps:[120,300]}] },
+  { icao:"LFXU", nom:"Les Mureaux", pistes:[{ids:["10L","28R"],caps:[100,280]}, {ids:["10R","28L"],caps:[100,280]}] },
+  { icao:"LFYG", nom:"Cambrai Niergnies", pistes:[{ids:["08L","26R"],caps:[80,260]}, {ids:["08R","26L"],caps:[80,260]}] },
+  { icao:"LFYR", nom:"Romorantin Pruniers", pistes:[{ids:["04L","22R"],caps:[40,220]}, {ids:["04R","22L"],caps:[40,220]}] },
+  { icao:"LFYS", nom:"Ste Léocadie", pistes:[{ids:["07","25"],caps:[70,250]}] }
 ];
 
 /* Étape 4 — tri « du plus gros au plus petit » : ordre d'importance (trafic passagers approximatif)
@@ -1884,14 +2129,17 @@ AERODROMES.sort((a,b)=>{
    (départ/arrivée) est réglé sur AFIS, seuls les terrains non contrôlés sont proposés ; sur Contrôlé,
    seuls les terrains contrôlés. Liste des terrains contrôlés (gros aéroports + bases/terrains à
    tour de contrôle) ; tout le reste est considéré non contrôlé. */
+/* Terrains CONTRÔLÉS = ceux dont une fréquence TWR est publiée (OurAirports).
+   Les autres sont AFIS (agent d'information) ou en auto-information. */
 const CONTROLLED_ICAO = new Set([
-  "LFPG","LFPO","LFPB","LFMN","LFLL","LFML","LFBO","LFSB","LFBD","LFRS","LFOB","LFQQ","LFMT","LFKJ",
-  "LFKB","LFST","LFRB","LFBZ","LFMP","LFBP","LFTH","LFKF","LFRN","LFLC","LFKC","LFBT","LFMK","LFLS",
-  "LFLB","LFBL","LFBH","LFTW","LFRD","LFJL","LFRK","LFCR","LFRG","LFBE","LFBI","LFOH","LFMV","LFRH",
-  "LFLY","LFMH","LFBF","LFOK","LFSD","LFST","LFSN","LFRO","LFRQ","LFOT","LFLX","LFBG",
-  // bases militaires / terrains à contrôle
-  "LFBC","LFBM","LFOA","LFMO","LFMI","LFMY","LFSO","LFSI","LFRJ","LFRL","LFKS","LFPC","LFOE","LFOC",
-  "LFOJ","LFSX","LFQP","LFBF","LFPV","LFXA","LFSL"
+  "LFAC","LFAQ","LFAT","LFBA","LFBC","LFBD","LFBE","LFBF","LFBG","LFBH","LFBI","LFBL","LFBM","LFBO",
+  "LFBP","LFBR","LFBT","LFBZ","LFCL","LFCR","LFCV","LFDN","LFGA","LFGB","LFGJ","LFJL","LFKB","LFKC",
+  "LFKF","LFKJ","LFKS","LFLB","LFLC","LFLG","LFLL","LFLN","LFLP","LFLS","LFLU","LFLX","LFLY","LFMA",
+  "LFMC","LFMD","LFMH","LFMI","LFMK","LFML","LFMN","LFMO","LFMP","LFMT","LFMU","LFMV","LFMY","LFOA",
+  "LFOB","LFOC","LFOE","LFOH","LFOJ","LFOK","LFOP","LFOT","LFOX","LFPB","LFPC","LFPE","LFPG","LFPL",
+  "LFPM","LFPN","LFPO","LFPT","LFPV","LFPZ","LFQE","LFQP","LFQQ","LFQT","LFRB","LFRC","LFRD","LFRG",
+  "LFRH","LFRJ","LFRK","LFRL","LFRM","LFRN","LFRO","LFRQ","LFRS","LFRV","LFRZ","LFSB","LFSD","LFSI",
+  "LFSL","LFSO","LFSP","LFST","LFSX","LFTF","LFTH","LFTW","LFXA","LFYG"
 ]);
 AERODROMES.forEach(a=>{ a.ctrl = CONTROLLED_ICAO.has(a.icao); });
 
@@ -2088,14 +2336,32 @@ function digitCanon(normText){
   // recolle les chiffres séparés par des espaces : "1 0 1 5" → "1015"
   return d.replace(/\d(?:\s+\d)+/g, m => m.replace(/\s+/g,''));
 }
+/* Forme abrégée de l'indicatif (manuel DSNA p. 18) : 1er caractère + 2 derniers.
+   F-BGBX → F-BX, F-ABCD → F-CD. Elle ne s'emploie qu'APRÈS un premier contact
+   complet, et à l'initiative du contrôleur. */
+function abrevCall(call){
+  const c=(call||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(c.length<3) return call||'';
+  return c[0]+'-'+c.slice(-2);
+}
+/* Indicatif à employer à cet instant : complet au premier contact sur une fréquence,
+   abrégé ensuite. state.callForm est posé par le rendu de chaque échange. */
+function callNow(){
+  return (typeof state!=='undefined' && state.callForm==='abbr') ? abrevCall(state.call) : state.call;
+}
+
 function callsignVariants(call){
   const compact=(call||"").toUpperCase().replace(/[^A-Z0-9]/g,'');
   const letters=compact.split('');
   const toPhon=arr=>canonPhrase(arr.map(l=>NATO[l]||l).join(' '));
+  // Forme abrégée : 1er + 2 derniers caractères.
+  const abr=[letters[0]].concat(letters.slice(-2));
   return [toPhon(letters), toPhon(letters.slice(1)), toPhon(letters.slice(-3)),
-          toPhon(letters.slice(-2)), normalize(compact),
+          toPhon(letters.slice(-2)), toPhon(abr),
+          normalize(compact), normalize(abr.join('')),
           normalize(call),                 // forme écrite "f abcd"
-          normalize(letters.join(' '))     // lettres épelées "f a b c d"
+          normalize(letters.join(' ')),    // lettres épelées "f a b c d"
+          normalize(abr.join(' '))
          ].filter(v=>v.length>0);
 }
 function terrainVariants(ad){
@@ -2801,7 +3067,7 @@ const state = {
   meteo:{windDir:0, windForce:0, qnh:0}, ventPhrase:"", rwy:{id:"", cap:0},
   capDep:0, numCircuit:1, voiceRate:1.0, voiceName:null, noiseEnabled:false,
   controlled:{dep:true, arr:true}, altCruise:3000, cause:"",  // contrôlé/AFIS PAR CÔTÉ (départ/arrivée)
-  difficulty:'debutant', exam:null,                    // C1 / C2  (aléas = automatiques en mode Réel)
+  difficulty:'debutant', exam:null, callForm:'full',                    // C1 / C2  (aléas = automatiques en mode Réel)
   scenarioIndex:-1, queue:[], stepIndex:0, results:[]
 };
 // contrôlé ? pour un côté donné ('dep'/'arr'), avec repli défensif.
@@ -2809,7 +3075,7 @@ function ctrlOf(side){ const c=state.controlled; return (side==='arr') ? !!c.arr
 
 function fillDisplay(raw){
   if(raw==null) return "";
-  return raw.replace(/\{CALL\}/g, state.call)
+  return raw.replace(/\{CALL\}/g, callNow())
             .replace(/\{ADRM\}/g, state.activeAd ? state.activeAd.nom : "le terrain")
             .replace(/\{PISTE\}/g, state.rwy.id)
             .replace(/\{QNH\}/g, state.meteo.qnh)
@@ -2817,11 +3083,12 @@ function fillDisplay(raw){
             .replace(/\{CAPDEP\}/g, state.capDep)
             .replace(/\{NUM\}/g, state.numCircuit)
             .replace(/\{ALT\}/g, state.altCruise)
-            .replace(/\{CAUSE\}/g, state.cause);
+            .replace(/\{CAUSE\}/g, state.cause)
+            .replace(/\{DEPSTN\}/g, state.depStn||'');
 }
 function fillSpeech(raw){
   let t = (raw||"")
-    .replace(/\{CALL\}/g, phoneticCallsign(state.call))
+    .replace(/\{CALL\}/g, phoneticCallsign(callNow()))
     .replace(/\{ADRM\}/g, state.activeAd ? state.activeAd.nom : "le terrain")
     .replace(/\{PISTE\}/g, state.rwy.id)
     .replace(/\{QNH\}/g, String(state.meteo.qnh))
@@ -2829,7 +3096,8 @@ function fillSpeech(raw){
     .replace(/\{CAPDEP\}/g, String(state.capDep))
     .replace(/\{NUM\}/g, String(state.numCircuit))
     .replace(/\{ALT\}/g, String(state.altCruise))
-    .replace(/\{CAUSE\}/g, state.cause);
+    .replace(/\{CAUSE\}/g, state.cause)
+    .replace(/\{DEPSTN\}/g, state.depStn||'');
   return spokenDigits(t);
 }
 
@@ -4857,13 +5125,27 @@ if(!RECO_OK){
 
   function freqOf(a,kinds){ for(var i=0;i<kinds.length;i++){ if(a.freq&&a.freq[kinds[i]]) return {k:kinds[i],f:a.freq[kinds[i]]}; } return null; }
   // Nom d'organisme déduit du TYPE de fréquence réellement publié pour ce terrain.
+  /* Nature du terrain — elle change la phraséologie du tout au tout :
+       TWR  : organisme de contrôle → il délivre des CLAIRANCES (« autorisé »)
+       AFIS : agent d'information   → il informe, il n'autorise jamais
+       A/A  : auto-information      → personne au sol, le pilote annonce ses intentions
+     Le manuel DSNA couvre le contrôle et l'AFIS, mais PAS l'auto-information : les
+     formulations A/A reprennent la structure AFIS du manuel en retirant toute notion
+     d'autorisation, puisqu'aucun organisme n'est là pour en délivrer. */
+  function natureTerrain(a){
+    if(!a || !a.freq) return 'aa';
+    if(a.freq.TWR) return 'twr';
+    if(a.freq.AFIS || a.freq.INFO) return 'afis';
+    return 'aa';
+  }
   function stnName(a,kind){
     var base=a.nom.split(/[\-–(]/)[0].trim();
     if(kind==='TWR') return base+' Tour';
     if(kind==='GND') return base+' Sol';
     if(kind==='APP') return base+' Approche';
     if(kind==='AFIS'||kind==='INFO') return base+' Information';
-    return base;               // A/A, UNIC… : auto-information
+    // A/A, UNIC, ou aucune fréquence : on s'adresse au terrain lui-même.
+    return base+' auto-information';
   }
 
   function buildFlight(){
@@ -4885,13 +5167,15 @@ if(!RECO_OK){
     var infoF=infoSrc?{k:'FIS',f:infoSrc.f}:null;
 
     // --- État moteur : on réutilise `state` (comme le fait launchScenario). ---
-    state.activeAd=dep; state.activeSide='dep';
+    state.activeAd=dep; state.activeSide='dep'; state.depStn=stnName(dep,depF.k);
     drawMeteo();                       // vent, QNH, piste en service au départ
     state.altCruise=cruise;            // …mais on garde l'altitude choisie par l'élève
     var depRwy=state.rwy;
 
     F.ctx={ dep:dep, arr:arr, cruise:cruise, ac:acLabel, acShort:acShort,
             depF:depF, arrF:arrF, infoF:infoF, infoSrc:infoSrc,
+            pax:Math.max(1,parseInt($v('navPax').value,10)||1),
+            depNat:natureTerrain(dep), arrNat:arr?natureTerrain(arr):null,
             depStn:stnName(dep,depF.k), arrStn:arr?stnName(arr,arrF.k):null,
             infoStn:infoSrc?infoSrc.n:null, chaineSiv:chaineSiv, depRwy:depRwy };
 
@@ -4901,28 +5185,45 @@ if(!RECO_OK){
     // 1 — Mise en route (p. 39)
     push({ ph:'Mise en route', src:'p. 39', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Appelez '+C.depStn+'.',
-      consigne:'Appelez '+C.depStn+' : votre indicatif, puis demandez la mise en route.',
-      attendu:C.depStn+', {CALL}, bonjour, demande mise en route.',
+      consigne: (C.depNat==='aa')
+        ? 'Terrain sans organisme : en auto-information, annoncez-vous à '+C.depStn+' — indicatif et intention de mise en route.'
+        : 'Appelez '+C.depStn+' : votre indicatif, puis demandez la mise en route.',
+      attendu: C.depNat==='aa'
+        ? C.depStn+', {CALL}, bonjour, '+C.acShort+' au parking, je mets en route.'
+        : C.depStn+', {CALL}, bonjour, demande mise en route.',
       motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.depStn,C.depF.k)},
                  {label:'Votre indicatif',ref:'callsign'},
-                 {label:'Demande de mise en route',variantes:['mise en route','demande mise en route','demande la mise en route']} ],
-      atcAfter:'{CALL}, mise en route approuvée.' });
+                 {label:'Mise en route',variantes:['mise en route','demande mise en route','demande la mise en route','je mets en route']} ],
+      atcAfter: (C.depNat==='twr') ? '{CALL}, mise en route approuvée.'
+              : (C.depNat==='afis') ? '{CALL}, {DEPSTN}, roger, piste {PISTE} en service, QNH {QNH}.'
+              : null });
 
     // 2 — Demande de roulage (p. 45, exemple VFR Chavenay)
     push({ ph:'Roulage', src:'p. 44-45', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Demandez le roulage à '+C.depStn+'.',
-      consigne:'Demandez les consignes de roulage'+(C.arr?' pour un vol à destination de '+C.arr.nom:'')+'. Précisez votre type d\'avion.',
-      attendu:'{CALL}, '+C.acShort+', parking, demande consignes de roulage'+(C.arr?' pour vol à destination de '+C.arr.nom:'')+'.',
+      consigne:'Annonce complète : indicatif, type d\'avion, nombre de personnes à bord, position, puis '+
+               (C.depNat==='aa'?'votre intention de rouler (personne ne vous autorise ici)':'votre demande de roulage')+
+               (C.arr?' pour une navigation vers '+C.arr.nom:'')+'.',
+      attendu:'{CALL}, '+C.acShort+', '+C.pax+' personne'+(C.pax>1?'s':'')+' à bord, au parking, '+
+              (C.depNat==='aa'?'je roule piste {PISTE}':'demande le roulage')+
+              (C.arr?' pour une navigation vers '+C.arr.nom:' pour un vol local')+'.',
       motsCles:[ {label:'Votre indicatif',ref:'callsign'},
-                 {label:'Demande de roulage',variantes:['roulage','consignes de roulage','demande roulage','demande consignes']} ]
+                 {label:'Type d\'avion',variantes:acVars(C.acShort)},
+                 {label:'Personnes à bord',variantes:paxVars(C.pax)},
+                 {label:'Position (parking)',variantes:['parking','au parking','parking club','aire de stationnement']},
+                 {label:'Roulage',variantes:['roulage','consignes de roulage','demande roulage','demande le roulage','demande consignes','je roule']} ]
               .concat(C.arr?[{label:'Destination',variantes:destVars(C.arr)}]:[]),
-      atcAfter:'{CALL}, roulez et entrez aire d\'attente {PISTE}, rappelez prêt.' });
+      atcAfter: C.depNat==='aa' ? null : '{CALL}, roulez et entrez aire d\'attente {PISTE}, rappelez prêt.' });
 
     // 3 — Collationnement du roulage (p. 45)
     push({ ph:'Collationnement roulage', src:'p. 45', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Collationnez.',
-      consigne:'Collationnez : vous roulez et entrez dans l\'aire d\'attente {PISTE}, et vous rappellerez prêt.',
-      attendu:'Je roule et entre dans l\'aire d\'attente {PISTE} et rappelle prêt, {CALL}.',
+      consigne: C.depNat==='aa'
+        ? 'Personne ne vous a donné d\'instruction : annoncez simplement que vous entrez au point d\'attente de la piste {PISTE}.'
+        : 'Collationnez : vous roulez et entrez dans l\'aire d\'attente {PISTE}, et vous rappellerez prêt.',
+      attendu: C.depNat==='aa'
+        ? 'J\'entre au point d\'attente piste {PISTE}, {CALL}.'
+        : 'Je roule et entre dans l\'aire d\'attente {PISTE} et rappelle prêt, {CALL}.',
       motsCles:[ {label:'Je roule',variantes:['je roule','roule']},
                  {label:'Aire d\'attente',variantes:["aire d attente","point d attente","aire dattente"]},
                  {label:'Numéro de piste',ref:'piste'},
@@ -4930,15 +5231,22 @@ if(!RECO_OK){
 
     // 4 — Prêt au départ (p. 50)
     push({ ph:'Prêt au départ', src:'p. 50', stn:C.depStn, freq:C.depF.f, leg:0,
-      atcBefore:'{CALL}, rappelez prêt au départ.',
+      atcBefore: C.depNat==='aa' ? null : '{CALL}, rappelez prêt au départ.',
       reel:'Répondez à '+C.depStn+'.',
-      consigne:'Annoncez que vous êtes prêt au départ.',
-      attendu:'Prêt au départ, {CALL}.',
+      consigne: C.depNat==='aa'
+        ? 'Annoncez que vous vous alignez et décollez piste {PISTE} — aucune autorisation n\'existe ici.'
+        : 'Annoncez que vous êtes prêt au départ.',
+      attendu: C.depNat==='aa'
+        ? 'Je m\'aligne et je décolle piste {PISTE}, {CALL}.'
+        : 'Prêt au départ, {CALL}.',
       motsCles:[ {label:'Prêt au départ',variantes:['pret au depart','pret','paré','affirme']},
                  {label:'Votre indicatif',ref:'callsign'} ],
-      atcAfter:'{CALL}, alignez-vous et attendez piste {PISTE}.' });
+      atcAfter: C.depNat==='aa' ? null : '{CALL}, alignez-vous et attendez piste {PISTE}.' });
 
-    // 5 — Alignement (p. 53) — « alignez-vous et attendez » sont indissociables
+    /* 5 — Alignement (p. 53) : « alignez-vous et attendez » sont indissociables… mais
+       cette instruction n'existe que si un contrôleur la délivre. Sans TWR, l'étape
+       « Prêt au départ » a déjà couvert l'alignement et le décollage. */
+    if(C.depNat==='twr')
     push({ ph:'Alignement', src:'p. 53', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Collationnez.',
       consigne:'Collationnez l\'alignement : vous vous alignez ET vous attendez.',
@@ -4947,12 +5255,16 @@ if(!RECO_OK){
                  {label:'J\'attends',variantes:["j attends","attends","et j attends"]},
                  {label:'Numéro de piste',ref:'piste'},
                  {label:'Votre indicatif',ref:'callsign'} ],
-      atcAfter:'{CALL}, piste {PISTE}, autorisé décollage, vent {VENT}.' });
+      atcAfter: (C.depNat==='twr')
+        ? '{CALL}, piste {PISTE}, autorisé décollage, vent {VENT}.'
+        : '{CALL}, piste {PISTE} en service, vent {VENT}, QNH {QNH}, pas de trafic connu.' });
 
     // 6 — Décollage (p. 59) — le pilote dit « je décolle », JAMAIS « autorisé décollage »
     push({ ph:'Décollage', src:'p. 59', stn:C.depStn, freq:C.depF.f, leg:0.03,
       reel:'Collationnez l\'autorisation de décollage.',
-      consigne:'Collationnez l\'autorisation. Le pilote dit « je décolle » — « autorisé décollage » est réservé au contrôleur.',
+      consigne: (C.depNat==='twr')
+        ? 'Collationnez l\'autorisation. Le pilote dit « je décolle » — « autorisé décollage » est réservé au contrôleur.'
+        : 'Sans organisme de contrôle, personne ne vous autorise : annoncez que vous décollez de la piste en service.',
       attendu:'Piste {PISTE}, je décolle, {CALL}.',
       motsCles:[ {label:'Numéro de piste',ref:'piste'},
                  {label:'Je décolle',variantes:['je decolle','decolle']},
@@ -5144,12 +5456,15 @@ if(!RECO_OK){
       motsCles:[ {label:'Votre indicatif',ref:'callsign'},
                  {label:'En finale',variantes:['finale','en finale','final']},
                  {label:'Numéro de piste',ref:'piste'} ],
-      atcAfter:'{CALL}, piste {PISTE}, autorisé atterrissage, vent {VENT}.' });
+      atcAfter: (C.arrNat==='twr') ? '{CALL}, piste {PISTE}, autorisé atterrissage, vent {VENT}.'
+              : '{CALL}, piste {PISTE} en service, vent {VENT}, pas de trafic connu.' });
 
     // 18 — Atterrissage (p. 154) — le pilote dit « j'atterris »
     push({ ph:'Atterrissage', src:'p. 154', stn:lastStn, freq:lastF, leg:0.99,
       reel:'Collationnez l\'autorisation d\'atterrissage.',
-      consigne:'Collationnez. Le pilote dit « j\'atterris » — « autorisé atterrissage » est réservé au contrôleur.',
+      consigne: (C.arrNat==='twr')
+        ? 'Collationnez. Le pilote dit « j\'atterris » — « autorisé atterrissage » est réservé au contrôleur.'
+        : 'Sans organisme de contrôle, annoncez simplement que vous atterrissez sur la piste en service.',
       attendu:'Piste {PISTE}, j\'atterris, {CALL}.',
       motsCles:[ {label:'Numéro de piste',ref:'piste'},
                  {label:'J\'atterris',variantes:["j atterris","atterris","jatterris"]},
@@ -5165,6 +5480,15 @@ if(!RECO_OK){
                  {label:'Votre indicatif',ref:'callsign'} ],
       atcAfter:'{CALL}, roulez parking aviation générale.' });
 
+    /* Premier échange sur une fréquence = indicatif COMPLET ; ensuite forme abrégée
+       (manuel DSNA p. 18). On marque les étapes après coup : le changement de
+       fréquence lui-même est un collationnement, donc encore en forme abrégée —
+       c'est l'appel initial sur la NOUVELLE fréquence qui repasse en complet. */
+    var freqPrec=null;
+    S.forEach(function(st){
+      st.premierContact = (st.freq!==freqPrec);
+      freqPrec = st.freq;
+    });
     F.steps=S; F.i=0; F.results=[];
   }
 
@@ -5175,6 +5499,18 @@ if(!RECO_OK){
     base.split(/[\s'’\-]+/).forEach(function(w){ if(w.length>3) v.push(w.toLowerCase()); });
     if(kind==='TWR') v.push('tour'); if(kind==='GND') v.push('sol');
     if(kind==='APP') v.push('approche'); if(kind==='AFIS') v.push('information','info');
+    return v;
+  }
+  // Variantes pour le type d'avion et le nombre de personnes à bord.
+  function acVars(ab){
+    var v=[ab.toLowerCase()];
+    ab.toLowerCase().split(/[\s-]+/).forEach(function(w){ if(w.length>2) v.push(w); });
+    return v;
+  }
+  var NOMBRES=['zero','une','deux','trois','quatre','cinq','six','sept','huit','neuf'];
+  function paxVars(n){
+    var v=[String(n),'a bord','personne','personnes'];
+    if(NOMBRES[n]) v.push(NOMBRES[n]+' personne', NOMBRES[n]+' personnes', NOMBRES[n]);
     return v;
   }
   function destVars(a){
@@ -5206,6 +5542,7 @@ if(!RECO_OK){
   function renderStep(){
     var s=F.steps[F.i]; if(!s) return endFlight();
     if(s.onEnter) s.onEnter();
+    state.callForm = s.premierContact ? 'full' : 'abbr';
     tune(s.stn,s.freq,false);
     $v('vfPhase').textContent=s.ph;
     $v('vfSrc').textContent='Manuel DSNA '+s.src;

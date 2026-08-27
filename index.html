@@ -289,8 +289,6 @@
   .exam-hero{background:linear-gradient(135deg,#efeafb,#f7fbff); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow-sm); margin-bottom:18px}
   .exam-hero h2{font-size:22px; margin-bottom:8px}
   .exam-hero p{color:var(--ink-2); max-width:58ch; margin:0 0 20px}
-  .running-banner{display:none; align-items:center; gap:10px; background:var(--violet-soft); border:1px solid var(--violet); color:var(--violet-dark); border-radius:12px; padding:11px 16px; font-weight:600; font-size:14px; margin-bottom:16px}
-  .running-banner.show{display:flex}
 
   .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--ink); color:#fff; padding:12px 20px; border-radius:var(--pill); font-size:13.5px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:200; box-shadow:var(--shadow-lg)}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
@@ -326,7 +324,6 @@
   .fb-item .mk .ic-svg{width:16px; height:16px}
   .fb-item.ok .mk .ic-svg{stroke:var(--violet)}
   .fb-item.ko .mk .ic-svg{stroke:#c98a00}
-  .running-banner .ic-svg{width:17px; height:17px; stroke:var(--violet-dark)}
   .ptt .rec-dot{width:10px; height:10px; border-radius:50%; background:#fff; flex:none}
 
   /* ============ Indicateur de scroll (bas du hero) ============ */
@@ -618,6 +615,9 @@
   .nav-zone.z-rpd{ border-left-color:#c74a4a; }
   .nav-zone b{ color:var(--ink); font-weight:700; }
   .nav-zone .zmeta{ display:block; color:var(--ink-2); font-size:11.5px; margin-top:2px; }
+  .nav-zonewarn{ background:#fdecec; border:1px solid #e6b3b0; border-left:3px solid var(--bad);
+    border-radius:9px; padding:9px 11px; font-size:12.5px; line-height:1.5; color:#7d2f2b; margin-bottom:8px; }
+  .nav-zonewarn b{ color:#5e211e; }
   .nav-zone .zfreq{ font-family:var(--mono); color:var(--violet-dark); font-weight:700; }
 
   .nav-recap{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
@@ -893,6 +893,8 @@
     :root[data-theme="dark"] .nav-warn.nav-fatal{ background:#301a19; border-color:#6b3330;
       border-left-color:#c74a4a; color:#f3b4b0; }
     :root[data-theme="dark"] .nav-warn.nav-fatal strong{ color:#ffcecb; }
+    :root[data-theme="dark"] .nav-zonewarn{ background:#301a19; border-color:#6b3330; color:#f3b4b0; }
+    :root[data-theme="dark"] .nav-zonewarn b{ color:#ffcecb; }
     :root[data-theme="dark"] .nav-warn code{ background:rgba(255,255,255,.10); }
     /* --bad reste clair (il sert de texte/bordure sur fond sombre) ; le bouton
        « Abandonner » porte du blanc, il lui faut donc un rouge plus soutenu : 4,97:1. */
@@ -983,7 +985,6 @@
     <div class="side-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>RadioTrainer</span></div>
     <nav class="side-nav">
       <button class="sidelink" type="button" data-page="exercices"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg><span>Scénarios</span></button>
-      <button class="sidelink" type="button" data-page="examen"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8l10-4 10 4-10 4L2 8z"/><path d="M6 10v4.2c0 1.2 2.7 2.3 6 2.3s6-1.1 6-2.3V10"/><path d="M22 8v5"/></svg><span>Examen blanc</span></button>
       <button class="sidelink" type="button" data-page="navigation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5.5-5.5 2 2-5.5 5.5-2z" fill="currentColor" stroke="none"/></svg><span>Navigation</span></button>
       <button class="sidelink" type="button" data-page="epellation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6M12 4v16"/></svg><span>Épellation</span></button>
       <button class="sidelink" type="button" data-page="cours"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg><span>Cours</span></button>
@@ -1090,8 +1091,6 @@
       <div class="container">
         <h2 class="section-title">Scénarios</h2>
         <p class="section-sub">Choisissez vos aérodromes et vos options, puis lancez un scénario. Parlez au micro (Chrome ou Edge).</p>
-
-        <div class="running-banner" id="runningBanner"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8l10-4 10 4-10 4L2 8z"/><path d="M6 10v4.2c0 1.2 2.7 2.3 6 2.3s6-1.1 6-2.3V10"/><path d="M22 8v5"/></svg><span>Examen blanc en cours — les scénarios s'enchaînent, score cumulé à la fin.</span></div>
 
         <div class="config">
           <div class="field">
@@ -1235,20 +1234,6 @@
         <div class="logwrap">
           <h2>Journal radio</h2>
           <div class="log" id="log"><span class="empty">— Choisissez un aérodrome puis un scénario pour commencer —</span></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== EXAMEN BLANC ==================== -->
-    <section id="page-examen" class="page">
-      <div class="container">
-        <h2 class="section-title">Examen blanc</h2>
-        <p class="section-sub">Une session continue, comme le jour J.</p>
-        <div class="exam-hero">
-          <h2>Enchaînez 4 scénarios d'affilée</h2>
-          <p>Roulage → décollage → navigation ou intégration (tiré au sort) → tour de piste, dans un seul journal radio continu, avec un <strong>score cumulé</strong> à la fin. Pensez à choisir vos aérodromes dans l'onglet <em>Scénarios</em> avant de démarrer.</p>
-          <button class="btn cta" id="examBtn" type="button">Démarrer l'examen blanc</button>
-          <span class="exam-note" style="display:block; margin-top:12px">Astuce : passez la difficulté sur « Examen » dans les réglages pour un mode plus strict (indice désactivé, tolérance réduite, minuteur plus court).</span>
         </div>
       </div>
     </section>
@@ -2309,7 +2294,7 @@ function correctToken(w){
     const d=lev(w,r);
     if(d<bd){ bd=d; best=r; }
   }
-  // C1 : mode "Examen" = tolérance plus stricte (seuils réduits).
+  // C1 : mode « Réel » = tolérance plus stricte (seuils réduits).
   const strict = (typeof state!=='undefined' && state.difficulty==='reel');
   const thresh = strict ? (w.length<=4 ? 0 : 1) : (w.length<=4 ? 1 : 2);
   return bd<=thresh ? best : w;
@@ -2958,7 +2943,7 @@ if(RECO_OK){
     el.validerBtn.disabled = false;
   };
 }
-// C1 : délai de silence 2,5 s (Débutant) / 1,5 s (Examen).
+// C1 : délai de silence 2,5 s (Débutant) / 1,5 s (Réel).
 function armSilence(){
   clearTimeout(silenceTimer);
   // Réglage explicite s'il existe, sinon valeur liée à la difficulté (comportement d'origine).
@@ -3074,7 +3059,7 @@ const state = {
   meteo:{windDir:0, windForce:0, qnh:0}, ventPhrase:"", rwy:{id:"", cap:0},
   capDep:0, numCircuit:1, voiceRate:1.0, voiceName:null, noiseEnabled:false,
   controlled:{dep:true, arr:true}, altCruise:3000, cause:"",  // contrôlé/AFIS PAR CÔTÉ (départ/arrivée)
-  difficulty:'debutant', exam:null, callForm:'full',                    // C1 / C2  (aléas = automatiques en mode Réel)
+  difficulty:'debutant', callForm:'full',                    // C1 / C2  (aléas = automatiques en mode Réel)
   scenarioIndex:-1, queue:[], stepIndex:0, results:[]
 };
 // contrôlé ? pour un côté donné ('dep'/'arr'), avec repli défensif.
@@ -3199,7 +3184,7 @@ const el={
   depInput:$('depInput'), depList:$('depList'), arrInput:$('arrInput'), arrList:$('arrList'),
   call:$('call'), voiceRate:$('voiceRate'), voiceSelect:$('voiceSelect'), noiseToggle:$('noiseToggle'),
   depCtrlSelect:$('depCtrlSelect'), arrCtrlSelect:$('arrCtrlSelect'),
-  difficultySelect:$('difficultySelect'), examBtn:$('examBtn'), badgeGrid:$('badgeGrid'),
+  difficultySelect:$('difficultySelect'), badgeGrid:$('badgeGrid'),
   scenarios:$('scenarios'), panel:$('panel'),
   stepLabel:$('stepLabel'), dots:$('dots'), terrainToggle:$('terrainToggle'), meteo:$('meteo'),
   atcBox:$('atcBox'), atcStation:$('atcStation'), atcTxt:$('atcTxt'),
@@ -3270,12 +3255,11 @@ function onCtrlChange(){
   if(state.depAd && ctrlOf('dep')!==!!state.depAd.ctrl){ state.depAd=null; el.depInput.value=''; }
   if(state.arrAd && ctrlOf('arr')!==!!state.arrAd.ctrl){ state.arrAd=null; el.arrInput.value=''; }
   // Rejouer le scénario en cours pour appliquer le changement contrôlé/AFIS
-  if(state.scenarioIndex>=0 && !state.exam) startWithTerrain();
+  if(state.scenarioIndex>=0) startWithTerrain();
 }
 el.depCtrlSelect.addEventListener('change', onCtrlChange);
 el.arrCtrlSelect.addEventListener('change', onCtrlChange);
 el.difficultySelect.addEventListener('change', ()=>{ state.difficulty = el.difficultySelect.value; });
-el.examBtn.addEventListener('click', startExamBlanc);
 el.noiseToggle.addEventListener('change', ()=>{
   state.noiseEnabled = el.noiseToggle.checked;
   if(!state.noiseEnabled) stopRadioNoise();   // couper immédiatement si décoché en pleine parole
@@ -3399,7 +3383,7 @@ function renderScope(){
 }
 function startScope(){
   stopScope();
-  // Densité selon la difficulté : plus dense en Examen. Pas de trafic pour un scénario sans terrain.
+  // Densité selon la difficulté : plus dense en Réel. Pas de trafic pour un scénario sans terrain.
   const sc=SCENARIOS[state.scenarioIndex];
   const box=document.getElementById('scopeBox');
   if(!box) return;
@@ -3437,9 +3421,9 @@ function startWithTerrain(){
   el.recap.classList.add('hidden');
   el.panel.classList.remove('hidden');
   // C2 : en examen blanc, journal continu (on ne vide pas entre scénarios).
-  if(!(state.exam && state.exam.idx>0)) clearLog();
+  clearLog();
   const adLabel = state.activeAd ? (state.activeAd.icao+' '+state.activeAd.nom) : 'sans aérodrome';
-  logRow('sys','━━ '+sc.titre+' · '+adLabel+(state.exam?(' · Examen blanc '+(state.exam.idx+1)+'/'+state.exam.seq.length):'')+' ━━');
+  logRow('sys','━━ '+sc.titre+' · '+adLabel+' ━━');
   if(state.activeAd && !sc.noTerrain)
     logRow('sys','Piste '+state.rwy.id+' en service · Vent '+state.meteo.windDir+'°/'+state.meteo.windForce+'kt · QNH '+state.meteo.qnh
       +(sc.controllable ? ' · '+(ctrlOf(state.activeSide)?'Contrôlé':'Non contrôlé (AFIS)') : ''));
@@ -3848,35 +3832,7 @@ function showRecap(){
   });
   logRow('sys','━━ '+sc.titre+' : '+totalFound+' / '+totalAll+' ━━');
 
-  // C2 : examen blanc → cumul, enchaînement, récap final unique
-  if(state.exam){
-    state.exam.cumFound+=totalFound; state.exam.cumTotal+=totalAll;
-    missed.forEach(m=>state.exam.cumMissed.push(m));
-    state.exam.perScenario.push(sc.titre+' : '+totalFound+'/'+totalAll);
-    if(state.exam.idx < state.exam.seq.length-1){
-      state.exam.idx++;
-      launchScenario(state.exam.seq[state.exam.idx]);   // scénario suivant, journal continu
-      return;
-    }
-    const F=state.exam.cumFound, T=state.exam.cumTotal, per=state.exam.perScenario.slice();
-    const miss=[...new Set(state.exam.cumMissed)];
-    el.panel.classList.add('hidden');
-    el.recapList.innerHTML='';
-    per.forEach(t=>{ const li=document.createElement('li'); li.textContent=t; el.recapList.appendChild(li); });
-    el.scoreNum.innerHTML = F+' <small>/ '+T+' éléments corrects (examen blanc cumulé) — '
-      +tauxReussite(F,T)+'</small>';
-    el.recap.classList.remove('hidden');
-    el.recap.scrollIntoView({behavior:'smooth', block:'nearest'});
-    logRow('sys','━━ EXAMEN BLANC terminé : '+F+' / '+T+' — '+tauxReussite(F,T)+' ━━');
-    saveHistory({ date:new Date().toISOString(), scenario:'Examen blanc',
-      terrain: state.activeAd?state.activeAd.icao:'', piste:'', found:F, total:T,
-      missed:miss, mode:state.difficulty, exam:true });
-    state._lastRecapText = 'RadioTrainer — Examen blanc\n'+per.join('\n')+'\nTotal : '+F+' / '+T
-      +'\nÉléments manqués : '+(miss.join(', ')||'aucun')
-      +'\n(Outil pédagogique — données fictives — à valider avec un instructeur)';
-    state.exam=null;
-    return;
-  }
+
 
   // Récap normal
   el.panel.classList.add('hidden');
@@ -3895,13 +3851,6 @@ function showRecap(){
   state._lastRecapText = buildRecapText(sc, totalFound, totalAll, missed);
 }
 
-/* C2 : lance un examen blanc (4 scénarios, 3e tiré au sort navigation/intégration). */
-function startExamBlanc(){
-  if(!state.depAd && !state.arrAd){ showToast("Choisissez d'abord un aérodrome de départ."); return; }
-  const third = Math.random()<0.5 ? 4 /*navigation*/ : 2 /*intégration*/;
-  state.exam = { seq:[0,1,third,3], idx:0, cumFound:0, cumTotal:0, cumMissed:[], perScenario:[] };
-  launchScenario(state.exam.seq[0]);
-}
 function buildRecapText(sc, found, total, missed){
   const d=new Date();
   return 'RadioTrainer — Récap\n'
@@ -3950,12 +3899,10 @@ function computeBadges(h){
   const perfect = h.filter(e=>e.total>0 && e.found===e.total);
   const circuitPerfect = perfect.some(e=>/Tour de piste/i.test(e.scenario));
   const emergencyDone = h.some(e=>/Urgence/i.test(e.scenario));
-  const examPassed = h.some(e=>e.exam && e.total>0 && e.found/e.total>=0.8);
   return [
     { ic:ICONS.takeoff, t:"Premier tour de piste réussi", d:"Un tour de piste sans faute.", earned:circuitPerfect },
     { ic:ICONS.target, t:"5 scénarios sans faute", d:"5 scénarios à 100 %.", earned:perfect.length>=5 },
     { ic:ICONS.bell, t:"Sang-froid", d:"Une urgence traitée.", earned:emergencyDone },
-    { ic:ICONS.cap, t:"Examen blanc réussi", d:"Examen blanc ≥ 80 %.", earned:examPassed },
     { ic:ICONS.medal, t:"Vétéran", d:"20 sessions enregistrées.", earned:h.length>=20 }
   ];
 }
@@ -4002,11 +3949,10 @@ if(!RECO_OK){
 /* ============ ROUTEUR SPA + animations de navigation (n'affecte pas la logique métier ci-dessus) ============ */
 (function(){
   // Pages : vitrine (accueil), écrans d'auth (login/signup), et pages applicatives (dans la coquille).
-  var PAGES=['accueil','login','signup','exercices','examen','navigation','epellation','cours','progression','parametres','compte'];
-  var APP_PAGES=['exercices','examen','navigation','epellation','cours','progression','parametres','compte'];
+  var PAGES=['accueil','login','signup','exercices','navigation','epellation','cours','progression','parametres','compte'];
+  var APP_PAGES=['exercices','navigation','epellation','cours','progression','parametres','compte'];
   var pages={}; PAGES.forEach(function(p){pages[p]=document.getElementById('page-'+p);});
   var sideLinks=[].slice.call(document.querySelectorAll('.sidelink'));
-  var banner=document.getElementById('runningBanner');
   var sidebar=document.getElementById('sidebar');
 
   // État d'authentification : MOCK, uniquement en mémoire (pas de backend, pas de persistance,
@@ -4038,7 +3984,6 @@ if(!RECO_OK){
     setDrawer(false);
     PAGES.forEach(function(p){ if(pages[p]) pages[p].classList.toggle('active',p===name); });
     sideLinks.forEach(function(a){ a.classList.toggle('current',a.dataset.page===name); });
-    if(name!=='exercices' && banner) banner.classList.remove('show');
     if(push!==false && ('#'+name)!==location.hash){ try{history.pushState({p:name},'','#'+name);}catch(e){} }
     window.scrollTo(0,0);
     requestAnimationFrame(function(){ revealNow(pages[name]); });
@@ -4073,11 +4018,6 @@ if(!RECO_OK){
 
   window.addEventListener('popstate',function(){ showPage((location.hash||'#accueil').slice(1),false); });
   window.addEventListener('scroll',function(){ revealNow(); },{passive:true});
-
-  // Examen blanc : afficher le bandeau + router vers la vue Exercices
-  // (le bouton conserve par ailleurs son handler métier startExamBlanc défini plus haut).
-  var eb=document.getElementById('examBtn');
-  if(eb) eb.addEventListener('click',function(){ if(banner) banner.classList.add('show'); showPage('exercices'); });
 
   // Contrôles segmentés (pilule) : couche VISUELLE au-dessus des <select> existants.
   // Le <select> reste la source de vérité ; un clic met à jour sa valeur et déclenche
@@ -4744,6 +4684,13 @@ if(!RECO_OK){
                                      fillColor:'#3884c4',fillOpacity:.045};
     return {color:'#b03a3a',weight:1.1,opacity:.8,dashArray:'3 3',fillColor:'#c74a4a',fillOpacity:.06};
   }
+  /* Plancher/plafond lisibles : 0 est une valeur VALIDE (surface) — l'écrire « ? »
+     à cause d'un test de véracité JavaScript était une erreur d'affichage. */
+  function altTxt(v){
+    if(v===0) return 'SFC';
+    if(typeof v!=='number') return '?';
+    return v>=1000 ? v.toLocaleString('fr-FR') : String(v);
+  }
   function grpOf(t){ return (t==='CTR')?'ctr':((t==='TMA'||t==='CTA')?'tma':'rpd'); }
 
   // Couches visibles : les zones R/P/D sont masquées par défaut — les afficher toutes
@@ -4785,11 +4732,11 @@ if(!RECO_OK){
       onEachFeature:function(f,l){
         var p=f.properties;
         l.bindPopup('<b>'+esc(p.n)+'</b><br>'+p.t+(p.c?' — classe '+p.c:'')+
-          '<br><span class="pf">'+(p.lo||'?')+' → '+(p.up||'?')+' ft</span>');
+          '<br><span class="pf">'+altTxt(p.lo)+' → '+altTxt(p.up)+' ft</span>');
         // Étiquette façon carte aéronautique : nom + plancher/plafond, à partir du
         // zoom 9 seulement (au-delà, les libellés se chevauchent et brouillent la carte).
         if(z>=9 && l.getBounds){
-          l.bindTooltip(esc(p.n)+(p.c?' ('+p.c+')':'')+'<br>'+(p.up||'?')+' / '+(p.lo||'?'),
+          l.bindTooltip(esc(p.n)+(p.c?' ('+p.c+')':'')+'<br>'+altTxt(p.up)+' / '+altTxt(p.lo),
             {permanent:true, direction:'center', className:'nav-zlabel'});
         }
       }
@@ -4945,11 +4892,21 @@ if(!RECO_OK){
     var z=zonesOnRoute();
     if(!z.length){ box.innerHTML='<p class="nav-empty">Aucun espace contrôlé recensé à '+
       (ftOf(document.getElementById('navFl').value)||3500)+' ft sur cette route.</p>'; return; }
-    box.innerHTML=z.map(function(p){
+    /* Classe A : le VFR y est interdit (seul l'IFR y est admis). Si la route traverse
+       une telle zone à l'altitude choisie, on le signale — c'est une impossibilité
+       réglementaire, pas un simple détail de fréquence. */
+    var clA=z.filter(function(p){ return p.c==='A'; });
+    var avert='';
+    if(clA.length){
+      avert='<div class="nav-zonewarn"><b>Classe A traversée — vol VFR non autorisé.</b> '+
+        esc(clA.map(function(p){return p.n;}).slice(0,3).join(', '))+
+        (clA.length>3?'…':'')+'. En VFR, passez sous le plancher ou contournez.</div>';
+    }
+    box.innerHTML=avert+z.map(function(p){
       var cls=(p.t==='CTR')?'':(p.t==='TMA'||p.t==='CTA')?'z-tma':'z-rpd';
       var f=freqForZone(p);
       return '<div class="nav-zone '+cls+'"><b>'+esc(p.n)+'</b>'+
-        '<span class="zmeta">'+p.t+(p.c?' · classe '+p.c:'')+' · '+(p.lo||'?')+'→'+(p.up||'?')+' ft'+
+        '<span class="zmeta">'+p.t+(p.c?' · classe '+p.c:'')+' · '+altTxt(p.lo)+'→'+altTxt(p.up)+' ft'+
         (f?' · <span class="zfreq">'+f.mhz+'</span> ('+f.icao+')':'')+'</span></div>';
     }).join('');
   }
@@ -5125,22 +5082,71 @@ if(!RECO_OK){
   }
   /* Suite ordonnée des SIV traversés, sans doublon consécutif : c'est elle qui
      produit les changements de fréquence en route. */
-  function sivSurRoute(a,b){
-    // 1) échantillonnage : secteur le plus proche en chaque point
+  /* ---- Organisme responsable en un point donné ----
+     En espace CONTRÔLÉ (CTR, TMA, CTA de classe A à E), l'interlocuteur n'est pas le
+     SIV mais l'organisme dont dépend l'espace : la tour pour un CTR, l'approche pour
+     un TMA/CTA. Le SIV ne rend le service d'information qu'en espace non contrôlé.
+     C'est ce qui manquait : on annonçait « Beauvais Information » alors qu'on volait
+     dans le TMA de Paris, où il faut être avec l'approche et détenir une clairance. */
+  function espaceControle(lat,lon,altFt){
+    if(typeof NAV_AIRSPACE==='undefined') return null;
+    var best=null;
+    NAV_AIRSPACE.features.forEach(function(f){
+      var p=f.properties;
+      if(p.t!=='CTR' && p.t!=='TMA' && p.t!=='CTA') return;
+      if(!p.c) return;                                  // sans classe : on ignore
+      if(typeof p.lo==='number' && altFt<p.lo) return;
+      if(typeof p.up==='number' && altFt>p.up) return;
+      if(!inPoly(lon,lat,f.geometry)) return;
+      // Le plus contraignant l'emporte : CTR avant TMA, puis le plancher le plus haut
+      // (l'espace le plus « intérieur » à cette altitude).
+      var rang=(p.t==='CTR')?0:1;
+      if(!best || rang<best.rang || (rang===best.rang && (p.lo||0)>(best.p.lo||0)))
+        best={p:p, rang:rang};
+    });
+    return best?best.p:null;
+  }
+  /* Organisme (nom + fréquence) correspondant à un espace contrôlé. */
+  function organismeDe(p){
+    var a=p.ad?BY[p.ad]:null;
+    if(!a || !a.freq) return null;
+    if(p.t==='CTR'){
+      var f=a.freq.TWR||a.freq.AFIS||a.freq.APP;
+      if(!f) return null;
+      return {n:stnName(a, a.freq.TWR?'TWR':(a.freq.AFIS?'AFIS':'APP')), f:f, zone:p};
+    }
+    var g=a.freq.APP||a.freq.TWR;
+    if(!g) return null;
+    return {n:stnName(a, a.freq.APP?'APP':'TWR'), f:g, zone:p};
+  }
+  /* Interlocuteur à un point : espace contrôlé s'il y en a un, sinon SIV. */
+  function organismeEnRoute(lat,lon,altFt){
+    var z=espaceControle(lat,lon,altFt);
+    if(z){
+      var o=organismeDe(z);
+      if(o) return o;
+    }
+    var s=sivLePlusProche(lat,lon);
+    return {n:s.n, f:s.f, zone:null};
+  }
+
+  /* Suite ordonnée des interlocuteurs le long de la route, À L'ALTITUDE DE CROISIÈRE.
+     Chaque changement d'organisme donne un changement de fréquence ; l'entrée dans un
+     espace contrôlé donne en plus une demande de clairance. */
+  function sivSurRoute(a,b,altFt){
+    altFt = altFt || 3500;
     var brut=[];
     for(var i=0;i<=24;i++){
       var t=i/24;
-      brut.push(sivLePlusProche(a.lat+(b.lat-a.lat)*t, a.lon+(b.lon-a.lon)*t));
+      brut.push(organismeEnRoute(a.lat+(b.lat-a.lat)*t, a.lon+(b.lon-a.lon)*t, altFt));
     }
-    // 2) lissage : un secteur effleuré sur un seul échantillon est un artefact du
-    //    choix par centre (il produisait des zigzags du type Seine → Bâle → Seine).
-    //    On exige deux échantillons consécutifs pour retenir un changement.
+    // Lissage : un organisme effleuré sur un seul échantillon est un artefact.
     var out=[];
     for(var j=0;j<brut.length;j++){
       var s=brut[j];
       if(out.length && out[out.length-1].f===s.f) continue;
-      var suivant=brut[j+1];
-      if(suivant && suivant.f!==s.f && out.length) continue;   // passage furtif : ignoré
+      var suiv=brut[j+1];
+      if(suiv && suiv.f!==s.f && out.length) continue;
       out.push(s);
     }
     return out.length?out:[brut[0]];
@@ -5185,7 +5191,7 @@ if(!RECO_OK){
     /* Service d'information en route : suite des SIV réellement survolés, et non
        plus l'approche du terrain de départ (qui restait affichée sur tout le trajet,
        même sur 700 km — cf. Valenciennes → Agen). */
-    var chaineSiv = arr ? sivSurRoute(dep,arr) : [];
+    var chaineSiv = arr ? sivSurRoute(dep,arr,cruise) : [];
     var infoSrc=chaineSiv.length?chaineSiv[0]:null;
     var infoF=infoSrc?{k:'FIS',f:infoSrc.f}:null;
 
@@ -5372,6 +5378,31 @@ if(!RECO_OK){
                          {label:'Votre indicatif',ref:'callsign'} ],
               tuneTo:{stn:s.n, freq:s.f} });
             precSiv=s.n; precF=s.f;
+
+            /* Entrée dans un espace CONTRÔLÉ : une clairance est nécessaire.
+               Le manuel donne la formulation du transit VFR (p. 178). */
+            if(s.zone){
+              var cls=s.zone.c||'?';
+              push({ ph:'Clairance '+s.zone.t, src:'p. 178', stn:s.n, freq:s.f, leg:part+0.01,
+                reel:'Demandez la clairance de transit à '+s.n+'.',
+                consigne:'Vous entrez dans le '+s.zone.t+' '+s.zone.n+', classe '+cls+
+                         ' : demandez le transit — indicatif, altitude, votre route.',
+                attendu:s.n+', {CALL}, demande transit VFR, {ALT} pieds, de '+C.dep.nom+' à '+C.arr.nom+'.',
+                motsCles:[ {label:'Organisme appelé',variantes:stnVars(s.n,'APP')},
+                           {label:'Votre indicatif',ref:'callsign'},
+                           {label:'Demande de transit',variantes:['transit','demande transit','transit vfr','traversee']},
+                           {label:'Altitude',ref:'alt'} ],
+                atcAfter:'{CALL}, transitez '+s.zone.n+', maintenez {ALT} pieds.' });
+
+              push({ ph:'Collationnement clairance', src:'p. 178', stn:s.n, freq:s.f, leg:part+0.02,
+                reel:'Collationnez.',
+                consigne:'Collationnez la clairance : vous transitez et vous maintenez {ALT} pieds.',
+                attendu:'Je transite '+s.zone.n+', maintiens {ALT} pieds, {CALL}.',
+                motsCles:[ {label:'Je transite',variantes:['transite','je transite','transit']},
+                           {label:'Je maintiens',variantes:['maintiens','je maintiens','maintien']},
+                           {label:'Altitude',ref:'alt'},
+                           {label:'Votre indicatif',ref:'callsign'} ] });
+            }
           })(C.chaineSiv[si], si);
 
           /* Un aléa après chaque changement de secteur : c'est le rôle même du

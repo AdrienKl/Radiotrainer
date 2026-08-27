@@ -414,22 +414,6 @@
   .digit-card .fr{font-weight:600; font-size:15.5px; color:var(--ink)}
   .digit-card .en{font-size:12.5px; color:var(--ink-2)}
 
-  /* ---- Scope trafic (radar immersif, adapté du prototype au thème clair) ---- */
-  .scope-box{background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
-    padding:8px 10px 6px; box-shadow:var(--shadow-sm); width:172px}
-  .scope-box .scope-title{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
-    color:var(--ink-2); margin:0 2px 4px; display:flex; align-items:center; justify-content:space-between}
-  .scope-box .scope-title b{color:var(--violet); font-weight:700}
-  svg.scope{display:block; width:100%; height:auto}
-  svg.scope circle.ring{fill:none; stroke:var(--border); stroke-width:1; opacity:.7}
-  svg.scope line.cross{stroke:var(--border); stroke-width:1; opacity:.55}
-  svg.scope .sweep{transform-origin:75px 75px; animation:scopeSpin 4s linear infinite}
-  @keyframes scopeSpin{to{transform:rotate(360deg)}}
-  svg.scope .blip{fill:var(--ink-2); transition:cx .9s linear, cy .9s linear}
-  svg.scope .blip.own{fill:var(--violet)}
-  svg.scope .blip-label{font-family:var(--mono); font-size:7px; fill:var(--ink-2);
-    transition:x .9s linear, y .9s linear}
-  @media (prefers-reduced-motion: reduce){ svg.scope .sweep{animation:none} }
 
   /* ================= Flux connexion/inscription + coquille applicative (barre latérale) =================
      Restructuration visuelle uniquement ; la logique métier (scénarios, reco, etc.) est inchangée. */
@@ -920,6 +904,53 @@
     /* Étiquettes de zone : le halo blanc reste correct, la carte dessous est claire. */
     :root[data-theme="dark"] .badge.locked, :root[data-theme="dark"] .badge{ background:var(--surface-2); }
 
+  /* ================= Historique de vols ================= */
+  .nav-hist{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow-sm); margin:0 0 16px; overflow:hidden; }
+  .nav-hist-head{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:14px;
+    background:none; border:none; cursor:pointer; padding:14px 17px; text-align:left; font-family:var(--sans); }
+  .nav-hist-head:hover{ background:var(--surface-2); }
+  .nhh-l{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .nhh-t{ font-size:14px; font-weight:700; color:var(--ink); }
+  .nhh-s{ font-size:12.5px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nhh-r{ display:flex; align-items:center; gap:9px; flex:none; color:var(--ink-2); }
+  .nhh-n{ font-family:var(--mono); font-size:12px; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:var(--pill); padding:2px 9px; }
+  .nhh-chev{ width:17px; height:17px; transition:transform .18s; }
+  .nav-hist-head[aria-expanded="true"] .nhh-chev{ transform:rotate(180deg); }
+  .nav-hist-body{ border-top:1px solid var(--border); max-height:340px; overflow-y:auto; }
+  .nh-row{ display:flex; align-items:center; gap:12px; width:100%; background:none; border:none;
+    border-bottom:1px solid var(--surface-2); cursor:pointer; padding:11px 17px; text-align:left;
+    font-family:var(--sans); }
+  .nh-row:hover{ background:var(--surface-2); }
+  .nh-row:last-child{ border-bottom:none; }
+  .nh-vol{ font-family:var(--mono); font-size:13px; font-weight:700; color:var(--ink); flex:none; }
+  .nh-meta{ font-size:12px; color:var(--ink-2); flex:1; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nh-pct{ font-family:var(--mono); font-size:12.5px; font-weight:700; flex:none;
+    border-radius:var(--pill); padding:3px 10px; }
+  .nh-pct.bon{ background:rgba(46,158,91,.14); color:#1f6e40; }
+  .nh-pct.moy{ background:rgba(224,145,42,.16); color:#8a5a1d; }
+  .nh-pct.bas{ background:rgba(199,74,74,.14); color:#96332f; }
+  .nav-hist-detail{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; }
+  .nav-hist-detail h3{ font-family:var(--sans); font-size:19px; font-weight:800; color:var(--ink); margin:14px 0 12px; }
+  .nav-hist-actions{ display:flex; gap:9px; flex-wrap:wrap; margin:16px 0 0; }
+  .nav-hist-lignes{ margin-top:16px; border-top:1px solid var(--border); padding-top:14px;
+    display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; }
+  .nhl{ border-left:3px solid var(--border); padding:2px 0 2px 12px; }
+  .nhl.ko{ border-left-color:var(--bad); }
+  .nhl.ok{ border-left-color:var(--ok); }
+  .nhl-ph{ font-family:var(--mono); font-size:10.5px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-2); }
+  .nhl-att{ font-size:13.5px; color:var(--ink); margin-top:2px; line-height:1.5; }
+  .nhl-dit{ font-size:12.5px; color:var(--ink-2); margin-top:3px; font-family:var(--mono); }
+  .nhl-man{ font-size:12.5px; color:#96332f; margin-top:3px; }
+  :root[data-theme="dark"] .nhl-man{ color:#f3b4b0; }
+  :root[data-theme="dark"] .nh-pct.bon{ background:rgba(69,193,135,.16); color:#8fe3b8; }
+  :root[data-theme="dark"] .nh-pct.moy{ background:rgba(232,169,74,.16); color:#f0c99b; }
+  :root[data-theme="dark"] .nh-pct.bas{ background:rgba(224,100,95,.16); color:#f3b4b0; }
+
   /* ================= Optimisations mobile =================
      Regroupées ici, après toutes les règles de base, pour qu'elles gagnent sans
      recourir à !important. */
@@ -1175,19 +1206,6 @@
             <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end">
               <div class="terrain-toggle" id="terrainToggle"></div>
               <div class="meteo" id="meteo"></div>
-              <div class="scope-box" id="scopeBox" hidden>
-                <div class="scope-title"><span>Scope trafic</span><b id="scopeCount">0</b></div>
-                <svg class="scope" viewBox="0 0 150 150" aria-hidden="true">
-                  <circle class="ring" cx="75" cy="75" r="25"></circle>
-                  <circle class="ring" cx="75" cy="75" r="50"></circle>
-                  <circle class="ring" cx="75" cy="75" r="70"></circle>
-                  <line class="cross" x1="75" y1="4" x2="75" y2="146"></line>
-                  <line class="cross" x1="4" y1="75" x2="146" y2="75"></line>
-                  <g class="sweep"><line x1="75" y1="75" x2="75" y2="6" stroke="var(--violet)" stroke-width="1.4" opacity="0.5"></line></g>
-                  <circle class="blip own" cx="75" cy="75" r="3.2"></circle>
-                  <g id="blipsLayer"></g>
-                </svg>
-              </div>
             </div>
           </div>
 
@@ -1415,6 +1433,33 @@
               <div class="vf-log" id="vfLog" aria-live="polite"></div>
             </div>
           </div>
+        </div>
+
+        <!-- ============ HISTORIQUE DES VOLS ============
+             Carte repliée montrant le dernier vol ; au clic, la liste complète.
+             Chaque vol peut être rejoué à l'identique, et son détail consulté. -->
+        <div class="nav-hist" id="navHist" hidden>
+          <button class="nav-hist-head" id="navHistHead" type="button" aria-expanded="false">
+            <span class="nhh-l">
+              <span class="nhh-t">Historique de vols</span>
+              <span class="nhh-s" id="navHistLast">—</span>
+            </span>
+            <span class="nhh-r"><span class="nhh-n" id="navHistCount">0</span>
+              <svg class="ic-svg nhh-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+          </button>
+          <div class="nav-hist-body hidden" id="navHistBody"></div>
+        </div>
+
+        <!-- Détail d'un vol de l'historique -->
+        <div class="nav-hist-detail hidden" id="navHistDetail">
+          <button class="btn small" id="navHistBack" type="button">Retour à la liste</button>
+          <h3 id="navHistTitle">Vol</h3>
+          <div id="navHistScore"></div>
+          <div class="nav-hist-actions">
+            <button class="btn small cta" id="navHistRefaire" type="button">Refaire ce vol</button>
+            <button class="btn small" id="navHistErreurs" type="button">Voir les erreurs</button>
+          </div>
+          <div class="nav-hist-lignes hidden" id="navHistLignes"></div>
         </div>
 
         <!-- Débriefing de fin de vol -->
@@ -2519,6 +2564,8 @@ function aleaCap(){ const cap=Math.floor(Math.random()*36)*10; const c3=String(c
                {label:"Votre indicatif",ref:'callsign'} ] };
 }
 // Information de trafic (accusé de réception).
+/* Petit utilitaire conservé après le retrait du radar : il reste utilisé par les aléas. */
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 function aleaTrafic(){ const pos=pick(["à midi","à trois heures","à neuf heures","convergent"]); const d=randInt(3,10);
   return { stn:'tour', station:"{ADRM} {STN}",
     atc:"{CALL}, trafic "+pos+", "+d+" nautiques, même altitude.",
@@ -3471,63 +3518,6 @@ function maybeInsertAlea(sc){
   logRow('sys','Aléa : '+(labels[kind]||'imprévu')+'.');
 }
 
-/* =========================================================================
-   SCOPE TRAFIC (idée reprise du prototype, purement visuel/immersif)
-   Aucun impact sur la logique de phraséologie : décor animé pendant un scénario.
-   ========================================================================= */
-let traficState=[], traficInterval=null;
-function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-function genererTrafic(n){
-  const codes=["GABC","HPQR","JXYZ","GKLM","BTUV","HRST","FBGX","GDEF"];
-  const list=[];
-  for(let i=0;i<n;i++){
-    list.push({
-      id:"F-"+codes[randInt(0,codes.length-1)],
-      distance:randInt(2,11), angle:randInt(0,359),
-      vAngle:(Math.random()<0.5?-1:1)*randInt(2,6),
-      vDist:(Math.random()<0.5?-1:1)*0.35
-    });
-  }
-  return list;
-}
-function pasTrafic(){
-  traficState.forEach(a=>{
-    a.angle=(a.angle+a.vAngle+360)%360;
-    a.distance+=a.vDist;
-    if(a.distance<1.5 || a.distance>11.5) a.vDist*=-1;
-  });
-  renderScope();
-}
-function renderScope(){
-  const layer=document.getElementById('blipsLayer');
-  if(!layer) return;
-  layer.innerHTML = traficState.map(a=>{
-    const rad=a.angle*Math.PI/180;
-    const r=18+Math.min(a.distance*4.5,52);           // rayon écran (viewBox 150, centre 75)
-    const x=(75+r*Math.cos(rad)).toFixed(1);
-    const y=(75+r*Math.sin(rad)).toFixed(1);
-    return `<circle class="blip" cx="${x}" cy="${y}" r="2.2"></circle>`
-         + `<text class="blip-label" x="${(+x+3.5).toFixed(1)}" y="${(+y+2).toFixed(1)}">${a.id.slice(-3)}</text>`;
-  }).join('');
-}
-function startScope(){
-  stopScope();
-  // Densité selon la difficulté : plus dense en Réel. Pas de trafic pour un scénario sans terrain.
-  const sc=SCENARIOS[state.scenarioIndex];
-  const box=document.getElementById('scopeBox');
-  if(!box) return;
-  if(sc && sc.noTerrain){ box.hidden=true; return; }
-  const n=(state.difficulty==='reel') ? randInt(3,6) : randInt(1,3);
-  traficState=genererTrafic(n);
-  const cnt=document.getElementById('scopeCount'); if(cnt) cnt.textContent=n;
-  box.hidden=false;
-  renderScope();
-  traficInterval=setInterval(pasTrafic, 1400);
-}
-function stopScope(){
-  clearInterval(traficInterval); traficInterval=null;
-  const box=document.getElementById('scopeBox'); if(box) box.hidden=true;
-}
 
 function launchScenario(i){
   const sc=SCENARIOS[i];
@@ -3559,7 +3549,6 @@ function startWithTerrain(){
   maybeInsertAlea(sc);          // C3
   renderTerrainToggle();
   renderStep();
-  startScope();                 // décor radar animé (visuel uniquement)
 }
 
 function renderTerrainToggle(){
@@ -3943,7 +3932,6 @@ function tauxReussite(found,total){
 }
 function showRecap(){
   if(listening) stopListening();
-  stopScope();                  // fin du scénario : on arrête le radar
   const sc=SCENARIOS[state.scenarioIndex];
   // Score de CE scénario
   let totalFound=0, totalAll=0, num=0; const missed=[]; const lines=[];
@@ -4189,7 +4177,7 @@ if(!RECO_OK){
 <script>
 /* ============ Épellation radio + Catalogue de cours (module autonome).
    Réutilise NATO / AERODROMES / normalize / correctToken / ICONS du script principal,
-   sans toucher à sa logique. Scope et instance micro 100% indépendants de la section
+   sans toucher à sa logique. Instance micro 100% indépendante de la section
    « Exercices » (aucune variable/fonction/instance partagée). ============ */
 (function(){
   var $=function(id){return document.getElementById(id);};
@@ -5258,7 +5246,7 @@ if(!RECO_OK){
      des erreurs de reconnaissance, mcFound() pour la détection des mots-clés,
      speakATC() pour la voix du contrôleur, bindPushToTalk() pour le PTT. */
   var recap=document.getElementById('navRecap'), body=document.getElementById('navRecapBody');
-  var F={ steps:[], i:0, results:[], ctx:null, running:false, planeMk:null, animT:null };
+  var F={ steps:[], i:0, results:[], dits:[], attendus:[], ctx:null, running:false, planeMk:null, animT:null };
   var $v=function(id){ return document.getElementById(id); };
 
   /* ---- Services d'information de vol (SIV) ----
@@ -5844,7 +5832,7 @@ if(!RECO_OK){
       st.premierContact = (st.freq!==freqPrec);
       freqPrec = st.freq;
     });
-    F.steps=S; F.i=0; F.results=[];
+    F.steps=S; F.i=0; F.results=[]; F.dits=[]; F.attendus=[];
   }
 
   /* ================= ALÉAS MAJEURS EN VOL =================
@@ -6168,6 +6156,10 @@ if(!RECO_OK){
     // Débutant : la consigne détaille ce qu'il faut transmettre.
     // Réel : on indique seulement qui appeler — à vous de retrouver la formulation.
     $v('vfConsigne').textContent=fillDisplay((level==='reel'&&s.reel)?s.reel:s.consigne);
+    /* On fige ici la phrase attendue : elle dépend de state.callForm, qui change
+       d'un échange à l'autre. La calculer en fin de vol donnerait la mauvaise
+       forme d'indicatif pour tous les échanges. */
+    F.attendus[F.i]=fillDisplay(s.attendu||'');
   }
   function answer(raw){
     var s=F.steps[F.i]; if(!s) return;
@@ -6176,6 +6168,7 @@ if(!RECO_OK){
     vfLog('you',raw||'(rien entendu)');
     var res=s.motsCles.map(function(mc){ return {label:mc.label, found:mcFound(mc,corrected)}; });
     F.results[F.i]=res;
+    F.dits[F.i]=raw||'';        // conservé pour le détail de l'historique
     // Même moteur d'explications que les Scénarios (défini dans le bloc principal).
     rendreFeedback($v('vfFb'), s, res, corrected, 'fb');
     var ok=res.filter(function(r){return r.found;}).length;
@@ -6316,6 +6309,76 @@ if(!RECO_OK){
     renderStep();
   }
 
+  /* ---- Historique des vols ----
+     Stocké séparément de l'historique des scénarios (clé distincte) : la structure
+     diffère (route, aléa, détail des échanges). On garde les 40 derniers vols et,
+     pour chacun, le texte attendu et ce qui a été dit — c'est ce qui permet de
+     revoir ses erreurs après coup. */
+  var VOLS_KEY='rt-vols';
+  function chargerVols(){ try{ return JSON.parse(localStorage.getItem(VOLS_KEY)||'[]'); }catch(e){ return []; } }
+  function enregistrerVol(entree){
+    var v=chargerVols(); v.unshift(entree);
+    try{ localStorage.setItem(VOLS_KEY, JSON.stringify(v.slice(0,40))); }catch(e){}
+    majHistorique();
+  }
+  function pctClasse(p){ return p>=80?'bon':(p>=50?'moy':'bas'); }
+  function dateCourte(iso){
+    try{ var d=new Date(iso);
+      return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' '+
+             d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){ return ''; }
+  }
+  function majHistorique(){
+    var v=chargerVols(), box=$v('navHist');
+    if(!box) return;
+    if(!v.length){ box.hidden=true; return; }
+    box.hidden=false;
+    $v('navHistCount').textContent=v.length;
+    var d=v[0];
+    $v('navHistLast').textContent='Dernier : '+d.titre+' · '+d.pct+' % · '+dateCourte(d.date);
+    $v('navHistBody').innerHTML=v.map(function(e,i){
+      return '<button class="nh-row" type="button" data-vol="'+i+'">'+
+        '<span class="nh-vol">'+esc(e.titre)+'</span>'+
+        '<span class="nh-meta">'+dateCourte(e.date)+' · '+esc(e.avion||'')+
+          (e.alea?' · '+esc(e.alea):'')+'</span>'+
+        '<span class="nh-pct '+pctClasse(e.pct)+'">'+e.pct+' %</span></button>';
+    }).join('');
+    $v('navHistBody').querySelectorAll('[data-vol]').forEach(function(b){
+      b.addEventListener('click',function(){ ouvrirVol(parseInt(b.dataset.vol,10)); });
+    });
+  }
+  var volAffiche=null;
+  function ouvrirVol(i){
+    var v=chargerVols()[i]; if(!v) return;
+    volAffiche=v;
+    $v('navHistTitle').textContent=v.titre+' — '+dateCourte(v.date);
+    var manques=v.lignes.filter(function(l){ return l.manquants && l.manquants.length; }).length;
+    var repondus=v.lignes.filter(function(l){ return l.repondu; }).length;
+    $v('navHistScore').innerHTML='<dl>'+
+      '<dt>Score</dt><dd>'+v.ok+' / '+v.total+' éléments — <b>'+v.pct+' % de réussite</b></dd>'+
+      '<dt>Échanges</dt><dd>'+repondus+' répondu'+(repondus>1?'s':'')+' sur '+v.lignes.length+
+        (repondus?(manques?' — '+manques+' avec des oublis':' — aucun oubli'):'')+'</dd>'+
+      '<dt>Avion</dt><dd>'+esc(v.avion||'—')+'</dd>'+
+      '<dt>Altitude</dt><dd>'+(v.alt||'—')+' ft</dd>'+
+      (v.alea?'<dt>Imprévu</dt><dd>'+esc(v.alea)+'</dd>':'')+'</dl>';
+    $v('navHistLignes').classList.add('hidden');
+    $v('navHistErreurs').textContent='Voir les erreurs';
+    sec.querySelector('.nav-layout').classList.add('hidden');
+    sec.querySelector('.nav-mode').classList.add('hidden');
+    sec.querySelector('.nav-warn').classList.add('hidden');
+    $v('navHist').hidden=true;
+    $v('navHistDetail').classList.remove('hidden');
+    window.scrollTo(0,0);
+  }
+  function fermerVol(){
+    $v('navHistDetail').classList.add('hidden');
+    sec.querySelector('.nav-layout').classList.remove('hidden');
+    sec.querySelector('.nav-mode').classList.remove('hidden');
+    sec.querySelector('.nav-warn').classList.remove('hidden');
+    majHistorique();
+    if(map) setTimeout(function(){ map.invalidateSize(); },30);
+  }
+
   function endFlight(){
     F.running=false; setRecoSink(null); oublierVol();
     var tot=0, ok=0;
@@ -6342,6 +6405,29 @@ if(!RECO_OK){
     if(mk.length) rows.push(['À retravailler','<span class="rz">'+mk.map(function(k){return esc(k)+' ('+manques[k]+')';}).join(' · ')+'</span>']);
     $v('navRecapTitle').textContent='Débriefing du vol';
     body.innerHTML='<dl>'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>';}).join('')+'</dl>';
+    /* Trace du vol : on garde, pour chaque échange, la phrase attendue, ce qui a été
+       dit et les éléments manqués — de quoi revoir ses erreurs plus tard. */
+    var lignes=F.steps.map(function(st,i){
+      var r=F.results[i];
+      return { ph:st.ph, stn:st.stn, freq:st.freq,
+               attendu:F.attendus[i]||fillDisplay(st.attendu||''),
+               dit:F.dits[i]||'',
+               manquants:(r||[]).filter(function(x){return !x.found;}).map(function(x){return x.label;}),
+               repondu:!!r };
+    });
+    var LIBH={moteur:'panne moteur (MAYDAY)', fumee:'fumée en cabine (MAYDAY)',
+              malaise:'passager malade (PAN PAN)', cap:'changement de cap imposé',
+              radio:'panne radio', ferme:'terrain d\'arrivée fermé'};
+    enregistrerVol({
+      date:new Date().toISOString(),
+      titre: C.arr ? (C.dep.icao+' → '+(C.arrReelle?C.arrReelle.icao:C.arr.icao)) : (C.dep.icao+' — vol local'),
+      dep:C.dep.icao, arr:C.arr?C.arr.icao:null, deg:sel.alt||null,
+      mode:mode, level:level, avion:C.ac, acftNom:C.ac,
+      alt:C.cruise, pax:C.pax,
+      ok:ok, total:tot, pct:pct,
+      alea: C.alea ? (LIBH[C.alea]||C.aleaNom||C.alea) : null,
+      lignes:lignes
+    });
     $v('navFlight').classList.add('hidden');
     recap.classList.remove('hidden');
     restoreMap();
@@ -6445,6 +6531,52 @@ if(!RECO_OK){
       (a?' → '+a.icao:' (vol local)')+' — repris à l’échange '+(v.i+1)+'.';
     box.classList.remove('hidden');
   }
+  /* ---- Interactions de l'historique ---- */
+  $v('navHistHead').addEventListener('click',function(){
+    var b=$v('navHistBody'), ouvert=!b.classList.contains('hidden');
+    b.classList.toggle('hidden', ouvert);
+    $v('navHistHead').setAttribute('aria-expanded', ouvert?'false':'true');
+  });
+  $v('navHistBack').addEventListener('click',fermerVol);
+  $v('navHistErreurs').addEventListener('click',function(){
+    var box=$v('navHistLignes'), cache=box.classList.contains('hidden');
+    if(cache && volAffiche){
+      box.innerHTML=volAffiche.lignes.map(function(l){
+        var ko=l.manquants && l.manquants.length;
+        return '<div class="nhl '+(l.repondu?(ko?'ko':'ok'):'')+'">'+
+          '<div class="nhl-ph">'+esc(l.ph)+(l.stn?' · '+esc(l.stn):'')+(l.freq?' · '+fq(l.freq):'')+'</div>'+
+          '<div class="nhl-att">Attendu : '+esc(l.attendu||'—')+'</div>'+
+          (l.repondu
+            ? '<div class="nhl-dit">Vous : '+esc(l.dit||'(rien entendu)')+'</div>'+
+              (ko?'<div class="nhl-man">Manquant : '+esc(l.manquants.join(', '))+'</div>':'')
+            : '<div class="nhl-dit">Échange passé</div>')+
+          '</div>';
+      }).join('');
+    }
+    box.classList.toggle('hidden', !cache);
+    $v('navHistErreurs').textContent = cache ? 'Masquer le détail' : 'Voir les erreurs';
+  });
+  /* Refaire un vol : on réinjecte sa configuration puis on démarre. Les tirages au sort
+     (météo, aléa) sont refaits — c'est le même vol, pas la même partie. */
+  $v('navHistRefaire').addEventListener('click',function(){
+    var v=volAffiche; if(!v) return;
+    fermerVol();
+    IN.dep.value=v.dep; sel.dep=v.dep;
+    if(v.arr){ IN.arr.value=v.arr; sel.arr=v.arr; } else { IN.arr.value=''; sel.arr=null; }
+    if(v.deg){ IN.alt.value=v.deg; sel.alt=v.deg; } else { IN.alt.value=''; sel.alt=null; }
+    mode=v.mode||'voyage';
+    sec.querySelectorAll('[data-volmode]').forEach(function(b){ b.classList.toggle('active',b.dataset.volmode===mode); });
+    document.body.classList.toggle('volmode-local',mode==='local');
+    level=v.level||'debutant';
+    sec.querySelectorAll('[data-diff]').forEach(function(b){ b.classList.toggle('active',b.dataset.diff===level); });
+    var m=AIRCRAFT.filter(function(a){ return a.nom===v.acftNom; })[0];
+    if(m){ acChoice=m; acInput.value=m.nom; acInput.classList.remove('champ-requis'); }
+    if(v.alt) $v('navFl').value=v.alt;
+    if(v.pax) $v('navPax').value=v.pax;
+    redraw();
+    startFlight();
+  });
+
   $v('navResumeGo').addEventListener('click',function(){
     var v=volSauvegarde(); if(v){ $v('navResume').classList.add('hidden'); reprendreVol(v); }
   });
@@ -6455,6 +6587,7 @@ if(!RECO_OK){
   window.addEventListener('rt:page',function(e){
     if(e.detail.page!=='navigation') return;
     majReprise();
+    majHistorique();
     initMap();
     setTimeout(function(){ map.invalidateSize(); if(!sel.dep) setTarget('dep'); },30);
   });

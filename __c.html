@@ -2296,32 +2296,9 @@ const REF_WORDS = [
   'entre','entrons','sortie','circuit','quittons','estime','estimons','indicatif',
   'altitude','niveau','descends','descendons','monte','montons','virage','tour',
   'travers','mi','longue','courte','dernier','avant','apres','prets','stationnement',
-  'club','avion','machine','bimoteur','monomoteur','ulm','planeur','remorquage',
-  /* Mots outils absents du lexique : le correcteur les transformait en un voisin
-     à une lettre (« roule »→« route », « dans »→« sans »), ce qui faisait échouer
-     un collationnement pourtant exact. */
-  'roule','roules','dans','sans','avec','sur','sous','vers','depuis','jusqu',
-  'entre','entrez','entrons','puis','entendu','copie','affirme','negatif',
-  /* Mots trouvés par le balayage des phrases de référence : sans eux le correcteur
-     les transformait en un voisin à une lettre — « vous »→« sous », « ident »→« cent »,
-     « pas »→« par », « déroute »→« route », « attendez »→« attente ». */
-  'vous','nous','ident','pas','visuel','visuelle','deroute','deroutement','deroutons',
-  'attendez','attendons','recois','recoit','recevez','clair','fort','stationne'
+  'club','avion','machine','bimoteur','monomoteur','ulm','planeur','remorquage'
 ];
 const REF_SET = new Set(REF_WORDS);
-/* Noms propres protégés. Sans cela le correcteur flou transforme un nom de terrain
-   ou d'organisme en mot du lexique à une lettre près : « Lille » devenait « mille »,
-   et le collationnement « Lille Approche 120,275 » était compté faux alors qu'il
-   était exact. On les ajoute au vocabulaire de référence dès qu'AERODROMES est
-   disponible (plus bas dans ce même script). */
-function protegerNomsPropres(){
-  if(typeof AERODROMES==='undefined') return;
-  AERODROMES.forEach(function(a){
-    normalize(a.nom).split(' ').forEach(function(w){ if(w.length>=3) REF_SET.add(w); });
-    REF_SET.add(normalize(a.icao));
-  });
-}
-protegerNomsPropres();   // appelé ICI : REF_SET vient d'être créé (zone morte sinon)
 
 /* Erreurs de transcription fréquentes (section D3) : correspondances connues du moteur
    de reconnaissance vocale FR, corrigées en priorité (clés déjà normalisées, sans accents). */
@@ -6845,5 +6822,35 @@ if(!RECO_OK){
 })();
 </script>
 
-</body>
+<script>
+var G=function(i){return document.getElementById(i);};
+var wait=function(ms){return new Promise(r=>setTimeout(r,ms));};
+window.addEventListener('DOMContentLoaded',function(){setTimeout(async function(){
+  localStorage.clear();
+  G('loginSubmit').click(); document.querySelector('[data-page="navigation"]').click();
+  await wait(2500);
+  async function vol(dep,arr,bon){
+    G('navDep').value=dep;G('navDep').dispatchEvent(new Event('change'));
+    G('navArr').value=arr;G('navArr').dispatchEvent(new Event('change'));
+    var ac=G('navAcft'); ac.value=''; ac.focus(); ac.value='Cessna 172'; ac.dispatchEvent(new Event('input'));
+    await wait(40);
+    var it=document.querySelector('#navAcftList .ac-item'); if(it) it.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+    G('navStart').click(); await wait(180);
+    var g=0;
+    while(!G('navFlight').classList.contains('hidden')&&g++<90){
+      G('vfHint').click(); await wait(12);
+      var t=G('vfAtc').textContent.replace('Exemple attendu : ','').replace(/\(p\..*/,'').trim();
+      if(!bon && g%2===0) t=t.split(' ').slice(0,3).join(' ');
+      G('vfTransText').value=t; G('vfTransText').dispatchEvent(new Event('input'));
+      if(!G('vfValider').disabled) G('vfValider').click();
+      await wait(18); G('vfNext').click(); await wait(12);
+    }
+    G('navBack').click(); await wait(50);
+  }
+  await vol('LFPT','LFAY',false);
+  G('navHistHead').click(); await wait(80);
+  document.querySelectorAll('.nh-row')[0].click(); await wait(80);
+  G('navHistErreurs').click();
+},400);});
+</script></body>
 </html>

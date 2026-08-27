@@ -5833,6 +5833,8 @@ if(!RECO_OK){
                  {label:'Votre indicatif',ref:'callsign'} ],
       atcAfter:'{CALL}, roulez parking aviation générale.' });
 
+    insererAleaMajeur(S, C);
+
     /* Premier échange sur une fréquence = indicatif COMPLET ; ensuite forme abrégée
        (manuel DSNA p. 18). On marque les étapes après coup : le changement de
        fréquence lui-même est un collationnement, donc encore en forme abrégée —
@@ -5843,6 +5845,116 @@ if(!RECO_OK){
       freqPrec = st.freq;
     });
     F.steps=S; F.i=0; F.results=[];
+  }
+
+  /* ================= ALÉAS MAJEURS EN VOL =================
+     Événements qui CHANGENT le déroulé, contrairement aux aléas d'information :
+     urgences, guidage imposé, terrain d'arrivée fermé (déroutement).
+
+     Sources : structure MAYDAY / PAN PAN du manuel DSNA (p. 238 — organisme,
+     identification, nature, intentions, position), guidage et modification de cap
+     (p. 191 et 195), information sur l'état des aérodromes (p. 208).
+     Le manuel ne donne AUCUNE formulation de déroutement : celle-ci est construite
+     sur la rubrique « intentions du commandant de bord », qui est bien du manuel,
+     mais la phrase exacte n'y figure pas. */
+  function aleaUrgenceVol(kind, stn, freq, leg){
+    var M={ moteur:{g:'MAYDAY', cause:'panne moteur'},
+            fumee:{g:'MAYDAY', cause:'fumée en cabine'},
+            malaise:{g:'PAN PAN', cause:'passager malade'} };
+    var e=M[kind], g=e.g, gl=g.toLowerCase();
+    var rep=(g==='MAYDAY') ? g+' '+g+' '+g : g+' '+g+' '+g;
+    return [
+      { ph:g==='MAYDAY'?'Détresse':'Urgence', src:'p. 238', stn:stn, freq:freq, leg:leg, majeur:true,
+        situation:'Aléa en vol : '+e.cause+'.',
+        reel:'Transmettez votre message de détresse.',
+        consigne:g+' répété trois fois, organisme, votre indicatif, nature du problème, vos intentions.',
+        attendu:rep+', '+stn+', {CALL}, '+e.cause+', demande assistance, je me déroute.',
+        motsCles:[ {label:'Appel ('+g+' ×3)',variantes:[gl+' '+gl+' '+gl, gl]},
+                   {label:'Votre indicatif',ref:'callsign'},
+                   {label:'Nature du problème',variantes:e.cause.split(' ').filter(function(w){return w.length>3;})},
+                   {label:'Vos intentions',variantes:['assistance','je me pose','pose','deroute','deroutement','atterrissage','descends','priorite']} ],
+        atcAfter: g==='MAYDAY'
+          ? '{CALL}, '+g+' reçu, transpondeur 7700, vous êtes prioritaire.'
+          : '{CALL}, '+g+' reçu, maintenez l\'écoute.' },
+      { ph:'Collationnement '+(g==='MAYDAY'?'détresse':'urgence'), src:'p. 238', stn:stn, freq:freq, leg:leg, majeur:true,
+        reel:'Collationnez.',
+        consigne: g==='MAYDAY' ? 'Collationnez le transpondeur.' : 'Accusez réception.',
+        attendu: g==='MAYDAY' ? 'Transpondeur 7700, {CALL}.' : 'Roger, {CALL}.',
+        motsCles: g==='MAYDAY'
+          ? [ {label:'Transpondeur 7700',variantes:['7700','transpondeur 7700','sept sept zero zero','squawk 7700','affiche 7700']},
+              {label:'Votre indicatif',ref:'callsign'} ]
+          : [ {label:'Accusé de réception',variantes:['roger','recu','bien recu','wilco']},
+              {label:'Votre indicatif',ref:'callsign'} ] }
+    ];
+  }
+  function aleaCapVol(stn, freq, leg){
+    var cap=Math.floor(Math.random()*36)*10, c3=String(cap).padStart(3,'0');
+    var cote=Math.random()<0.5?'droite':'gauche';
+    return [{ ph:'Changement de cap', src:'p. 195', stn:stn, freq:freq, leg:leg, majeur:true,
+      atcBefore:'{CALL}, pour espacement, tournez à '+cote+' cap '+c3+'.',
+      reel:'Collationnez le nouveau cap.',
+      consigne:'Collationnez : le sens du virage, puis le cap.',
+      attendu:'À '+cote+' cap '+c3+', {CALL}.',
+      motsCles:[ {label:'Sens du virage',variantes:['a '+cote, 'par la '+cote, cote]},
+                 {label:'Cap',variantes:['cap','au cap']},
+                 {label:'Valeur de cap',variantes:numVariants(c3)},
+                 {label:'Votre indicatif',ref:'callsign'} ] }];
+  }
+  function aleaRadioVol(stn, freq, leg){
+    return [{ ph:'Panne radio', src:'p. 246-248', stn:stn, freq:freq, leg:leg, majeur:true,
+      atcBefore:'{CALL}, '+stn+', me recevez-vous ? Si vous me recevez, transpondeur ident.',
+      reel:'Répondez si vous entendez.',
+      consigne:'Vous entendez le contrôleur : répondez et confirmez que vous affichez ident.',
+      attendu:'{CALL}, je vous reçois, transpondeur ident.',
+      motsCles:[ {label:'Votre indicatif',ref:'callsign'},
+                 {label:'Réception',variantes:['je vous recois','recois','recu','fort et clair','cinq sur cinq']},
+                 {label:'Transpondeur ident',variantes:['ident','transpondeur ident','affiche ident','squawk ident']} ] }];
+  }
+  function aleaTerrainFerme(stn, freq, leg, arr, deroute){
+    return [{ ph:'Terrain fermé', src:'p. 208', stn:stn, freq:freq, leg:leg, majeur:true, deroute:deroute,
+      atcBefore:'{CALL}, information : '+arr.nom+' est fermé, piste inutilisable.',
+      reel:'Annoncez votre déroutement.',
+      consigne:'Le terrain d\'arrivée est fermé : annoncez que vous vous déroutez vers '+deroute.nom+'.',
+      attendu:'Roger, je me déroute vers '+deroute.nom+', {CALL}.',
+      motsCles:[ {label:'Accusé de réception',variantes:['roger','recu','bien recu','copie']},
+                 {label:'Déroutement',variantes:['deroute','deroutement','je me deroute','divert','detourne']},
+                 {label:'Nouveau terrain',variantes:destVars(deroute)},
+                 {label:'Votre indicatif',ref:'callsign'} ] }];
+  }
+
+  /* Insère AU PLUS un aléa majeur par vol, avant la phase d'arrivée.
+     Probabilité plus forte en mode Réel, comme dans les scénarios. */
+  function insererAleaMajeur(S, C){
+    if(!C.arr) return;                                  // vol local : pas de déroutement
+    var proba = (level==='reel') ? 0.6 : 0.25;
+    if(Math.random() >= proba) return;
+    // Point d'insertion : juste avant l'intégration.
+    var idx=-1;
+    for(var i=0;i<S.length;i++) if(S[i].ph==='Intégration'){ idx=i; break; }
+    if(idx<1) return;
+    var ref=S[idx-1], stn=ref.stn, freq=ref.freq, leg=Math.min(0.75,(ref.leg||0.6)+0.01);
+    var choix=['moteur','fumee','malaise','cap','radio'];
+    // Le déroutement n'a de sens que si un terrain de dégagement a été choisi.
+    var alt = sel.alt && BY[sel.alt] ? BY[sel.alt] : null;
+    if(alt) choix.push('ferme','ferme');                // un peu plus probable : c'est le cas demandé
+    var kind=choix[Math.floor(Math.random()*choix.length)];
+    var bloc;
+    if(kind==='cap')        bloc=aleaCapVol(stn,freq,leg);
+    else if(kind==='radio') bloc=aleaRadioVol(stn,freq,leg);
+    else if(kind==='ferme') bloc=aleaTerrainFerme(stn,freq,leg,C.arr,alt);
+    else                    bloc=aleaUrgenceVol(kind,stn,freq,leg);
+    S.splice.apply(S,[idx,0].concat(bloc));
+    C.alea=kind;
+    /* Terrain fermé : les échanges d'arrivée doivent viser le terrain de déroutement,
+       sinon on continuerait à parler au terrain qu'on vient de renoncer à rejoindre. */
+    if(kind==='ferme' && alt){
+      var nf=freqOf(alt,['TWR','AFIS','APP','A/A','UNIC','CTAF']);
+      var nstn=nf?stnName(alt,nf.k):alt.nom+' auto-information';
+      for(var j=idx+bloc.length;j<S.length;j++){
+        S[j].stn=nstn; S[j].freq=nf?nf.f:null;
+      }
+      C.arrReelle=alt;
+    }
   }
 
   // Variantes de reconnaissance pour un nom d'organisme / une fréquence / une destination.
@@ -6067,13 +6179,20 @@ if(!RECO_OK){
     F.results.forEach(function(r){ if(r) r.forEach(function(x){ if(!x.found) manques[x.label]=(manques[x.label]||0)+1; }); });
     var mk=Object.keys(manques).sort(function(a,b){return manques[b]-manques[a];}).slice(0,6);
     var C=F.ctx;
-    var rows=[['Vol', C.arr?(C.dep.icao+' → '+C.arr.icao):(C.dep.icao+' — vol local')],
+    var rows=[['Vol', C.arr?(C.dep.icao+' → '+(C.arrReelle?C.arrReelle.icao:C.arr.icao)):(C.dep.icao+' — vol local')],
               ['Échanges', F.results.filter(Boolean).length+' / '+F.steps.length],
               ['Score', tot?(ok+' / '+tot+' éléments — <b>'+pct+' % de réussite</b>'):'—'],
               ['Altitude', C.cruise+' ft'+(C.altDemandee&&C.altDemandee!==C.cruise
                   ? ' <span class="rz">(demandé '+C.altDemandee+' ft — ajusté pour éviter la classe A)</span>':'')],
               ['Avion', esc(C.ac)]];
     if(C.via) rows.push(['Route','<span class="rz">décalée pour contourner un espace de classe A</span>']);
+    // Trace de l'imprévu rencontré : c'est souvent ce qu'on retient d'un vol.
+    var LIB={moteur:'panne moteur (MAYDAY)', fumee:'fumée en cabine (MAYDAY)',
+             malaise:'passager malade (PAN PAN)', cap:'changement de cap imposé',
+             radio:'panne radio', ferme:'terrain d\'arrivée fermé'};
+    if(C.alea) rows.push(['Imprévu','<span class="rz">'+esc(LIB[C.alea]||C.alea)+'</span>']);
+    if(C.arrReelle) rows.push(['Déroutement','<span class="rz">arrivée reportée sur '+
+        esc(C.arrReelle.icao+' — '+C.arrReelle.nom)+'</span>']);
     if(mk.length) rows.push(['À retravailler','<span class="rz">'+mk.map(function(k){return esc(k)+' ('+manques[k]+')';}).join(' · ')+'</span>']);
     $v('navRecapTitle').textContent='Débriefing du vol';
     body.innerHTML='<dl>'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>';}).join('')+'</dl>';

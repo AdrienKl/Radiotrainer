@@ -620,8 +620,12 @@
   .nav-adpop .pf{ font-family:var(--mono); font-size:11.5px; color:var(--violet-dark); }
   .nav-adpop button{ margin-top:7px; cursor:pointer; background:var(--violet); color:#fff; border:none;
     border-radius:8px; padding:5px 10px; font-family:var(--sans); font-size:12px; font-weight:600; }
-  .nav-admark{ background:var(--violet); border:2px solid #fff; border-radius:50%;
-    box-shadow:0 1px 4px rgba(0,0,0,.4); }
+  /* Zone de clic large et transparente ; la pastille visible est centrée dedans. */
+  .nav-adhit{ display:flex; align-items:center; justify-content:center; background:none; border:none;
+    cursor:pointer; }
+  .nav-adhit:hover .nav-admark{ transform:scale(1.55); box-shadow:0 0 0 4px rgba(91,75,206,.22),0 1px 4px rgba(0,0,0,.4); }
+  .nav-admark{ display:block; background:var(--violet); border:2px solid #fff; border-radius:50%;
+    box-shadow:0 1px 4px rgba(0,0,0,.4); transition:transform .12s, box-shadow .12s; }
   .nav-admark.sel-dep{ background:#2e9e5b; }
   .nav-admark.sel-arr{ background:#d9534f; }
   .nav-admark.sel-alt{ background:#e0a13a; }
@@ -904,6 +908,54 @@
     /* Étiquettes de zone : le halo blanc reste correct, la carte dessous est claire. */
     :root[data-theme="dark"] .badge.locked, :root[data-theme="dark"] .badge{ background:var(--surface-2); }
 
+  /* ================= Accueil (tableau de bord) ================= */
+  .tb-stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));
+    gap:12px; margin-bottom:18px; }
+  .tb-stat{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 18px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:3px; }
+  .tb-stat b{ font-family:var(--mono); font-size:26px; font-weight:700; color:var(--ink); line-height:1.05; }
+  .tb-stat b i{ font-style:normal; font-size:15px; color:var(--ink-2); font-weight:400; }
+  .tb-stat span{ font-size:12px; color:var(--ink-2); }
+  .tb-stat .tb-ic{ color:var(--violet); margin-bottom:4px; }
+  .tb-stat .tb-ic .ic-svg{ width:18px; height:18px; }
+
+  .tb-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));
+    gap:16px; margin-bottom:16px; }
+  .tb-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px 20px; box-shadow:var(--shadow-sm); }
+  .tb-card.tb-wide{ margin-bottom:16px; }
+  .tb-card h3{ font-family:var(--sans); font-size:15px; font-weight:800; color:var(--ink); margin:0 0 12px; }
+  .tb-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+  .tb-head h3{ margin:0; }
+  .tb-note{ font-size:12.5px; color:var(--ink-2); margin:10px 0 0; line-height:1.5; }
+
+  /* Quota : jauge simple, lisible d'un coup d'œil. */
+  .tb-quota{ display:flex; align-items:center; gap:12px; }
+  .tb-jauge{ flex:1; height:10px; background:var(--surface-2); border-radius:5px; overflow:hidden;
+    border:1px solid var(--border); }
+  .tb-jauge i{ display:block; height:100%; background:var(--violet); border-radius:5px; }
+  .tb-jauge i.plein{ background:var(--warn); }
+  .tb-qn{ font-family:var(--mono); font-size:15px; font-weight:700; color:var(--ink); flex:none; }
+  .tb-qn small{ font-size:12px; color:var(--ink-2); font-weight:400; }
+
+  .tb-vide{ font-size:13px; color:var(--ink-2); }
+  .tb-ligne{ display:flex; align-items:center; gap:12px; padding:10px 0;
+    border-bottom:1px solid var(--surface-2); }
+  .tb-ligne:last-child{ border-bottom:none; padding-bottom:0; }
+  .tb-l1{ font-family:var(--mono); font-size:13px; font-weight:700; color:var(--ink); flex:none; }
+  .tb-l2{ font-size:12.5px; color:var(--ink-2); flex:1; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tb-l3{ font-family:var(--mono); font-size:12.5px; font-weight:700; flex:none;
+    border-radius:var(--pill); padding:3px 10px; }
+  .tb-l3.bon{ background:rgba(46,158,91,.14); color:#1f6e40; }
+  .tb-l3.moy{ background:rgba(224,145,42,.16); color:#8a5a1d; }
+  .tb-l3.bas{ background:rgba(199,74,74,.14); color:#96332f; }
+  :root[data-theme="dark"] .tb-l3.bon{ background:rgba(69,193,135,.16); color:#8fe3b8; }
+  :root[data-theme="dark"] .tb-l3.moy{ background:rgba(232,169,74,.16); color:#f0c99b; }
+  :root[data-theme="dark"] .tb-l3.bas{ background:rgba(224,100,95,.16); color:#f3b4b0; }
+  .tb-repr{ display:flex; flex-direction:column; gap:10px; }
+  .tb-repr .btn{ width:100%; }
+
   /* ================= Historique de vols ================= */
   .nav-hist{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     box-shadow:var(--shadow-sm); margin:0 0 16px; overflow:hidden; }
@@ -1066,6 +1118,7 @@
   <aside class="sidebar" id="sidebar" aria-label="Navigation">
     <div class="side-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>RadioTrainer</span></div>
     <nav class="side-nav">
+      <button class="sidelink" type="button" data-page="tableau"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="1.5"/></svg><span>Accueil</span></button>
       <button class="sidelink" type="button" data-page="exercices"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg><span>Scénarios</span></button>
       <button class="sidelink" type="button" data-page="navigation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5.5-5.5 2 2-5.5 5.5-2z" fill="currentColor" stroke="none"/></svg><span>Navigation</span></button>
       <button class="sidelink" type="button" data-page="epellation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6M12 4v16"/></svg><span>Épellation</span></button>
@@ -1164,6 +1217,45 @@
           </div>
           <button class="btn cta auth-submit" id="signupSubmit" type="button">S'inscrire</button>
           <p class="auth-switch">Déjà un compte ? <button class="auth-link" type="button" data-page="login">Se connecter</button></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== ACCUEIL (tableau de bord) ==================== -->
+    <section id="page-tableau" class="page">
+      <div class="container">
+        <h2 class="section-title" id="tbTitre">Bonjour</h2>
+        <p class="section-sub" id="tbSub">Votre progression et vos derniers vols.</p>
+
+        <div class="tb-stats" id="tbStats"></div>
+
+        <div class="tb-grid">
+          <div class="tb-card">
+            <h3>Quota du jour</h3>
+            <div class="tb-quota" id="tbQuota"></div>
+            <p class="tb-note" id="tbQuotaNote"></p>
+          </div>
+
+          <div class="tb-card">
+            <h3>Reprendre</h3>
+            <div id="tbReprendre"></div>
+          </div>
+        </div>
+
+        <div class="tb-card tb-wide">
+          <div class="tb-head">
+            <h3>Derniers vols</h3>
+            <button class="btn small" id="tbVoirTout" type="button">Voir tout</button>
+          </div>
+          <div id="tbVols"></div>
+        </div>
+
+        <div class="tb-card tb-wide">
+          <div class="tb-head">
+            <h3>Dernières sessions de scénarios</h3>
+            <button class="btn small" id="tbVoirProg" type="button">Progression</button>
+          </div>
+          <div id="tbSessions"></div>
         </div>
       </div>
     </section>
@@ -4133,8 +4225,8 @@ if(!RECO_OK){
 /* ============ ROUTEUR SPA + animations de navigation (n'affecte pas la logique métier ci-dessus) ============ */
 (function(){
   // Pages : vitrine (accueil), écrans d'auth (login/signup), et pages applicatives (dans la coquille).
-  var PAGES=['accueil','login','signup','exercices','navigation','epellation','cours','progression','parametres','compte'];
-  var APP_PAGES=['exercices','navigation','epellation','cours','progression','parametres','compte'];
+  var PAGES=['accueil','login','signup','tableau','exercices','navigation','epellation','cours','progression','parametres','compte'];
+  var APP_PAGES=['tableau','exercices','navigation','epellation','cours','progression','parametres','compte'];
   var pages={}; PAGES.forEach(function(p){pages[p]=document.getElementById('page-'+p);});
   var sideLinks=[].slice.call(document.querySelectorAll('.sidelink'));
   var sidebar=document.getElementById('sidebar');
@@ -4190,7 +4282,7 @@ if(!RECO_OK){
     });
   });
   // Validation MOCK connexion/inscription : aucune vérification, on entre dans l'application.
-  function enterApp(){ authed=true; var t=pendingTarget||'exercices'; pendingTarget=null; showPage(t); }
+  function enterApp(){ authed=true; var t=pendingTarget||'tableau'; pendingTarget=null; showPage(t); }
   var loginSubmit=document.getElementById('loginSubmit'); if(loginSubmit) loginSubmit.addEventListener('click',enterApp);
   var signupSubmit=document.getElementById('signupSubmit'); if(signupSubmit) signupSubmit.addEventListener('click',enterApp);
   // Déconnexion : retour à la vitrine (utile pour re-tester le flux).
@@ -4841,11 +4933,15 @@ if(!RECO_OK){
       });
     });
   }
+  /* Marqueur : petite pastille VISIBLE au centre d'une zone cliquable BEAUCOUP plus
+     large (28 px). Viser un point de 8 px à la souris — et plus encore au doigt —
+     était pénible ; on garde donc le rendu discret mais on élargit la cible. */
   function mkIcon(icao){
     var role=(sel.dep===icao?' sel-dep':sel.arr===icao?' sel-arr':sel.alt===icao?' sel-alt':'');
-    var s=role?13:8;
-    return L.divIcon({className:'', html:'<div class="nav-admark'+role+'" style="width:'+s+'px;height:'+s+'px"></div>',
-      iconSize:[s,s], iconAnchor:[s/2,s/2]});
+    var s=role?14:9, Z=28;
+    return L.divIcon({ className:'nav-adhit',
+      html:'<span class="nav-admark'+role+'" style="width:'+s+'px;height:'+s+'px"></span>',
+      iconSize:[Z,Z], iconAnchor:[Z/2,Z/2] });
   }
   function popupHtml(a){
     var f=Object.keys(a.freq).map(function(k){return k+' '+a.freq[k];}).join(' · ');
@@ -6288,6 +6384,8 @@ if(!RECO_OK){
     recap.classList.add('hidden');
     $v('navFlight').classList.remove('hidden');
     $v('vfMapSlot').appendChild(sec.querySelector('.nav-mapwrap'));   // la carte suit le vol
+    // Décompte du quota du jour (affiché sur l'accueil ; non bloquant pour l'instant).
+    if(window.rtQuotaIncr) window.rtQuotaIncr();
     document.body.classList.add('in-flight');   // carte réduite + libellés de config masqués
     var br=$v('navResume'); if(br) br.classList.add('hidden');   // un vol tourne : plus de proposition de reprise
     $v('vfCall').textContent=state.call;        // indicatif rappelé en permanence
@@ -6676,6 +6774,162 @@ if(!RECO_OK){
     initMap();
     setTimeout(function(){ map.invalidateSize(); if(!sel.dep) setTarget('dep'); },30);
   });
+})();
+</script>
+
+<script>
+/* ============ ACCUEIL — TABLEAU DE BORD (module autonome) ============
+   Agrège ce qui existe déjà : historique des vols (rt-vols, écrit par la Navigation)
+   et historique des scénarios (radiotrainer_history_v2). N'invente aucune donnée :
+   une statistique sans historique affiche « — ». */
+(function(){
+  var sec=document.getElementById('page-tableau');
+  if(!sec) return;
+  var $t=function(id){ return document.getElementById(id); };
+
+  var QUOTA_MAX=4;                      // vols par jour
+  var JOURS_KEY='rt-jours';             // dates de connexion, pour la série
+  var QUOTA_KEY='rt-quota';
+
+  function jourISO(d){ return (d||new Date()).toISOString().slice(0,10); }
+  function lire(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch(e){ return d; } }
+  function ecrire(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+  /* ---- Série de jours consécutifs ----
+     On enregistre chaque jour d'ouverture, puis on remonte le calendrier tant que
+     la veille est présente. Une journée manquée remet la série à zéro. */
+  function marquerJour(){
+    var j=lire(JOURS_KEY,[]), a=jourISO();
+    if(j.indexOf(a)<0){ j.push(a); ecrire(JOURS_KEY, j.slice(-400)); }
+  }
+  function serieJours(){
+    var j=lire(JOURS_KEY,[]);
+    if(!j.length) return 0;
+    var vus={}; j.forEach(function(d){ vus[d]=1; });
+    var n=0, cur=new Date();
+    if(!vus[jourISO(cur)]) return 0;
+    while(vus[jourISO(cur)]){ n++; cur.setDate(cur.getDate()-1); }
+    return n;
+  }
+
+  /* ---- Quota : compté et affiché, mais NON bloquant pour l'instant ----
+     `quotaAtteint()` est prêt à servir de garde le jour où on l'activera. */
+  function quotaDuJour(){
+    var q=lire(QUOTA_KEY,{});
+    return (q.date===jourISO()) ? (q.n||0) : 0;
+  }
+  window.rtQuotaIncr=function(){
+    var a=jourISO(), q=lire(QUOTA_KEY,{});
+    ecrire(QUOTA_KEY, {date:a, n:(q.date===a?(q.n||0):0)+1});
+  };
+  window.rtQuotaAtteint=function(){ return quotaDuJour()>=QUOTA_MAX; };
+
+  function vols(){ try{ return JSON.parse(localStorage.getItem('rt-vols')||'[]'); }catch(e){ return []; } }
+  function sessions(){ try{ return JSON.parse(localStorage.getItem('radiotrainer_history_v2')||'[]'); }catch(e){ return []; } }
+  function cls(p){ return p>=80?'bon':(p>=50?'moy':'bas'); }
+  function dateFr(iso){
+    try{ var d=new Date(iso);
+      return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' '+
+             d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){ return ''; }
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  var IC={
+    cible:'<svg class="ic-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".9" fill="currentColor" stroke="none"/></svg>',
+    avion:'<svg class="ic-svg" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5L21 16z"/></svg>',
+    feu:'<svg class="ic-svg" viewBox="0 0 24 24"><path d="M12 3s5 4 5 8a5 5 0 0 1-10 0c0-2 1-3 1-3s1 1.5 2 1.5C11 7 12 3 12 3z"/></svg>',
+    micro:'<svg class="ic-svg" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg>'
+  };
+  function stat(ic,val,lib){
+    return '<div class="tb-stat"><span class="tb-ic">'+ic+'</span><b>'+val+'</b><span>'+lib+'</span></div>';
+  }
+
+  function rendre(){
+    marquerJour();
+    var V=vols(), S=sessions();
+    // Taux moyen : sur les vols ET les sessions de scénarios, pondéré par les éléments.
+    var ok=0, tot=0;
+    V.forEach(function(v){ ok+=v.ok||0; tot+=v.total||0; });
+    S.forEach(function(s){ ok+=s.found||0; tot+=s.total||0; });
+    var moy = tot ? Math.round(ok/tot*100) : null;
+    var serie=serieJours();
+
+    $t('tbTitre').textContent = V.length||S.length ? 'Bon retour' : 'Bienvenue';
+    $t('tbSub').textContent = V.length||S.length
+      ? 'Votre progression et vos derniers vols.'
+      : 'Lancez un premier scénario ou un vol : vos statistiques apparaîtront ici.';
+
+    $t('tbStats').innerHTML =
+      stat(IC.cible, moy===null?'—':(moy+'&nbsp;%'), 'taux de réussite moyen') +
+      stat(IC.avion, V.length, 'vol'+(V.length>1?'s':'')+' réalisé'+(V.length>1?'s':'')) +
+      stat(IC.micro, S.length, 'session'+(S.length>1?'s':'')+' de scénarios') +
+      stat(IC.feu, serie, 'jour'+(serie>1?'s':'')+' d\'affilée');
+
+    // Quota
+    var n=quotaDuJour(), pc=Math.min(100, Math.round(n/QUOTA_MAX*100));
+    $t('tbQuota').innerHTML =
+      '<span class="tb-qn">'+n+'<small> / '+QUOTA_MAX+'</small></span>'+
+      '<span class="tb-jauge"><i class="'+(n>=QUOTA_MAX?'plein':'')+'" style="width:'+pc+'%"></i></span>';
+    $t('tbQuotaNote').textContent = n>=QUOTA_MAX
+      ? 'Quota du jour atteint — la limite n\'est pas encore appliquée, vous pouvez continuer.'
+      : 'Vols décomptés aujourd\'hui. La limite est affichée mais pas encore appliquée.';
+
+    // Reprendre : vol interrompu, ou dernier vol à refaire
+    var enCours=null;
+    try{ enCours=JSON.parse(localStorage.getItem('rt-vol-en-cours')||'null'); }catch(e){}
+    var r=$t('tbReprendre'), html='<div class="tb-repr">';
+    if(enCours && enCours.dep){
+      html+='<div class="tb-l2">Vol interrompu : '+esc(enCours.dep)+(enCours.arr?' → '+esc(enCours.arr):'')+
+            ' — échange '+((enCours.i||0)+1)+'.</div>'+
+            '<button class="btn small cta" data-go="navigation">Reprendre le vol</button>';
+    } else if(V.length){
+      html+='<div class="tb-l2">Dernier vol : '+esc(V[0].titre)+' — '+V[0].pct+' %.</div>'+
+            '<button class="btn small cta" data-go="navigation">Nouveau vol</button>';
+    } else {
+      html+='<div class="tb-l2">Aucun vol en cours.</div>'+
+            '<button class="btn small cta" data-go="navigation">Préparer un vol</button>';
+    }
+    html+='<button class="btn small" data-go="exercices">Lancer un scénario</button></div>';
+    r.innerHTML=html;
+
+    // Derniers vols
+    $t('tbVols').innerHTML = V.length
+      ? V.slice(0,5).map(function(v){
+          return '<div class="tb-ligne"><span class="tb-l1">'+esc(v.titre)+'</span>'+
+                 '<span class="tb-l2">'+dateFr(v.date)+' · '+esc(v.avion||'')+
+                 (v.alea?' · '+esc(v.alea):'')+'</span>'+
+                 '<span class="tb-l3 '+cls(v.pct)+'">'+v.pct+' %</span></div>';
+        }).join('')
+      : '<div class="tb-vide">Aucun vol enregistré pour l\'instant.</div>';
+
+    // Dernières sessions de scénarios
+    $t('tbSessions').innerHTML = S.length
+      ? S.slice(0,5).map(function(s){
+          var p=s.total?Math.round(s.found/s.total*100):0;
+          return '<div class="tb-ligne"><span class="tb-l1">'+esc(s.terrain||'—')+'</span>'+
+                 '<span class="tb-l2">'+dateFr(s.date)+' · '+esc(s.scenario||'')+'</span>'+
+                 '<span class="tb-l3 '+cls(p)+'">'+p+' %</span></div>';
+        }).join('')
+      : '<div class="tb-vide">Aucune session enregistrée pour l\'instant.</div>';
+
+    sec.querySelectorAll('[data-go]').forEach(function(b){
+      b.addEventListener('click',function(){
+        var lien=document.querySelector('.sidelink[data-page="'+b.dataset.go+'"]');
+        if(lien) lien.click();
+      });
+    });
+  }
+
+  $t('tbVoirTout').addEventListener('click',function(){
+    var l=document.querySelector('.sidelink[data-page="navigation"]'); if(l) l.click();
+  });
+  $t('tbVoirProg').addEventListener('click',function(){
+    var l=document.querySelector('.sidelink[data-page="progression"]'); if(l) l.click();
+  });
+  window.addEventListener('rt:page',function(e){ if(e.detail.page==='tableau') rendre(); });
+  marquerJour();
 })();
 </script>
 

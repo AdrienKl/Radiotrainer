@@ -2565,6 +2565,48 @@ function aleaUrgence(kind){
 // Causes d'urgence tirées au sort (liste fermée — §3.11)
 const CAUSES = ["panne moteur", "fumée en cabine", "passager malade"];
 
+/* ---- Utilitaires partagés par le scénario « Navigation / croisière » ----
+   Ils reposent sur RT_AIR, publié par le module Navigation, et sur NAV_AD_GEO. */
+function orgVars(nom){
+  var base=String(nom||'').replace(/\s+(Tour|Sol|Approche|Information|auto-information)$/,'');
+  var v=[normalize(base)];
+  base.split(/[\s'’\-]+/).forEach(function(w){ if(w.length>3) v.push(normalize(w)); });
+  if(/Approche/.test(nom)) v.push('approche');
+  if(/Information/.test(nom)) v.push('information','info');
+  if(/Tour/.test(nom)) v.push('tour');
+  return v.filter(Boolean);
+}
+function freqMots(f){
+  var s=String(f), p=s.split('.');
+  return [s, s.replace('.',','), s.replace('.',' '), p.join(' decimale '), p.join(' virgule '),
+          p[0]+' '+(p[1]||'')].map(normalize);
+}
+/* SIV le plus proche d'un terrain — même table que le module Navigation, dupliquée ici
+   volontairement : les deux blocs <script> ne partagent pas de portée, et exporter la
+   table entière pour trois usages n'en vaut pas la peine. */
+const SIV_SCEN=[
+  {n:'Lille Information',f:'126.480',lat:50.45,lon:3.10},{n:'Cotentin Information',f:'120.350',lat:49.10,lon:-0.80},
+  {n:'Beauvais Information',f:'119.800',lat:49.40,lon:2.55},{n:'Seine Information',f:'120.325',lat:48.90,lon:3.45},
+  {n:'Strasbourg Information',f:'119.450',lat:48.70,lon:6.90},{n:'Nord Rennes Information',f:'126.950',lat:48.30,lon:-1.70},
+  {n:'Iroise Information',f:'119.575',lat:48.30,lon:-4.30},{n:'Sud Rennes Information',f:'134.000',lat:47.85,lon:-1.20},
+  {n:'Bâle Information',f:'135.850',lat:47.40,lon:5.60},{n:'Seine Information',f:'127.815',lat:47.35,lon:1.50},
+  {n:'Nantes Information',f:'122.800',lat:47.20,lon:-1.60},{n:'Poitiers Information',f:'124.000',lat:46.60,lon:0.30},
+  {n:'Limoges Information',f:'124.050',lat:45.90,lon:1.40},{n:'Lyon Information',f:'135.200',lat:45.85,lon:4.60},
+  {n:'Clermont Information',f:'119.375',lat:45.50,lon:3.20},{n:'Aquitaine Information',f:'120.575',lat:44.60,lon:0.40},
+  {n:'Marseille Information',f:'124.500',lat:44.00,lon:4.50},{n:'Toulouse Information',f:'121.250',lat:43.80,lon:1.30},
+  {n:'Provence Information',f:'126.260',lat:43.70,lon:5.50},{n:'Nice Information',f:'120.850',lat:43.60,lon:7.00},
+  {n:'Biarritz Information',f:'119.175',lat:43.35,lon:-1.40},{n:'Pyrénées Information',f:'126.525',lat:43.15,lon:-0.90}
+];
+function sivProche(ad){
+  if(!ad||typeof ad.lat!=='number') return null;
+  var best=null,bd=1e9;
+  SIV_SCEN.forEach(function(s){
+    var dx=(s.lon-ad.lon)*Math.cos(ad.lat*Math.PI/180), dy=s.lat-ad.lat, d=dx*dx+dy*dy;
+    if(d<bd){ bd=d; best=s; }
+  });
+  return best;
+}
+
 const SCENARIOS = [
   {
     id:"roulage", titre:"Mise en route + roulage", station:"{ADRM} {STN}", defaultTerrain:'dep', controllable:true,
@@ -2693,6 +2735,81 @@ const SCENARIOS = [
   },
   {
     id:"navigation", titre:"Navigation / croisière", station:"Information", defaultTerrain:'dep', noTerrain:true,
+    /* Échanges construits sur l'espace aérien RÉEL au-dessus du terrain choisi :
+       montée dans le TMA, clairance de transit, puis changement de fréquence vers le
+       service d'information. Si aucun espace contrôlé n'existe au-dessus du terrain
+       (ou si les données manquent), on retombe sur les tours génériques ci-dessous. */
+    buildTours: function(){
+      var A=window.RT_AIR, ad=state.activeAd;
+      if(!A || !ad) return null;
+      // AERODROMES ne porte pas les coordonnées : elles viennent de NAV_AD_GEO (par OACI).
+      var g=(typeof NAV_AD_GEO!=='undefined')?NAV_AD_GEO[ad.icao]:null;
+      if(!g) return null;
+      var pos={icao:ad.icao, nom:ad.nom, lat:g.lat, lon:g.lon, freq:g.freq||{}};
+      var pile=A.empilement(pos).filter(function(p){ return p.t!=='CTR'; });
+      if(!pile.length) return null;
+      var tma=pile[0];                                  // premier espace au-dessus du CTR
+      var org=A.organismeDe(tma);
+      if(!org) return null;
+      var plaf=(typeof tma.up==='number')?tma.up:null;
+      var alt=(typeof tma.lo==='number')?Math.max(tma.lo+500,1500):2000;
+      state.altCruise=alt;
+      var T=[];
+      // 1 — Montée : demande de clairance pour pénétrer le TMA (manuel p. 178)
+      T.push({ role:'pilote', stn:'tour', station:org.n,
+        situation:"En montée au-dessus de "+ad.nom+", vous allez pénétrer le "+tma.t+" "+tma.n+
+                  " (classe "+(tma.c||'?')+", "+(tma.lo||0)+" à "+(plaf||'?')+" pieds).",
+        consigne:"Demandez le transit : organisme, indicatif, altitude souhaitée.",
+        attendu:org.n+", {CALL}, demande transit VFR, {ALT} pieds.",
+        motsCles:[ {label:"Organisme appelé",variantes:orgVars(org.n)},
+                   {label:"Votre indicatif",ref:'callsign'},
+                   {label:"Demande de transit",variantes:["transit","demande transit","transit vfr","traversee","penetration"]},
+                   {label:"Altitude",ref:'alt'} ] });
+      // 2 — Collationnement de la clairance
+      T.push({ stn:'tour', station:org.n,
+        atc:"{CALL}, transitez "+tma.n+", maintenez {ALT} pieds.",
+        consigne:"Collationnez : vous transitez et vous maintenez {ALT} pieds.",
+        attendu:"Je transite "+tma.n+", maintiens {ALT} pieds, {CALL}.",
+        motsCles:[ {label:"Je transite",variantes:["transite","je transite","transit"]},
+                   {label:"Je maintiens",variantes:["maintiens","je maintiens","maintien"]},
+                   {label:"Altitude",ref:'alt'},
+                   {label:"Votre indicatif",ref:'callsign'} ] });
+      // 3 — Information de trafic (manuel p. 211)
+      T.push({ stn:'tour', station:org.n,
+        atc:["{CALL}, trafic convergent, Cessna 172, même altitude.",
+             "{CALL}, trafic à midi, 8 nautiques, altitude inconnue."],
+        consigne:"Accusez réception de l'information de trafic.",
+        attendu:"Trafic en vue, {CALL}.",
+        motsCles:[ {label:"Accusé de réception",variantes:["trafic en vue","en vue","roger","recu","bien recu","je cherche","pas en vue","negatif"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] });
+      // 4 — Sortie du TMA : transfert vers le service d'information (manuel p. 182)
+      var siv=sivProche(pos);
+      if(siv){
+        T.push({ stn:'tour', station:org.n,
+          atc:"{CALL}, vous quittez "+tma.n+", contactez "+siv.n+" "+String(siv.f).replace('.',',')+".",
+          consigne:"Collationnez : le nom de l'organisme, la fréquence, puis votre indicatif.",
+          attendu:siv.n+" "+String(siv.f).replace('.',',')+", {CALL}.",
+          motsCles:[ {label:"Organisme",variantes:orgVars(siv.n)},
+                     {label:"Nouvelle fréquence",variantes:freqMots(siv.f)},
+                     {label:"Votre indicatif",ref:'callsign'} ] });
+        T.push({ role:'pilote', stn:'tour', station:siv.n,
+          situation:"Vous venez de passer sur "+siv.n+".",
+          consigne:"Prise de contact : organisme, indicatif, VFR, altitude.",
+          attendu:siv.n+", {CALL}, en VFR, {ALT} pieds.",
+          motsCles:[ {label:"Organisme appelé",variantes:orgVars(siv.n)},
+                     {label:"Votre indicatif",ref:'callsign'},
+                     {label:"En VFR",variantes:["vfr","en vfr","v f r"]},
+                     {label:"Altitude",ref:'alt'} ] });
+      }
+      // 5 — Quitter la fréquence (manuel p. 153)
+      T.push({ stn:'tour', station:siv?siv.n:org.n,
+        atc:"{CALL}, rappelez quittant la fréquence.",
+        consigne:"Annoncez que vous quittez la fréquence, puis votre indicatif.",
+        attendu:"Je quitte la fréquence, {CALL}.",
+        motsCles:[ {label:"Quitte la fréquence",variantes:["je quitte la frequence","quitte la frequence","quitte","je quitte"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] });
+      return T;
+    },
     // Manuel DSNA : Service d'information de vol (p.204), Information de trafic (p.211), Transit VFR (p.178).
     // L'organisme « Information » est générique (les vrais organismes/fréquences dépendent de la région).
     tours:[
@@ -3302,6 +3419,9 @@ function buildQueue(sc){
     // diffère (on reste dans le circuit) ; la formulation §3.6 est reprise faute d'équivalent circuit.
     raw = [ ...SCENARIOS[0].tours, ...SCENARIOS[1].tours.slice(0,4),
             tourVentArriere(), tourNumeroATC(), tourBase(), tourFinale(), circuitChoiceStep() ];
+  } else if(typeof sc.buildTours==='function'){
+    // Scénario dont les échanges dépendent de l'espace aérien réel du terrain choisi.
+    raw = sc.buildTours() || sc.tours;
   } else {
     raw = sc.tours;
   }
@@ -4718,6 +4838,16 @@ if(!RECO_OK){
   }
   function drawAirspace(){
     if(!map) return;
+    /* La carte OACI DESSINE DÉJÀ tous les espaces, avec leurs limites, classes et
+       fréquences. Superposer nos polygones par-dessus rendait la région parisienne
+       illisible (empilement des TMA en aplats colorés). On ne les trace donc que sur
+       le fond OpenStreetMap, qui lui ne porte aucune information aéronautique. */
+    if(oaciLayer && map.hasLayer(oaciLayer)){
+      zoneLayer.clearLayers();
+      var hh=$v('navZoomHint');
+      if(hh) hh.textContent='Espaces aériens lus directement sur la carte OACI.';
+      return;
+    }
     // Espaces aériens absents : le reste de la page (terrains, route, vol) reste
     // parfaitement utilisable, on le signale simplement au lieu de rester muet.
     if(typeof NAV_AIRSPACE==='undefined'){
@@ -4787,17 +4917,39 @@ if(!RECO_OK){
   }
 
   // ---- Route + espaces traversés ----
+  // Plan d'évitement courant (calculé à la configuration, réutilisé au démarrage).
+  var planCourant=null;
+  function majPlan(){
+    planCourant=null;
+    if(mode!=='voyage'||!sel.dep||!sel.arr||!BY[sel.dep]||!BY[sel.arr]) return;
+    planCourant=eviterClasseA(BY[sel.dep],BY[sel.arr],ftOf($v('navFl').value)||3500);
+  }
   function redraw(){
     if(!map) return;
     if(routeLine){ map.removeLayer(routeLine); routeLine=null; }
+    majPlan();
     var pts=[];
     if(sel.dep&&BY[sel.dep]) pts.push([BY[sel.dep].lat,BY[sel.dep].lon]);
     if(mode==='voyage'&&sel.arr&&BY[sel.arr]) pts.push([BY[sel.arr].lat,BY[sel.arr].lon]);
-    // Si un contournement a été calculé, la carte montre la route RÉELLEMENT suivie.
-    if(pts.length===2 && F.ctx && F.ctx.via) pts=[pts[0],[F.ctx.via.lat,F.ctx.via.lon],pts[1]];
+    /* Contournement visible sur la carte, en configuration comme en vol : on trace la
+       route RÉELLEMENT suivie, pas la ligne droite d'origine. */
+    var via = (F.ctx && F.running) ? F.ctx.via : (planCourant?planCourant.via:null);
+    if(pts.length===2 && via) pts=[pts[0],[via.lat,via.lon],pts[1]];
     if(pts.length>=2){
-      routeLine=L.polyline(pts,{color:'#d9534f',weight:2.5,dashArray:'7 5'}).addTo(map);
-      map.fitBounds(routeLine.getBounds(),{padding:[45,45]});
+      routeLine=L.layerGroup().addTo(map);
+      if(via){
+        // Route directe rappelée en gris fin, pour montrer ce qui a été évité.
+        L.polyline([pts[0],pts[pts.length-1]],
+          {color:'#9aa2b8',weight:1.4,dashArray:'3 5',opacity:.75}).addTo(routeLine);
+        L.circleMarker([via.lat,via.lon],{radius:5,color:'#d9534f',weight:2,
+          fillColor:'#fff',fillOpacity:1}).addTo(routeLine)
+          .bindTooltip('Point de contournement (classe A)',{direction:'top'});
+      }
+      /* Liseré blanc sous le trait : sur la carte OACI, très chargée, un trait fin
+         rouge se confond avec les limites de zones déjà imprimées. */
+      L.polyline(pts,{color:'#fff',weight:6,opacity:.9}).addTo(routeLine);
+      var trace=L.polyline(pts,{color:'#d9534f',weight:3,dashArray:'8 5'}).addTo(routeLine);
+      map.fitBounds(trace.getBounds(),{padding:[45,45]});
     } else if(pts.length===1){ map.setView(pts[0],10); }
     renderZones();
   }
@@ -5056,6 +5208,7 @@ if(!RECO_OK){
     if(on) map.removeLayer(oaciLayer); else { oaciLayer.addTo(map); oaciLayer.setZIndex(2); }
     basemapBtn.classList.toggle('on',!on);
     basemapBtn.textContent = on ? 'Fond OpenStreetMap' : 'Carte OACI';
+    drawAirspace();   // l'un dessine les espaces, l'autre non
   });
 
   // Niveau Débutant / Réel.
@@ -5334,7 +5487,7 @@ if(!RECO_OK){
        même sur 700 km — cf. Valenciennes → Agen). */
     /* Évitement de la classe A avant toute chose : l'altitude et la route retenues
        ci-dessous sont celles du plan CORRIGÉ, pas celles demandées. */
-    var evit = arr ? eviterClasseA(dep,arr,cruise) : {alt:cruise, via:null, msg:null};
+    var evit = arr ? (planCourant || eviterClasseA(dep,arr,cruise)) : {alt:cruise, via:null, msg:null};
     if(arr){ cruise = evit.alt; state.altCruise = cruise; }
     var chaineSiv = arr ? sivSurRoute(dep,arr,cruise,evit.via) : [];
     var infoSrc=chaineSiv.length?chaineSiv[0]:null;
@@ -5994,6 +6147,29 @@ if(!RECO_OK){
 
   // ---- Init différé : la carte n'est construite qu'à la 1re visite de la page.
   // Un conteneur en display:none a une taille nulle → Leaflet doit être recalculé.
+  /* Espaces aériens exposés aux Scénarios : ils vivent dans un autre bloc <script>
+     et n'ont pas accès à la portée de ce module. On publie le strict nécessaire.
+     Disponible au lancement d'un scénario, puisque tous les scripts sont déjà exécutés. */
+  window.RT_AIR = {
+    espaceControle: espaceControle,
+    organismeDe:    organismeDe,
+    natureTerrain:  natureTerrain,
+    stnName:        stnName,
+    /* Empilement des espaces contrôlés au-dessus d'un terrain, du plus bas au plus haut. */
+    empilement: function(a){
+      if(typeof NAV_AIRSPACE==='undefined'||!a||typeof a.lat!=='number') return [];
+      var out=[];
+      NAV_AIRSPACE.features.forEach(function(f){
+        var p=f.properties;
+        if(p.t!=='CTR'&&p.t!=='TMA'&&p.t!=='CTA') return;
+        if(!p.c) return;
+        if(inPoly(a.lon,a.lat,f.geometry)) out.push(p);
+      });
+      out.sort(function(x,y){ return (x.lo||0)-(y.lo||0); });
+      return out;
+    }
+  };
+
   // Bandeau de reprise : proposé à l'entrée sur la page si un vol a été interrompu.
   function majReprise(){
     var v=volSauvegarde(), box=$v('navResume');

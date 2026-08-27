@@ -648,6 +648,11 @@
   }
 
   /* ---- Vol en direct (Phase 2) ---- */
+  /* Avertissement d'évitement de classe A, affiché en tête du vol. */
+  .vf-evit{ display:flex; align-items:flex-start; gap:9px; background:#fff6ed;
+    border:1px solid #f0c9a6; border-left:3px solid var(--warn); border-radius:12px;
+    padding:12px 15px; margin-bottom:14px; font-size:13.5px; line-height:1.55; color:#7a4418; }
+  .vf-evit b{ color:#5f3312; }
   .vf-top{ display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border);
     border-radius:var(--radius); padding:11px 15px; margin-bottom:14px; box-shadow:var(--shadow); }
   .vf-tune{ display:flex; align-items:baseline; gap:10px; min-width:0; }
@@ -890,6 +895,8 @@
     :root[data-theme="dark"] .nav-warn{ background:#2e2114; border-color:#5c4426; border-left-color:#d9873c; color:#f0c99b; }
     :root[data-theme="dark"] .nav-warn strong{ color:#ffd9a8; }
     :root[data-theme="dark"] .vf-noreco{ background:#2e2114; border-color:#5c4426; color:#f0c99b; }
+    :root[data-theme="dark"] .vf-evit{ background:#2e2114; border-color:#5c4426; color:#f0c99b; }
+    :root[data-theme="dark"] .vf-evit b{ color:#ffd9a8; }
     :root[data-theme="dark"] .nav-warn.nav-fatal{ background:#301a19; border-color:#6b3330;
       border-left-color:#c74a4a; color:#f3b4b0; }
     :root[data-theme="dark"] .nav-warn.nav-fatal strong{ color:#ffcecb; }
@@ -1368,6 +1375,8 @@
             <div class="vf-prog"><div class="vf-bar" id="vfBar"></div></div>
             <button class="btn ghost vf-quit" id="vfQuit" type="button">Terminer le vol</button>
           </div>
+
+          <div class="vf-evit hidden" id="vfEvit"></div>
 
           <div class="vf-layout">
             <div class="vf-mapslot" id="vfMapSlot"></div>
@@ -4784,7 +4793,9 @@ if(!RECO_OK){
     var pts=[];
     if(sel.dep&&BY[sel.dep]) pts.push([BY[sel.dep].lat,BY[sel.dep].lon]);
     if(mode==='voyage'&&sel.arr&&BY[sel.arr]) pts.push([BY[sel.arr].lat,BY[sel.arr].lon]);
-    if(pts.length===2){
+    // Si un contournement a été calculé, la carte montre la route RÉELLEMENT suivie.
+    if(pts.length===2 && F.ctx && F.ctx.via) pts=[pts[0],[F.ctx.via.lat,F.ctx.via.lon],pts[1]];
+    if(pts.length>=2){
       routeLine=L.polyline(pts,{color:'#d9534f',weight:2.5,dashArray:'7 5'}).addTo(map);
       map.fitBounds(routeLine.getBounds(),{padding:[45,45]});
     } else if(pts.length===1){ map.setView(pts[0],10); }
@@ -4816,6 +4827,117 @@ if(!RECO_OK){
   // Échantillonne la route et retourne les zones survolées, filtrées par la tranche
   // d'altitude choisie. APPROXIMATIF : segment droit en lat/lon, pas de grand cercle,
   // pas de gestion des références SFC/FL — purement informatif (cf. avertissement UI).
+  /* ================= ÉVITEMENT DE LA CLASSE A =================
+     Le VFR est interdit en classe A. Plutôt que de laisser voler dans un espace
+     interdit, on cherche un contournement et on prévient l'élève.
+     Stratégie, dans cet ordre :
+       1) changer d'ALTITUDE (le plus simple : passer sous le plancher de la zone) ;
+       2) à défaut, DÉCALER la route latéralement via un point intermédiaire.
+     Si aucune des deux ne marche, on le dit franchement plutôt que d'inventer. */
+
+  // Échantillons le long d'une route éventuellement brisée par un point intermédiaire.
+  function echRoute(a,b,via,n){
+    var pts=via?[a,via,b]:[a,b], out=[];
+    for(var s=0;s<pts.length-1;s++){
+      var p=pts[s], q=pts[s+1];
+      for(var i=0;i<=n;i++){
+        var t=i/n;
+        out.push([p.lon+(q.lon-p.lon)*t, p.lat+(q.lat-p.lat)*t]);
+      }
+    }
+    return out;
+  }
+  // Zones de classe A rencontrées à une altitude donnée.
+  function classeASur(a,b,via,alt){
+    if(typeof NAV_AIRSPACE==='undefined') return [];
+    var ech=echRoute(a,b,via,60), hit=[];
+    NAV_AIRSPACE.features.forEach(function(f){
+      var p=f.properties;
+      if(p.c!=='A') return;
+      if(typeof p.lo==='number' && alt<p.lo) return;
+      if(typeof p.up==='number' && alt>p.up) return;
+      for(var s=0;s<ech.length;s++){
+        if(inPoly(ech[s][0],ech[s][1],f.geometry)){ hit.push(p); return; }
+      }
+    });
+    return hit;
+  }
+  /* Recherche d'une altitude libre, en s'éloignant progressivement de celle demandée
+     (on privilégie une altitude proche, et plutôt plus basse : passer SOUS un TMA est
+     la manœuvre habituelle en VFR). */
+  function altitudeLibre(a,b,via,voulue,plancher){
+    plancher = plancher || 1500;      // en dessous, une croisière n'est plus réaliste
+    var cands=[];
+    for(var d=500; d<=6000; d+=500){
+      if(voulue-d>=plancher) cands.push(voulue-d);
+      if(voulue+d<=9500) cands.push(voulue+d);
+    }
+    for(var i=0;i<cands.length;i++){
+      if(classeASur(a,b,via,cands[i]).length===0) return cands[i];
+    }
+    return null;
+  }
+  /* Décalage latéral : on déporte le point milieu perpendiculairement à la route,
+     d'abord à gauche puis à droite, par pas de 5 NM. */
+  function decalageLibre(a,b,alt){
+    var mlat=(a.lat+b.lat)/2, mlon=(a.lon+b.lon)/2;
+    var dy=b.lat-a.lat, dx=(b.lon-a.lon)*Math.cos(mlat*Math.PI/180);
+    var L=Math.sqrt(dx*dx+dy*dy) || 1;
+    var px=-dy/L, py=dx/L;                     // vecteur perpendiculaire unitaire
+    for(var nm=5; nm<=80; nm+=5){
+      var ddeg=nm/60;                          // 1 NM ≈ 1/60 degré de latitude
+      var essais=[
+        {lat:mlat+py*ddeg, lon:mlon+px*ddeg/Math.cos(mlat*Math.PI/180), cote:'gauche'},
+        {lat:mlat-py*ddeg, lon:mlon-px*ddeg/Math.cos(mlat*Math.PI/180), cote:'droite'}
+      ];
+      for(var k=0;k<essais.length;k++){
+        if(classeASur(a,b,essais[k],alt).length===0)
+          return {via:essais[k], nm:nm, cote:essais[k].cote};
+      }
+    }
+    return null;
+  }
+  /* Plan d'évitement : renvoie l'altitude et le point intermédiaire à retenir,
+     plus un message expliquant la modification. */
+  function eviterClasseA(a,b,alt){
+    var zones=classeASur(a,b,null,alt);
+    if(!zones.length) return {alt:alt, via:null, msg:null};
+    var noms=[].concat(zones).map(function(z){return z.n;}).filter(function(v,i,t){return t.indexOf(v)===i;});
+    var liste=noms.slice(0,3).join(', ')+(noms.length>3?'…':'');
+    var estSont=(noms.length>1?' sont':' est');
+    /* Ordre de préférence :
+         1. une altitude RAISONNABLE (≥ 1500 ft) — la manœuvre VFR courante ;
+         2. un décalage latéral à l'altitude demandée ;
+         3. en dernier recours seulement, une altitude basse (≥ 1000 ft).
+       Descendre à 1000 ft au-dessus d'une agglomération n'est pas une solution :
+       on préfère contourner. */
+    var alt2=altitudeLibre(a,b,null,alt,1500);
+    if(alt2!==null){
+      return {alt:alt2, via:null,
+        msg:'Trajet légèrement modifié : '+liste+estSont+' en classe A, interdite au VFR. '+
+            'Altitude de croisière ramenée de '+alt+' à '+alt2+' pieds pour passer '+
+            (alt2<alt?'dessous':'au-dessus')+'.'};
+    }
+    var d=decalageLibre(a,b,alt);
+    if(d){
+      return {alt:alt, via:d.via,
+        msg:'Trajet légèrement modifié : '+liste+estSont+' en classe A, interdite au VFR. '+
+            'Aucune altitude praticable ne permettait de l\'éviter — la route est décalée '+
+            'd\'environ '+d.nm+' NM sur la '+d.cote+'.'};
+    }
+    var alt3=altitudeLibre(a,b,null,alt,1000);
+    if(alt3!==null){
+      return {alt:alt3, via:null,
+        msg:'Trajet légèrement modifié : '+liste+estSont+' en classe A, interdite au VFR. '+
+            'Ni contournement ni altitude confortable possibles : croisière ramenée à '+
+            alt3+' pieds, ce qui est bas — en vol réel, ce trajet demande une route VFR publiée.'};
+    }
+    return {alt:alt, via:null,
+      msg:'Attention : '+liste+estSont+' en classe A, interdite au VFR, et aucune altitude '+
+          'ni aucun contournement ne permet de l\'éviter ici. En vol réel, ce trajet passe '+
+          'par une route VFR publiée ou une clairance spéciale. Choisissez d\'autres terrains.'};
+  }
+
   function zonesOnRoute(){
     if(typeof NAV_AIRSPACE==='undefined'||!sel.dep||!BY[sel.dep]) return [];
     var a=BY[sel.dep], b=(mode==='voyage'&&sel.arr&&BY[sel.arr])?BY[sel.arr]:null;
@@ -4895,12 +5017,15 @@ if(!RECO_OK){
     /* Classe A : le VFR y est interdit (seul l'IFR y est admis). Si la route traverse
        une telle zone à l'altitude choisie, on le signale — c'est une impossibilité
        réglementaire, pas un simple détail de fréquence. */
+    /* Classe A : le VFR y est interdit. On annonce dès la configuration la correction
+       qui sera appliquée au démarrage, pour que l'élève sache à quoi s'attendre. */
     var clA=z.filter(function(p){ return p.c==='A'; });
     var avert='';
-    if(clA.length){
-      avert='<div class="nav-zonewarn"><b>Classe A traversée — vol VFR non autorisé.</b> '+
-        esc(clA.map(function(p){return p.n;}).slice(0,3).join(', '))+
-        (clA.length>3?'…':'')+'. En VFR, passez sous le plancher ou contournez.</div>';
+    if(clA.length && sel.arr && BY[sel.arr]){
+      var plan=eviterClasseA(BY[sel.dep], BY[sel.arr], ftOf($v('navFl').value)||3500);
+      avert='<div class="nav-zonewarn"><b>Classe A sur la route — interdite au VFR.</b> '+
+            esc(plan.msg? plan.msg.replace(/^Trajet légèrement modifié : /,'') :
+                'Le trajet sera ajusté au démarrage.')+'</div>';
     }
     box.innerHTML=avert+z.map(function(p){
       var cls=(p.t==='CTR')?'':(p.t==='TMA'||p.t==='CTA')?'z-tma':'z-rpd';
@@ -5150,12 +5275,11 @@ if(!RECO_OK){
   /* Suite ordonnée des interlocuteurs le long de la route, À L'ALTITUDE DE CROISIÈRE.
      Chaque changement d'organisme donne un changement de fréquence ; l'entrée dans un
      espace contrôlé donne en plus une demande de clairance. */
-  function sivSurRoute(a,b,altFt){
+  function sivSurRoute(a,b,altFt,via){
     altFt = altFt || 3500;
-    var brut=[];
-    for(var i=0;i<=24;i++){
-      var t=i/24;
-      brut.push(organismeEnRoute(a.lat+(b.lat-a.lat)*t, a.lon+(b.lon-a.lon)*t, altFt));
+    var ech=echRoute(a,b,via,via?12:24), brut=[];
+    for(var i=0;i<ech.length;i++){
+      brut.push(organismeEnRoute(ech[i][1], ech[i][0], altFt));
     }
     // Lissage : un organisme effleuré sur un seul échantillon est un artefact.
     var out=[];
@@ -5208,7 +5332,11 @@ if(!RECO_OK){
     /* Service d'information en route : suite des SIV réellement survolés, et non
        plus l'approche du terrain de départ (qui restait affichée sur tout le trajet,
        même sur 700 km — cf. Valenciennes → Agen). */
-    var chaineSiv = arr ? sivSurRoute(dep,arr,cruise) : [];
+    /* Évitement de la classe A avant toute chose : l'altitude et la route retenues
+       ci-dessous sont celles du plan CORRIGÉ, pas celles demandées. */
+    var evit = arr ? eviterClasseA(dep,arr,cruise) : {alt:cruise, via:null, msg:null};
+    if(arr){ cruise = evit.alt; state.altCruise = cruise; }
+    var chaineSiv = arr ? sivSurRoute(dep,arr,cruise,evit.via) : [];
     var infoSrc=chaineSiv.length?chaineSiv[0]:null;
     var infoF=infoSrc?{k:'FIS',f:infoSrc.f}:null;
 
@@ -5222,6 +5350,7 @@ if(!RECO_OK){
             depF:depF, arrF:arrF, infoF:infoF, infoSrc:infoSrc,
             pax:Math.max(1,parseInt($v('navPax').value,10)||1),
             depNat:natureTerrain(dep), arrNat:arr?natureTerrain(arr):null,
+            via:evit.via, evitMsg:evit.msg, altDemandee:ftOf($v('navFl').value)||3500,
             depStn:stnName(dep,depF.k), arrStn:arr?stnName(arr,arrF.k):null,
             infoStn:infoSrc?infoSrc.n:null, chaineSiv:chaineSiv, depRwy:depRwy };
 
@@ -5659,7 +5788,12 @@ if(!RECO_OK){
   function legPoint(t){
     var a=F.ctx.dep, b=F.ctx.arr;
     if(!b) return [a.lat,a.lon];
-    return [a.lat+(b.lat-a.lat)*t, a.lon+(b.lon-a.lon)*t];
+    var via=F.ctx.via;
+    if(!via) return [a.lat+(b.lat-a.lat)*t, a.lon+(b.lon-a.lon)*t];
+    // Route brisée : première moitié dep→via, seconde moitié via→arr.
+    if(t<0.5){ var u=t/0.5; return [a.lat+(via.lat-a.lat)*u, a.lon+(via.lon-a.lon)*u]; }
+    var v=(t-0.5)/0.5;
+    return [via.lat+(b.lat-via.lat)*v, via.lon+(b.lon-via.lon)*v];
   }
   function movePlane(t){
     if(!map||t==null) return;
@@ -5686,6 +5820,11 @@ if(!RECO_OK){
     document.body.classList.add('in-flight');   // carte réduite + libellés de config masqués
     var br=$v('navResume'); if(br) br.classList.add('hidden');   // un vol tourne : plus de proposition de reprise
     $v('vfCall').textContent=state.call;        // indicatif rappelé en permanence
+    var ev=$v('vfEvit');
+    if(F.ctx.evitMsg){ ev.innerHTML='<span>'+ICONS.warn+'</span><span><b>Trajet ajusté.</b> '+
+        esc(F.ctx.evitMsg.replace('Trajet légèrement modifié : ',''))+'</span>';
+      ev.classList.remove('hidden'); }
+    else ev.classList.add('hidden');
     $v('vfLog').innerHTML='';
     F.running=true;
     setRecoSink({ // Aperçu pendant qu'on parle, dans le champ éditable.
@@ -5778,7 +5917,10 @@ if(!RECO_OK){
     var rows=[['Vol', C.arr?(C.dep.icao+' → '+C.arr.icao):(C.dep.icao+' — vol local')],
               ['Échanges', F.results.filter(Boolean).length+' / '+F.steps.length],
               ['Score', tot?(ok+' / '+tot+' éléments — <b>'+pct+' % de réussite</b>'):'—'],
-              ['Altitude', C.cruise+' ft'], ['Avion', esc(C.ac)]];
+              ['Altitude', C.cruise+' ft'+(C.altDemandee&&C.altDemandee!==C.cruise
+                  ? ' <span class="rz">(demandé '+C.altDemandee+' ft — ajusté pour éviter la classe A)</span>':'')],
+              ['Avion', esc(C.ac)]];
+    if(C.via) rows.push(['Route','<span class="rz">décalée pour contourner un espace de classe A</span>']);
     if(mk.length) rows.push(['À retravailler','<span class="rz">'+mk.map(function(k){return esc(k)+' ('+manques[k]+')';}).join(' · ')+'</span>']);
     $v('navRecapTitle').textContent='Débriefing du vol';
     body.innerHTML='<dl>'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>';}).join('')+'</dl>';

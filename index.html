@@ -4194,6 +4194,7 @@ el.copyBtn.addEventListener('click', ()=>{
 const LS_KEY='radiotrainer_history_v2';
 function loadHistory(){ try{ return JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch(e){ return []; } }
 function saveHistory(entry){
+  if(window.rtJourActif) window.rtJourActif();   // journée de pratique effective
   const h=loadHistory(); h.unshift(entry);
   try{ localStorage.setItem(LS_KEY, JSON.stringify(h.slice(0,50))); }catch(e){}
   renderHistory();
@@ -6673,6 +6674,7 @@ if(!RECO_OK){
     var LIBH={moteur:'panne moteur (MAYDAY)', fumee:'fumée en cabine (MAYDAY)',
               malaise:'passager malade (PAN PAN)', cap:'changement de cap imposé',
               radio:'panne radio', ferme:'terrain d\'arrivée fermé'};
+    if(window.rtJourActif) window.rtJourActif();   // journée de pratique effective
     enregistrerVol({
       date:new Date().toISOString(),
       titre: C.arr ? (C.dep.icao+' → '+(C.arrReelle?C.arrReelle.icao:C.arr.icao)) : (C.dep.icao+' — vol local'),
@@ -6876,12 +6878,14 @@ if(!RECO_OK){
   function ecrire(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 
   /* ---- Série de jours consécutifs ----
-     On enregistre chaque jour d'ouverture, puis on remonte le calendrier tant que
-     la veille est présente. Une journée manquée remet la série à zéro. */
+     On ne compte QUE les jours où quelque chose a été fait (vol ou scénario terminé).
+     Compter les simples ouvertures de page affichait « 1 jour d'affilée » à quelqu'un
+     qui n'avait encore rien pratiqué — une fausse récompense. */
   function marquerJour(){
     var j=lire(JOURS_KEY,[]), a=jourISO();
     if(j.indexOf(a)<0){ j.push(a); ecrire(JOURS_KEY, j.slice(-400)); }
   }
+  window.rtJourActif=marquerJour;      // appelé en fin de vol et en fin de scénario
   function serieJours(){
     var j=lire(JOURS_KEY,[]);
     if(!j.length) return 0;
@@ -6927,7 +6931,6 @@ if(!RECO_OK){
   }
 
   function rendre(){
-    marquerJour();
     var V=vols(), S=sessions();
     // Taux moyen : sur les vols ET les sessions de scénarios, pondéré par les éléments.
     var ok=0, tot=0;
@@ -6935,17 +6938,24 @@ if(!RECO_OK){
     S.forEach(function(s){ ok+=s.found||0; tot+=s.total||0; });
     var moy = tot ? Math.round(ok/tot*100) : null;
     var serie=serieJours();
+    var nbSeances = V.length + S.length;      // séances réellement terminées
+    var rien = nbSeances===0;
 
     $t('tbTitre').textContent = V.length||S.length ? 'Bon retour' : 'Bienvenue';
     $t('tbSub').textContent = V.length||S.length
       ? 'Votre progression et vos derniers vols.'
       : 'Lancez un premier scénario ou un vol : vos statistiques apparaîtront ici.';
 
+    /* Rien de fait = rien à annoncer. Et avec une seule séance, on ne parle pas de
+       « moyenne » : on dit sur quoi le chiffre porte. */
+    var libTaux = rien ? 'pas encore de résultat'
+                : (nbSeances===1 ? 'de réussite sur 1 séance' : 'taux de réussite moyen');
     $t('tbStats').innerHTML =
-      stat(IC.cible, moy===null?'—':(moy+'&nbsp;%'), 'taux de réussite moyen') +
-      stat(IC.avion, V.length, 'vol'+(V.length>1?'s':'')+' réalisé'+(V.length>1?'s':'')) +
-      stat(IC.micro, S.length, 'session'+(S.length>1?'s':'')+' de scénarios') +
-      stat(IC.feu, serie, 'jour'+(serie>1?'s':'')+' d\'affilée');
+      stat(IC.cible, (rien||moy===null)?'—':(moy+'&nbsp;%'), libTaux) +
+      stat(IC.avion, V.length?V.length:'—', V.length>1?'vols réalisés':'vol réalisé') +
+      stat(IC.micro, S.length?S.length:'—', S.length>1?'sessions de scénarios':'session de scénarios') +
+      stat(IC.feu, serie?serie:'—', rien?'aucune pratique enregistrée'
+            :('jour'+(serie>1?'s':'')+' d\'affilée'));
 
     // Quota
     var n=quotaDuJour(), pc=Math.min(100, Math.round(n/QUOTA_MAX*100));
@@ -7025,7 +7035,9 @@ if(!RECO_OK){
                  '<span class="tb-fb"><i style="width:'+Math.round(x.n/maxn*100)+'%"></i></span>'+
                  '<span class="tb-fn">'+x.n+'×</span></div>';
         }).join('')
-      : '<div class="tb-vide">Rien à signaler — aucun oubli enregistré.</div>';
+      : '<div class="tb-vide">'+(rien
+          ? 'Terminez un scénario ou un vol : vos oublis les plus fréquents apparaîtront ici.'
+          : 'Aucun oubli enregistré — rien à retravailler pour l\'instant.')+'</div>';
 
     /* ---- Courbe de progression : 15 derniers vols, du plus ancien au plus récent ---- */
     var serieP=V.slice(0,15).map(function(v){ return v.pct; }).reverse();
@@ -7045,12 +7057,16 @@ if(!RECO_OK){
         '</svg><div class="tb-courbe-lg"><span>il y a '+serieP.length+' vols</span>'+
         '<span>dernier : '+serieP[serieP.length-1]+' %</span></div></div>';
     } else {
-      $t('tbCourbe').innerHTML='<div class="tb-vide">Deux vols au moins sont nécessaires pour tracer une progression.</div>';
+      $t('tbCourbe').innerHTML='<div class="tb-vide">'+(V.length===0
+        ? 'Aucun vol pour l\'instant — la courbe apparaîtra après deux vols.'
+        : 'Un seul vol enregistré — il en faut deux pour tracer une progression.')+'</div>';
     }
 
     /* ---- Objectifs (badges calculés par la page Progression) ---- */
     var B=(window.rtBadges?window.rtBadges():[]);
-    $t('tbBadges').innerHTML = B.length
+    $t('tbBadges').innerHTML = rien
+      ? '<div class="tb-vide">Les objectifs se débloquent au fil de vos vols et scénarios.</div>'
+      : B.length
       ? '<div class="tb-badges">'+B.map(function(b){
           return '<div class="tb-badge'+(b.earned?' ok':'')+'"><span class="ic">'+
                  (b.earned?b.ic:'<svg class="ic-svg" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>')+
@@ -7073,7 +7089,6 @@ if(!RECO_OK){
     var l=document.querySelector('.sidelink[data-page="progression"]'); if(l) l.click();
   });
   window.addEventListener('rt:page',function(e){ if(e.detail.page==='tableau') rendre(); });
-  marquerJour();
 })();
 </script>
 

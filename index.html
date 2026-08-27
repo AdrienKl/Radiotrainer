@@ -1833,7 +1833,7 @@
             <p class="set-note" id="setDataInfo">—</p>
             <div class="set-actions">
               <button class="btn small" id="setExport" type="button">Exporter mes données</button>
-              <button class="btn small" id="setClearHist" type="button">Effacer l'historique et les badges</button>
+              <button class="btn small" id="setClearHist" type="button">Effacer mes vols et mon historique</button>
               <button class="btn small" id="setReset" type="button">Réinitialiser les paramètres</button>
             </div>
             <p class="set-note">Tout est stocké dans votre navigateur. Rien n'est envoyé sur Internet.</p>
@@ -7197,20 +7197,29 @@ if(!RECO_OK){
 
   /* ---------- Données locales ---------- */
   function histCount(){ try{ return (JSON.parse(localStorage.getItem(LS_KEY))||[]).length; }catch(e){ return 0; } }
+  function volCount(){ try{ return (JSON.parse(localStorage.getItem('rt-vols')||'[]')).length; }catch(e){ return 0; } }
   function refreshData(){
-    var n=histCount();
-    $s('setDataInfo').textContent = n
-      ? n+' session'+(n>1?'s':'')+' enregistrée'+(n>1?'s':'')+' sur cet appareil.'
-      : 'Aucune session enregistrée pour l’instant.';
+    var n=histCount(), v=volCount();
+    if(!n && !v){ $s('setDataInfo').textContent='Aucune donnée enregistrée pour l’instant.'; return; }
+    var p=[];
+    if(v) p.push(v+' vol'+(v>1?'s':''));
+    if(n) p.push(n+' session'+(n>1?'s':'')+' de scénarios');
+    $s('setDataInfo').textContent = p.join(' et ')+' sur cet appareil.';
   }
   $s('setClearHist').addEventListener('click',function(){
-    if(!histCount()) return;
-    rtConfirm('Votre historique de scores et les badges qui en découlent seront définitivement effacés de cet appareil.',
-      {title:'Effacer l’historique ?',ok:'Effacer'}).then(function(ok){
+    if(!histCount() && !volCount()){ showToast('Aucune donnée à effacer.'); return; }
+    rtConfirm('Vos vols, vos sessions de scénarios, vos badges, votre série de jours et '+
+              'le quota du jour seront définitivement effacés de cet appareil.',
+      {title:'Tout effacer ?',ok:'Effacer'}).then(function(ok){
         if(!ok) return;
+        /* On efface TOUT ce qui alimente l'accueil : n'en oublier une partie laissait
+           des statistiques orphelines et empêchait de revenir à un état vierge. */
+        ['rt-vols','rt-jours','rt-quota','rt-vol-en-cours'].forEach(function(k){
+          try{ localStorage.removeItem(k); }catch(e){}
+        });
         try{ localStorage.removeItem(LS_KEY); }catch(e){}
         try{ renderHistory(); renderBadges(); }catch(e){}
-        refreshData(); showToast('Historique effacé.');
+        refreshData(); showToast('Données effacées.');
       });
   });
   $s('setReset').addEventListener('click',function(){
@@ -7221,8 +7230,9 @@ if(!RECO_OK){
       });
   });
   $s('setExport').addEventListener('click',function(){
+    function lu(k){ try{ return JSON.parse(localStorage.getItem(k))||[]; }catch(e){ return []; } }
     var data={ exporte_le:new Date().toISOString(), parametres:S,
-               historique:(function(){ try{ return JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch(e){ return []; } })() };
+               historique_scenarios:lu(LS_KEY), vols:lu('rt-vols'), jours_pratique:lu('rt-jours') };
     var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);

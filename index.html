@@ -5922,24 +5922,170 @@ if(!RECO_OK){
                  {label:'Votre indicatif',ref:'callsign'} ] }];
   }
 
+  /* ---- Bibliothèque d'aléas (un seul échange chacun) ----
+     Chaque entrée porte sa page du manuel DSNA. Les accusés de réception simples
+     reprennent « Roger » (p. 19-21) ; les collationnements reprennent la valeur.
+     `mk` construit un aléa à partir d'un message ATC et de mots-clés. */
+  function accuseSimple(){
+    return [ {label:'Accusé de réception',variantes:['roger','recu','bien recu','copie','wilco']},
+             {label:'Votre indicatif',ref:'callsign'} ];
+  }
+  function mk(ph,src,atc,consigne,attendu,mots,reel){
+    return function(stn,freq,leg,C){
+      return [{ ph:ph, src:src, stn:stn, freq:freq, leg:leg, majeur:true,
+        atcBefore:atc, reel:reel||'Répondez au contrôleur.', consigne:consigne,
+        attendu:attendu, motsCles:mots||accuseSimple() }];
+    };
+  }
+  var LIEUX=['Montauban','Chartres','Auxerre','Vierzon','Cognac','Épernay','Vichy','Bergerac'];
+  function unLieu(){ return LIEUX[Math.floor(Math.random()*LIEUX.length)]; }
+  function unCode(){ return String(1000+Math.floor(Math.random()*6000)); }
+
+  var ALEAS_VOL = [
+    // ---- Information de vol (manuel p. 205-213) ----
+    mk('Renseignement SIGMET','p. 205','{CALL}, renseignement SIGMET, givrage modéré à fort entre niveau 90 et niveau 130 sur votre route.',
+       'Accusez réception du SIGMET.','Roger, {CALL}.'),
+    mk('Turbulence signalée','p. 205','{CALL}, un pilote signale de fortes turbulences sur votre route.',
+       'Accusez réception.','Roger, {CALL}.'),
+    mk('Cendres volcaniques','p. 206','{CALL}, renseignement SIGMET, nuage de cendres volcaniques entre niveau 200 et niveau 350 sur votre route, pas de restriction particulière.',
+       'Accusez réception.','Roger, {CALL}.'),
+    mk('Balise en panne','p. 207','{CALL}, V-O-R "{BAL}" en panne.',
+       'Accusez réception de l\'indisponibilité.','Roger, {CALL}.'),
+    mk('Activité aviaire','p. 208','{CALL}, activité aviaire signalée sur votre route.',
+       'Accusez réception.','Roger, {CALL}.'),
+    mk('Zone réglementée','p. 208','{CALL}, {ZONE} active.',
+       'Accusez réception : vous devrez la contourner.','Roger, {CALL}.',
+       [ {label:'Accusé de réception',variantes:['roger','recu','bien recu','copie','evite','contourne']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Météo en route','p. 209','{CALL}, stratus signalés dans la région de {LIEU}.',
+       'Accusez réception de l\'information météo.','Roger, {CALL}.'),
+    mk('Météo défavorable','p. 209','{CALL}, un pilote signale des conditions météorologiques défavorables au voisinage de {LIEU}.',
+       'Accusez réception.','Roger, {CALL}.'),
+    mk('Trafic convergent','p. 211','{CALL}, trafic convergent, route 180, estimant {LIEU} à 52, Cessna 172, même altitude.',
+       'Accusez réception, ou annoncez le trafic en vue.','Roger, {CALL}.',
+       [ {label:'Réponse trafic',variantes:['roger','trafic en vue','en vue','recu','negatif','pas en vue']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Trafic inconnu','p. 211','{CALL}, trafic lent, inconnu, 1 heure, 8 nautiques, route nord-est, altitude inconnue.',
+       'Répondez : « trafic en vue », sinon « négatif ».','Trafic en vue, {CALL}.',
+       [ {label:'Réponse trafic',variantes:['trafic en vue','en vue','negatif','pas en vue','je cherche','roger']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Suggestion de manœuvre','p. 212','{CALL}, trafic non identifié, 1 heure, 8 nautiques. Je vous suggère de tourner à droite 20 degrés.',
+       'Collationnez la manœuvre suggérée.','Je tourne à droite 20 degrés, {CALL}.',
+       [ {label:'Virage',variantes:['tourne a droite','a droite','droite','20 degres','vingt degres']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Assurez votre séparation','p. 213','{CALL}, trafic 2 heures, 12 nautiques, convergent, même niveau, assurez votre séparation.',
+       'Répondez : vous n\'avez pas le visuel, ou vous l\'avez.','Pas visuel sur le trafic, {CALL}.',
+       [ {label:'Réponse trafic',variantes:['pas visuel','pas en vue','negatif','trafic en vue','en vue','roger']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Dégagé du trafic','p. 213','{CALL}, dégagé du trafic.',
+       'Accusez réception.','Roger, {CALL}.'),
+    // ---- Transpondeur (p. 186) ----
+    mk('Code transpondeur','p. 186','{CALL}, transpondeur {CODE}.',
+       'Collationnez le code assigné.','Transpondeur {CODE}, {CALL}.',
+       [ {label:'Transpondeur',variantes:['transpondeur','squawk','affiche']},
+         {label:'Code assigné',variantes:['__CODE__']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    // ---- Attentes (p. 127) ----
+    mk('Attente','p. 127','{CALL}, attendez à vue verticale {LIEU}, cause trafic.',
+       'Collationnez l\'attente.','J\'attends verticale {LIEU}, {CALL}.',
+       [ {label:'J\'attends',variantes:['j attends','attends','attente','verticale']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Délai','p. 127','{CALL}, prévoyez 10 minutes de délai, cause trafic.',
+       'Accusez réception du délai.','Roger, 10 minutes de délai, {CALL}.',
+       [ {label:'Accusé de réception',variantes:['roger','recu','bien recu','delai','dix minutes','10 minutes']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Pas de délai','p. 127','{CALL}, pas de délai prévu.',
+       'Accusez réception.','Roger, {CALL}.'),
+    // ---- Guidage et cap (p. 191, 195) ----
+    mk('Guidage','p. 191','{CALL}, pour séparation, guidage radar, tournez à gauche cap 270.',
+       'Collationnez le cap.','À gauche cap 270, {CALL}.',
+       [ {label:'Sens du virage',variantes:['a gauche','gauche','par la gauche']},
+         {label:'Cap',variantes:['cap','au cap']},
+         {label:'Valeur de cap',variantes:['270','deux sept zero','deux cent soixante dix']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Reprise de navigation','p. 191','{CALL}, guidage terminé, reprenez votre navigation propre.',
+       'Collationnez.','Je reprends ma navigation, {CALL}.',
+       [ {label:'Reprise',variantes:['reprends','reprise','navigation propre','navigation']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Maintien de cap','p. 195','{CALL}, maintenez le cap actuel.',
+       'Collationnez.','Je maintiens le cap, {CALL}.',
+       [ {label:'Je maintiens',variantes:['maintiens','je maintiens','maintien','cap']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    // ---- Altitude (p. 17, 178) ----
+    mk('Changement d\'altitude','p. 178','{CALL}, pour séparation, montez altitude 4500 pieds.',
+       'Collationnez la nouvelle altitude.','Je monte altitude 4500 pieds, {CALL}.',
+       [ {label:'Je monte',variantes:['monte','je monte','montons']},
+         {label:'Altitude',variantes:['4500','quatre mille cinq cents','quarante cinq']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Descente demandée','p. 178','{CALL}, descendez altitude 2000 pieds, trafic en croisement.',
+       'Collationnez la nouvelle altitude.','Je descends altitude 2000 pieds, {CALL}.',
+       [ {label:'Je descends',variantes:['descends','je descends','descente']},
+         {label:'Altitude',variantes:['2000','deux mille','vingt']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    // ---- État des aérodromes (p. 208) ----
+    mk('Piste non inspectée','p. 208','{CALL}, information : inspection de piste non effectuée à destination.',
+       'Accusez réception.','Roger, {CALL}.'),
+    mk('Piste contaminée','p. 208','{CALL}, information : eau stagnante sur la piste à destination.',
+       'Accusez réception.','Roger, {CALL}.'),
+    mk('Vent arrière signalé','p. 235','{CALL}, vent secteur arrière signalé 10 nœuds en finale à destination.',
+       'Accusez réception.','Roger, {CALL}.'),
+    // ---- VFR spécial (p. 174) ----
+    mk('VFR spécial','p. 174','{CALL}, conditions VFR spécial à destination, prévoyez 10 minutes de délai.',
+       'Accusez réception.','Roger, {CALL}.'),
+    // ---- Fréquence (p. 182) ----
+    mk('Veille demandée','p. 182','{CALL}, veillez {FREQ}.',
+       'Collationnez la fréquence à veiller.','Je veille {FREQ}, {CALL}.',
+       [ {label:'Veille',variantes:['veille','je veille','veillez']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Rappel demandé','p. 182','{CALL}, rappelez dans cinq minutes.',
+       'Accusez réception.','Je rappelle dans cinq minutes, {CALL}.',
+       [ {label:'Je rappelle',variantes:['rappelle','je rappelle','rappel']},
+         {label:'Votre indicatif',ref:'callsign'} ]),
+    mk('Standby','p. 19-21','{CALL}, standby.',
+       'Accusez réception et attendez.','Standby, {CALL}.',
+       [ {label:'Standby',variantes:['standby','stand by','j attends','attends','roger']},
+         {label:'Votre indicatif',ref:'callsign'} ])
+  ];
+
   /* Insère AU PLUS un aléa majeur par vol, avant la phase d'arrivée.
      Probabilité plus forte en mode Réel, comme dans les scénarios. */
   function insererAleaMajeur(S, C){
     if(!C.arr) return;                                  // vol local : pas de déroutement
-    var proba = (level==='reel') ? 0.6 : 0.25;
-    if(Math.random() >= proba) return;
+    if(Math.random() >= 0.5) return;                    // environ un vol sur deux
     // Point d'insertion : juste avant l'intégration.
     var idx=-1;
     for(var i=0;i<S.length;i++) if(S[i].ph==='Intégration'){ idx=i; break; }
     if(idx<1) return;
     var ref=S[idx-1], stn=ref.stn, freq=ref.freq, leg=Math.min(0.75,(ref.leg||0.6)+0.01);
-    var choix=['moteur','fumee','malaise','cap','radio'];
-    // Le déroutement n'a de sens que si un terrain de dégagement a été choisi.
+    /* Tirage parmi TOUS les aléas : les 5 « lourds » (urgences, guidage, panne radio,
+       terrain fermé) et la bibliothèque de messages du service d'information. */
     var alt = sel.alt && BY[sel.alt] ? BY[sel.alt] : null;
-    if(alt) choix.push('ferme','ferme');                // un peu plus probable : c'est le cas demandé
+    var choix=['moteur','fumee','malaise','cap','radio'];
+    if(alt) choix.push('ferme');
+    for(var q=0;q<ALEAS_VOL.length;q++) choix.push('lib:'+q);
     var kind=choix[Math.floor(Math.random()*choix.length)];
     var bloc;
-    if(kind==='cap')        bloc=aleaCapVol(stn,freq,leg);
+    if(kind.indexOf('lib:')===0){
+      bloc=ALEAS_VOL[parseInt(kind.slice(4),10)](stn,freq,leg,C);
+      // Substitution des éléments variables du message.
+      var lieu=unLieu(), code=unCode(), bal=BALISES[Math.floor(Math.random()*BALISES.length)];
+      var zone=ZONES_R[Math.floor(Math.random()*ZONES_R.length)];
+      bloc.forEach(function(st){
+        ['atcBefore','consigne','attendu'].forEach(function(k){
+          if(typeof st[k]==='string') st[k]=st[k]
+            .replace(/\{LIEU\}/g,lieu).replace(/\{CODE\}/g,code)
+            .replace(/\{BAL\}/g,bal).replace(/\{ZONE\}/g,zone)
+            .replace(/\{FREQ\}/g,fq(freq));
+        });
+        if(st.motsCles) st.motsCles=st.motsCles.map(function(mc){
+          if(mc.variantes && mc.variantes[0]==='__CODE__')
+            return {label:mc.label, variantes:numVariants(code)};
+          return mc;
+        });
+      });
+      C.aleaNom=bloc[0].ph;
+    }
+    else if(kind==='cap')   bloc=aleaCapVol(stn,freq,leg);
     else if(kind==='radio') bloc=aleaRadioVol(stn,freq,leg);
     else if(kind==='ferme') bloc=aleaTerrainFerme(stn,freq,leg,C.arr,alt);
     else                    bloc=aleaUrgenceVol(kind,stn,freq,leg);
@@ -6190,7 +6336,7 @@ if(!RECO_OK){
     var LIB={moteur:'panne moteur (MAYDAY)', fumee:'fumée en cabine (MAYDAY)',
              malaise:'passager malade (PAN PAN)', cap:'changement de cap imposé',
              radio:'panne radio', ferme:'terrain d\'arrivée fermé'};
-    if(C.alea) rows.push(['Imprévu','<span class="rz">'+esc(LIB[C.alea]||C.alea)+'</span>']);
+    if(C.alea) rows.push(['Imprévu','<span class="rz">'+esc(LIB[C.alea]||C.aleaNom||C.alea)+'</span>']);
     if(C.arrReelle) rows.push(['Déroutement','<span class="rz">arrivée reportée sur '+
         esc(C.arrReelle.icao+' — '+C.arrReelle.nom)+'</span>']);
     if(mk.length) rows.push(['À retravailler','<span class="rz">'+mk.map(function(k){return esc(k)+' ('+manques[k]+')';}).join(' · ')+'</span>']);

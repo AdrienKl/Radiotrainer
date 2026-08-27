@@ -1719,7 +1719,7 @@ const AERODROMES = [
   { icao:"LFAM", nom:"Berck-sur-Mer", pistes:[{ids:["06","24"],caps:[57,237]}] },
   { icao:"LFAO", nom:"Bagnoles-Couterne", pistes:[{ids:["12","30"],caps:[120,300]}] },
   { icao:"LFAP", nom:"Rethel-Perthes", pistes:[{ids:["06","24"],caps:[60,240]}] },
-  { icao:"LFAQ", nom:"Albert Bray airport", pistes:[{ids:["08","26"],caps:[90,270]}, {ids:["08R","26L"],caps:[80,260]}] },
+  { icao:"LFAQ", nom:"Albert Bray", pistes:[{ids:["08","26"],caps:[90,270]}, {ids:["08R","26L"],caps:[80,260]}] },
   { icao:"LFAS", nom:"Falaise-Mont d'Eraines", pistes:[{ids:["06","24"],caps:[60,240]}] },
   { icao:"LFAT", nom:"Le Touquet-Côte d'Opale", pistes:[{ids:["13","31"],caps:[133,313]}] },
   { icao:"LFAV", nom:"Valenciennes-Denain", pistes:[{ids:["06","24"],caps:[60,240]}, {ids:["11","29"],caps:[110,290]}, {ids:["11L","29R"],caps:[110,290]}] },
@@ -1896,7 +1896,7 @@ const AERODROMES = [
   { icao:"LFJS", nom:"Soissons-Courmelles", pistes:[{ids:["07","25"],caps:[70,250]}] },
   { icao:"LFJT", nom:"Tours Le Louroux", pistes:[{ids:["03","21"],caps:[30,210]}] },
   { icao:"LFJU", nom:"Lurcy-Lévis", pistes:[{ids:["06","24"],caps:[56,236]}, {ids:["06R","24L"],caps:[58,238]}] },
-  { icao:"LFJY", nom:"Chambley airfield", pistes:[{ids:["05","23"],caps:[50,230]}] },
+  { icao:"LFJY", nom:"Chambley", pistes:[{ids:["05","23"],caps:[50,230]}] },
   { icao:"LFKA", nom:"Albertville General Pierre Delachenal", pistes:[{ids:["05","23"],caps:[51,231]}] },
   { icao:"LFKB", nom:"Bastia-Poretta", pistes:[{ids:["16","34"],caps:[163,343]}] },
   { icao:"LFKC", nom:"Calvi Sainte Catherine", pistes:[{ids:["18","36"],caps:[179,359]}] },
@@ -1935,7 +1935,7 @@ const AERODROMES = [
   { icao:"LFLX", nom:"Châteauroux Déols", pistes:[{ids:["03","21"],caps:[33,213]}] },
   { icao:"LFLY", nom:"Lyon Bron", pistes:[{ids:["16","34"],caps:[163,343]}] },
   { icao:"LFLZ", nom:"Feurs - Chambéon", pistes:[{ids:["15","33"],caps:[153,333]}] },
-  { icao:"LFMA", nom:"Aix Les Milles airport", pistes:[{ids:["14","32"],caps:[146,326]}] },
+  { icao:"LFMA", nom:"Aix Les Milles", pistes:[{ids:["14","32"],caps:[146,326]}] },
   { icao:"LFMC", nom:"Le Luc-Le Cannet", pistes:[{ids:["09","27"],caps:[88,268]}, {ids:["13","31"],caps:[130,310]}] },
   { icao:"LFMD", nom:"Cannes Mandelieu", pistes:[{ids:["04","22"],caps:[43,223]}, {ids:["17","35"],caps:[170,350]}, {ids:["17L","35R"],caps:[170,350]}] },
   { icao:"LFME", nom:"Nîmes Courbessac", pistes:[{ids:["18L","36R"],caps:[180,0]}, {ids:["18R","36L"],caps:[180,0]}] },
@@ -1992,7 +1992,7 @@ const AERODROMES = [
   { icao:"LFOR", nom:"Chartres-Métropole", pistes:[{ids:["09","27"],caps:[90,270]}] },
   { icao:"LFOS", nom:"Saint-Valery-Vittefleur", pistes:[{ids:["07","25"],caps:[70,250]}] },
   { icao:"LFOT", nom:"Tours Val de Loire", pistes:[{ids:["02","20"],caps:[15,195]}] },
-  { icao:"LFOU", nom:"Cholet Le Pontreau airfield", pistes:[{ids:["02","20"],caps:[25,205]}, {ids:["02R","20L"],caps:[25,205]}] },
+  { icao:"LFOU", nom:"Cholet Le Pontreau", pistes:[{ids:["02","20"],caps:[25,205]}, {ids:["02R","20L"],caps:[25,205]}] },
   { icao:"LFOV", nom:"Laval-Entrammes", pistes:[{ids:["14","32"],caps:[142,322]}] },
   { icao:"LFOX", nom:"Étampes-Mondésir", pistes:[{ids:["06","24"],caps:[60,240]}, {ids:["06L","24R"],caps:[60,240]}] },
   { icao:"LFOY", nom:"Havre-Saint-Romain-de-Colbosc", pistes:[{ids:["01","19"],caps:[10,190]}, {ids:["06","24"],caps:[60,240]}] },
@@ -5106,9 +5106,26 @@ if(!RECO_OK){
     });
     return best?best.p:null;
   }
+  /* Certains CTA régionaux ne portent pas de code terrain dans les données SIA : ils
+     sont nommés d'après la région ou la grande approche qui les gère. On les rattache
+     par leur nom. Les espaces étrangers débordant sur la France (Genève, Luxembourg,
+     Karlsruhe, Koksijde, Sarrebruck, Anglo-Normandes) n'ont pas d'équivalent dans une
+     base d'aérodromes français : ils retombent sur le SIV, faute de fréquence. */
+  var CTA_PAR_NOM=[
+    [/^TOULOUSE/, 'LFBO'], [/^BORDEAUX/, 'LFBD'], [/^MARSEILLE/, 'LFML'],
+    [/^TOULON/,   'LFTH'], [/^COGNAC/,   'LFBG'], [/^SALON/,     'LFMY'],
+    [/^RHONE/,    'LFLL']
+  ];
+  function adDeZone(p){
+    if(p.ad) return p.ad;
+    var n=(p.n||'').toUpperCase();
+    for(var i=0;i<CTA_PAR_NOM.length;i++) if(CTA_PAR_NOM[i][0].test(n)) return CTA_PAR_NOM[i][1];
+    return null;
+  }
   /* Organisme (nom + fréquence) correspondant à un espace contrôlé. */
   function organismeDe(p){
-    var a=p.ad?BY[p.ad]:null;
+    var code=adDeZone(p);
+    var a=code?BY[code]:null;
     if(!a || !a.freq) return null;
     if(p.t==='CTR'){
       var f=a.freq.TWR||a.freq.AFIS||a.freq.APP;

@@ -1958,6 +1958,10 @@
               </div>
             </div>
             <div class="set-row">
+              <div class="set-lbl"><b>Radio manuelle</b><span>Afficher la nouvelle fréquence en standby puis permuter, comme en vol réel. Désactivée, la radio s'accorde toute seule.</span></div>
+              <button class="switch" id="setRadio" type="button" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="set-row">
               <div class="set-lbl"><b>Espaces affichés au départ</b><span>Les zones R/P/D surchargent la carte à petite échelle.</span></div>
               <div class="set-chips">
                 <button class="nav-tgl" type="button" data-lay="ctr">CTR</button>
@@ -7544,6 +7548,12 @@ if(!RECO_OK){
       S.layers=S.layers||{ctr:true,tma:true,rpd:false};
       S.layers[k]=!S.layers[k]; save(); b.classList.toggle('on',S.layers[k]);
     });
+  });
+
+  /* ---------- Radio manuelle (Navigation et Scénarios) ---------- */
+  $s('setRadio').addEventListener('click',function(){
+    S.radioManuelle = (S.radioManuelle===false);   // clé absente = activée par défaut
+    save(); sw($s('setRadio'), S.radioManuelle!==false);
   });
 
   /* ---------- Données locales ---------- */

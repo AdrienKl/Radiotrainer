@@ -986,6 +986,81 @@
   .tb-badge b{ font-size:13px; font-weight:700; color:var(--ink); display:block; }
   .tb-badge span{ font-size:11.5px; color:var(--ink-2); }
 
+  /* ================= Radio COM =================
+     Un vrai poste VHF : bandeau noir, afficheur à segments, molettes MHz/kHz et
+     bouton de permutation. Les quatre habillages s'inspirent des postes qu'on
+     trouve réellement dans ces machines — ce sont des évocations, pas des répliques. */
+  .radio{ margin-bottom:14px; }
+  .radio-corps{ background:linear-gradient(#2a2d33,#16181c); border:1px solid #0c0d10;
+    border-radius:12px; padding:11px 13px; box-shadow:0 2px 10px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.07); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .radio-marque{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; color:#7d8590;
+    text-transform:uppercase; writing-mode:vertical-rl; transform:rotate(180deg);
+    align-self:stretch; display:flex; align-items:center; }
+  .radio-ecran{ display:flex; align-items:center; gap:12px; background:#05070a;
+    border:1px solid #000; border-radius:7px; padding:8px 14px; flex:1; min-width:250px;
+    box-shadow:inset 0 2px 7px rgba(0,0,0,.85); }
+  .radio-col{ display:flex; flex-direction:column; gap:2px; align-items:center; flex:1; }
+  .radio-lab{ font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; color:#5d6672; }
+  .radio-val{ font-family:var(--mono); font-size:25px; font-weight:700; letter-spacing:.02em;
+    line-height:1; color:#3ee08a; text-shadow:0 0 9px rgba(62,224,138,.55); }
+  .radio-val.stby{ color:#8b95a3; text-shadow:none; }
+  .radio-val.attendue{ animation:radioClign 1s ease-in-out infinite; }
+  @keyframes radioClign{ 0%,100%{opacity:1} 50%{opacity:.35} }
+  .radio-swap{ background:#22262c; border:1px solid #0a0c0f; border-radius:6px; cursor:pointer;
+    padding:7px 9px; display:inline-flex; box-shadow:0 1px 0 rgba(255,255,255,.06); flex:none; }
+  .radio-swap:hover{ background:#2e343c; }
+  .radio-swap:active{ transform:translateY(1px); }
+  .radio-swap svg{ width:17px; height:17px; fill:none; stroke:#c8ced8; stroke-width:2;
+    stroke-linecap:round; stroke-linejoin:round; }
+  .radio-swap.pret svg{ stroke:#3ee08a; }
+  .radio-swap.pret{ box-shadow:0 0 0 2px rgba(62,224,138,.45); }
+  .radio-cmd{ display:flex; align-items:center; gap:10px; flex:none; }
+  .radio-knob{ display:flex; align-items:center; gap:4px; background:#1b1e23; border:1px solid #0a0c0f;
+    border-radius:20px; padding:3px; }
+  .rk{ width:26px; height:26px; border-radius:50%; border:1px solid #0a0c0f; cursor:pointer;
+    background:radial-gradient(circle at 35% 30%,#4a5058,#23272d); color:#dfe4ea;
+    font-size:15px; line-height:1; font-family:var(--sans); display:inline-flex;
+    align-items:center; justify-content:center; }
+  .rk:hover{ background:radial-gradient(circle at 35% 30%,#5a616a,#2b3037); }
+  .rk:active{ transform:translateY(1px); }
+  .rk-lab{ font-family:var(--mono); font-size:8.5px; letter-spacing:.1em; color:#7d8590; width:26px; text-align:center; }
+  .radio-saisie{ width:86px; background:#05070a; border:1px solid #000; border-radius:6px;
+    padding:6px 8px; font-family:var(--mono); font-size:13px; color:#8b95a3; text-align:center; }
+  .radio-saisie:focus{ outline:none; border-color:#3ee08a; color:#3ee08a; }
+  .radio-aide{ font-size:12.5px; color:var(--ink-2); margin:8px 2px 0; line-height:1.5; }
+  .radio-aide.alerte{ color:#96332f; }
+  :root[data-theme="dark"] .radio-aide.alerte{ color:#f3b4b0; }
+
+  /* --- Habillages par machine --- */
+  /* Cessna : postes Garmin, afficheur clair sur fond sombre, bezel gris anthracite. */
+  .radio[data-skin="cessna"] .radio-corps{ background:linear-gradient(#3a3f46,#212429); }
+  .radio[data-skin="cessna"] .radio-val{ color:#e8f2ff; text-shadow:0 0 8px rgba(160,200,255,.5); }
+  .radio[data-skin="cessna"] .radio-val.stby{ color:#7f8b9c; text-shadow:none; }
+  .radio[data-skin="cessna"] .radio-swap.pret svg{ stroke:#8fc6ff; }
+  /* Piper : type Bendix/King, numéraux vert gaz sur noir profond. */
+  .radio[data-skin="piper"] .radio-corps{ background:linear-gradient(#232323,#101010); }
+  .radio[data-skin="piper"] .radio-ecran{ background:#020402; }
+  .radio[data-skin="piper"] .radio-val{ color:#57ff8f; text-shadow:0 0 10px rgba(87,255,143,.6); }
+  /* Robin : postes Becker, segments ambrés, façade compacte. */
+  .radio[data-skin="robin"] .radio-corps{ background:linear-gradient(#2b2823,#151310); }
+  .radio[data-skin="robin"] .radio-val{ color:#ffb347; text-shadow:0 0 9px rgba(255,179,71,.55); }
+  .radio[data-skin="robin"] .radio-val.stby{ color:#9a8b73; text-shadow:none; }
+  .radio[data-skin="robin"] .radio-swap.pret svg{ stroke:#ffb347; }
+  .radio[data-skin="robin"] .radio-swap.pret{ box-shadow:0 0 0 2px rgba(255,179,71,.45); }
+  /* Générique : blanc neutre. */
+  .radio[data-skin="generic"] .radio-val{ color:#e6ebf2; text-shadow:0 0 8px rgba(230,235,242,.35); }
+  .radio[data-skin="generic"] .radio-swap.pret svg{ stroke:#e6ebf2; }
+
+  @media (max-width:560px){
+    .radio-corps{ gap:10px; padding:10px; }
+    .radio-marque{ display:none; }
+    .radio-ecran{ min-width:0; width:100%; padding:8px 10px; }
+    .radio-val{ font-size:21px; }
+    .radio-cmd{ width:100%; justify-content:space-between; }
+    .radio-saisie{ flex:1; width:auto; }
+  }
+
   /* ================= Historique de vols ================= */
   .nav-hist{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     box-shadow:var(--shadow-sm); margin:0 0 16px; overflow:hidden; }
@@ -1406,6 +1481,32 @@
             <button class="btn small" id="nextBtn" type="button" disabled>Échange suivant<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
           </div>
 
+          <!-- Radio COM : n'apparaît que sur les échanges qui portent une fréquence
+               (scénario Navigation / croisière). Même mécanique qu'en vol. -->
+          <div class="radio hidden" id="scRadio" data-skin="generic">
+            <div class="radio-corps">
+              <div class="radio-marque"><span id="scRadioNom">COM 1</span></div>
+              <div class="radio-ecran">
+                <div class="radio-col"><span class="radio-lab">ACTIVE</span>
+                  <span class="radio-val" id="scRadioAct">—</span></div>
+                <button class="radio-swap" id="scRadioSwap" type="button" title="Permuter">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
+                </button>
+                <div class="radio-col"><span class="radio-lab">STANDBY</span>
+                  <span class="radio-val stby" id="scRadioStby">—</span></div>
+              </div>
+              <div class="radio-cmd">
+                <div class="radio-knob"><button class="rk" type="button" data-sctune="-1">−</button>
+                  <span class="rk-lab">MHz</span><button class="rk" type="button" data-sctune="1">+</button></div>
+                <input class="radio-saisie" id="scRadioSaisie" type="text" inputmode="decimal"
+                       placeholder="saisir…" maxlength="7" aria-label="Fréquence standby">
+                <div class="radio-knob"><button class="rk" type="button" data-sctune="-0.005">−</button>
+                  <span class="rk-lab">kHz</span><button class="rk" type="button" data-sctune="0.005">+</button></div>
+              </div>
+            </div>
+            <p class="radio-aide" id="scRadioAide"></p>
+          </div>
+
           <div class="trans-wrap" id="transWrap">
             <label for="transText">Transcription (modifiable avant validation)</label>
             <textarea id="transText" placeholder="Ce que le micro a entendu s'affiche ici — corrigez si besoin, puis validez."></textarea>
@@ -1577,6 +1678,44 @@
           </div>
 
           <div class="vf-evit hidden" id="vfEvit"></div>
+
+          <!-- ============ RADIO COM ============
+               Deux fréquences comme sur un vrai poste : ACTIVE (celle sur laquelle on
+               émet) et STANDBY (celle qu'on prépare). Le bouton central les permute.
+               L'habillage change selon l'avion choisi — voir radioSkin(). -->
+          <div class="radio" id="vfRadio" data-skin="generic">
+            <div class="radio-corps">
+              <div class="radio-marque"><span id="radioNom">COM 1</span></div>
+              <div class="radio-ecran">
+                <div class="radio-col">
+                  <span class="radio-lab">ACTIVE</span>
+                  <span class="radio-val" id="radioAct">121.200</span>
+                </div>
+                <button class="radio-swap" id="radioSwap" type="button" title="Permuter active / standby (Entrée)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
+                </button>
+                <div class="radio-col">
+                  <span class="radio-lab">STANDBY</span>
+                  <span class="radio-val stby" id="radioStby">—</span>
+                </div>
+              </div>
+              <div class="radio-cmd">
+                <div class="radio-knob">
+                  <button class="rk" type="button" data-tune="-1">−</button>
+                  <span class="rk-lab">MHz</span>
+                  <button class="rk" type="button" data-tune="1">+</button>
+                </div>
+                <input class="radio-saisie" id="radioSaisie" type="text" inputmode="decimal"
+                       placeholder="saisir…" maxlength="7" aria-label="Saisir la fréquence standby">
+                <div class="radio-knob">
+                  <button class="rk" type="button" data-tune="-0.005">−</button>
+                  <span class="rk-lab">kHz</span>
+                  <button class="rk" type="button" data-tune="0.005">+</button>
+                </div>
+              </div>
+            </div>
+            <p class="radio-aide" id="radioAide"></p>
+          </div>
 
           <div class="vf-layout">
             <div class="vf-mapslot" id="vfMapSlot"></div>
@@ -3008,7 +3147,7 @@ const SCENARIOS = [
       state.altCruise=alt;
       var T=[];
       // 1 — Montée : demande de clairance pour pénétrer le TMA (manuel p. 178)
-      T.push({ role:'pilote', stn:'tour', station:org.n,
+      T.push({ role:'pilote', stn:'tour', station:org.n, freq:org.f,
         situation:"En montée au-dessus de "+ad.nom+", vous allez pénétrer le "+tma.t+" "+tma.n+
                   " (classe "+(tma.c||'?')+", "+(tma.lo||0)+" à "+(plaf||'?')+" pieds).",
         consigne:"Demandez le transit : organisme, indicatif, altitude souhaitée.",
@@ -3018,7 +3157,7 @@ const SCENARIOS = [
                    {label:"Demande de transit",variantes:["transit","demande transit","transit vfr","traversee","penetration"]},
                    {label:"Altitude",ref:'alt'} ] });
       // 2 — Collationnement de la clairance
-      T.push({ stn:'tour', station:org.n,
+      T.push({ stn:'tour', station:org.n, freq:org.f,
         atc:"{CALL}, transitez "+tma.n+", maintenez {ALT} pieds.",
         consigne:"Collationnez : vous transitez et vous maintenez {ALT} pieds.",
         attendu:"Je transite "+tma.n+", maintiens {ALT} pieds, {CALL}.",
@@ -3027,7 +3166,7 @@ const SCENARIOS = [
                    {label:"Altitude",ref:'alt'},
                    {label:"Votre indicatif",ref:'callsign'} ] });
       // 3 — Information de trafic (manuel p. 211)
-      T.push({ stn:'tour', station:org.n,
+      T.push({ stn:'tour', station:org.n, freq:org.f,
         atc:["{CALL}, trafic convergent, Cessna 172, même altitude.",
              "{CALL}, trafic à midi, 8 nautiques, altitude inconnue."],
         consigne:"Accusez réception de l'information de trafic.",
@@ -3037,14 +3176,14 @@ const SCENARIOS = [
       // 4 — Sortie du TMA : transfert vers le service d'information (manuel p. 182)
       var siv=sivProche(pos);
       if(siv){
-        T.push({ stn:'tour', station:org.n,
+        T.push({ stn:'tour', station:org.n, freq:org.f, tuneTo:siv.f,
           atc:"{CALL}, vous quittez "+tma.n+", contactez "+siv.n+" "+String(siv.f).replace('.',',')+".",
           consigne:"Collationnez : le nom de l'organisme, la fréquence, puis votre indicatif.",
           attendu:siv.n+" "+String(siv.f).replace('.',',')+", {CALL}.",
           motsCles:[ {label:"Organisme",variantes:orgVars(siv.n)},
                      {label:"Nouvelle fréquence",variantes:freqMots(siv.f)},
                      {label:"Votre indicatif",ref:'callsign'} ] });
-        T.push({ role:'pilote', stn:'tour', station:siv.n,
+        T.push({ role:'pilote', stn:'tour', station:siv.n, freq:siv.f,
           situation:"Vous venez de passer sur "+siv.n+".",
           consigne:"Prise de contact : organisme, indicatif, VFR, altitude.",
           attendu:siv.n+", {CALL}, en VFR, {ALT} pieds.",
@@ -3054,7 +3193,7 @@ const SCENARIOS = [
                      {label:"Altitude",ref:'alt'} ] });
       }
       // 5 — Quitter la fréquence (manuel p. 153)
-      T.push({ stn:'tour', station:siv?siv.n:org.n,
+      T.push({ stn:'tour', station:siv?siv.n:org.n, freq:siv?siv.f:org.f,
         atc:"{CALL}, rappelez quittant la fréquence.",
         consigne:"Annoncez que vous quittez la fréquence, puis votre indicatif.",
         attendu:"Je quitte la fréquence, {CALL}.",
@@ -3787,6 +3926,7 @@ function currentStep(){ return state.queue[state.stepIndex]; }
 
 function renderStep(){
   majIndicatif();
+  scRadioPourEtape();
   const sc=SCENARIOS[state.scenarioIndex];
   const step=currentStep();
   if(step && step.onEnter && !step._entered){ step._entered=true; step.onEnter(); } // C3 (ex: vent qui tourne)
@@ -3926,6 +4066,66 @@ const RT_SET_KEY='rt-settings';
 function rtSettings(){ try{ return JSON.parse(localStorage.getItem(RT_SET_KEY)||'{}'); }catch(e){ return {}; } }
 function rtSaveSettings(s){ try{ localStorage.setItem(RT_SET_KEY, JSON.stringify(s)); }catch(e){} }
 
+/* ================= RADIO COM (Scénarios) =================
+   Même principe qu'en Navigation : on n'émet que sur la fréquence ACTIVE. Elle
+   n'apparaît que sur les échanges qui portent une fréquence — aujourd'hui le
+   scénario « Navigation / croisière ». Les autres n'ont pas de transfert. */
+var scRadio={ act:null, stby:null, attendue:null };
+function scRadioManuelle(){ return rtSettings().radioManuelle!==false; }
+function scFmt(f){ return f==null?'—':Number(f).toFixed(3); }
+function scRadioSkin(){
+  var M={Cessna:['cessna','GARMIN COM 1'],Piper:['piper','BENDIX/KING COM'],
+         Robin:['robin','BECKER COM'],Jodel:['robin','BECKER COM'],Socata:['robin','BECKER COM']};
+  // Les scénarios n'ont pas de sélecteur d'avion : on reprend la dernière machine
+  // choisie en Navigation, sinon un poste générique.
+  var fam=rtSettings().derniereFamille;
+  var d=M[fam]||['generic','VHF COM 1'];
+  var r=$('scRadio'); if(r) r.setAttribute('data-skin',d[0]);
+  var n=$('scRadioNom'); if(n) n.textContent=d[1];
+}
+function scMajRadio(){
+  if(!$('scRadioAct')) return;
+  $('scRadioAct').textContent=scFmt(scRadio.act);
+  var st=$('scRadioStby'); st.textContent=scFmt(scRadio.stby);
+  var pret = scRadio.attendue!=null && scRadio.stby!=null &&
+             Math.abs(Number(scRadio.stby)-Number(scRadio.attendue))<0.0005;
+  st.classList.toggle('attendue',pret);
+  $('scRadioSwap').classList.toggle('pret',pret);
+  var s=currentStep(), a=$('scRadioAide');
+  if(s && s.freq && !scBonneFreq()){
+    a.textContent='Vous émettez sur '+scFmt(scRadio.act)+' — '+(s.station||'la station')+
+      ' est sur '+scFmt(s.freq)+'. Affichez-la en standby puis permutez.';
+    a.classList.add('alerte');
+  } else { a.textContent=''; a.classList.remove('alerte'); }
+}
+function scBonneFreq(){
+  var s=currentStep();
+  if(!s || !s.freq || !scRadioManuelle()) return true;
+  return scRadio.act!=null && Math.abs(Number(scRadio.act)-Number(s.freq))<0.0005;
+}
+function scPoserStby(f){
+  if(f==null) return;
+  scRadio.stby=Math.min(136.975,Math.max(118,Math.round(Number(f)*1000)/1000));
+  scMajRadio();
+}
+function scPermuter(){
+  if(scRadio.stby==null) return;
+  var t=scRadio.act; scRadio.act=scRadio.stby; scRadio.stby=t;
+  if(scRadio.attendue!=null && Math.abs(Number(scRadio.act)-Number(scRadio.attendue))<0.0005)
+    scRadio.attendue=null;
+  scMajRadio();
+}
+/* Affiche ou masque la radio selon que l'échange courant porte une fréquence. */
+function scRadioPourEtape(){
+  var box=$('scRadio'); if(!box) return;
+  var s=currentStep();
+  if(!s || !s.freq || !scRadioManuelle()){ box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  if(scRadio.act==null) scRadio.act=Number(s.freq);       // première fréquence : déjà réglée
+  scRadio.attendue = (Math.abs(Number(scRadio.act)-Number(s.freq))>=0.0005) ? Number(s.freq) : null;
+  scRadioSkin(); scMajRadio();
+}
+
 /* --- Confirmation avant d'abandonner (helper global, réutilisé par le module Navigation) ---
    Renvoie une Promise résolue à true/false. On n'utilise pas window.confirm() :
    il gèle le fil d'exécution, ce qui interrompt la synthèse vocale du contrôleur. */
@@ -3971,7 +4171,36 @@ bindPushToTalk(el.pttBtn,     ()=>{ if(RECO_OK && !listening) startListening(); 
 bindPushToTalk(el.reRecordBtn,()=>{ if(RECO_OK && !listening) startListening(); }, ()=>{ if(listening) stopListening(); });
 el.replayBtn.addEventListener('click', ()=>{ const s=currentStep(); if(s && s.atc) speakATC(s.atc); });
 el.hintBtn.addEventListener('click', ()=>{ const s=currentStep(); el.hintTxt.textContent=fillDisplay(s.attendu); el.hint.classList.remove('hidden'); });
-el.validerBtn.addEventListener('click', ()=> evaluate(el.transText.value));
+/* ---- Commandes de la radio (Scénarios) ---- */
+if($('scRadioSwap')){
+  $('scRadioSwap').addEventListener('click', scPermuter);
+  document.querySelectorAll('[data-sctune]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const pas=parseFloat(b.dataset.sctune);
+      const base=(scRadio.stby!=null)?Number(scRadio.stby):(scRadio.act!=null?Number(scRadio.act):118);
+      scPoserStby(Math.round((base+pas)*1000)/1000);
+      $('scRadioSaisie').value='';
+    });
+  });
+  $('scRadioSaisie').addEventListener('input', ()=>{
+    const n=parseFloat($('scRadioSaisie').value.replace(',','.').replace(/[^0-9.]/g,''));
+    if(!isNaN(n) && n>=118 && n<=136.975) scPoserStby(n);
+  });
+  $('scRadioSaisie').addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); scPermuter(); $('scRadioSaisie').value=''; }
+  });
+}
+el.validerBtn.addEventListener('click', ()=>{
+  // Émettre sur la mauvaise fréquence : personne ne répond, comme en vol.
+  if(!scBonneFreq()){
+    const s=currentStep();
+    logRow('sys','Aucune réponse — vous émettez sur '+scFmt(scRadio.act)+
+                 ' alors que '+(s.station||'la station')+' écoute sur '+scFmt(s.freq)+'.');
+    scMajRadio();
+    return;
+  }
+  evaluate(el.transText.value);
+});
 el.nextBtn.addEventListener('click', ()=>{
   if(state.stepIndex < state.queue.length-1){ state.stepIndex++; renderStep(); }
   else showRecap();
@@ -4906,6 +5135,8 @@ if(!RECO_OK){
   autocomplete(acInput, document.getElementById('navAcftList'), AIRCRAFT,
                function(d){return d.nom;}, function(d){return d.abbr;},
                function(d){ acChoice=d; acInput.classList.remove('champ-requis');
+                            // mémorisée pour l'habillage de la radio des Scénarios
+                            try{ var s=rtSettings(); s.derniereFamille=d.fam; rtSaveSettings(s); }catch(e){}
                             try{ renderNavlog(); }catch(e){} });
   // Le champ est vidé à la main : on oublie la sélection précédente.
   acInput.addEventListener('input',function(){ if(!acInput.value.trim()) acChoice=null; });
@@ -5678,7 +5909,17 @@ if(!RECO_OK){
     return out.length?out:[brut[0]];
   }
 
-  function freqOf(a,kinds){ for(var i=0;i<kinds.length;i++){ if(a.freq&&a.freq[kinds[i]]) return {k:kinds[i],f:a.freq[kinds[i]]}; } return null; }
+  /* Bande VHF aéronautique civile : 118,000 à 136,975 MHz. Quelques terrains
+     militaires de la base portent des fréquences UHF (142,45 ; 37,925…) qu'aucune
+     radio VFR ne peut afficher : on les écarte plutôt que de demander l'impossible. */
+  function bandeVHF(f){ var n=Number(f); return n>=118 && n<=136.975; }
+  function freqOf(a,kinds){
+    for(var i=0;i<kinds.length;i++){
+      var f=a.freq&&a.freq[kinds[i]];
+      if(f && bandeVHF(f)) return {k:kinds[i],f:f};
+    }
+    return null;
+  }
   // Nom d'organisme déduit du TYPE de fréquence réellement publié pour ce terrain.
   /* Nature du terrain — elle change la phraséologie du tout au tout :
        TWR  : organisme de contrôle → il délivre des CLAIRANCES (« autorisé »)
@@ -6377,15 +6618,91 @@ if(!RECO_OK){
     d.innerHTML='<span class="who">'+w+'</span>'+esc(txt);
     $v('vfLog').appendChild(d); $v('vfLog').scrollTop=1e6;
   }
+  /* ================= RADIO COM =================
+     Fonctionnement réel : on n'émet que sur la fréquence ACTIVE. Quand le contrôleur
+     transfère (« contactez X 119,800 »), il faut afficher 119,800 en STANDBY puis
+     permuter. Tant que ce n'est pas fait, le nouvel organisme ne répond pas. */
+  var radio={ act:null, stby:null, attendue:null };
+
+  /* Habillage selon la machine. Les postes cités sont ceux qu'on rencontre
+     couramment dans ces avions ; le rendu s'en inspire sans prétendre les copier. */
+  var RADIO_SKINS={
+    Cessna:{skin:'cessna', nom:'GARMIN COM 1'},
+    Piper: {skin:'piper',  nom:'BENDIX/KING COM'},
+    Robin: {skin:'robin',  nom:'BECKER COM'},
+    Jodel: {skin:'robin',  nom:'BECKER COM'},
+    Socata:{skin:'robin',  nom:'BECKER COM'}
+  };
+  function radioSkin(){
+    var d=(acChoice&&RADIO_SKINS[acChoice.fam])||{skin:'generic',nom:'VHF COM 1'};
+    var r=$v('vfRadio');
+    if(r) r.setAttribute('data-skin', d.skin);
+    var n=$v('radioNom'); if(n) n.textContent=d.nom;
+  }
+  function fmtF(f){ return f==null?'—':Number(f).toFixed(3); }
+  function majRadio(){
+    $v('radioAct').textContent = fmtF(radio.act);
+    var st=$v('radioStby');
+    st.textContent = fmtF(radio.stby);
+    // La standby clignote quand elle correspond à la fréquence attendue : prêt à permuter.
+    var pret = radio.attendue!=null && radio.stby!=null &&
+               Math.abs(Number(radio.stby)-Number(radio.attendue))<0.0005;
+    st.classList.toggle('attendue', pret);
+    $v('radioSwap').classList.toggle('pret', pret);
+    majAideRadio();
+  }
+  function surBonneFreq(){
+    var s=F.steps[F.i];
+    if(!s || !s.freq) return true;                  // étape sans fréquence : rien à vérifier
+    if(!radioManuelle()) return true;               // mode manuel désactivé
+    return radio.act!=null && Math.abs(Number(radio.act)-Number(s.freq))<0.0005;
+  }
+  function majAideRadio(){
+    var a=$v('radioAide'); if(!a) return;
+    var s=F.steps[F.i];
+    if(!radioManuelle()){ a.textContent=''; a.classList.remove('alerte'); return; }
+    if(s && s.freq && !surBonneFreq()){
+      a.textContent='Vous émettez sur '+fmtF(radio.act)+' — '+(s.stn||'la station')+
+        ' est sur '+fmtF(s.freq)+'. Affichez-la en standby puis permutez.';
+      a.classList.add('alerte');
+    } else if(radio.attendue!=null){
+      a.textContent='Nouvelle fréquence à afficher en standby, puis permutez.';
+      a.classList.remove('alerte');
+    } else { a.textContent=''; a.classList.remove('alerte'); }
+  }
+  function radioManuelle(){ return rtSettings().radioManuelle!==false; }
+  function poserStby(f){
+    if(f==null) return;
+    var n=Math.round(Number(f)*1000)/1000;
+    radio.stby=Math.min(136.975, Math.max(118, n));
+    majRadio();
+  }
+  function permuter(){
+    if(radio.stby==null) return;
+    var t=radio.act; radio.act=radio.stby; radio.stby=t;
+    if(radio.attendue!=null && Math.abs(Number(radio.act)-Number(radio.attendue))<0.0005)
+      radio.attendue=null;                          // transfert accompli
+    majRadio();
+    var e=$v('radioAct'); e.classList.remove('tuning'); void e.offsetWidth; e.classList.add('tuning');
+  }
+
   function tune(stn,freq,animate){
     $v('vfStation').textContent=stn||'—';
     $v('vfFreq').textContent=freq?fq(freq):'—';
     if(animate){ var e=$v('vfFreq'); e.classList.remove('tuning'); void e.offsetWidth; e.classList.add('tuning'); }
+    /* En mode manuel, la radio N'EST PAS accordée automatiquement : c'est au pilote
+       de le faire. On mémorise seulement la fréquence attendue. */
+    if(freq!=null && !radioManuelle()) radio.act=Number(freq);
+    majRadio();
   }
   function renderStep(){
     var s=F.steps[F.i]; if(!s) return endFlight();
     if(s.onEnter) s.onEnter();
     state.callForm = s.premierContact ? 'full' : 'abbr';
+    /* Fréquence à afficher : celle de l'étape en cours si on n'y est pas encore. */
+    radio.attendue = (radioManuelle() && s.freq!=null &&
+                      (radio.act==null || Math.abs(Number(radio.act)-Number(s.freq))>=0.0005))
+                     ? Number(s.freq) : null;
     tune(s.stn,s.freq,false);
     $v('vfPhase').textContent=s.ph;
     $v('vfSrc').textContent='Manuel DSNA '+s.src;
@@ -6469,6 +6786,11 @@ if(!RECO_OK){
     if(window.rtQuotaIncr) window.rtQuotaIncr();
     document.body.classList.add('in-flight');   // carte réduite + libellés de config masqués
     var br=$v('navResume'); if(br) br.classList.add('hidden');   // un vol tourne : plus de proposition de reprise
+    // Au départ, la radio est déjà réglée sur le terrain : on ne commence pas un vol
+    // avec un poste éteint.
+    radio.act = (F.ctx.depF && F.ctx.depF.f) ? Number(F.ctx.depF.f) : null;
+    radio.stby=null; radio.attendue=null;
+    radioSkin(); majRadio();
     $v('vfCall').textContent=state.call;        // indicatif rappelé en permanence
     var ev=$v('vfEvit');
     if(F.ctx.evitMsg){ ev.innerHTML='<span>'+ICONS.warn+'</span><span><b>Trajet ajusté.</b> '+
@@ -6711,12 +7033,41 @@ if(!RECO_OK){
     }
     startFlight();
   });
+  /* ---- Commandes de la radio ---- */
+  $v('radioSwap').addEventListener('click',permuter);
+  sec.querySelectorAll('[data-tune]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var pas=parseFloat(b.dataset.tune);
+      var base=(radio.stby!=null)?Number(radio.stby):(radio.act!=null?Number(radio.act):118);
+      poserStby(Math.round((base+pas)*1000)/1000);
+      $v('radioSaisie').value='';
+    });
+  });
+  $v('radioSaisie').addEventListener('input',function(){
+    var v=$v('radioSaisie').value.replace(',','.').replace(/[^0-9.]/g,'');
+    var n=parseFloat(v);
+    if(!isNaN(n) && n>=118 && n<=136.975) poserStby(n);
+  });
+  $v('radioSaisie').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){ e.preventDefault(); permuter(); $v('radioSaisie').value=''; }
+  });
+
   bindPushToTalk($v('vfPtt'), function(){ if(F.running) startListening(); }, function(){ stopListening(); });
   bindPushToTalk($v('vfRerec'), function(){ if(F.running) startListening(); }, function(){ stopListening(); });
   // La notation n'a lieu qu'à la validation explicite.
   $v('vfValider').addEventListener('click',function(){
     var t=$v('vfTransText').value.trim();
     if(!t) return;
+    /* Émettre sur la mauvaise fréquence : personne ne répond, comme en vrai.
+       On ne note pas l'échange, on renvoie vers la radio. */
+    if(!surBonneFreq()){
+      var s=F.steps[F.i];
+      vfLog('sys','Aucune réponse — vous émettez sur '+fmtF(radio.act)+
+                  ' alors que '+(s.stn||'la station')+' écoute sur '+fmtF(s.freq)+'.');
+      majAideRadio();
+      $v('vfRadio').scrollIntoView({behavior:'smooth',block:'nearest'});
+      return;
+    }
     $v('vfValider').disabled=true;
     answer(t);
   });
@@ -7251,6 +7602,7 @@ if(!RECO_OK){
     var L=S.layers||{ctr:true,tma:true,rpd:false};
     sec.querySelectorAll('[data-lay]').forEach(function(b){ b.classList.toggle('on',!!L[b.getAttribute('data-lay')]); });
     sw($s('setNoise'),!!S.noise);
+    sw($s('setRadio'), S.radioManuelle!==false);   // absent = radio manuelle active
     $s('setCall').value=S.call||'F-ABCD';
     refreshData();
   }

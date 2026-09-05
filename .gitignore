@@ -9,3 +9,11 @@ Manuel_Phraseologie.pdf
 
 # macOS
 .DS_Store
+
+# Photos d'avion sources (~34 Mo) : elles servent à FABRIQUER les découpes de
+# assets/avions/. Ce sont les .webp détourés qui sont publiés, pas les originaux.
+photo avion/
+
+# Cartes OACI sources deplacees dans ce dossier : elles servent a fabriquer les
+# tuiles de assets/oaci/, elles ne sont pas publiees.
+carte oaci/

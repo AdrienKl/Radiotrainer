@@ -513,7 +513,12 @@
     padding:8px 18px; font-family:var(--sans); font-size:13.5px; font-weight:600; color:var(--ink-2); transition:.15s; }
   .nav-mode-opt.active{ background:var(--violet); color:#fff; }
 
-  .nav-layout{ display:grid; grid-template-columns:1fr 360px; gap:18px; align-items:start; }
+  /* minmax(0,1fr) et non 1fr : sinon la carte Leaflet impose sa largeur intrinseque
+     et deborde la colonne sur les ecrans etroits.
+     .nav-col empile carte + historique : sans ce conteneur, le placement automatique
+     de la grille poussait .nav-form sur la rangee de l'historique, donc tres bas. */
+  .nav-layout{ display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:18px; align-items:start; }
+  .nav-col{ display:flex; flex-direction:column; gap:14px; min-width:0; }
   .nav-mapwrap{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     padding:10px; box-shadow:var(--shadow); }
   .nav-map{ height:340px; border-radius:12px; background:var(--surface-2); z-index:0; }
@@ -584,6 +589,10 @@
   .nav-resume-act{ display:flex; gap:8px; }
   .nav-navlog{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0 0;
     background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:11px 13px; }
+  /* Le display:grid ci-dessus l'emporte sur le [hidden] de la feuille du navigateur :
+     sans cette regle, un bandeau gris vide restait affiche sous « Niveau » tant
+     qu'aucun trajet n'etait choisi. */
+  .nav-navlog[hidden]{ display:none; }
   .nav-navlog div{ display:flex; flex-direction:column; gap:2px; }
   .nav-navlog dt{ font-family:var(--mono); font-size:9.5px; letter-spacing:.06em;
     text-transform:uppercase; color:var(--ink-2); margin:0; }
@@ -631,8 +640,15 @@
   .nav-admark.sel-alt{ background:#e0a13a; }
 
   @media (max-width:980px){
-    .nav-layout{ grid-template-columns:1fr; }
+    .nav-layout{ grid-template-columns:minmax(0,1fr); }
     .nav-map{ height:380px; }
+    /* Une seule colonne : l'ordre utile devient carte -> configurateur -> historique.
+       display:contents fait remonter les enfants de .nav-col dans la grille, ce qui
+       permet de les ordonner avec le formulaire (sinon l'historique passait avant). */
+    .nav-col{ display:contents; }
+    .nav-mapwrap{ order:1; }
+    .nav-form{ order:2; }
+    .nav-hist{ order:3; }
   }
 
   /* ---- Vol en direct (Phase 2) ---- */
@@ -653,6 +669,14 @@
   .vf-call{ font-family:var(--mono); font-size:14.5px; font-weight:700; color:var(--violet-dark);
     background:var(--violet-soft); border:1px solid var(--violet); border-radius:8px;
     padding:3px 10px; white-space:nowrap; }
+  /* Fréquence ATIS du terrain de départ, affichée à côté de celle de l'organisme
+     pendant tout le vol : c'est la première à afficher, avant même d'appeler.
+     Volontairement en retrait (contour, pas de fond plein) pour ne pas concurrencer
+     la fréquence ACTIVE, qui est celle sur laquelle on émet. */
+  .vf-atis{ font-family:var(--mono); font-size:13px; font-weight:700; color:var(--ink-2);
+    background:var(--surface-2); border:1px dashed var(--border); border-radius:8px;
+    padding:2px 8px; white-space:nowrap; }
+  .vf-atis b{ color:var(--violet-dark); }
   .vf-freq.tuning{ animation:vfTune .5s ease 3; }
   @keyframes vfTune{ 0%,100%{background:var(--violet)} 50%{background:#e0a13a} }
   .vf-prog{ flex:1; height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden; min-width:60px; }
@@ -671,6 +695,9 @@
   body.in-flight .nav-legend{ font-size:11px; gap:9px; }
   body.in-flight .nav-maphint, body.in-flight .nav-maptools{ display:none; }
   body.in-flight #page-navigation > .container > .section-sub{ display:none; }
+  /* En vol, on ne montre que ce qui sert à voler : l'historique et son détail
+     appartiennent à l'écran de configuration. */
+  body.in-flight .nav-hist, body.in-flight .nav-hist-detail{ display:none; }
   .vf-radio{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     padding:18px; box-shadow:var(--shadow); }
   .vf-phase{ display:flex; align-items:baseline; justify-content:space-between; gap:10px;
@@ -681,6 +708,26 @@
     padding:11px 13px; font-size:14px; line-height:1.5; color:var(--violet-dark); margin-bottom:11px; }
   .vf-atc:empty{ display:none; }
   .vf-atc b{ font-weight:700; }
+  /* Mode Réel : le message du contrôleur n'est PAS écrit — on n'affiche que la
+     mention de la transmission et un bouton pour la réécouter, comme en vol où
+     l'on peut demander « répétez ». */
+  .vf-ecoute{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .vf-ecoute .qui{ display:flex; align-items:center; gap:9px; font-weight:700; }
+  .vf-ecoute .qui .ic-svg{ width:17px; height:17px; flex:none; }
+  .vf-rejouer{ display:inline-flex; align-items:center; gap:6px; flex:none; cursor:pointer;
+    background:var(--violet); color:#fff; border:none; border-radius:var(--pill);
+    padding:6px 13px; font-family:var(--sans); font-size:12.5px; font-weight:700; }
+  .vf-rejouer:hover{ filter:brightness(1.08); }
+  .vf-rejouer .ic-svg{ width:14px; height:14px; }
+  /* Ligne de journal en attente : le texte n'apparaît qu'une fois la réponse donnée. */
+  .vf-log .r.attente{ font-style:normal; opacity:.75; }
+  .vf-consigne:empty{ display:none; }
+  .vf-situation{ display:flex; align-items:flex-start; gap:10px; background:#fdf2f0;
+    border:1px solid #e6bdb7; border-radius:11px; padding:11px 13px; font-size:14.5px;
+    line-height:1.5; color:#7d2b26; margin-bottom:11px; font-weight:700; }
+  .vf-situation .ic-svg{ width:18px; height:18px; flex:none; margin-top:1px; }
+  .vf-situation.hidden{ display:none; }
+  :root[data-theme="dark"] .vf-situation{ background:#3a201d; border-color:#7a3b34; color:#f3b4b0; }
   .vf-consigne{ background:var(--surface-2); border:1px solid var(--border); border-radius:11px;
     padding:15px 17px; font-size:16px; line-height:1.6; color:var(--ink); margin-bottom:16px; }
 
@@ -735,8 +782,11 @@
 
   /* Marqueur avion sur la carte pendant le vol */
   .vf-plane{ font-size:0; }
-  .vf-plane svg{ width:26px; height:26px; color:#c0392b;
-    filter:drop-shadow(0 1px 3px rgba(0,0,0,.45)); transition:transform .8s linear; }
+  /* Le rouge se confondait avec les zones R/P/D de la carte OACI. Bleu ardoise
+     cercle de blanc : lisible sur un fond charge, sans imiter un symbole reel. */
+  .vf-plane svg{ display:block; width:28px; height:28px; color:#1b3a63;
+    filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 3px #fff) drop-shadow(0 1px 3px rgba(0,0,0,.4));
+    transition:transform .8s linear; transform-origin:50% 50%; }
 
   /* --- Zone de parole (placé APRÈS les règles .vf-* d'origine pour les surcharger) ---
      C'est tout le panneau qui grandit, pas seulement le bouton micro : la page passe
@@ -758,7 +808,10 @@
   .vf-log{ flex:1 1 auto; max-height:none; font-size:13.5px; }
 
   @media (max-width:980px){
-    .vf-layout{ grid-template-columns:1fr; }
+    /* minmax(0,1fr) et non 1fr : la piste « auto » laissait la carte Leaflet imposer
+       sa largeur intrinsèque et déborder l'écran sous 360 px. */
+    .vf-layout{ grid-template-columns:minmax(0,1fr); }
+    .nav-mapwrap{ max-width:100%; overflow:hidden; }
     .vf-top{ flex-wrap:wrap; }
     .vf-mapslot{ position:static; }        /* pas de collage en colonne unique */
     .vf-radio{ min-height:0; padding:20px; }
@@ -986,84 +1039,233 @@
   .tb-badge b{ font-size:13px; font-weight:700; color:var(--ink); display:block; }
   .tb-badge span{ font-size:11.5px; color:var(--ink-2); }
 
-  /* ================= Radio COM =================
-     Un vrai poste VHF : bandeau noir, afficheur à segments, molettes MHz/kHz et
-     bouton de permutation. Les quatre habillages s'inspirent des postes qu'on
-     trouve réellement dans ces machines — ce sont des évocations, pas des répliques. */
-  .radio{ margin-bottom:14px; }
+  /* ================= Pile avionique : COM + transpondeur =================
+     Deux boîtiers empilés, comme dans un tableau de bord : l'émetteur VHF au-dessus,
+     le transpondeur en dessous. Les quatre habillages s'inspirent des postes qu'on
+     rencontre réellement dans ces machines — ce sont des évocations, pas des répliques.
+     Largeur bornée : un rack avionique est étroit, et le panneau de parole a besoin
+     de la place restante. */
+  /* 540 px : la largeur juste suffisante pour que chaque boîtier tienne sur UNE
+     rangée (afficheur + molettes). En dessous tout passait à la ligne et la pile
+     devenait deux fois plus haute. Reste ~40 % plus étroit que la pleine largeur. */
+  /* Pile avionique a gauche, photo d'avion a droite : le rack garde sa largeur,
+     la photo occupe ce qui reste. */
+  .avio-rang{ display:flex; align-items:flex-start; gap:20px; margin:0 0 14px; }
+  .avio{ flex:0 1 540px; max-width:540px; min-width:0; }
+
+  .vf-avion{ flex:1 1 240px; min-width:0; margin:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:7px; align-self:stretch; }
+  .vf-avion img{ display:block; width:100%; max-width:340px; height:auto; max-height:150px;
+    object-fit:contain;
+    /* L'ombre portee suit la silhouette (et non le cadre) : c'est ce qui pose
+       l'avion dans la page au lieu de le laisser flotter en vignette. */
+    filter:drop-shadow(0 10px 14px rgba(15,20,35,.28));
+    animation:vfFlotte 5.5s ease-in-out infinite; will-change:transform; }
+  .vf-avion figcaption{ font-size:11px; color:var(--ink-2); text-align:center; line-height:1.4; }
+  .vf-avion figcaption b{ display:block; font-size:12px; color:var(--ink); font-weight:700; }
+  /* Un leger roulis vertical, comme en air calme. */
+  @keyframes vfFlotte{ 0%,100%{ transform:translateY(-5px) } 50%{ transform:translateY(5px) } }
+  @media (prefers-reduced-motion:reduce){ .vf-avion img{ animation:none } }
+  @media (max-width:900px){
+    .avio-rang{ flex-direction:column; gap:14px; }
+    .avio{ flex:1 1 auto; max-width:540px; width:100%; }
+    /* En colonne, `flex:1` etirait le bloc photo sur toute la hauteur restante et
+       laissait un grand vide sous le transpondeur : on le laisse a sa taille. */
+    .vf-avion{ flex:0 0 auto; align-self:center; }
+    .vf-avion img{ max-width:280px; max-height:110px; }
+  }
+  .radio{ margin-bottom:8px; }
+  .radio:last-child{ margin-bottom:0; }
   .radio-corps{ background:linear-gradient(#2a2d33,#16181c); border:1px solid #0c0d10;
-    border-radius:12px; padding:11px 13px; box-shadow:0 2px 10px rgba(0,0,0,.45),
-    inset 0 1px 0 rgba(255,255,255,.07); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-  .radio-marque{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; color:#7d8590;
-    text-transform:uppercase; writing-mode:vertical-rl; transform:rotate(180deg);
-    align-self:stretch; display:flex; align-items:center; }
-  .radio-ecran{ display:flex; align-items:center; gap:12px; background:#05070a;
-    border:1px solid #000; border-radius:7px; padding:8px 14px; flex:1; min-width:250px;
+    border-radius:10px; padding:8px 9px; box-shadow:0 2px 10px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.07); display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  /* Plaque constructeur : horizontale et lisible — c'est le premier repère visuel
+     qui distingue un habillage d'un autre. */
+  .radio-plaque{ display:flex; align-items:center; gap:5px; font-family:var(--mono);
+    font-size:8px; letter-spacing:.13em; color:#8a929d; text-transform:uppercase;
+    flex:none; writing-mode:vertical-rl; transform:rotate(180deg);
+    align-self:stretch; justify-content:center; }
+  .radio-led{ width:5px; height:5px; border-radius:50%; background:#3a4048; flex:none; }
+  .radio.actif .radio-led{ background:#4ade80; box-shadow:0 0 5px rgba(74,222,128,.9); }
+
+  /* min-width 232 : deux fréquences à trois décimales plus le bouton de permutation.
+     En dessous, la valeur STANDBY débordait sous les molettes dès qu'elle était
+     renseignée. La rangée de commandes passe alors à la ligne, ce qui est voulu. */
+  .radio-ecran{ display:flex; align-items:center; gap:8px; background:#05070a;
+    border:1px solid #000; border-radius:5px; padding:5px 9px; flex:1 1 232px; min-width:232px;
     box-shadow:inset 0 2px 7px rgba(0,0,0,.85); }
-  .radio-col{ display:flex; flex-direction:column; gap:2px; align-items:center; flex:1; }
-  .radio-lab{ font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; color:#5d6672; }
-  .radio-val{ font-family:var(--mono); font-size:25px; font-weight:700; letter-spacing:.02em;
-    line-height:1; color:#3ee08a; text-shadow:0 0 9px rgba(62,224,138,.55); }
+  .radio-col{ display:flex; flex-direction:column; gap:1px; align-items:center; flex:1; }
+  .radio-lab{ font-family:var(--mono); font-size:7.5px; letter-spacing:.14em; color:#5d6672; }
+  .radio-val{ font-family:var(--mono); font-size:19px; font-weight:700; letter-spacing:.01em;
+    line-height:1; color:#3ee08a; text-shadow:0 0 9px rgba(62,224,138,.55); white-space:nowrap; }
   .radio-val.stby{ color:#8b95a3; text-shadow:none; }
   .radio-val.attendue{ animation:radioClign 1s ease-in-out infinite; }
   @keyframes radioClign{ 0%,100%{opacity:1} 50%{opacity:.35} }
-  .radio-swap{ background:#22262c; border:1px solid #0a0c0f; border-radius:6px; cursor:pointer;
-    padding:7px 9px; display:inline-flex; box-shadow:0 1px 0 rgba(255,255,255,.06); flex:none; }
+  .radio-swap{ background:#22262c; border:1px solid #0a0c0f; border-radius:5px; cursor:pointer;
+    padding:5px 6px; display:inline-flex; box-shadow:0 1px 0 rgba(255,255,255,.06); flex:none; }
   .radio-swap:hover{ background:#2e343c; }
   .radio-swap:active{ transform:translateY(1px); }
-  .radio-swap svg{ width:17px; height:17px; fill:none; stroke:#c8ced8; stroke-width:2;
+  .radio-swap svg{ width:15px; height:15px; fill:none; stroke:#c8ced8; stroke-width:2;
     stroke-linecap:round; stroke-linejoin:round; }
   .radio-swap.pret svg{ stroke:#3ee08a; }
   .radio-swap.pret{ box-shadow:0 0 0 2px rgba(62,224,138,.45); }
-  .radio-cmd{ display:flex; align-items:center; gap:10px; flex:none; }
-  .radio-knob{ display:flex; align-items:center; gap:4px; background:#1b1e23; border:1px solid #0a0c0f;
-    border-radius:20px; padding:3px; }
-  .rk{ width:26px; height:26px; border-radius:50%; border:1px solid #0a0c0f; cursor:pointer;
+
+  .radio-cmd{ display:flex; align-items:center; gap:7px; flex:none; }
+  .radio-knob{ display:flex; align-items:center; gap:3px; background:#1b1e23; border:1px solid #0a0c0f;
+    border-radius:18px; padding:2px; }
+  .rk{ width:21px; height:21px; border-radius:50%; border:1px solid #0a0c0f; cursor:pointer;
     background:radial-gradient(circle at 35% 30%,#4a5058,#23272d); color:#dfe4ea;
-    font-size:15px; line-height:1; font-family:var(--sans); display:inline-flex;
-    align-items:center; justify-content:center; }
+    font-size:14px; line-height:1; font-family:var(--sans); display:inline-flex;
+    align-items:center; justify-content:center; flex:none; }
   .rk:hover{ background:radial-gradient(circle at 35% 30%,#5a616a,#2b3037); }
   .rk:active{ transform:translateY(1px); }
-  .rk-lab{ font-family:var(--mono); font-size:8.5px; letter-spacing:.1em; color:#7d8590; width:26px; text-align:center; }
-  .radio-saisie{ width:86px; background:#05070a; border:1px solid #000; border-radius:6px;
-    padding:6px 8px; font-family:var(--mono); font-size:13px; color:#8b95a3; text-align:center; }
+  .rk-lab{ font-family:var(--mono); font-size:7.5px; letter-spacing:.08em; color:#7d8590;
+    width:19px; text-align:center; }
+  .radio-saisie{ width:74px; background:#05070a; border:1px solid #000; border-radius:5px;
+    padding:5px 6px; font-family:var(--mono); font-size:12px; color:#8b95a3; text-align:center; }
   .radio-saisie:focus{ outline:none; border-color:#3ee08a; color:#3ee08a; }
-  .radio-aide{ font-size:12.5px; color:var(--ink-2); margin:8px 2px 0; line-height:1.5; }
+  /* Pastille « à afficher » : rappelle en clair la fréquence ou le code à régler,
+     et disparaît d'elle-même dès que le réglage est fait. C'est le seul endroit où
+     l'élève peut lire la valeur attendue si le contrôleur ne l'a pas annoncée. */
+  .radio-cible{ display:inline-flex; align-items:center; gap:7px; margin:7px 2px 0;
+    background:var(--violet-soft); border:1px solid var(--violet); border-radius:var(--pill);
+    padding:4px 11px; font-size:12.5px; color:var(--violet); }
+  .radio-cible b{ font-family:var(--mono); font-size:13.5px; font-weight:700; }
+  .radio-cible.hidden{ display:none; }
+  .xp-btn.exec{ letter-spacing:.04em; }
+  /* Code composé mais pas encore activé : le bouton EXÉC réclame l'appui. On le met
+     en relief plutôt qu'en clignotement d'opacité, qui le faisait passer pour inactif. */
+  .xp-btn.exec.arme{ background:#3ee08a; color:#06180f; border-color:#1d6b45;
+    animation:execPulse 1.1s ease-in-out infinite; }
+  @keyframes execPulse{ 0%,100%{box-shadow:0 0 0 0 rgba(62,224,138,.55)}
+                        50%{box-shadow:0 0 0 4px rgba(62,224,138,0)} }
+  .radio[data-skin="cessna"] .xp-btn.exec.arme{ background:#8fc6ff; color:#06182c; border-color:#3b6ea3; }
+  .radio[data-skin="piper"]  .xp-btn.exec.arme{ background:#5cff96; color:#04200f; border-color:#1f6d3c; }
+  .radio[data-skin="robin"]  .xp-btn.exec.arme{ background:#ffb347; color:#241500; border-color:#8a5f1c; }
+  .radio[data-skin="generic"] .xp-btn.exec.arme{ background:#e6ebf2; color:#14171c; border-color:#8b95a3; }
+  .radio-val.brouillon{ opacity:.6; }
+  .radio-aide{ font-size:12.5px; color:var(--ink-2); margin:6px 2px 0; line-height:1.5; }
   .radio-aide.alerte{ color:#96332f; }
   :root[data-theme="dark"] .radio-aide.alerte{ color:#f3b4b0; }
 
-  /* --- Habillages par machine --- */
-  /* Cessna : postes Garmin, afficheur clair sur fond sombre, bezel gris anthracite. */
-  .radio[data-skin="cessna"] .radio-corps{ background:linear-gradient(#3a3f46,#212429); }
-  .radio[data-skin="cessna"] .radio-val{ color:#e8f2ff; text-shadow:0 0 8px rgba(160,200,255,.5); }
+  /* ---- Transpondeur ----
+     Quatre roues octales (0 à 7 : un code SSR n'a pas de 8 ni de 9), un sélecteur de
+     mode et le bouton IDENT. */
+  .xp-ecran{ flex:1 1 150px; min-width:140px; gap:9px; }
+  .xp-code{ letter-spacing:.16em; }
+  .xp-etat{ font-family:var(--mono); font-size:8.5px; letter-spacing:.1em; color:#5d6672;
+    border:1px solid #23262c; border-radius:3px; padding:2px 5px; flex:none; }
+  .xp-etat.on{ color:#3ee08a; border-color:#2c5c42; }
+  .xp-roues{ display:flex; gap:3px; }
+  .xp-roue{ display:flex; flex-direction:column; align-items:center; gap:1px;
+    background:#1b1e23; border:1px solid #0a0c0f; border-radius:5px; padding:2px; }
+  .xp-roue button{ width:19px; height:13px; border:none; border-radius:3px; cursor:pointer;
+    background:#3a4048; color:#dfe4ea; font-size:9px; line-height:1; padding:0;
+    display:inline-flex; align-items:center; justify-content:center; }
+  .xp-roue button:hover{ background:#4c545e; }
+  .xp-roue span{ font-family:var(--mono); font-size:12px; color:#aeb6c0; }
+  .xp-btn{ font-family:var(--mono); font-size:9px; letter-spacing:.06em; cursor:pointer;
+    background:#22262c; color:#c8ced8; border:1px solid #0a0c0f; border-radius:5px;
+    padding:6px 7px; flex:none; }
+  .xp-btn:hover{ background:#2e343c; }
+  .xp-btn:active{ transform:translateY(1px); }
+  .xp-btn.actif{ background:#3ee08a; color:#06180f; border-color:#1d6b45; }
+  .xp-btn.attendu{ animation:radioClign 1s ease-in-out infinite; }
+
+  /* ================= Habillages par machine =================
+     Chaque habillage change la façade ENTIÈRE (teinte du boîtier, forme, écran,
+     couleur des segments, plaque constructeur) : à l'écran, on doit voir tout de
+     suite qu'on a changé d'avion. */
+
+  /* --- Cessna : postes Garmin. Bezel anthracite arrondi, plaque horizontale en haut,
+         afficheur blanc bleuté, molettes concentriques. --- */
+  .radio[data-skin="cessna"] .radio-corps{ background:linear-gradient(#454b54,#23272d);
+    border-radius:12px; border-color:#12151a; }
+  .radio[data-skin="cessna"] .radio-plaque{ color:#dfe6ef; font-size:8.5px; letter-spacing:.2em;
+    background:#151a20; border:1px solid #0a0d11; border-radius:4px; padding:12px 4px; }
+  .radio[data-skin="cessna"] .radio-ecran{ background:#070c12; border-radius:4px; }
+  .radio[data-skin="cessna"] .radio-val{ color:#eaf3ff; text-shadow:0 0 8px rgba(150,195,255,.55); }
   .radio[data-skin="cessna"] .radio-val.stby{ color:#7f8b9c; text-shadow:none; }
+  .radio[data-skin="cessna"] .radio-lab{ color:#6d7887; }
+  .radio[data-skin="cessna"] .rk{ background:radial-gradient(circle at 35% 30%,#6d7683,#2b3138);
+    box-shadow:inset 0 0 0 3px #23272d, 0 1px 0 rgba(255,255,255,.08); }
   .radio[data-skin="cessna"] .radio-swap.pret svg{ stroke:#8fc6ff; }
-  /* Piper : type Bendix/King, numéraux vert gaz sur noir profond. */
-  .radio[data-skin="piper"] .radio-corps{ background:linear-gradient(#232323,#101010); }
-  .radio[data-skin="piper"] .radio-ecran{ background:#020402; }
-  .radio[data-skin="piper"] .radio-val{ color:#57ff8f; text-shadow:0 0 10px rgba(87,255,143,.6); }
-  /* Robin : postes Becker, segments ambrés, façade compacte. */
-  .radio[data-skin="robin"] .radio-corps{ background:linear-gradient(#2b2823,#151310); }
-  .radio[data-skin="robin"] .radio-val{ color:#ffb347; text-shadow:0 0 9px rgba(255,179,71,.55); }
-  .radio[data-skin="robin"] .radio-val.stby{ color:#9a8b73; text-shadow:none; }
+  .radio[data-skin="cessna"] .radio-swap.pret{ box-shadow:0 0 0 2px rgba(143,198,255,.45); }
+  .radio[data-skin="cessna"] .xp-btn.actif{ background:#8fc6ff; color:#06182c; border-color:#3b6ea3; }
+  .radio[data-skin="cessna"] .xp-etat.on{ color:#8fc6ff; border-color:#31506e; }
+
+  /* --- Piper : type Bendix/King. Façade noire quasi carrée, vis apparentes,
+         numéraux vert gaz, molette unique crantée. --- */
+  .radio[data-skin="piper"] .radio-corps{ background:linear-gradient(#242424,#0e0e0e);
+    border-radius:4px; border-color:#000;
+    box-shadow:0 2px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05); }
+  .radio[data-skin="piper"] .radio-plaque{ color:#d3d6da; font-size:7.5px; letter-spacing:.1em;
+    border-right:1px solid #2f2f2f; padding-right:7px; }
+  .radio[data-skin="piper"] .radio-ecran{ background:#020602; border-radius:2px;
+    border:1px solid #1a1a1a; }
+  .radio[data-skin="piper"] .radio-val{ color:#5cff96; text-shadow:0 0 11px rgba(92,255,150,.65); }
+  .radio[data-skin="piper"] .radio-val.stby{ color:#2f7d52; text-shadow:none; }
+  .radio[data-skin="piper"] .radio-lab{ color:#4f5c53; }
+  .radio[data-skin="piper"] .radio-knob{ border-radius:4px; background:#141414; }
+  .radio[data-skin="piper"] .rk{ border-radius:3px;
+    background:linear-gradient(#3d3d3d,#1c1c1c); color:#d6d9dc; }
+  .radio[data-skin="piper"] .radio-swap{ border-radius:3px; background:#1c1c1c; }
+  .radio[data-skin="piper"] .radio-swap.pret svg{ stroke:#5cff96; }
+  .radio[data-skin="piper"] .xp-roue{ border-radius:3px; background:#141414; }
+  .radio[data-skin="piper"] .xp-roue button{ border-radius:2px; background:#3d3d3d; }
+  .radio[data-skin="piper"] .xp-btn{ border-radius:3px; background:#1c1c1c; }
+  .radio[data-skin="piper"] .xp-btn.actif{ background:#5cff96; color:#04200f; border-color:#1f6d3c; }
+  .radio[data-skin="piper"] .xp-etat.on{ color:#5cff96; border-color:#265338; }
+
+  /* --- Robin / Jodel : postes Becker. Boîtier étroit brun-noir, écran ambre à
+         segments, boutons plats rectangulaires. --- */
+  .radio[data-skin="robin"] .radio-corps{ background:linear-gradient(#332f28,#17150f);
+    border-radius:6px; border-color:#0a0906; padding:8px 9px; gap:7px; }
+  .radio[data-skin="robin"] .radio-plaque{ color:#c9a86a; font-size:7.5px; letter-spacing:.16em; }
+  .radio[data-skin="robin"] .radio-ecran{ background:#120c03; border:1px solid #060400;
+    border-radius:3px; padding:5px 9px; }
+  .radio[data-skin="robin"] .radio-val{ color:#ffb347; text-shadow:0 0 10px rgba(255,179,71,.6); }
+  .radio[data-skin="robin"] .radio-val.stby{ color:#8c7448; text-shadow:none; }
+  .radio[data-skin="robin"] .radio-lab{ color:#6d5c3c; }
+  .radio[data-skin="robin"] .radio-knob{ border-radius:4px; background:#1d1a14; }
+  .radio[data-skin="robin"] .rk{ border-radius:4px; background:linear-gradient(#4a4438,#221f18);
+    color:#e6d9bd; width:20px; height:19px; }
+  .radio[data-skin="robin"] .radio-swap{ border-radius:4px; background:#221f18; }
   .radio[data-skin="robin"] .radio-swap.pret svg{ stroke:#ffb347; }
   .radio[data-skin="robin"] .radio-swap.pret{ box-shadow:0 0 0 2px rgba(255,179,71,.45); }
-  /* Générique : blanc neutre. */
+  .radio[data-skin="robin"] .radio-saisie{ background:#120c03; color:#c9a86a; }
+  .radio[data-skin="robin"] .radio-saisie:focus{ border-color:#ffb347; color:#ffb347; }
+  .radio[data-skin="robin"] .xp-roue{ border-radius:4px; background:#1d1a14; }
+  .radio[data-skin="robin"] .xp-roue button{ border-radius:2px; background:#4a4438; color:#e6d9bd; }
+  .radio[data-skin="robin"] .xp-roue span{ color:#ffb347; }
+  .radio[data-skin="robin"] .xp-btn{ border-radius:4px; background:#221f18; color:#e6d9bd; }
+  .radio[data-skin="robin"] .xp-btn.actif{ background:#ffb347; color:#241500; border-color:#8a5f1c; }
+  .radio[data-skin="robin"] .xp-etat.on{ color:#ffb347; border-color:#6b5426; }
+
+  /* --- Générique : rack gris neutre, segments blancs. --- */
   .radio[data-skin="generic"] .radio-val{ color:#e6ebf2; text-shadow:0 0 8px rgba(230,235,242,.35); }
   .radio[data-skin="generic"] .radio-swap.pret svg{ stroke:#e6ebf2; }
+  .radio[data-skin="generic"] .xp-btn.actif{ background:#e6ebf2; color:#14171c; border-color:#8b95a3; }
+  .radio[data-skin="generic"] .xp-etat.on{ color:#e6ebf2; border-color:#4a515b; }
 
-  @media (max-width:560px){
-    .radio-corps{ gap:10px; padding:10px; }
-    .radio-marque{ display:none; }
-    .radio-ecran{ min-width:0; width:100%; padding:8px 10px; }
-    .radio-val{ font-size:21px; }
+  @media (max-width:640px){
+    .avio{ max-width:none; }
+    .radio-corps{ gap:8px; padding:9px; }
+    .radio-plaque{ display:none; }
+    .radio-ecran{ min-width:0; width:100%; padding:7px 9px; }
+    .radio-val{ font-size:20px; }
     .radio-cmd{ width:100%; justify-content:space-between; }
-    .radio-saisie{ flex:1; width:auto; }
+    .radio-saisie{ flex:1; width:auto; min-width:0; }
+    .xp-roues{ flex:none; }
   }
 
   /* ================= Historique de vols ================= */
+  /* L'historique occupe la colonne de GAUCHE, sous la carte : en bas de page il se
+     retrouvait derriere le debriefing et le panneau de vol, et se melangeait a eux.
+     Il est desormais dans .nav-col ; c'est le gap du flex qui l'espace de la carte,
+     plus une marge (qui creait un decalage avec le formulaire d'en face). */
   .nav-hist{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    box-shadow:var(--shadow-sm); margin:0 0 16px; overflow:hidden; }
+    box-shadow:var(--shadow-sm); margin:0; overflow:hidden; }
   .nav-hist-head{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:14px;
     background:none; border:none; cursor:pointer; padding:14px 17px; text-align:left; font-family:var(--sans); }
   .nav-hist-head:hover{ background:var(--surface-2); }
@@ -1089,6 +1291,9 @@
   .nh-pct.bon{ background:rgba(46,158,91,.14); color:#1f6e40; }
   .nh-pct.moy{ background:rgba(224,145,42,.16); color:#8a5a1d; }
   .nh-pct.bas{ background:rgba(199,74,74,.14); color:#96332f; }
+  /* Le detail d'un vol REMPLACE l'ecran de configuration : ouvrirVol() masque
+     .nav-layout, donc ce bloc doit vivre en dehors d'elle, sinon il disparaissait
+     avec elle et le clic sur un vol ne montrait rien. */
   .nav-hist-detail{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     box-shadow:var(--shadow); padding:22px 24px; }
   .nav-hist-detail h3{ font-family:var(--sans); font-size:20px; font-weight:800; color:var(--ink);
@@ -1203,6 +1408,33 @@
      Pas de !important : aucun élément ne mélange un style inline display et la classe .hidden. */
   .hidden{display:none}
 
+  /* ==================== PAGE CARTE ====================
+     Consultation de la carte OACI en grand. Contrairement à #navMap (340 px, encastrée
+     dans le formulaire de préparation), celle-ci prend la hauteur de la fenêtre : c'est
+     une page de lecture, pas un outil de sélection. Le conteneur reste en position
+     relative pour que la barre d'outils flottante s'y ancre. */
+  .carte-wrap{ position:relative; }
+  .carte-map{ height:calc(100vh - 210px); min-height:420px; border-radius:var(--radius);
+              border:1px solid var(--border); background:var(--surface-2); z-index:0; }
+  /* La barre d'outils flotte SUR la carte : à cette hauteur, la placer dessous
+     l'aurait poussée hors de l'écran. z-index 401 = juste au-dessus des tuiles et
+     des marqueurs Leaflet (400), en dessous des popups (700). */
+  .carte-tools{ position:absolute; top:10px; right:10px; z-index:401;
+                display:flex; flex-direction:column; align-items:stretch; gap:6px;
+                background:var(--surface); border:1px solid var(--border);
+                border-radius:12px; padding:8px; box-shadow:0 2px 10px rgba(0,0,0,.14); }
+  .carte-tools .nav-tgl{ justify-content:center; }
+  .carte-hint{ font-size:12px; color:var(--ink-2); margin:8px 4px 0; }
+  /* Pastille d'aérodrome : même code visuel que la carte de navigation, en plus discret
+     (ici on consulte, on ne sélectionne pas). */
+  .carte-admark{ display:block; width:8px; height:8px; background:var(--violet);
+                 border:2px solid #fff; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,.45); }
+  @media (max-width:720px){
+    .carte-map{ height:calc(100vh - 250px); min-height:340px; }
+    .carte-tools{ top:8px; right:8px; padding:6px; gap:5px; }
+    .carte-tools .nav-tgl{ font-size:11px; }
+  }
+
 </style>
 </head>
 <body>
@@ -1226,6 +1458,7 @@
       <button class="sidelink" type="button" data-page="tableau"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="1.5"/></svg><span>Accueil</span></button>
       <button class="sidelink" type="button" data-page="exercices"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg><span>Scénarios</span></button>
       <button class="sidelink" type="button" data-page="navigation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5.5-5.5 2 2-5.5 5.5-2z" fill="currentColor" stroke="none"/></svg><span>Navigation</span></button>
+      <button class="sidelink" type="button" data-page="carte"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5.5v15L9 18l6 3 6-2.5v-15L15 6z"/><path d="M9 3v15M15 6v15"/></svg><span>Carte</span></button>
       <button class="sidelink" type="button" data-page="epellation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6M12 4v16"/></svg><span>Épellation</span></button>
       <button class="sidelink" type="button" data-page="cours"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg><span>Cours</span></button>
       <button class="sidelink" type="button" data-page="progression"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg><span>Progression</span></button>
@@ -1483,28 +1716,53 @@
 
           <!-- Radio COM : n'apparaît que sur les échanges qui portent une fréquence
                (scénario Navigation / croisière). Même mécanique qu'en vol. -->
-          <div class="radio hidden" id="scRadio" data-skin="generic">
-            <div class="radio-corps">
-              <div class="radio-marque"><span id="scRadioNom">COM 1</span></div>
-              <div class="radio-ecran">
-                <div class="radio-col"><span class="radio-lab">ACTIVE</span>
-                  <span class="radio-val" id="scRadioAct">—</span></div>
-                <button class="radio-swap" id="scRadioSwap" type="button" title="Permuter">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
-                </button>
-                <div class="radio-col"><span class="radio-lab">STANDBY</span>
-                  <span class="radio-val stby" id="scRadioStby">—</span></div>
+          <!-- Pile avionique des Scénarios : n'apparaît que sur les exercices qui
+               comportent un changement de fréquence ou un code transpondeur. -->
+          <div class="avio hidden" id="scAvio">
+            <div class="radio hidden" id="scRadio" data-skin="generic">
+              <div class="radio-corps">
+                <div class="radio-plaque"><span id="scRadioNom">VHF COM</span><i class="radio-led"></i></div>
+                <div class="radio-ecran">
+                  <div class="radio-col"><span class="radio-lab">ACTIVE</span>
+                    <span class="radio-val" id="scRadioAct">—</span></div>
+                  <button class="radio-swap" id="scRadioSwap" type="button" title="Permuter">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
+                  </button>
+                  <div class="radio-col"><span class="radio-lab">STANDBY</span>
+                    <span class="radio-val stby" id="scRadioStby">—</span></div>
+                </div>
+                <div class="radio-cmd">
+                  <div class="radio-knob"><button class="rk" type="button" data-sctune="-1">&minus;</button>
+                    <span class="rk-lab">MHz</span><button class="rk" type="button" data-sctune="1">+</button></div>
+                  <input class="radio-saisie" id="scRadioSaisie" type="text" inputmode="decimal"
+                         placeholder="saisir&hellip;" maxlength="7" aria-label="Fréquence standby">
+                  <div class="radio-knob"><button class="rk" type="button" data-sctune="-0.005">&minus;</button>
+                    <span class="rk-lab">kHz</span><button class="rk" type="button" data-sctune="0.005">+</button></div>
+                </div>
               </div>
-              <div class="radio-cmd">
-                <div class="radio-knob"><button class="rk" type="button" data-sctune="-1">−</button>
-                  <span class="rk-lab">MHz</span><button class="rk" type="button" data-sctune="1">+</button></div>
-                <input class="radio-saisie" id="scRadioSaisie" type="text" inputmode="decimal"
-                       placeholder="saisir…" maxlength="7" aria-label="Fréquence standby">
-                <div class="radio-knob"><button class="rk" type="button" data-sctune="-0.005">−</button>
-                  <span class="rk-lab">kHz</span><button class="rk" type="button" data-sctune="0.005">+</button></div>
-              </div>
+              <p class="radio-cible hidden" id="scRadioCible"></p>
+              <p class="radio-aide" id="scRadioAide"></p>
             </div>
-            <p class="radio-aide" id="scRadioAide"></p>
+
+            <div class="radio xpdr hidden" id="scXpdr" data-skin="generic">
+              <div class="radio-corps">
+                <div class="radio-plaque"><span>XPDR</span><i class="radio-led"></i></div>
+                <div class="radio-ecran xp-ecran">
+                  <div class="radio-col"><span class="radio-lab">CODE</span>
+                    <span class="radio-val xp-code" id="scXpdrCode">7000</span></div>
+                  <span class="xp-etat on" id="scXpdrEtat">ALT</span>
+                </div>
+                <div class="radio-cmd">
+                  <div class="xp-roues" id="scXpdrRoues"></div>
+                  <button class="xp-btn exec" id="scXpdrExec" type="button"
+                          title="Activer le code affiché sur les roues">EXÉC</button>
+                  <button class="xp-btn" id="scXpdrMode" type="button" title="Veille / marche / altitude">MODE</button>
+                  <button class="xp-btn" id="scXpdrIdent" type="button" title="Fonction d'identification (SPI)">IDENT</button>
+                </div>
+              </div>
+              <p class="radio-cible hidden" id="scXpdrCible"></p>
+              <p class="radio-aide" id="scXpdrAide"></p>
+            </div>
           </div>
 
           <div class="trans-wrap" id="transWrap">
@@ -1579,23 +1837,44 @@
         </div>
 
         <div class="nav-layout">
-          <div class="nav-mapwrap">
-            <div id="navMap" class="nav-map"></div>
-            <div class="nav-legend">
-              <span><i class="lg lg-ctr"></i>CTR</span>
-              <span><i class="lg lg-tma"></i>TMA / CTA</span>
-              <span><i class="lg lg-rpd"></i>Zones R / P / D</span>
-              <span><i class="lg lg-rte"></i>Route</span>
+          <!-- Colonne de GAUCHE : la carte, puis l'historique collé juste en dessous.
+               Empilement explicite (.nav-col) : le placement automatique de la grille
+               renvoyait sinon le formulaire une rangée plus bas dès que l'historique
+               devenait visible. -->
+          <div class="nav-col">
+            <div class="nav-mapwrap">
+              <div id="navMap" class="nav-map"></div>
+              <div class="nav-legend">
+                <span><i class="lg lg-ctr"></i>CTR</span>
+                <span><i class="lg lg-tma"></i>TMA / CTA</span>
+                <span><i class="lg lg-rpd"></i>Zones R / P / D</span>
+                <span><i class="lg lg-rte"></i>Route</span>
+              </div>
+              <div class="nav-maptools">
+                <button class="nav-tgl nav-basemap on" id="navBasemap" type="button">Carte OACI</button>
+                <button class="nav-tgl on" type="button" data-layer="ctr">CTR</button>
+                <button class="nav-tgl on" type="button" data-layer="tma">TMA / CTA</button>
+                <button class="nav-tgl" type="button" data-layer="rpd">Zones R / P / D</button>
+                <span class="nav-zoomhint" id="navZoomHint"></span>
+              </div>
+              <p class="nav-maphint">Cliquez un terrain sur la carte pour l'affecter au champ actif, ou utilisez les listes.</p>
             </div>
-            <div class="nav-maptools">
-              <button class="nav-tgl nav-basemap on" id="navBasemap" type="button">Carte OACI</button>
-              <button class="nav-tgl on" type="button" data-layer="ctr">CTR</button>
-              <button class="nav-tgl on" type="button" data-layer="tma">TMA / CTA</button>
-              <button class="nav-tgl" type="button" data-layer="rpd">Zones R / P / D</button>
-              <span class="nav-zoomhint" id="navZoomHint"></span>
+
+            <!-- ============ HISTORIQUE DES VOLS ============
+                 Carte repliée montrant le dernier vol ; au clic, la liste complète.
+                 Chaque vol peut être rejoué à l'identique, et son détail consulté. -->
+            <div class="nav-hist" id="navHist" hidden>
+              <button class="nav-hist-head" id="navHistHead" type="button" aria-expanded="false">
+                <span class="nhh-l">
+                  <span class="nhh-t">Historique de vols</span>
+                  <span class="nhh-s" id="navHistLast">—</span>
+                </span>
+                <span class="nhh-r"><span class="nhh-n" id="navHistCount">0</span>
+                  <svg class="ic-svg nhh-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+              </button>
+              <div class="nav-hist-body hidden" id="navHistBody"></div>
             </div>
-            <p class="nav-maphint">Cliquez un terrain sur la carte pour l'affecter au champ actif, ou utilisez les listes.</p>
-          </div>
+          </div><!-- /.nav-col -->
 
           <div class="nav-form">
             <div class="nav-grp">
@@ -1648,7 +1927,7 @@
               <button class="nav-diff-opt active" type="button" data-diff="debutant">Débutant</button>
               <button class="nav-diff-opt" type="button" data-diff="reel">Réel</button>
             </div>
-            <p class="nav-diff-note" id="navDiffNote">La consigne détaille ce que vous devez dire.</p>
+            <p class="nav-diff-note" id="navDiffNote">Le contrôleur est écrit, et la consigne détaille ce que vous devez dire.</p>
             </div>
 
             <div class="nav-navlog" id="navNavlog" hidden></div>
@@ -1662,6 +1941,18 @@
           </div>
         </div>
 
+        <!-- Détail d'un vol de l'historique -->
+        <div class="nav-hist-detail hidden" id="navHistDetail">
+          <button class="btn small" id="navHistBack" type="button">Retour à la liste</button>
+          <h3 id="navHistTitle">Vol</h3>
+          <div id="navHistScore"></div>
+          <div class="nav-hist-actions">
+            <button class="btn small cta" id="navHistRefaire" type="button">Refaire ce vol</button>
+            <button class="btn small" id="navHistErreurs" type="button">Voir les erreurs</button>
+          </div>
+          <div class="nav-hist-lignes hidden" id="navHistLignes"></div>
+        </div>
+
         <!-- ============ VOL EN DIRECT (Phase 2) ============
              La carte de configuration (.nav-mapwrap) est DÉPLACÉE dans #vfMapSlot pendant
              le vol, puis remise en place à la fin : une seule instance Leaflet, un seul
@@ -1672,6 +1963,7 @@
               <span class="vf-call" id="vfCall" title="Votre indicatif">—</span>
               <span class="vf-station" id="vfStation">—</span>
               <span class="vf-freq" id="vfFreq">—</span>
+              <span class="vf-atis hidden" id="vfAtis"></span>
             </div>
             <div class="vf-prog"><div class="vf-bar" id="vfBar"></div></div>
             <button class="btn ghost vf-quit" id="vfQuit" type="button">Terminer le vol</button>
@@ -1679,42 +1971,79 @@
 
           <div class="vf-evit hidden" id="vfEvit"></div>
 
-          <!-- ============ RADIO COM ============
-               Deux fréquences comme sur un vrai poste : ACTIVE (celle sur laquelle on
-               émet) et STANDBY (celle qu'on prépare). Le bouton central les permute.
-               L'habillage change selon l'avion choisi — voir radioSkin(). -->
-          <div class="radio" id="vfRadio" data-skin="generic">
-            <div class="radio-corps">
-              <div class="radio-marque"><span id="radioNom">COM 1</span></div>
-              <div class="radio-ecran">
-                <div class="radio-col">
-                  <span class="radio-lab">ACTIVE</span>
-                  <span class="radio-val" id="radioAct">121.200</span>
+          <!-- ============ PILE AVIONIQUE : COM + TRANSPONDEUR ============
+               COM : deux fréquences comme sur un vrai poste — ACTIVE (celle sur
+               laquelle on émet) et STANDBY (celle qu'on prépare) ; le bouton central
+               les permute.
+               XPDR : code SSR à quatre roues octales (0 à 7), sélecteur de mode et
+               bouton IDENT, comme le demande le contrôleur (manuel DSNA p. 186-187).
+               L'habillage des deux boîtiers change selon l'avion choisi — voir radioSkin(). -->
+          <div class="avio-rang">
+          <div class="avio" id="vfAvio">
+            <div class="radio" id="vfRadio" data-skin="generic">
+              <div class="radio-corps">
+                <div class="radio-plaque"><span id="radioNom">VHF COM</span><i class="radio-led"></i></div>
+                <div class="radio-ecran">
+                  <div class="radio-col">
+                    <span class="radio-lab">ACTIVE</span>
+                    <span class="radio-val" id="radioAct">121.200</span>
+                  </div>
+                  <button class="radio-swap" id="radioSwap" type="button" title="Permuter active / standby (Entrée)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
+                  </button>
+                  <div class="radio-col">
+                    <span class="radio-lab">STANDBY</span>
+                    <span class="radio-val stby" id="radioStby">—</span>
+                  </div>
                 </div>
-                <button class="radio-swap" id="radioSwap" type="button" title="Permuter active / standby (Entrée)">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
-                </button>
-                <div class="radio-col">
-                  <span class="radio-lab">STANDBY</span>
-                  <span class="radio-val stby" id="radioStby">—</span>
+                <div class="radio-cmd">
+                  <div class="radio-knob">
+                    <button class="rk" type="button" data-tune="-1">&minus;</button>
+                    <span class="rk-lab">MHz</span>
+                    <button class="rk" type="button" data-tune="1">+</button>
+                  </div>
+                  <input class="radio-saisie" id="radioSaisie" type="text" inputmode="decimal"
+                         placeholder="saisir&hellip;" maxlength="7" aria-label="Saisir la fréquence standby">
+                  <div class="radio-knob">
+                    <button class="rk" type="button" data-tune="-0.005">&minus;</button>
+                    <span class="rk-lab">kHz</span>
+                    <button class="rk" type="button" data-tune="0.005">+</button>
+                  </div>
                 </div>
               </div>
-              <div class="radio-cmd">
-                <div class="radio-knob">
-                  <button class="rk" type="button" data-tune="-1">−</button>
-                  <span class="rk-lab">MHz</span>
-                  <button class="rk" type="button" data-tune="1">+</button>
-                </div>
-                <input class="radio-saisie" id="radioSaisie" type="text" inputmode="decimal"
-                       placeholder="saisir…" maxlength="7" aria-label="Saisir la fréquence standby">
-                <div class="radio-knob">
-                  <button class="rk" type="button" data-tune="-0.005">−</button>
-                  <span class="rk-lab">kHz</span>
-                  <button class="rk" type="button" data-tune="0.005">+</button>
-                </div>
-              </div>
+              <p class="radio-cible hidden" id="radioCible"></p>
+              <p class="radio-aide" id="radioAide"></p>
             </div>
-            <p class="radio-aide" id="radioAide"></p>
+
+            <div class="radio xpdr" id="vfXpdr" data-skin="generic">
+              <div class="radio-corps">
+                <div class="radio-plaque"><span id="xpdrNom">XPDR</span><i class="radio-led"></i></div>
+                <div class="radio-ecran xp-ecran">
+                  <div class="radio-col">
+                    <span class="radio-lab">CODE</span>
+                    <span class="radio-val xp-code" id="xpdrCode">7000</span>
+                  </div>
+                  <span class="xp-etat on" id="xpdrEtat">ALT</span>
+                </div>
+                <div class="radio-cmd">
+                  <div class="xp-roues" id="xpdrRoues"></div>
+                  <button class="xp-btn exec" id="xpdrExec" type="button"
+                          title="Activer le code affiché sur les roues">EXÉC</button>
+                  <button class="xp-btn" id="xpdrMode" type="button" title="Veille / marche / altitude">MODE</button>
+                  <button class="xp-btn" id="xpdrIdent" type="button" title="Fonction d'identification (SPI)">IDENT</button>
+                </div>
+              </div>
+              <p class="radio-cible hidden" id="xpdrCible"></p>
+              <p class="radio-aide" id="xpdrAide"></p>
+            </div>
+          </div>
+
+            <!-- Photo d'avion, tiree au sort a chaque vol. Purement decorative :
+                 elle ne correspond pas a la machine choisie dans le formulaire. -->
+            <figure class="vf-avion" id="vfAvion" aria-hidden="true">
+              <img id="vfAvionImg" alt="">
+              <figcaption id="vfAvionLeg"></figcaption>
+            </figure>
           </div>
 
           <div class="vf-layout">
@@ -1723,6 +2052,10 @@
             <div class="vf-radio">
               <div class="vf-phase"><span id="vfPhase">—</span><span class="vf-src" id="vfSrc"></span></div>
               <div class="vf-atc" id="vfAtc"></div>
+              <!-- Ce qui se passe à bord (panne, malaise…) : ce n'est pas de la
+                   phraséologie, c'est ce que le pilote constate. Affiché dans les
+                   deux niveaux, sinon un aléa serait invisible en mode Réel. -->
+              <div class="vf-situation hidden" id="vfSituation"></div>
               <div class="vf-consigne" id="vfConsigne">—</div>
 
               <button class="vf-ptt" id="vfPtt" type="button">
@@ -1756,39 +2089,28 @@
           </div>
         </div>
 
-        <!-- ============ HISTORIQUE DES VOLS ============
-             Carte repliée montrant le dernier vol ; au clic, la liste complète.
-             Chaque vol peut être rejoué à l'identique, et son détail consulté. -->
-        <div class="nav-hist" id="navHist" hidden>
-          <button class="nav-hist-head" id="navHistHead" type="button" aria-expanded="false">
-            <span class="nhh-l">
-              <span class="nhh-t">Historique de vols</span>
-              <span class="nhh-s" id="navHistLast">—</span>
-            </span>
-            <span class="nhh-r"><span class="nhh-n" id="navHistCount">0</span>
-              <svg class="ic-svg nhh-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
-          </button>
-          <div class="nav-hist-body hidden" id="navHistBody"></div>
-        </div>
-
-        <!-- Détail d'un vol de l'historique -->
-        <div class="nav-hist-detail hidden" id="navHistDetail">
-          <button class="btn small" id="navHistBack" type="button">Retour à la liste</button>
-          <h3 id="navHistTitle">Vol</h3>
-          <div id="navHistScore"></div>
-          <div class="nav-hist-actions">
-            <button class="btn small cta" id="navHistRefaire" type="button">Refaire ce vol</button>
-            <button class="btn small" id="navHistErreurs" type="button">Voir les erreurs</button>
-          </div>
-          <div class="nav-hist-lignes hidden" id="navHistLignes"></div>
-        </div>
-
         <!-- Débriefing de fin de vol -->
         <div id="navRecap" class="nav-recap hidden">
           <h3 id="navRecapTitle">Débriefing du vol</h3>
           <div id="navRecapBody"></div>
           <button class="btn ghost" id="navBack" type="button">Retour à la configuration</button>
         </div>
+      </div>
+    </section>
+
+    <!-- ==================== CARTE ==================== -->
+    <section id="page-carte" class="page">
+      <div class="container">
+        <h2 class="section-title">Carte</h2>
+        <p class="section-sub">La carte aéronautique OACI 1:500 000 en plein écran. Les pastilles marquent les aérodromes ; le bouton permet de les masquer pour lire la carte telle qu'elle est imprimée.</p>
+        <div class="carte-wrap">
+          <div id="carteMap" class="carte-map"></div>
+          <div class="carte-tools">
+            <button class="nav-tgl nav-basemap on" id="carteBasemap" type="button">Carte OACI</button>
+            <button class="nav-tgl on" id="carteAd" type="button" aria-pressed="true">Aérodromes</button>
+          </div>
+        </div>
+        <p class="carte-hint" id="carteHint">Cliquez une pastille pour voir le code, l'altitude et les fréquences du terrain.</p>
       </div>
     </section>
 
@@ -1958,7 +2280,7 @@
               </div>
             </div>
             <div class="set-row">
-              <div class="set-lbl"><b>Radio manuelle</b><span>Afficher la nouvelle fréquence en standby puis permuter, comme en vol réel. Désactivée, la radio s'accorde toute seule.</span></div>
+              <div class="set-lbl"><b>Radio et transpondeur manuels</b><span>Afficher la nouvelle fréquence en standby puis permuter, et afficher le code SSR assigné, comme en vol réel. Désactivés, la radio s'accorde seule et le code n'est plus exigé.</span></div>
               <button class="switch" id="setRadio" type="button" role="switch" aria-checked="true"><span></span></button>
             </div>
             <div class="set-row">
@@ -2000,7 +2322,7 @@
 
   <footer>
     Fonctionne hors-ligne (hors micro/synthèse du navigateur), <strong>à l'exception du fond de carte de la page Navigation</strong>, chargé depuis les serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap. Le reste du site n'envoie aucune donnée sur Internet.
-    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Photo d'accueil : rawpixel — licence CC0.
+    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82.
   </footer>
 
   <div class="toast" id="toast"></div>
@@ -2707,6 +3029,16 @@ function fuzzyCorrect(text){
 }
 
 /* Variantes de reconnaissance pour un nombre (brut + chiffre-par-chiffre + cardinal) */
+/* Un code SSR ne s'écrit qu'avec des chiffres 0 à 7 (quatre digits octaux).
+   On écarte les codes réservés : 7000 (veille VFR), 7500/7600/7700 (urgences),
+   2000 (entrée sans code assigné). */
+const CODES_SSR_RESERVES={'7000':1,'7500':1,'7600':1,'7700':1,'2000':1};
+function codeSSR(){
+  let c;
+  do{ c=''; for(let i=0;i<4;i++) c+=Math.floor(Math.random()*8); }
+  while(CODES_SSR_RESERVES[c] || c[0]==='0');
+  return c;
+}
 function numVariants(str){
   const s=String(str);
   const n=parseInt(s,10);
@@ -2945,6 +3277,7 @@ function aleaUrgence(kind){
                {label:"Nature du problème",variantes:e.cause.split(' ').filter(w=>w.length>3)},
                {label:"Intention",variantes:["pose","je me pose","poser","atterr","retour","deroute","descend","descente","assistance","priorite"]} ] };
   const ack = { stn:'tour', station:"{ADRM} {STN}",
+    xpdrAssign: g==='MAYDAY' ? '7700' : null,
     atc: g==='MAYDAY' ? "{CALL}, "+g+" reçu, transpondeur 7700, terrain dégagé, vous êtes prioritaire."
                       : "{CALL}, "+g+" reçu, maintenez l'écoute.",
     consigne: g==='MAYDAY' ? "Collationnez le transpondeur." : "Accusez réception (Roger).",
@@ -3008,8 +3341,12 @@ const SCENARIOS = [
     tours:[
       { role:'pilote', stn:'sol',
         situation:"Vous êtes au parking, prêt à demander la mise en route.",
-        consigne:"Contactez le contrôle : station, indicatif, position, demande de mise en route.",
-        attendu:"{ADRM} {STN}, {CALL}, bonjour, au parking, demande mise en route.",  // Manuel DSNA p.39 « Demande mise en route »
+        consigne:"Contactez le contrôle : station, indicatif, position, demande de mise en route{ATISCONS}.",
+        /* {ATISPART} devient « , information Bravo » quand le terrain diffuse un ATIS,
+           et disparaît sinon : « Mérignac Prévol, Rapidair 3245, en D 8, demande mise
+           en route pour Lyon, information L » (manuel DSNA p. 39). */
+        attendu:"{ADRM} {STN}, {CALL}, bonjour, au parking, demande mise en route{ATISPART}.",  // Manuel DSNA p.39 « Demande mise en route »
+        atisMot:true,
         // AFIS : l'agent d'information ne délivre pas de clairance ; le pilote annonce ses intentions.
         afis:{ consigne:"Contactez l'agent AFIS : station, indicatif, position, intentions (mise en route).",
                attendu:"{ADRM} {STN}, {CALL}, bonjour, au parking, demande mise en route." },
@@ -3169,8 +3506,18 @@ const SCENARIOS = [
                    {label:"Je maintiens",variantes:["maintiens","je maintiens","maintien"]},
                    {label:"Altitude",ref:'alt'},
                    {label:"Votre indicatif",ref:'callsign'} ] });
-      // 3 — Information de trafic (manuel p. 211)
+      // 2 bis — Code transpondeur assigné par l'organisme (manuel p. 186)
+      var codeTma=codeSSR();
       T.push({ stn:'tour', station:org.n, freq:org.f,
+        atc:"{CALL}, transpondeur "+codeTma+".",
+        consigne:"Collationnez le code, puis affichez-le sur les quatre roues du transpondeur.",
+        attendu:"Transpondeur "+codeTma+", {CALL}.",
+        motsCles:[ {label:"Transpondeur",variantes:["transpondeur","squawk","affiche","affiche transpondeur"]},
+                   {label:"Code assigné",variantes:numVariants(codeTma)},
+                   {label:"Votre indicatif",ref:'callsign'} ],
+        xpdrAssign:codeTma });
+      // 3 — Information de trafic (manuel p. 211)
+      T.push({ stn:'tour', station:org.n, freq:org.f, xpdrReq:codeTma,
         atc:["{CALL}, trafic convergent, Cessna 172, même altitude.",
              "{CALL}, trafic à midi, 8 nautiques, altitude inconnue."],
         consigne:"Accusez réception de l'information de trafic.",
@@ -3196,6 +3543,14 @@ const SCENARIOS = [
                      {label:"En VFR",variantes:["vfr","en vfr","v f r"]},
                      {label:"Altitude",ref:'alt'} ] });
       }
+      // 4 bis — Fonction d'identification (manuel p. 187)
+      T.push({ stn:'tour', station:siv?siv.n:org.n, freq:siv?siv.f:org.f,
+        atc:"{CALL}, transpondeur ident.",
+        consigne:"Collationnez, puis pressez IDENT au transpondeur.",
+        attendu:"Transpondeur ident, {CALL}.",
+        motsCles:[ {label:"Transpondeur ident",variantes:["transpondeur ident","ident","squawk ident","affiche ident"]},
+                   {label:"Votre indicatif",ref:'callsign'} ],
+        identReq:true });
       // 5 — Quitter la fréquence (manuel p. 153)
       T.push({ stn:'tour', station:siv?siv.n:org.n, freq:siv?siv.f:org.f,
         atc:"{CALL}, rappelez quittant la fréquence.",
@@ -3249,7 +3604,8 @@ const SCENARIOS = [
                          {label:"Altitude",variantes:["pieds","pied","niveau"]} ] },
               { stn:'tour', station:"{ADRM} {STN}",                               // Manuel DSNA p.238 « Mayday Roger, transpondeur 7700 »
                 atc:"{CALL}, Mayday Roger, transpondeur 7700.",
-                consigne:"Collationnez le code transpondeur.",
+                consigne:"Collationnez le code transpondeur, puis affichez 7700.",
+                xpdrAssign:'7700',
                 attendu:"Transpondeur 7700, {CALL}.",
                 motsCles:[ {label:"Transpondeur 7700",variantes:["7700","transpondeur 7700","sept sept zero zero","squawk 7700","affiche 7700"]},
                            {label:"Votre indicatif",ref:'callsign'} ] } ] },
@@ -3500,6 +3856,8 @@ function stopListening(){ clearTimeout(silenceTimer); try{ recognition.stop(); }
    dont le libellé est réécrit en JS). Trait hérité via currentColor + classe .ic-svg. */
 const ICONS = {
   mic:      '<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg>',
+  son:      '<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
+  rejouer:  '<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v5h-5"/></svg>',
   chevron:  '<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
   check:    '<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
   warn:     '<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4.5"/><path d="M12 17.5h.01"/></svg>',
@@ -3577,7 +3935,7 @@ function stopRadioNoise(){
 const state = {
   call:"F-ABCD",
   depAd:null, arrAd:null, activeAd:null, activeSide:'dep',
-  meteo:{windDir:0, windForce:0, qnh:0}, ventPhrase:"", rwy:{id:"", cap:0},
+  meteo:{windDir:0, windForce:0, qnh:0}, ventPhrase:"", rwy:{id:"", cap:0}, atis:null,
   capDep:0, numCircuit:1, voiceRate:1.0, voiceName:null, noiseEnabled:false,
   controlled:{dep:true, arr:true}, altCruise:3000, cause:"",  // contrôlé/AFIS PAR CÔTÉ (départ/arrivée)
   difficulty:'debutant', callForm:'full',                    // C1 / C2  (aléas = automatiques en mode Réel)
@@ -3597,6 +3955,9 @@ function fillDisplay(raw){
             .replace(/\{NUM\}/g, state.numCircuit)
             .replace(/\{ALT\}/g, state.altCruise)
             .replace(/\{CAUSE\}/g, state.cause)
+            .replace(/\{ATIS\}/g, state.atis ? state.atis.mot : '')
+            .replace(/\{ATISPART\}/g, state.atis ? ', information '+state.atis.mot : '')
+            .replace(/\{ATISCONS\}/g, state.atis ? ", puis la lettre d'information reçue à l'ATIS" : '')
             .replace(/\{DEPSTN\}/g, state.depStn||'');
 }
 function fillSpeech(raw){
@@ -3610,6 +3971,9 @@ function fillSpeech(raw){
     .replace(/\{NUM\}/g, String(state.numCircuit))
     .replace(/\{ALT\}/g, String(state.altCruise))
     .replace(/\{CAUSE\}/g, state.cause)
+    .replace(/\{ATIS\}/g, state.atis ? state.atis.mot : '')
+    .replace(/\{ATISPART\}/g, state.atis ? ', information '+state.atis.mot : '')
+    .replace(/\{ATISCONS\}/g, '')
     .replace(/\{DEPSTN\}/g, state.depStn||'');
   return spokenDigits(t);
 }
@@ -3670,7 +4034,44 @@ function finalizeStep(t){
   s.consigne = sub(s.consigne); s.station = sub(s.station);
   if(s.motsCles) s.motsCles = s.motsCles.map(mc =>
     mc.ref==='station' ? { label:mc.label, variantes:[ word.toLowerCase() ] } : mc);
+  /* Fréquence de l'organisme appelé. Sans elle, la pile avionique des Scénarios
+     restait masquée : le poste ne servait que dans le scénario Navigation. En la
+     renseignant, les Scénarios se comportent comme la page Navigation — il faut
+     afficher la bonne fréquence pour être entendu du contrôleur. */
+  if(s.freq==null) s.freq = freqScenario(stn, controlled);
+  /* La lettre d'information ne devient un mot-clé noté que si le terrain a un ATIS. */
+  if(s.atisMot && state.atis && s.motsCles)
+    s.motsCles = s.motsCles.concat([{ label:"Lettre d'information", variantes:atisVars(state.atis) }]);
   return s;
+}
+
+/* Fréquence publiée du terrain actif pour la station visée. L'ordre de repli suit
+   ce qu'on trouve réellement sur une carte VAC : au sol on appelle le Sol s'il
+   existe, sinon la Tour ; sur un terrain non contrôlé, l'AFIS puis l'auto-info. */
+function freqScenario(stn, controlled){
+  const g=(state.activeAd && typeof NAV_AD_GEO!=='undefined') ? NAV_AD_GEO[state.activeAd.icao] : null;
+  const f=g && g.freq ? g.freq : null;
+  if(!f) return null;
+  const ordre = controlled ? (stn==='sol' ? ['GND','TWR','APP'] : ['TWR','GND','APP'])
+                           : ['AFIS','INFO','A/A','UNIC','CTAF'];
+  for(const k of ordre){ if(f[k]) return Number(f[k]); }
+  return null;
+}
+
+/* Échange d'écoute de l'ATIS, inséré au tout début des scénarios qui commencent au
+   parking. Le message est « dit » par la synthèse comme le ferait le récepteur ;
+   l'élève doit ensuite restituer la lettre d'information, qu'il annoncera au
+   contrôleur à l'appel suivant (manuel DSNA p. 39 et p. 213). */
+function tourAtis(){
+  const a=state.atis;
+  return { stn:'sol', station:a.nom+' ATIS', freq:a.freq, premierContact:true,
+    atc:[a.texte],
+    situation:"Avant tout appel, vous écoutez l'ATIS de "+a.nom+".",
+    consigne:"Affichez la fréquence ATIS ("+a.freq.toFixed(3)+") sur le poste, écoutez le message, "+
+             "puis annoncez la lettre d'information reçue.",
+    attendu:"Information {ATIS}.",
+    motsCles:[ {label:"Information",variantes:["information","info"]},
+               {label:"Lettre d'information",variantes:atisVars(a)} ] };
 }
 
 /* Météo + piste en service (section B & G) */
@@ -3682,8 +4083,181 @@ function drawMeteo(){
   state.numCircuit      = 1 + Math.floor(Math.random()*3);    // 1..3
   state.altCruise       = (2000 + Math.floor(Math.random()*26)*100); // 2000..4500 par 100 (B1/B3)
   state.cause           = CAUSES[Math.floor(Math.random()*CAUSES.length)];           // B3
-  state.ventPhrase      = state.meteo.windDir + " degrés, " + state.meteo.windForce + " nœuds";
+  // « vent 0 degré » n'existe pas : le nord se dit 360 (ici comme dans l'ATIS).
+  state.ventPhrase      = capVent(state.meteo.windDir) + " degrés, " + state.meteo.windForce + " nœuds";
   state.rwy = runwayInService(state.activeAd, state.meteo.windDir);
+  drawTemps();                       // visibilité, temps présent, nuages, température…
+}
+
+/* =========================================================================
+   MÉTÉO DÉTAILLÉE — les paramètres que diffuse un ATIS
+   drawMeteo() ne tirait que vent et QNH : suffisant pour « vent 240 degrés
+   8 nœuds, QNH 1015 », pas pour un message ATIS, qui annonce aussi visibilité,
+   temps présent, nuages, température et point de rosée.
+
+   Les tirages ne sont pas indépendants : une visibilité de 2 km avec un ciel
+   clair n'existe pas. On tire donc un TYPE DE TEMPS, qui contraint ensuite tous
+   les paramètres. Le résultat reste fictif, mais cohérent.
+   ========================================================================= */
+const TEMPS_TYPES = [
+  { id:'cavok',   p:34, vis:[9999,9999], neb:[],                 tp:null,
+    tMin:12, tMax:30, spread:[6,14], piste:null },
+  { id:'beau',    p:26, vis:[10,30],     neb:['few'],            tp:null,
+    tMin:8,  tMax:26, spread:[4,10], piste:null },
+  { id:'couvert', p:16, vis:[8,15],      neb:['sct','bkn'],      tp:null,
+    tMin:4,  tMax:18, spread:[2,6],  piste:null },
+  { id:'pluie',   p:12, vis:[4,9],       neb:['bkn','ovc'],      tp:'Pluie',
+    tMin:3,  tMax:16, spread:[0,2],  piste:'Piste mouillée, freinage bon' },
+  { id:'averses', p:6,  vis:[6,12],      neb:['sct','bkn'],      tp:'Averse de pluie',
+    tMin:6,  tMax:20, spread:[1,4],  piste:'Flaques d’eau' },
+  { id:'brume',   p:4,  vis:[2,5],       neb:['bkn'],            tp:'Brume',
+    tMin:1,  tMax:12, spread:[0,1],  piste:'Piste humide' },
+  { id:'brouil',  p:2,  vis:[0.6,1.4],   neb:['ovc'],            tp:'Brouillard',
+    tMin:0,  tMax:9,  spread:[0,0],  piste:'Piste humide' }
+];
+/* Quantité de nuages : termes normalisés du manuel DSNA p. 217. */
+const NEB_MOT = { few:'peu', sct:'épars', bkn:'fragmenté', ovc:'couvert' };
+
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function entre(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+
+function tirerTemps(){
+  const total=TEMPS_TYPES.reduce((s,t)=>s+t.p,0);
+  let r=Math.random()*total;
+  for(const t of TEMPS_TYPES){ r-=t.p; if(r<=0) return t; }
+  return TEMPS_TYPES[0];
+}
+
+function drawTemps(){
+  const T=tirerTemps(), m=state.meteo;
+  m.type=T.id;
+  // Visibilité : au-delà de 10 km on annonce CAVOK, sinon la valeur en kilomètres.
+  m.cavok = (T.id==='cavok');
+  m.vis   = m.cavok ? null : Math.round((T.vis[0] + Math.random()*(T.vis[1]-T.vis[0]))*10)/10;
+  m.tempsPresent = T.tp;
+  m.pisteEtat    = T.piste;
+  // Couches nuageuses : bases croissantes, cohérentes avec le type de temps.
+  m.nuages = [];
+  let base = T.id==='brouil' ? entre(2,4)*100 : entre(8,26)*100;
+  T.neb.forEach(function(q){
+    m.nuages.push({ q:q, ft:base });
+    base += entre(6,22)*100;
+  });
+  m.temp = entre(T.tMin, T.tMax);
+  m.rosee = m.temp - entre(T.spread[0], T.spread[1]);
+  /* Niveau de transition : dépend du QNH. Table française usuelle pour une
+     altitude de transition de 5 000 ft (valeur la plus répandue en métropole ;
+     elle vaut 4 000 ft en région parisienne — d'où le caractère indicatif). */
+  m.transLevel = m.qnh>=1013 ? 60 : (m.qnh>=995 ? 65 : 70);
+  // Tendance : l'ATIS la reprend du TAF. NOSIG dans la grande majorité des cas.
+  m.tendance = Math.random()<0.8 ? 'NOSIG' : null;
+}
+
+/* =========================================================================
+   ATIS — service automatique d'information de région terminale
+   Structure et ordre des éléments : instruction SIA RCA 3 TA 011 (« formulaire
+   type » : INFORMATION, HEURE, TYPE D'APPROCHE, PISTE, SURFACE DE LA PISTE, NT,
+   DIVERS, VENT, VISIBILITÉ, TEMPS PRÉSENT, NUAGES, TEMPÉRATURE, POINT DE ROSÉE,
+   QNH, PHÉNOMÈNES SIGNIFICATIFS, TENDANCE, INSTRUCTIONS PARTICULIÈRES) et
+   manuel DSNA p. 213-217, dont l'exemple de Mérignac est le modèle suivi ici.
+
+   Le TYPE D'APPROCHE est volontairement omis : la base ne dit pas quelles
+   procédures aux instruments sont publiées, et annoncer « approche ILS » sur un
+   terrain qui n'en a pas serait faux. Le point de rosée est conservé bien que le
+   manuel note qu'il n'est plus obligatoire — il aide à comprendre le risque de
+   brume. Les valeurs sont FICTIVES, comme tout le reste du simulateur.
+   ========================================================================= */
+
+/* Un ATIS n'existe que là où il est publié : 67 terrains dans la base. Ailleurs
+   (AFIS, auto-information), le pilote obtient les paramètres en fréquence. */
+function atisFreqOf(ad){
+  if(!ad) return null;
+  const g=(typeof NAV_AD_GEO!=='undefined') ? NAV_AD_GEO[ad.icao] : null;
+  const f=g && g.freq ? g.freq.ATIS : null;
+  return f ? Number(f) : null;
+}
+
+/* Piste fermée : le manuel l'annonce bien sur l'ATIS (« Piste 29 fermée cause
+   travaux », p. 213). Cela n'a de sens que si le terrain a au moins DEUX pistes
+   physiques — sinon il serait fermé. On ne ferme jamais celle en service. */
+function pisteFermee(ad, enService){
+  if(!ad || !ad.pistes || ad.pistes.length<2) return null;
+  if(Math.random()>0.22) return null;
+  const num = id => parseInt(String(id),10);
+  const cote = id => /[LRC]$/.test(String(id));
+  /* La base décrit parfois une même bande deux fois (« 08 » et « 08R » à Albert,
+     « 18/36 » et « 36/18 » à Auch) : annoncer la fermeture de l'une pendant que
+     l'autre est en service serait absurde. On n'accepte donc que deux cas :
+       - des numéros DIFFÉRENTS (05 en service, 11 fermée — cas de Mérignac) ;
+       - le même numéro mais deux pistes PARALLÈLES déclarées (14L / 14R). */
+  const autres=ad.pistes.filter(function(p){
+    if(p.ids.indexOf(enService)>=0) return false;
+    const cand=p.ids[0];
+    if(num(cand)!==num(enService)) return true;
+    return cote(cand) && cote(enService);
+  });
+  if(!autres.length) return null;
+  const p=pick(autres);
+  return { id:p.ids[0], cause: pick(['travaux','travaux','inspection de piste']) };
+}
+
+/* Un cap de 0 degré n'existe pas en phraséologie : le nord se dit 360. */
+function capVent(d){ return d===0 ? 360 : d; }
+/* Une température négative s'annonce « moins 3 », jamais « -3 ». */
+function tempMot(t){ return t<0 ? 'moins '+Math.abs(t) : String(t); }
+/* Visibilité : en mètres sous 5 km (arrondie à la centaine), en kilomètres entiers
+   au-delà — c'est la façon dont elle est diffusée. */
+function visMot(v){
+  if(v>=5) return Math.round(v)+' kilomètres';
+  return Math.round(v*1000/100)*100+' mètres';
+}
+function majuscule(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+function heureUTC(){
+  const d=new Date();
+  return String(d.getUTCHours()).padStart(2,'0')+String(d.getUTCMinutes()).padStart(2,'0');
+}
+
+/* Construit le message ATIS du terrain, ou null s'il n'y a pas d'ATIS publié.
+   Le résultat est mémorisé dans state.atis : la lettre doit rester la même
+   pendant tout le vol, puisque le pilote l'annonce au premier contact. */
+function buildAtis(ad){
+  const freq=atisFreqOf(ad);
+  if(!freq || !ad) return null;
+  const m=state.meteo, rwy=state.rwy.id;
+  const L=pick('ABCDEFGHJKLMNPRSTUVWXYZ'.split(''));   // I, O et Q écartées (confusion)
+  const ferme=pisteFermee(ad, rwy);
+  const lignes=[];
+
+  lignes.push('Ici '+ad.nom+', information '+NATO[L]);
+  lignes.push('Enregistrée à '+heureUTC()+' UTC');
+  lignes.push('Piste en service '+rwy);
+  lignes.push(majuscule((m.pisteEtat ? m.pisteEtat+' ; ' : '')+'niveau de transition '+m.transLevel));
+  if(ferme) lignes.push('Piste '+ferme.id+' fermée cause '+ferme.cause);
+  lignes.push('Vent '+capVent(m.windDir)+' degrés, '+m.windForce+' nœuds');
+  if(m.cavok){
+    lignes.push('CAVOK');
+  }else{
+    lignes.push('Visibilité '+visMot(m.vis));
+    if(m.tempsPresent) lignes.push(m.tempsPresent);
+    if(m.nuages.length) lignes.push('Nuages '+m.nuages.map(n=>NEB_MOT[n.q]+' '+n.ft+' pieds').join(', '));
+  }
+  lignes.push('Température '+tempMot(m.temp)+', point de rosée '+tempMot(m.rosee));
+  lignes.push('QNH '+m.qnh);
+  if(m.tendance) lignes.push('Tendance '+m.tendance);
+  lignes.push('Informez '+ad.nom+' dès le premier contact que vous avez reçu l’information '+NATO[L]);
+
+  return { ad:ad.icao, nom:ad.nom, freq:freq, lettre:L, mot:NATO[L],
+           pisteFermee:ferme, lignes:lignes, texte:lignes.join('. ')+'.' };
+}
+
+/* Variantes acceptées à l'oral pour la lettre : le mot phonétique (« Bravo »),
+   la lettre seule (« B »), et les deux précédés d'« information ». */
+function atisVars(a){
+  if(!a) return [];
+  const l=a.lettre.toLowerCase(), w=a.mot.toLowerCase();
+  return [w, l, 'information '+w, 'information '+l, 'info '+w,
+          'avec information '+w, 'avec l information '+w, 'j ai '+w];
 }
 function runwayInService(ad, windDir){
   if(!ad) return {id:"", cap:0};
@@ -3820,6 +4394,10 @@ function buildQueue(sc){
   } else {
     raw = sc.tours;
   }
+  /* Écoute de l'ATIS avant le premier appel, sur les scénarios qui débutent au
+     parking (mise en route, tour de piste). Rien n'est inséré si le terrain ne
+     publie pas d'ATIS : c'est le cas de la grande majorité des terrains VFR. */
+  if(state.atis && (sc.id==='roulage' || sc.isCircuit)) raw = [tourAtis()].concat(raw);
   return raw.map(finalizeStep);   // A + B2 : résolution ATC aléatoire / AFIS / {STN}
 }
 
@@ -3882,8 +4460,20 @@ function startWithTerrain(){
   if(state.activeSide==='arr' && !state.arrAd) state.activeSide='dep';
   if(state.activeSide==='dep' && !state.depAd) { state.activeAd=state.arrAd; }
   drawMeteo();
+  /* ATIS du terrain : tiré une fois par exercice, avant la construction des
+     échanges — la lettre doit rester la même du début à la fin. */
+  state.atis = buildAtis(state.activeAd);
   state.queue = buildQueue(sc);
   state.stepIndex=0; state.results=[];
+  /* Nouvel exercice : on repart d'une pile avionique neuve (7000 en veille VFR),
+     sinon un code assigné au scénario précédent continuerait de clignoter. */
+  scXpdr.code='7000'; scXpdr.saisie='7000'; scXpdr.mode=2; scXpdr.ident=false; scXpdr.attendu=null;
+  /* Poste accordé sur l'organisme du terrain au démarrage — comme en Navigation, on
+     ne commence pas un exercice avec une radio éteinte. L'étape ATIS, elle, porte une
+     AUTRE fréquence : c'est elle qui oblige à manipuler le poste. */
+  scRadio.act=null; scRadio.stby=null; scRadio.attendue=null;
+  for(const st of state.queue){ if(st.freq!=null && !(state.atis && st.freq===state.atis.freq)){ scRadio.act=Number(st.freq); break; } }
+  scEchecFreq=0; scEchecCode=0; scAttend7600=false;
   if(listening) stopListening();
   el.recap.classList.add('hidden');
   el.panel.classList.remove('hidden');
@@ -4075,17 +4665,118 @@ function rtSaveSettings(s){ try{ localStorage.setItem(RT_SET_KEY, JSON.stringify
    n'apparaît que sur les échanges qui portent une fréquence — aujourd'hui le
    scénario « Navigation / croisière ». Les autres n'ont pas de transfert. */
 var scRadio={ act:null, stby:null, attendue:null };
+// Escalade des réponses du contrôleur : elle repart à zéro à chaque échange.
+var scEchecFreq=0, scEchecCode=0;
 function scRadioManuelle(){ return rtSettings().radioManuelle!==false; }
 function scFmt(f){ return f==null?'—':Number(f).toFixed(3); }
 function scRadioSkin(){
-  var M={Cessna:['cessna','GARMIN COM 1'],Piper:['piper','BENDIX/KING COM'],
-         Robin:['robin','BECKER COM'],Jodel:['robin','BECKER COM'],Socata:['robin','BECKER COM']};
-  // Les scénarios n'ont pas de sélecteur d'avion : on reprend la dernière machine
-  // choisie en Navigation, sinon un poste générique.
-  var fam=rtSettings().derniereFamille;
-  var d=M[fam]||['generic','VHF COM 1'];
-  var r=$('scRadio'); if(r) r.setAttribute('data-skin',d[0]);
+  // Même poste que la Navigation : Becker, quel que soit l'avion.
+  var d=['robin','BECKER'];
+  ['scRadio','scXpdr'].forEach(function(id){
+    var e=$(id); if(e) e.setAttribute('data-skin',d[0]);
+  });
   var n=$('scRadioNom'); if(n) n.textContent=d[1];
+}
+
+/* ================= Transpondeur des Scénarios =================
+   Même boîtier qu'en Navigation : quatre roues octales, mode, IDENT. Il n'apparaît
+   que sur les exercices qui comportent un code (manuel DSNA p. 186-187). */
+var scXpdr={ code:'7000', saisie:'7000', mode:2, ident:false, attendu:null };
+var SC_XP_MODES=['STBY','ON','ALT'];
+function scXpdrRoues(){
+  var box=$('scXpdrRoues'); if(!box || box.dataset.pret) return;
+  var h='';
+  for(var i=0;i<4;i++)
+    h+='<div class="xp-roue"><button type="button" data-scxp="'+i+'" data-d="1">&#9650;</button>'+
+       '<span data-scxpv="'+i+'">0</span>'+
+       '<button type="button" data-scxp="'+i+'" data-d="-1">&#9660;</button></div>';
+  box.innerHTML=h; box.dataset.pret='1';
+  box.querySelectorAll('[data-scxp]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var c=scXpdr.saisie.split('');
+      c[+b.dataset.scxp]=String((parseInt(c[+b.dataset.scxp],10)+(+b.dataset.d)+8)%8);
+      scXpdr.saisie=c.join(''); scMajXpdr();
+    });
+  });
+}
+function scBonCode(){
+  var s=currentStep();
+  if(!s || !scRadioManuelle()) return true;
+  if(s.xpdrReq && scXpdr.code!==s.xpdrReq) return false;
+  if(s.identReq && !scXpdr.ident) return false;
+  return true;
+}
+/* Pastille « à afficher » partagée par la radio et le transpondeur des Scénarios. */
+function scCible(el, contenu){
+  if(!el) return;
+  if(!contenu){ el.classList.add('hidden'); el.textContent=''; return; }
+  el.innerHTML='<span>'+escapeHtml(contenu[0])+'</span><b>'+escapeHtml(String(contenu[1]))+'</b>';
+  el.classList.remove('hidden');
+}
+function scXpdrExecuter(){
+  if(scXpdr.saisie===scXpdr.code){ scMajXpdr(); return; }
+  var avant=scXpdr.code;
+  scXpdr.code=scXpdr.saisie; scXpdr.ident=false;
+  scMajXpdr();
+  scReactionUrgence(scXpdr.code, avant);
+}
+/* Codes d'urgence composés pendant un exercice : mêmes procédures publiées qu'en
+   Navigation (manuel p. 238 pour 7700, p. 246 pour 7600). */
+function scReactionUrgence(code, avant){
+  var s=currentStep(); if(!s) return;
+  var stn=fillDisplay(s.station||'Le contrôle');
+  var m=null;
+  if(code==='7700')      m='{CALL}, '+stn+', Mayday Roger, transpondeur 7700.';
+  else if(code==='7600'){ m='{CALL}, '+stn+', si vous me recevez, transpondeur ident.'; scAttend7600=true; }
+  else if(avant==='7700'||avant==='7600'){
+    logRow('sys','Code d\'urgence annulé — vous êtes revenu au code '+code+'.');
+    scAttend7600=false; return;
+  } else return;
+  logRow('atc', fillDisplay(m)); speakATC(m, true);
+}
+var scAttend7600=false;
+function scSuite7600(){
+  if(!scAttend7600) return;
+  scAttend7600=false;
+  var s=currentStep(); if(!s) return;
+  var m='{CALL}, '+fillDisplay(s.station||'Le contrôle')+', ident observé, vous êtes en panne '+
+        'd\'émission, transpondeur 7600, accusez réception de tous mes messages par ident.';
+  logRow('atc', fillDisplay(m)); speakATC(m, true);
+}
+function scMajXpdr(){
+  var box=$('scXpdr'); if(!box) return;
+  scXpdrRoues();
+  var enAttente = scXpdr.saisie!==scXpdr.code;
+  $('scXpdrCode').textContent=scXpdr.saisie;
+  $('scXpdrCode').classList.toggle('brouillon', enAttente);
+  for(var i=0;i<4;i++){
+    var e=box.querySelector('[data-scxpv="'+i+'"]');
+    if(e) e.textContent=scXpdr.saisie[i];
+  }
+  var et=$('scXpdrEtat');
+  et.textContent = enAttente ? 'EXÉC ?' : (scXpdr.ident ? 'IDENT' : SC_XP_MODES[scXpdr.mode]);
+  et.classList.toggle('on', !enAttente && (scXpdr.mode>0 || scXpdr.ident));
+  $('scXpdrIdent').classList.toggle('actif', scXpdr.ident);
+  $('scXpdrExec').classList.toggle('arme', enAttente);
+  var s=currentStep(), a=$('scXpdrAide');
+  var reste = scXpdr.attendu!=null && scXpdr.code!==scXpdr.attendu;
+  $('scXpdrCode').classList.toggle('attendue', reste && !enAttente);
+  $('scXpdrIdent').classList.toggle('attendu', !!(s&&s.identReq&&!scXpdr.ident));
+  scCible($('scXpdrCible'), reste ? ['Code à afficher', scXpdr.attendu] : null);
+  if(!a) return;
+  if(enAttente){
+    a.textContent='Code composé sur les roues — pressez EXÉC pour l\'activer.';
+    a.classList.remove('alerte');
+  } else if(s && s.xpdrReq && scXpdr.code!==s.xpdrReq){
+    a.textContent='Le contrôleur ne vous voit pas au code assigné — affichez '+s.xpdrReq+' puis EXÉC.';
+    a.classList.add('alerte');
+  } else if(s && s.identReq && !scXpdr.ident){
+    a.textContent='Pressez IDENT : c\'est la fonction d\'identification demandée.';
+    a.classList.add('alerte');
+  } else if(reste){
+    a.textContent='Composez '+scXpdr.attendu+' sur les quatre roues, puis EXÉC.';
+    a.classList.remove('alerte');
+  } else { a.textContent=''; a.classList.remove('alerte'); }
 }
 function scMajRadio(){
   if(!$('scRadioAct')) return;
@@ -4096,8 +4787,11 @@ function scMajRadio(){
   st.classList.toggle('attendue',pret);
   $('scRadioSwap').classList.toggle('pret',pret);
   var s=currentStep(), a=$('scRadioAide');
-  if(s && s.freq && !scBonneFreq()){
-    a.textContent='Vous émettez sur '+scFmt(scRadio.act)+' — '+(s.station||'la station')+
+  var manque = s && s.freq && !scBonneFreq();
+  scCible($('scRadioCible'), manque
+    ? [fillDisplay(s.station||'Station')+' écoute sur', scFmt(s.freq)] : null);
+  if(manque){
+    a.textContent='Vous émettez sur '+scFmt(scRadio.act)+' — '+fillDisplay(s.station||'la station')+
       ' est sur '+scFmt(s.freq)+'. Affichez-la en standby puis permutez.';
     a.classList.add('alerte');
   } else { a.textContent=''; a.classList.remove('alerte'); }
@@ -4119,15 +4813,31 @@ function scPermuter(){
     scRadio.attendue=null;
   scMajRadio();
 }
-/* Affiche ou masque la radio selon que l'échange courant porte une fréquence. */
+/* Affiche la radio quand l'échange porte une fréquence, le transpondeur quand il
+   porte un code — et la pile entière dès que l'un des deux est utile. */
 function scRadioPourEtape(){
-  var box=$('scRadio'); if(!box) return;
+  var box=$('scRadio'), bx=$('scXpdr'), pile=$('scAvio');
+  if(!box || !pile) return;
+  scEchecFreq=0; scEchecCode=0;
   var s=currentStep();
-  if(!s || !s.freq || !scRadioManuelle()){ box.classList.add('hidden'); return; }
-  box.classList.remove('hidden');
-  if(scRadio.act==null) scRadio.act=Number(s.freq);       // première fréquence : déjà réglée
-  scRadio.attendue = (Math.abs(Number(scRadio.act)-Number(s.freq))>=0.0005) ? Number(s.freq) : null;
-  scRadioSkin(); scMajRadio();
+  var com = !!(s && s.freq && scRadioManuelle());
+  var xp  = !!(s && (s.xpdrAssign || s.xpdrReq || s.identReq) && scRadioManuelle());
+  box.classList.toggle('hidden', !com);
+  if(bx) bx.classList.toggle('hidden', !xp);
+  pile.classList.toggle('hidden', !com && !xp);
+  if(!com && !xp) return;
+  scRadioSkin();
+  if(com){
+    if(scRadio.act==null) scRadio.act=Number(s.freq);     // première fréquence : déjà réglée
+    scRadio.attendue = (Math.abs(Number(scRadio.act)-Number(s.freq))>=0.0005) ? Number(s.freq) : null;
+    scMajRadio();
+  }
+  if(xp){
+    if(s.xpdrAssign) scXpdr.attendu=s.xpdrAssign;
+    if(scXpdr.attendu!=null && scXpdr.code===scXpdr.attendu) scXpdr.attendu=null;
+    if(s.identReq) scXpdr.ident=false;
+    scMajXpdr();
+  }
 }
 
 /* --- Confirmation avant d'abandonner (helper global, réutilisé par le module Navigation) ---
@@ -4194,13 +4904,43 @@ if($('scRadioSwap')){
     if(e.key==='Enter'){ e.preventDefault(); scPermuter(); $('scRadioSaisie').value=''; }
   });
 }
+if($('scXpdrMode')){
+  $('scXpdrExec').addEventListener('click', scXpdrExecuter);
+  $('scXpdrMode').addEventListener('click', ()=>{ scXpdr.mode=(scXpdr.mode+1)%3; scXpdr.ident=false; scMajXpdr(); });
+  $('scXpdrIdent').addEventListener('click', ()=>{ scXpdr.ident=true; scMajXpdr(); scSuite7600(); });
+}
 el.validerBtn.addEventListener('click', ()=>{
   // Émettre sur la mauvaise fréquence : personne ne répond, comme en vol.
   if(!scBonneFreq()){
     const s=currentStep();
-    logRow('sys','Aucune réponse — vous émettez sur '+scFmt(scRadio.act)+
-                 ' alors que '+(s.station||'la station')+' écoute sur '+scFmt(s.freq)+'.');
+    scEchecFreq++;
+    if(scEchecFreq===1){
+      logRow('sys','Aucune réponse — vous émettez sur '+scFmt(scRadio.act)+
+                   ' alors que '+fillDisplay(s.station||'la station')+' écoute sur '+scFmt(s.freq)+'.');
+    } else {
+      /* Vous êtes encore sur la fréquence précédente : c'est donc le contrôleur que
+         vous écoutez toujours qui vous rappelle — procédure d'interruption des
+         communications (manuel p. 246) et renvoi en fréquence (p. 247). */
+      const m='{CALL}, me recevez-vous ? Veillez '+fillDisplay(s.station||'la station')+' '+
+              String(s.freq).replace('.',',')+', je répète '+String(s.freq).replace('.',',')+'.';
+      logRow('atc', fillDisplay(m)); speakATC(m);
+    }
     scMajRadio();
+    return;
+  }
+  // Idem pour le transpondeur : sans le code assigné, le contrôleur ne vous identifie pas.
+  if(!scBonCode()){
+    const sx=currentStep();
+    let m;
+    if(sx.identReq) m='{CALL}, transpondeur ident.';                       // p. 187
+    else {
+      scEchecCode++;
+      if(scEchecCode===1)      m='{CALL}, confirmez transpondeur '+sx.xpdrReq+'.';   // p. 187
+      else if(scEchecCode===2) m='{CALL}, je ne reçois pas votre transpondeur.';     // p. 190
+      else                     m='{CALL}, recyclez transpondeur, '+sx.xpdrReq+'.';   // p. 190
+    }
+    logRow('atc', fillDisplay(m)); speakATC(m);
+    scMajXpdr();
     return;
   }
   evaluate(el.transText.value);
@@ -4539,8 +5279,8 @@ if(!RECO_OK){
 /* ============ ROUTEUR SPA + animations de navigation (n'affecte pas la logique métier ci-dessus) ============ */
 (function(){
   // Pages : vitrine (accueil), écrans d'auth (login/signup), et pages applicatives (dans la coquille).
-  var PAGES=['accueil','login','signup','tableau','exercices','navigation','epellation','cours','progression','parametres','compte'];
-  var APP_PAGES=['tableau','exercices','navigation','epellation','cours','progression','parametres','compte'];
+  var PAGES=['accueil','login','signup','tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte'];
+  var APP_PAGES=['tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte'];
   var pages={}; PAGES.forEach(function(p){pages[p]=document.getElementById('page-'+p);});
   var sideLinks=[].slice.call(document.querySelectorAll('.sidelink'));
   var sidebar=document.getElementById('sidebar');
@@ -4989,8 +5729,45 @@ if(!RECO_OK){
      fetch() sur un fichier local est bloqué par la politique CORS et la carte ne se
      remplirait jamais. Un <script src> n'a pas cette restriction. -->
 <script src="assets/leaflet.js"></script>
+<script>
+/* ============ TUILES OACI : DEUX DOSSIERS ============
+   L'interface web de GitHub n'accepte que 100 fichiers par envoi, et le jeu
+   complet en compte 142. Les tuiles sont donc reparties en deux dossiers :
+
+       assets/oaci/    grilles 2 a 7  (zooms carte 5 a 10)   49 fichiers,  42 Mo
+       assets/oaci2/   grille  8      (zoom  carte 11)       93 fichiers,  74 Mo
+
+   Le numero de grille suffit a savoir ou chercher : aucune requete perdue, pas
+   de tentative-puis-repli. Pour ajouter un troisieme dossier, il n'y a que la
+   fonction ci-dessous a etendre.
+   ATTENTION : c'est bien _getZoomForUrl() qu'il faut lire, pas coords.z — le
+   premier applique zoomOffset (-3) et vaut donc le numero de GRILLE, le second
+   est le zoom de la CARTE. */
+function oaciDossier(grille){ return grille >= 8 ? 'assets/oaci2/' : 'assets/oaci/'; }
+var OaciTiles = L.TileLayer.extend({
+  getTileUrl: function(coords){
+    var g = this._getZoomForUrl();
+    return oaciDossier(g) + g + '_' + coords.x + '_' + coords.y + '.webp';
+  }
+});
+/* Sonde de publication. Deux cas bien distincts :
+   - le dossier principal manque  -> pas de carte OACI du tout, on bascule sur OSM ;
+   - seul le second manque        -> la carte reste parfaitement utilisable jusqu'au
+                                     zoom 10, on se contente de rabaisser le plafond
+                                     natif au lieu de tout desactiver. */
+function oaciSonde(couche, surAbsenceTotale){
+  var a=new Image(); a.onerror=surAbsenceTotale; a.src='assets/oaci/4_7_5.webp';
+  var b=new Image();
+  b.onerror=function(){
+    couche.options.maxNativeZoom=10;
+    if(couche._map) couche.redraw();
+  };
+  b.src='assets/oaci2/8_129_88.webp';
+}
+</script>
 <script src="assets/aerodromes-geo.js"></script>
 <script src="assets/airspace.js"></script>
+<script src="assets/avions.js"></script>
 <script>
 /* ============ Préparation de vol (page Navigation) — module autonome, Phase 1 ============
    N'AFFECTE AUCUNEMENT la logique des scénarios : ce module ne fait que LIRE la constante
@@ -5175,32 +5952,59 @@ if(!RECO_OK){
     });
     // Carte OACI 1:500 000 du SIA (édition 2026) : mosaïque France des 4 feuilles
     // fournies, calées par points de contrôle et raccordées au milieu des recouvrements.
-    // maxNativeZoom (et non maxZoom) : au-delà du zoom 10 Leaflet agrandit les tuiles
+    // maxNativeZoom (et non maxZoom) : au-delà du zoom 11 Leaflet agrandit les tuiles
     // existantes au lieu de faire disparaître la couche.
-    /* Tuiles de 2048 px, nommées à plat dans un seul dossier.
+    /* Tuiles de 2048 px, nommées à plat, réparties en DEUX dossiers.
        Une tuile de 2048 px couvre la même zone que 64 tuiles de 256 px, avec le même
        nombre de pixels au total : le détail est IDENTIQUE, seul le découpage change.
-       On passe ainsi de 1699 fichiers imbriqués à 47 fichiers à plat, ce qui permet
-       de publier le dossier en une seule fois sur un hébergeur qui limite le nombre
-       de fichiers par envoi.
+       On passe ainsi de plusieurs milliers de fichiers imbriqués à 142 fichiers à
+       plat. L'interface web de GitHub n'acceptant que 100 fichiers par envoi, ils
+       sont scindés en assets/oaci/ (grilles 2 à 7) et assets/oaci2/ (grille 8) :
+       chacun s'envoie en une fois. Le routage est fait par OaciTiles.getTileUrl,
+       défini juste après le chargement de Leaflet.
        tileSize 2048 + zoomOffset -3 : au zoom carte Z, Leaflet demande la grille Z-3,
-       et {z} vaut donc ce zoom de grille (2 à 7) — d'où le nommage {z}_{x}_{y}.
+       et le numéro de grille (2 à 8) donne le nom du fichier {grille}_{x}_{y}.
        minZoom 4 : sur un petit conteneur, fitBounds sur la France tombe au zoom 5 ;
        une couche démarrant plus haut resterait invisible. */
-    oaciLayer=L.tileLayer('assets/oaci/{z}_{x}_{y}.webp',{
-      /* min/maxNativeZoom sont exprimés dans le repère de la GRILLE (après zoomOffset).
-         ATTENTION : min/maxNativeZoom s'expriment dans le zoom de la CARTE, pas dans
-         celui de la grille. Les fichiers couvrent les grilles 2 à 7, soit les zooms
-         carte 5 à 10 — d'où 5 et 10 ici. Hors de cette plage Leaflet demandait des
-         tuiles inexistantes et la couche restait blanche : au zoom fort, et surtout
-         sur mobile où fitBounds descend au zoom 4 (grille 1, absente).
-         Avec ces bornes, Leaflet rééchelonne les tuiles existantes. */
+    oaciLayer=new OaciTiles('',{
+      /* ATTENTION : min/maxNativeZoom s'expriment dans le zoom de la CARTE, pas dans
+         celui de la grille. Les fichiers couvrent les grilles 2 à 8, soit les zooms
+         carte 5 à 11 — d'où 5 et 11 ici. Hors de cette plage Leaflet demandait des
+         tuiles inexistantes et la couche restait blanche.
+
+         GEOREFERENCEMENT (refait le 04/09/2026). Le modele geometrique reste celui
+         du 30/08 : les quatre planches sont ASSEMBLEES en une mosaique par
+         transformation rigide dans le repere Lambert de la planche Nord-Ouest, puis
+         cette mosaique est calee d'un bloc sur le QUADRILLAGE GEOGRAPHIQUE imprime
+         (maille 1x1 degre) — Lambert conique conforme suivi d'une affine, sept
+         parametres pour toute la France, 1,10 px RMS sur 94 intersections.
+
+         CE QUI A CHANGE : les pixels ne viennent plus de la mosaique, qui n'avait
+         ete assemblee qu'a 300 dpi, mais des QUATRE PLANCHES RENDUES A 600 dpi —
+         la resolution a laquelle les PDF du SIA sont reellement graves (bandes
+         JPEG de 13 065 px de large). C'est exactement le double, donc la grille 8
+         (zoom carte 11) est desormais NATIVE au lieu d'etre un agrandissement.
+         Chaque planche est calee sur la mosaique par une affine ajustee sur ~550
+         vignettes recalees par correlation de phase (residu 0,15 px pour la
+         planche Nord-Ouest, 0,17 Sud-Ouest, 0,53 Sud-Est, 1,40 Nord-Est) ; la
+         methode retrouve le calage connu de la planche Nord-Ouest a 0,76 px pres.
+         Le choix de la planche en chaque point est automatique : une planche n'est
+         retenue que la ou elle CONCORDE avec la mosaique, ce qui ecarte d'un coup
+         ses marges et les cartouches de legende imprimes par-dessus la carte. Les
+         1,4 % de bandes de raccord restantes retombent sur la mosaique.
+         Verification independante sur les symboles d'aerodrome (coordonnees AIP,
+         370 terrains) : ecart median 0,94 px, soit 99 m — contre 136 m pour le jeu
+         precedent mesure a l'identique.
+         Deux zones absentes de la mosaique restent reprises directement des
+         planches : la pointe du Finistere (Brest, Lanveoc, Ouessant) sur la planche
+         Nord-Ouest, et le carton Corse sur la planche Sud-Est.
+         Detail complet du modele et des mesures : assets/oaci/meta.json. */
       tileSize:2048, zoomOffset:-3,
       /* minZoom 5 : en dessous, une tuile de 2048 px réduite 16 fois n'est plus qu'un
          bruit gris — sur mobile la vue France entière tombe au zoom 4. On laisse
          alors le fond OpenStreetMap, net et lisible ; la carte OACI réapparaît dès
          qu'on zoome assez pour la déchiffrer. */
-      minNativeZoom:5, maxNativeZoom:10,
+      minNativeZoom:5, maxNativeZoom:11,
       minZoom:5, maxZoom:17, errorTileUrl:TRANSPARENT,
       attribution:'Carte OACI 1:500 000 &mdash; SIA / DGAC, édition 2026'
     });
@@ -5208,18 +6012,14 @@ if(!RECO_OK){
        n'affiche rien et l'utilisateur croit à un bug. On sonde UNE tuile de référence
        plutôt que d'écouter 'tileerror' : avec errorTileUrl, Leaflet émet aussi
        'tileload' pour l'image de remplacement, ce qui rendrait le comptage trompeur. */
-    (function(){
-      var probe=new Image();
-      probe.onerror=function(){
-        if(map.hasLayer(oaciLayer)) map.removeLayer(oaciLayer);
-        var b=document.getElementById('navBasemap');
-        if(b){ b.classList.remove('on'); b.textContent='Fond OpenStreetMap'; b.disabled=true;
-               b.title='Tuiles assets/oaci/ introuvables sur ce serveur'; }
-        var h=$v('navZoomHint');
-        if(h) h.textContent='Carte OACI indisponible ici : le dossier assets/oaci/ n’est pas publié. Fond OpenStreetMap utilisé.';
-      };
-      probe.src='assets/oaci/4_7_5.webp';       // tuile centrale sur la France
-    })();
+    oaciSonde(oaciLayer, function(){
+      if(map.hasLayer(oaciLayer)) map.removeLayer(oaciLayer);
+      var b=document.getElementById('navBasemap');
+      if(b){ b.classList.remove('on'); b.textContent='Fond OpenStreetMap'; b.disabled=true;
+             b.title='Tuiles assets/oaci/ introuvables sur ce serveur'; }
+      var h=$v('navZoomHint');
+      if(h) h.textContent='Carte OACI indisponible ici : le dossier assets/oaci/ n’est pas publié. Fond OpenStreetMap utilisé.';
+    });
     // OSM reste toujours dessous (repli hors couverture OACI) ; la carte OACI se
     // retire/remet via le bouton unique sous la carte, pas via un panneau de couches.
     osm.addTo(map); osm.setZIndex(1);
@@ -5238,7 +6038,9 @@ if(!RECO_OK){
     map.on('zoomend',drawAirspace);   // densité des zones adaptée au niveau de zoom
     ADS.forEach(function(a){
       var m=L.marker([a.lat,a.lon],{icon:mkIcon(a.icao),title:a.icao+' — '+a.nom}).addTo(map);
-      m.bindPopup(popupHtml(a));
+      /* Contenu évalué à l'ouverture (et non figé à la création) : en vol, la bulle
+         ne doit plus proposer de changer le départ ou l'arrivée. */
+      m.bindPopup(function(){ return popupHtml(a); });
       markers[a.icao]=m;
     });
     // Délégation : les boutons des popups affectent le terrain au champ choisi.
@@ -5262,9 +6064,12 @@ if(!RECO_OK){
   function popupHtml(a){
     var f=Object.keys(a.freq).map(function(k){return k+' '+a.freq[k];}).join(' · ');
     var pistes=(a.pistes||[]).map(function(p){return p.ids.join('/');}).join(', ');
-    return '<div class="nav-adpop"><b>'+a.icao+'</b> — '+esc(a.nom)+
+    var tete='<div class="nav-adpop"><b>'+a.icao+'</b> — '+esc(a.nom)+
       '<br><span class="pf">'+(f||'fréquences non publiées')+'</span>'+
-      (pistes?'<br><span class="pf">Piste(s) '+pistes+'</span>':'')+
+      (pistes?'<br><span class="pf">Piste(s) '+pistes+'</span>':'');
+    // Un vol est en cours : la carte n'est plus qu'un repère de situation.
+    if(F.running) return tete+'</div>';
+    return tete+
       '<br><button data-pick="dep" data-icao="'+a.icao+'">Départ</button> '+
       '<button data-pick="arr" data-icao="'+a.icao+'" class="nav-only-voyage">Arrivée</button> '+
       '<button data-pick="alt" data-icao="'+a.icao+'" class="nav-only-voyage">Dégagement</button></div>';
@@ -5358,6 +6163,7 @@ if(!RECO_OK){
 
   // ---- Sélection ----
   function setSel(slot,icao){
+    if(F.running) return;      // en vol, le plan est figé
     if(mode==='local' && slot!=='dep') return;
     var prev=sel[slot];
     // Un même terrain ne peut pas occuper deux rôles.
@@ -5675,6 +6481,8 @@ if(!RECO_OK){
     if(on) map.removeLayer(oaciLayer); else { oaciLayer.addTo(map); oaciLayer.setZIndex(2); }
     basemapBtn.classList.toggle('on',!on);
     basemapBtn.textContent = on ? 'Fond OpenStreetMap' : 'Carte OACI';
+    // En vol, repasser sur la carte OACI au zoom 11 la rendrait floue : on recale.
+    if(F.running && map.getZoom()>zoomVol()) map.setZoom(zoomVol());
     drawAirspace();   // l'un dessine les espaces, l'autre non
   });
 
@@ -5684,8 +6492,9 @@ if(!RECO_OK){
       level=b.dataset.diff;
       sec.querySelectorAll('[data-diff]').forEach(function(x){ x.classList.toggle('active',x===b); });
       $v('navDiffNote').textContent = (level==='reel')
-        ? "On vous indique seulement qui appeler : à vous de retrouver la formulation."
-        : "La consigne détaille ce que vous devez dire.";
+        ? "Le contrôleur n'est plus écrit : vous l'écoutez, et vous pouvez le réécouter. "+
+          "La consigne ne subsiste qu'au premier contact avec un organisme."
+        : "Le contrôleur est écrit, et la consigne détaille ce que vous devez dire.";
       if(F.running) renderStep();
     });
   });
@@ -5872,14 +6681,14 @@ if(!RECO_OK){
     var code=adDeZone(p);
     var a=code?BY[code]:null;
     if(!a || !a.freq) return null;
-    if(p.t==='CTR'){
-      var f=a.freq.TWR||a.freq.AFIS||a.freq.APP;
-      if(!f) return null;
-      return {n:stnName(a, a.freq.TWR?'TWR':(a.freq.AFIS?'AFIS':'APP')), f:f, zone:p};
-    }
-    var g=a.freq.APP||a.freq.TWR;
-    if(!g) return null;
-    return {n:stnName(a, a.freq.APP?'APP':'TWR'), f:g, zone:p};
+    /* Même filtre de bande que freqOf() : certains terrains militaires portant un
+       espace contrôlé publient des fréquences hors bande VHF civile (36,23 ; 142,45…).
+       Sans ce filtre, la clairance de transit exigeait une fréquence qu'aucune radio
+       VFR — et donc aucun élève — ne peut afficher : le vol s'arrêtait là. */
+    var ordre = (p.t==='CTR') ? ['TWR','AFIS','APP'] : ['APP','TWR'];
+    var choix = freqOf(a, ordre);
+    if(!choix) return null;
+    return {n:stnName(a, choix.k), f:choix.f, zone:p};
   }
   /* Interlocuteur à un point : espace contrôlé s'il y en a un, sinon SIV. */
   function organismeEnRoute(lat,lon,altFt){
@@ -5984,21 +6793,49 @@ if(!RECO_OK){
             depStn:stnName(dep,depF.k), arrStn:arr?stnName(arr,arrF.k):null,
             infoStn:infoSrc?infoSrc.n:null, chaineSiv:chaineSiv, depRwy:depRwy };
 
+    /* ATIS du terrain de départ. Il n'existe que sur les terrains où il est publié
+       (67 dans la base) ; ailleurs state.atis reste nul et aucune étape n'est
+       insérée — le pilote obtient alors les paramètres en fréquence. La lettre est
+       tirée une seule fois par vol : c'est elle que le pilote annonce ensuite. */
+    state.atis = buildAtis(dep);
+    F.ctx.atis = state.atis;
+
     var S=[], C=F.ctx;
     function push(o){ S.push(o); }
+
+    /* 0 — Écoute de l'ATIS (manuel DSNA p. 213-217).
+       Avant tout appel, on écoute l'ATIS : il donne la piste en service, le QNH et
+       la lettre d'information à annoncer. L'étape porte la FRÉQUENCE ATIS, donc le
+       poste doit être accordé dessus : c'est exactement le geste réel. */
+    if(C.atis){
+      push({ ph:'Écoute ATIS', src:'p. 213', stn:C.dep.nom+' ATIS', freq:C.atis.freq, leg:0,
+        atcBefore:C.atis.texte,
+        reel:'Affichez '+C.atis.freq.toFixed(3)+' et écoutez l\'ATIS.',
+        consigne:'Affichez la fréquence ATIS ('+C.atis.freq.toFixed(3)+') et écoutez le message. '+
+                 'Annoncez ensuite la lettre d\'information reçue — c\'est elle que vous donnerez au contrôleur.',
+        attendu:'Information {ATIS}.',
+        motsCles:[ {label:'Information',variantes:['information','info','j ai information','avec information']},
+                   {label:'Lettre d\'information',variantes:atisVars(C.atis)} ],
+        atisStep:true });
+    }
 
     // 1 — Mise en route (p. 39)
     push({ ph:'Mise en route', src:'p. 39', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Appelez '+C.depStn+'.',
       consigne: (C.depNat==='aa')
         ? 'Terrain sans organisme : en auto-information, annoncez-vous à '+C.depStn+' — indicatif et intention de mise en route.'
-        : 'Appelez '+C.depStn+' : votre indicatif, puis demandez la mise en route.',
+        : 'Appelez '+C.depStn+' : votre indicatif, puis demandez la mise en route'+
+          (C.atis?', en terminant par la lettre d\'information reçue à l\'ATIS.':'.'),
+      /* La lettre d'information se donne dès la demande de mise en route :
+         « Mérignac Prévol, Rapidair 3245, en D 8, demande mise en route pour Lyon,
+         information L » (manuel DSNA p. 39). */
       attendu: C.depNat==='aa'
         ? C.depStn+', {CALL}, bonjour, '+C.acShort+' au parking, je mets en route.'
-        : C.depStn+', {CALL}, bonjour, demande mise en route.',
+        : C.depStn+', {CALL}, bonjour, demande mise en route'+(C.atis?', information {ATIS}.':'.'),
       motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.depStn,C.depF.k)},
                  {label:'Votre indicatif',ref:'callsign'},
-                 {label:'Mise en route',variantes:['mise en route','demande mise en route','demande la mise en route','je mets en route']} ],
+                 {label:'Mise en route',variantes:['mise en route','demande mise en route','demande la mise en route','je mets en route']} ]
+              .concat(C.atis?[{label:'Lettre d\'information',variantes:atisVars(C.atis)}]:[]),
       atcAfter: (C.depNat==='twr') ? '{CALL}, mise en route approuvée.'
               : (C.depNat==='afis') ? '{CALL}, {DEPSTN}, roger, piste {PISTE} en service, QNH {QNH}.'
               : null });
@@ -6029,10 +6866,30 @@ if(!RECO_OK){
       attendu: C.depNat==='aa'
         ? 'J\'entre au point d\'attente piste {PISTE}, {CALL}.'
         : 'Je roule et entre dans l\'aire d\'attente {PISTE} et rappelle prêt, {CALL}.',
-      motsCles:[ {label:'Je roule',variantes:['je roule','roule']},
+      /* En auto-information la phrase attendue est « j'entre au point d'attente » :
+         exiger « je roule » rendait l'exercice impossible à réussir sur ces terrains. */
+      motsCles:[ (C.depNat==='aa')
+                   ? {label:'J\'entre au point d\'attente',variantes:["j entre","entre","je rentre","au point d attente"]}
+                   : {label:'Je roule',variantes:['je roule','roule']},
                  {label:'Aire d\'attente',variantes:["aire d attente","point d attente","aire dattente"]},
                  {label:'Numéro de piste',ref:'piste'},
                  {label:'Votre indicatif',ref:'callsign'} ] });
+
+    /* 3 bis — Code transpondeur (p. 186). Sur un terrain contrôlé, le code SSR est
+       assigné au sol, avant le départ. Le pilote le collationne PUIS l'affiche :
+       les deux gestes comptent, comme en vol réel. */
+    if(C.depNat==='twr'){
+      C.codeDep=unCode();
+      push({ ph:'Code transpondeur', src:'p. 186', stn:C.depStn, freq:C.depF.f, leg:0,
+        atcBefore:'{CALL}, transpondeur '+C.codeDep+'.',
+        reel:'Collationnez le code assigné.',
+        consigne:'Collationnez le code transpondeur, puis affichez-le sur les quatre roues du boîtier.',
+        attendu:'Transpondeur '+C.codeDep+', {CALL}.',
+        motsCles:[ {label:'Transpondeur',variantes:['transpondeur','squawk','affiche','affiche transpondeur']},
+                   {label:'Code assigné',variantes:numVariants(C.codeDep)},
+                   {label:'Votre indicatif',ref:'callsign'} ],
+        xpdrAssign:C.codeDep });
+    }
 
     // 4 — Prêt au départ (p. 50)
     push({ ph:'Prêt au départ', src:'p. 50', stn:C.depStn, freq:C.depF.f, leg:0,
@@ -6044,7 +6901,10 @@ if(!RECO_OK){
       attendu: C.depNat==='aa'
         ? 'Je m\'aligne et je décolle piste {PISTE}, {CALL}.'
         : 'Prêt au départ, {CALL}.',
-      motsCles:[ {label:'Prêt au départ',variantes:['pret au depart','pret','paré','affirme']},
+      /* Idem : sans contrôleur, on annonce l'alignement et le décollage, pas « prêt au départ ». */
+      motsCles:[ (C.depNat==='aa')
+                   ? {label:'Je m\'aligne et je décolle',variantes:["je m aligne","aligne","je decolle","decolle"]}
+                   : {label:'Prêt au départ',variantes:['pret au depart','pret','paré','affirme']},
                  {label:'Votre indicatif',ref:'callsign'} ],
       atcAfter: C.depNat==='aa' ? null : '{CALL}, alignez-vous et attendez piste {PISTE}.' });
 
@@ -6127,6 +6987,44 @@ if(!RECO_OK){
           motsCles:[ {label:'Je maintiens',variantes:['maintiens','je maintiens','maintien']},
                      {label:'Altitude',ref:'alt'},
                      {label:'Votre indicatif',ref:'callsign'} ] });
+
+        /* 11 bis — Code transpondeur en route (p. 186 ; exemple d'un transfert VFR
+           avec assignation de code, p. 104-105). Le SIV donne son propre code. */
+        (function(){
+          var code=unCode(); C.codeRoute=code;
+          push({ ph:'Code transpondeur', src:'p. 186', stn:C.infoStn, freq:C.infoF.f, leg:0.5,
+            atcBefore:'{CALL}, transpondeur '+code+'.',
+            reel:'Collationnez le code assigné.',
+            consigne:'Collationnez le code, puis affichez-le au transpondeur.',
+            attendu:'Transpondeur '+code+', {CALL}.',
+            motsCles:[ {label:'Transpondeur',variantes:['transpondeur','squawk','affiche','affiche transpondeur']},
+                       {label:'Code assigné',variantes:numVariants(code)},
+                       {label:'Votre indicatif',ref:'callsign'} ],
+            xpdrAssign:code });
+
+          /* Un vol sur trois : demande d'identification (p. 187). Court, et cela
+             donne un sens au bouton IDENT. */
+          if(Math.random()<0.34)
+            push({ ph:'Identification', src:'p. 187', stn:C.infoStn, freq:C.infoF.f, leg:0.53,
+              atcBefore:'{CALL}, transpondeur ident.',
+              reel:'Collationnez, puis pressez IDENT.',
+              consigne:'Collationnez la demande d\'identification, puis pressez IDENT au transpondeur.',
+              attendu:'Transpondeur ident, {CALL}.',
+              motsCles:[ {label:'Transpondeur ident',variantes:['transpondeur ident','ident','squawk ident','affiche ident']},
+                         {label:'Votre indicatif',ref:'callsign'} ],
+              identReq:true });
+          /* Sinon, un vol sur trois : vérification du code affiché (p. 187). */
+          else if(Math.random()<0.5)
+            push({ ph:'Vérification du code', src:'p. 187', stn:C.infoStn, freq:C.infoF.f, leg:0.53,
+              atcBefore:'{CALL}, confirmez transpondeur '+code+'.',
+              reel:'Confirmez le code affiché.',
+              consigne:'Confirmez le code que vous affichez.',
+              attendu:'Transpondeur '+code+', {CALL}.',
+              motsCles:[ {label:'Transpondeur',variantes:['transpondeur','squawk','affiche']},
+                         {label:'Code affiché',variantes:numVariants(code)},
+                         {label:'Votre indicatif',ref:'callsign'} ],
+              xpdrReq:code });
+        })();
 
         // 12 — Information de trafic (p. 211)
         push({ ph:'Information de trafic', src:'p. 211', stn:C.infoStn, freq:C.infoF.f, leg:0.56,
@@ -6321,6 +7219,12 @@ if(!RECO_OK){
       st.premierContact = (st.freq!==freqPrec);
       freqPrec = st.freq;
     });
+    /* Une assignation de code n'a de valeur que si le code est ensuite AFFICHÉ.
+       On l'exige donc sur l'échange suivant : au-delà, on ne bloque plus, pour ne
+       pas transformer un oubli en impasse. */
+    for(var ci=0; ci<S.length-1; ci++)
+      if(S[ci].xpdrAssign && !S[ci+1].xpdrReq && !S[ci+1].identReq)
+        S[ci+1].xpdrReq=S[ci].xpdrAssign;
     F.steps=S; F.i=0; F.results=[]; F.dits=[]; F.attendus=[];
   }
 
@@ -6416,7 +7320,7 @@ if(!RECO_OK){
   }
   var LIEUX=['Montauban','Chartres','Auxerre','Vierzon','Cognac','Épernay','Vichy','Bergerac'];
   function unLieu(){ return LIEUX[Math.floor(Math.random()*LIEUX.length)]; }
-  function unCode(){ return String(1000+Math.floor(Math.random()*6000)); }
+  function unCode(){ return codeSSR(); }   // code SSR octal, cf. helper global
 
   var ALEAS_VOL = [
     // ---- Information de vol (manuel p. 205-213) ----
@@ -6621,6 +7525,84 @@ if(!RECO_OK){
     var w=(who==='atc')?'ATC':(who==='you'?'Vous':'—');
     d.innerHTML='<span class="who">'+w+'</span>'+esc(txt);
     $v('vfLog').appendChild(d); $v('vfLog').scrollTop=1e6;
+    return d;
+  }
+
+  /* ================= AFFICHAGE DES MESSAGES DU CONTRÔLEUR =================
+     Débutant : le message est écrit, on peut le relire.
+     Réel     : il n'est PAS écrit. On entend la transmission, on peut la réécouter,
+                et le texte n'apparaît dans le journal qu'APRÈS avoir répondu — pour
+                que le débriefing reste consultable sans donner la réponse d'avance. */
+  /* ================= DIFFUSION ATIS EN BOUCLE =================
+     Un ATIS tourne sans interruption : on ne l'« appelle » pas, on se cale sur sa
+     fréquence et on attend le passage qui nous intéresse. Le message est donc
+     rejoué tant qu'on reste sur l'étape et sur la bonne fréquence, avec la courte
+     pause qui sépare deux diffusions. Se caler ailleurs coupe l'écoute. */
+  var atisBoucle=null;
+  function arreterAtis(){
+    if(!atisBoucle) return;
+    atisBoucle.actif=false; clearTimeout(atisBoucle.t); atisBoucle=null;
+    try{ speechSynthesis.cancel(); }catch(e){}
+    stopRadioNoise();
+  }
+  function lancerAtis(texte){
+    if(atisBoucle) return;                       // deja en diffusion
+    if(!window.speechSynthesis){ atisBoucle={actif:true,t:null}; return; }
+    var b={actif:true,t:null}; atisBoucle=b;
+    function dire(){
+      if(!b.actif || !F.running) return;
+      try{ speechSynthesis.cancel(); }catch(e){}
+      var u=new SpeechSynthesisUtterance(fillSpeech(texte));
+      u.lang='fr-FR'; if(frVoice) u.voice=frVoice;
+      u.rate=state.voiceRate; u.pitch=1.0;
+      u.onstart=startRadioNoise;
+      u.onend=function(){ stopRadioNoise(); if(b.actif) b.t=setTimeout(dire,2600); };
+      u.onerror=function(){ stopRadioNoise(); if(b.actif) b.t=setTimeout(dire,4000); };
+      speechSynthesis.speak(u);
+    }
+    dire();
+  }
+  /* Appelee a chaque manipulation de la radio : c'est le calage sur la frequence
+     qui declenche l'ecoute, pas l'affichage de l'etape. */
+  function majEcouteAtis(){
+    var s=F.steps[F.i];
+    if(!F.running || !s || !s.atisStep){ arreterAtis(); return; }
+    if(surBonneFreq()){
+      if(!atisBoucle){
+        messageATC(s.stn, s.atcBefore, false, true);   // affichage seul : la boucle parle
+        lancerAtis(s.atcBefore);
+      }
+    } else {
+      arreterAtis();
+      $v('vfAtc').innerHTML='<div class="vf-ecoute"><span class="qui">'+ICONS.son+
+        'Rien sur cette fréquence — affichez celle de l\'ATIS pour l\'écouter.</span></div>';
+    }
+  }
+
+  var aRevELer=[];                 // lignes de journal masquées, à dévoiler après la réponse
+  function messageATC(stn, brut, urgent, muet){
+    var texte=fillDisplay(brut), atc=$v('vfAtc');
+    if(level!=='reel'){
+      atc.innerHTML='<b>'+esc(stn||'ATC')+' :</b> '+esc(texte);
+      vfLog('atc',texte);
+    } else {
+      atc.innerHTML='<div class="vf-ecoute"><span class="qui">'+ICONS.son+
+        esc(stn||'Le contrôle')+' vous transmet</span>'+
+        '<button class="vf-rejouer" type="button" data-rejouer>'+ICONS.rejouer+'Réécouter</button></div>';
+      var b=atc.querySelector('[data-rejouer]');
+      if(b) b.addEventListener('click',function(){ speakATC(brut, urgent); });
+      var ligne=vfLog('atc','(transmission — répondez, le texte s\'affichera ensuite)');
+      ligne.classList.add('attente');
+      aRevELer.push({el:ligne, texte:texte});
+    }
+    if(!muet) speakATC(brut, urgent);
+  }
+  function devoilerATC(){
+    aRevELer.forEach(function(o){
+      o.el.classList.remove('attente');
+      o.el.innerHTML='<span class="who">ATC</span>'+esc(o.texte);
+    });
+    aRevELer=[];
   }
   /* ================= RADIO COM =================
      Fonctionnement réel : on n'émet que sur la fréquence ACTIVE. Quand le contrôleur
@@ -6629,18 +7611,46 @@ if(!RECO_OK){
   var radio={ act:null, stby:null, attendue:null };
 
   /* Habillage selon la machine. Les postes cités sont ceux qu'on rencontre
-     couramment dans ces avions ; le rendu s'en inspire sans prétendre les copier. */
+     couramment dans ces avions ; le rendu s'en inspire sans prétendre les copier.
+     Seules les trois familles les plus répandues ont leur façade ; tout le reste
+     reçoit un rack générique. */
   var RADIO_SKINS={
-    Cessna:{skin:'cessna', nom:'GARMIN COM 1'},
-    Piper: {skin:'piper',  nom:'BENDIX/KING COM'},
-    Robin: {skin:'robin',  nom:'BECKER COM'},
-    Jodel: {skin:'robin',  nom:'BECKER COM'},
-    Socata:{skin:'robin',  nom:'BECKER COM'}
+    Cessna:{skin:'cessna', nom:'GARMIN'},
+    Piper: {skin:'piper',  nom:'BENDIX KING'},
+    Robin: {skin:'robin',  nom:'BECKER'}
   };
+  /* Un seul habillage pour toutes les machines : celui du DR400 (poste Becker,
+     afficheur ambre). RADIO_SKINS est conserve — il suffirait de rendre cette
+     fonction dependante de acChoice.fam pour revenir a un poste par famille. */
+  function skinCourant(){ return {skin:'robin', nom:'BECKER'}; }
+  /* ================= PHOTO D'AVION =================
+     Une photo differente a chaque vol. Elle est DECORATIVE : elle ne represente
+     pas la machine choisie dans le formulaire (les photos disponibles ne couvrent
+     pas les types d'ecole). On evite seulement de repeter celle du vol precedent. */
+  function choisirAvionPhoto(){
+    var fig=$v('vfAvion'); if(!fig) return;
+    var L=(typeof NAV_AVIONS!=='undefined') ? NAV_AVIONS : [];
+    if(!L.length){ fig.style.display='none'; return; }
+    var S=rtSettings();
+    var prec=(typeof S.photoAvion==='number') ? S.photoAvion : -1;
+    var choix=[]; for(var k=0;k<L.length;k++) if(k!==prec) choix.push(k);
+    if(!choix.length) choix=[0];
+    var i=choix[Math.floor(Math.random()*choix.length)];
+    try{ S.photoAvion=i; rtSaveSettings(S); }catch(e){}
+    var a=L[i], img=$v('vfAvionImg');
+    img.src='assets/avions/'+a.f; img.alt=a.nom;
+    $v('vfAvionLeg').innerHTML='<b>'+esc(a.nom)+'</b>';
+    /* Une image manquante (dossier non televerse) laisserait un cadre vide
+       avec l'icone « image cassee » : on masque plutot le bloc. */
+    img.onerror=function(){ fig.style.display='none'; };
+    fig.style.display='';
+  }
+
   function radioSkin(){
-    var d=(acChoice&&RADIO_SKINS[acChoice.fam])||{skin:'generic',nom:'VHF COM 1'};
-    var r=$v('vfRadio');
-    if(r) r.setAttribute('data-skin', d.skin);
+    var d=skinCourant();
+    ['vfRadio','vfXpdr'].forEach(function(id){
+      var e=$v(id); if(e) e.setAttribute('data-skin', d.skin);
+    });
     var n=$v('radioNom'); if(n) n.textContent=d.nom;
   }
   function fmtF(f){ return f==null?'—':Number(f).toFixed(3); }
@@ -6654,6 +7664,7 @@ if(!RECO_OK){
     st.classList.toggle('attendue', pret);
     $v('radioSwap').classList.toggle('pret', pret);
     majAideRadio();
+    if(typeof majEcouteAtis==='function') majEcouteAtis();
   }
   function surBonneFreq(){
     var s=F.steps[F.i];
@@ -6664,15 +7675,117 @@ if(!RECO_OK){
   function majAideRadio(){
     var a=$v('radioAide'); if(!a) return;
     var s=F.steps[F.i];
-    if(!radioManuelle()){ a.textContent=''; a.classList.remove('alerte'); return; }
-    if(s && s.freq && !surBonneFreq()){
+    if(!radioManuelle()){
+      a.textContent=''; a.classList.remove('alerte'); cible($v('radioCible'),null); return;
+    }
+    /* Pastille : la fréquence à afficher, en clair. Elle sert de filet quand le
+       contrôleur ne l'a pas annoncée (transfert automatique, début de vol) — sans
+       elle, l'élève n'a aucun moyen de la deviner. Elle s'efface une fois réglée. */
+    var manque = s && s.freq!=null && !surBonneFreq();
+    /* Même format que l'afficheur du poste (3 décimales) pour éviter toute ambiguïté.
+       Exception : sur l'écoute ATIS on ne souffle pas la fréquence — aller la
+       chercher fait partie de l'exercice, et la consigne la donne déjà. */
+    cible($v('radioCible'),
+      (manque && !(s && s.atisStep)) ? [(s.stn||'Station')+' écoute sur', fmtF(s.freq)] : null);
+    if(manque){
       a.textContent='Vous émettez sur '+fmtF(radio.act)+' — '+(s.stn||'la station')+
         ' est sur '+fmtF(s.freq)+'. Affichez-la en standby puis permutez.';
       a.classList.add('alerte');
+    } else if(s && s.freq==null && radio.act==null){
+      // 186 terrains ne publient aucune fréquence : il n'y a rien à afficher.
+      a.textContent='Aucune fréquence n\'est publiée pour ce terrain : émettez sans rien régler.';
+      a.classList.remove('alerte');
     } else if(radio.attendue!=null){
       a.textContent='Nouvelle fréquence à afficher en standby, puis permutez.';
       a.classList.remove('alerte');
     } else { a.textContent=''; a.classList.remove('alerte'); }
+  }
+
+  /* ================= RÉPONSES RÉELLES DU CONTRÔLEUR =================
+     Toutes les formulations ci-dessous sont celles du manuel DSNA : on ne devine
+     pas ce que dirait un contrôleur, on cite ce qu'il dit. */
+
+  // Station de la fréquence sur laquelle on émet réellement (souvent la précédente).
+  function stationSur(f){
+    if(f==null) return null;
+    for(var i=0;i<F.steps.length;i++){
+      var st=F.steps[i];
+      if(st.freq!=null && Math.abs(Number(st.freq)-Number(f))<0.0005) return st.stn;
+    }
+    return null;
+  }
+
+  /* Émission sur une mauvaise fréquence. Premier essai : silence, comme en vrai.
+     Ensuite l'organisme QUE VOUS ÉCOUTEZ ENCORE vous rappelle — c'est exactement la
+     procédure d'interruption des communications (manuel p. 246), suivie du renvoi en
+     fréquence « veillez … je répète … » (p. 247). */
+  function reponseMauvaiseFreq(s){
+    F.echecFreq=(F.echecFreq||0)+1;
+    var prec0=stationSur(radio.act);
+    if(F.echecFreq===1 || !prec0){
+      vfLog('sys','Aucune réponse — vous émettez sur '+fmtF(radio.act)+
+                  ' alors que '+(s.stn||'la station')+' écoute sur '+fmtF(s.freq)+'.');
+      /* Fréquence que personne n'occupe : aucun contrôleur ne peut vous rappeler,
+         c'est le silence radio. On renvoie donc vers la pastille — c'est une aide
+         de l'application, pas une phrase de contrôleur. */
+      if(!prec0 && F.echecFreq>1)
+        vfLog('sys','Personne n\'écoute sur '+fmtF(radio.act)+
+                    '. La fréquence à afficher est rappelée sous la radio.');
+      return;
+    }
+    var prec=stationSur(radio.act);
+    var m='{CALL}, '+prec+', me recevez-vous ? Veillez '+(s.stn||'la station')+' '+
+          fq(s.freq)+', je répète '+fq(s.freq)+'.';
+    messageATC(prec, m);
+  }
+
+  /* Code transpondeur erroné. Le manuel prévoit trois formulations, dans cet ordre :
+     « confirmez transpondeur X » (p. 187), puis « je ne reçois pas votre
+     transpondeur » et « recyclez transpondeur » (p. 190). */
+  function reponseMauvaisCode(s){
+    F.echecCode=(F.echecCode||0)+1;
+    var m;
+    if(F.echecCode===1)      m='{CALL}, confirmez transpondeur '+s.xpdrReq+'.';
+    else if(F.echecCode===2) m='{CALL}, je ne reçois pas votre transpondeur.';
+    else                     m='{CALL}, recyclez transpondeur, '+s.xpdrReq+'.';
+    messageATC(s.stn, m);
+  }
+
+  /* Identification non faite : le contrôleur redemande le SPI (manuel p. 187). */
+  function reponsePasIdent(){
+    var m='{CALL}, transpondeur ident.';
+    var st=F.steps[F.i];
+    messageATC(st&&st.stn, m);
+  }
+
+  /* Codes d'urgence composés par l'élève : le contrôleur les voit et applique la
+     procédure publiée. 7700 → accusé Mayday (p. 238) ; 7600 → procédure
+     d'interruption des communications (p. 246). */
+  function reactionCodeUrgence(code, avant){
+    if(!F.running) return;
+    var s=F.steps[F.i], stn=(s&&s.stn)||'Le contrôle';
+    var m=null, urgent=false;
+    if(code==='7700'){
+      m='{CALL}, '+stn+', Mayday Roger, transpondeur 7700.'; urgent=true;
+    } else if(code==='7600'){
+      m='{CALL}, '+stn+', si vous me recevez, transpondeur ident.'; urgent=true;
+      F.attend7600=true;
+    } else if(avant==='7700' || avant==='7600'){
+      vfLog('sys','Code d\'urgence annulé — vous êtes revenu au code '+code+'.');
+      F.attend7600=false; return;
+    } else return;
+    messageATC(stn, m, urgent);
+  }
+
+  /* Suite de la procédure 7600 : le pilote presse IDENT, le contrôleur confirme
+     (manuel p. 246, texte intégral). */
+  function suite7600(){
+    if(!F.attend7600) return;
+    F.attend7600=false;
+    var s=F.steps[F.i], stn=(s&&s.stn)||'Le contrôle';
+    var m='{CALL}, '+stn+', ident observé, vous êtes en panne d\'émission, transpondeur 7600, '+
+          'accusez réception de tous mes messages par ident.';
+    messageATC(stn, m, true);
   }
   function radioManuelle(){ return rtSettings().radioManuelle!==false; }
   function poserStby(f){
@@ -6690,6 +7803,124 @@ if(!RECO_OK){
     var e=$v('radioAct'); e.classList.remove('tuning'); void e.offsetWidth; e.classList.add('tuning');
   }
 
+  /* ================= TRANSPONDEUR =================
+     Quatre roues octales : un code SSR ne comporte que des chiffres 0 à 7.
+     7000 est le code de veille VFR affiché au départ (règlement SERA / AIP France ;
+     le manuel de phraséologie, lui, ne donne que la formulation des échanges).
+     Le contrôleur assigne un code (manuel DSNA p. 186), peut demander de le
+     confirmer ou de presser IDENT (p. 187) : tant que le code n'est pas affiché,
+     il ne vous voit pas sous ce code et le dit. */
+  var XP_MODES=['STBY','ON','ALT'];
+  /* `saisie` = ce que composent les roues ; `code` = ce que le transpondeur émet
+     réellement. Comme sur un vrai boîtier, composer ne suffit pas : il faut valider
+     (bouton EXÉC) pour que le contrôleur voie le nouveau code. */
+  var xpdr={ code:'7000', saisie:'7000', mode:2, ident:false, attendu:null };
+
+  function xpdrRendreRoues(){
+    var box=$v('xpdrRoues'); if(!box || box.dataset.pret) return;
+    var h='';
+    for(var i=0;i<4;i++)
+      h+='<div class="xp-roue"><button type="button" data-xp="'+i+'" data-d="1">&#9650;</button>'+
+         '<span data-xpv="'+i+'">0</span>'+
+         '<button type="button" data-xp="'+i+'" data-d="-1">&#9660;</button></div>';
+    box.innerHTML=h; box.dataset.pret='1';
+    box.querySelectorAll('[data-xp]').forEach(function(b){
+      b.addEventListener('click',function(){
+        xpdrTourner(parseInt(b.dataset.xp,10), parseInt(b.dataset.d,10));
+      });
+    });
+  }
+  function xpdrTourner(i,d){
+    var c=xpdr.saisie.split('');
+    c[i]=String((parseInt(c[i],10)+d+8)%8);        // octal : on boucle sur 0-7
+    xpdr.saisie=c.join('');
+    majXpdr();
+  }
+  /* Activation du code composé. C'est ici que le contrôleur « voit » le changement,
+     et donc ici qu'on réagit aux codes d'urgence. */
+  function xpdrExecuter(){
+    if(xpdr.saisie===xpdr.code){ majXpdr(); return; }
+    var avant=xpdr.code;
+    xpdr.code=xpdr.saisie;
+    xpdr.ident=false;                              // nouveau code : le SPI est annulé
+    majXpdr();
+    reactionCodeUrgence(xpdr.code, avant);
+  }
+  function xpdrManuel(){ return radioManuelle(); }
+  function surBonCode(){
+    var s=F.steps[F.i];
+    if(!s || !xpdrManuel()) return true;
+    if(s.xpdrReq && xpdr.code!==s.xpdrReq) return false;
+    if(s.identReq && !xpdr.ident) return false;
+    return true;
+  }
+  function majXpdr(){
+    var box=$v('vfXpdr'); if(!box) return;
+    xpdrRendreRoues();
+    var enAttente = xpdr.saisie!==xpdr.code;        // composé mais pas encore activé
+    $v('xpdrCode').textContent=xpdr.saisie;
+    $v('xpdrCode').classList.toggle('brouillon', enAttente);
+    for(var i=0;i<4;i++){
+      var e=box.querySelector('[data-xpv="'+i+'"]');
+      if(e) e.textContent=xpdr.saisie[i];
+    }
+    var et=$v('xpdrEtat');
+    et.textContent = enAttente ? 'EXÉC ?' : (xpdr.ident ? 'IDENT' : XP_MODES[xpdr.mode]);
+    et.classList.toggle('on', !enAttente && (xpdr.mode>0 || xpdr.ident));
+    $v('xpdrIdent').classList.toggle('actif', xpdr.ident);
+    $v('xpdrExec').classList.toggle('arme', enAttente);
+    var s=F.steps[F.i], a=$v('xpdrAide');
+    // Le code clignote tant que le code assigné n'est pas RÉELLEMENT émis.
+    var reste = xpdr.attendu!=null && xpdr.code!==xpdr.attendu;
+    $v('xpdrCode').classList.toggle('attendue', reste && !enAttente);
+    $v('xpdrIdent').classList.toggle('attendu', !!(s&&s.identReq&&!xpdr.ident));
+    // Pastille : le code à afficher, en clair, tant qu'il ne l'est pas.
+    cible($v('xpdrCible'), reste ? ['Code à afficher', xpdr.attendu] : null);
+    if(!a) return;
+    if(!xpdrManuel()){ a.textContent=''; a.classList.remove('alerte'); return; }
+    if(enAttente){
+      a.textContent='Code composé sur les roues — pressez EXÉC pour l\'activer.';
+      a.classList.remove('alerte');
+    } else if(s && s.xpdrReq && xpdr.code!==s.xpdrReq){
+      a.textContent=(s.stn||'Le contrôleur')+' ne vous voit pas au code assigné — affichez '+
+                    s.xpdrReq+' puis pressez EXÉC.';
+      a.classList.add('alerte');
+    } else if(s && s.identReq && !xpdr.ident){
+      a.textContent='Pressez IDENT : c\'est la fonction d\'identification demandée.';
+      a.classList.add('alerte');
+    } else if(reste){
+      a.textContent='Composez '+xpdr.attendu+' sur les quatre roues, puis EXÉC.';
+      a.classList.remove('alerte');
+    } else { a.textContent=''; a.classList.remove('alerte'); }
+  }
+
+  /* Pastille commune radio / transpondeur. */
+  function cible(el, contenu){
+    if(!el) return;
+    if(!contenu){ el.classList.add('hidden'); el.textContent=''; return; }
+    el.innerHTML='<span>'+esc(contenu[0])+'</span><b>'+esc(String(contenu[1]))+'</b>';
+    el.classList.remove('hidden');
+  }
+
+  /* Pastille ATIS de l'en-tête : la fréquence est donnée d'emblée (elle figure sur
+     la carte VAC, on ne la devine pas), la lettre n'apparaît qu'une fois l'ATIS
+     réellement écouté — sinon l'exercice se résoudrait sans écouter le message. */
+  function majAtisChip(){
+    var e=$v('vfAtis'); if(!e) return;
+    var a=F.ctx && F.ctx.atis;
+    if(!a){ e.classList.add('hidden'); e.textContent=''; return; }
+    var idx=-1;
+    for(var k=0;k<F.steps.length;k++){ if(F.steps[k].atisStep){ idx=k; break; } }
+    /* Avant l'écoute, la pastille signale seulement qu'un ATIS est diffusé : la
+       fréquence se lit sur la carte VAC, elle n'est pas servie d'emblée. Elle
+       apparaît ensuite avec la lettre, comme aide-mémoire pour la suite du vol. */
+    var ecoute = idx>=0 && F.i>idx;
+    e.innerHTML = ecoute
+      ? 'ATIS '+esc(fq(a.freq))+' &middot; <b>information '+esc(a.mot)+'</b>'
+      : 'ATIS diffusé';
+    e.classList.remove('hidden');
+  }
+
   function tune(stn,freq,animate){
     $v('vfStation').textContent=stn||'—';
     $v('vfFreq').textContent=freq?fq(freq):'—';
@@ -6698,6 +7929,16 @@ if(!RECO_OK){
        de le faire. On mémorise seulement la fréquence attendue. */
     if(freq!=null && !radioManuelle()) radio.act=Number(freq);
     majRadio();
+  }
+  /* En mode Réel, la consigne ne subsiste que là où elle apporte une information
+     qu'on ne peut pas déduire de la situation :
+       - premier contact sur une fréquence : il faut savoir QUI appeler ;
+       - événement majeur déclenché à bord (panne, malaise) : aucun contrôleur ne
+         vous a rien dit, c'est à vous d'ouvrir le dialogue.
+     Partout ailleurs — collationnements, accusés de réception, points du circuit —
+     la phase affichée suffit, et c'est justement l'exercice. */
+  function consigneUtile(s){
+    return !!(s.premierContact || (s.majeur && s.situation));
   }
   function renderStep(){
     var s=F.steps[F.i]; if(!s) return endFlight();
@@ -6708,6 +7949,14 @@ if(!RECO_OK){
                       (radio.act==null || Math.abs(Number(radio.act)-Number(s.freq))>=0.0005))
                      ? Number(s.freq) : null;
     tune(s.stn,s.freq,false);
+    majAtisChip();
+    /* Code assigné par le contrôleur à cette étape : il reste « attendu » tant que
+       les quatre roues ne l'affichent pas. */
+    if(s.xpdrAssign) xpdr.attendu=s.xpdrAssign;
+    if(xpdr.attendu!=null && xpdr.code===xpdr.attendu) xpdr.attendu=null;
+    if(s.identReq) xpdr.ident=false;      // la demande d'identification est à refaire
+    F.echecFreq=0; F.echecCode=0;         // l'escalade du contrôleur repart à zéro
+    majXpdr();
     $v('vfPhase').textContent=s.ph;
     $v('vfSrc').textContent='Manuel DSNA '+s.src;
     $v('vfBar').style.width=Math.round((F.i/F.steps.length)*100)+'%';
@@ -6715,12 +7964,23 @@ if(!RECO_OK){
     $v('vfTransText').value=''; $v('vfValider').disabled=true;
     movePlane(s.leg);
     var atc=$v('vfAtc');
-    if(s.atcBefore){ atc.innerHTML='<b>'+esc(s.stn)+' :</b> '+esc(fillDisplay(s.atcBefore));
-                     vfLog('atc',fillDisplay(s.atcBefore)); speakATC(s.atcBefore); }
+    aRevELer=[];                                  // nouvelle étape : rien en attente
+    arreterAtis();                                // une diffusion en cours s'arrête ici
+    if(s.atisStep) majEcouteAtis();               // l'ATIS ne se déclenche qu'une fois accordé
+    else if(s.atcBefore) messageATC(s.stn, s.atcBefore);
     else atc.innerHTML='';
-    // Débutant : la consigne détaille ce qu'il faut transmettre.
-    // Réel : on indique seulement qui appeler — à vous de retrouver la formulation.
-    $v('vfConsigne').textContent=fillDisplay((level==='reel'&&s.reel)?s.reel:s.consigne);
+    /* Débutant : la consigne détaille ce qu'il faut transmettre.
+       Réel : plus de consigne du tout — SAUF quand elle porte une information qu'on
+       ne peut pas deviner, c'est-à-dire l'organisme à appeler au premier contact sur
+       une fréquence. Ailleurs, la phase affichée au-dessus (« Base », « Finale »…)
+       suffit à situer l'échange : à vous de retrouver la formulation. */
+    var sit=$v('vfSituation');
+    if(s.situation){ sit.innerHTML=ICONS.warn+'<span>'+esc(fillDisplay(s.situation))+'</span>';
+                     sit.classList.remove('hidden'); }
+    else sit.classList.add('hidden');
+    $v('vfConsigne').textContent = (level==='reel')
+      ? (consigneUtile(s) ? fillDisplay(s.reel||'') : '')
+      : fillDisplay(s.consigne||'');
     /* On fige ici la phrase attendue : elle dépend de state.callForm, qui change
        d'un échange à l'autre. La calculer en fin de vol donnerait la mauvaise
        forme d'indicatif pour tous les échanges. */
@@ -6738,10 +7998,10 @@ if(!RECO_OK){
     rendreFeedback($v('vfFb'), s, res, corrected, 'fb');
     var ok=res.filter(function(r){return r.found;}).length;
     vfLog('sys','Éléments détectés : '+ok+' / '+res.length);
-    if(s.atcAfter){
-      $v('vfAtc').innerHTML='<b>'+esc(s.stn)+' :</b> '+esc(fillDisplay(s.atcAfter));
-      vfLog('atc',fillDisplay(s.atcAfter)); speakATC(s.atcAfter);
-    }
+    arreterAtis();      // on transmet : on ne reste pas sur la fréquence ATIS
+    /* La réponse est donnée : on peut dévoiler ce que le contrôleur avait dit. */
+    devoilerATC();
+    if(s.atcAfter) messageATC(s.stn, s.atcAfter);
     $v('vfNext').disabled=false;
   }
   function nextStep(){
@@ -6753,7 +8013,24 @@ if(!RECO_OK){
   }
 
   // ---- Avion animé sur la carte ----
-  var PLANE='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5L21 16z"/></svg>';
+  /* Silhouettes vues de dessus, nez en haut, centrees sur la voilure (24x24).
+     Vu du dessus, ce qui distingue un Cessna d'un DR400 n'est pas la position de
+     l'aile — invisible sous cet angle — mais son PLAN : aile rectangulaire et
+     longue envergure pour le Cessna, aile trapezoidale plus courte pour le DR400. */
+  var PLANE_CESSNA = '<svg viewBox="0 0 24 24" fill="currentColor">'+
+    '<path d="M11.3 3.4c0-.55.3-.95.7-.95s.7.4.7.95l.22 6.9h9.3c.3 0 .55.25.55.55v1.1c0 .3-.25.55-.55.55h-9.28l.28 5.4 2.9 1.5c.2.1.33.31.33.54v.86c0 .27-.25.47-.51.41L12 20.4l-3.94.81c-.26.06-.51-.14-.51-.41v-.86c0-.23.13-.44.33-.54l2.9-1.5.28-5.4H1.78c-.3 0-.55-.25-.55-.55v-1.1c0-.3.25-.55.55-.55h9.3z"/>'+
+    '<rect x="8.6" y="2.5" width="6.8" height=".85" rx=".42"/></svg>';
+  var PLANE_DR400 = '<svg viewBox="0 0 24 24" fill="currentColor">'+
+    '<path d="M11.3 3.2c0-.55.3-.95.7-.95s.7.4.7.95l.24 7.2 8.2 1.35c.35.06.6.36.6.71v.5c0 .33-.29.58-.62.53l-8.15-1.2.3 5.15 2.75 1.45c.2.11.32.32.32.55v.82c0 .27-.24.46-.5.4L12 20.5l-3.84.79c-.26.06-.5-.13-.5-.4v-.82c0-.23.12-.44.32-.55l2.75-1.45.3-5.15-8.15 1.2c-.33.05-.62-.2-.62-.53v-.5c0-.35.25-.65.6-.71l8.2-1.35z"/>'+
+    '<rect x="8.9" y="2.35" width="6.2" height=".8" rx=".4"/></svg>';
+  function silhouetteAvion(){
+    return (acChoice && acChoice.fam==='Cessna') ? PLANE_CESSNA : PLANE_DR400;
+  }
+  /* Cap suivi par le symbole : il doit pointer le long du trait de route. */
+  function capRoute(a,b){
+    var dl=(b[1]-a[1])*Math.cos((a[0]+b[0])/2*Math.PI/180);
+    return Math.atan2(dl, b[0]-a[0])*180/Math.PI;
+  }
   function legPoint(t){
     var a=F.ctx.dep, b=F.ctx.arr;
     if(!b) return [a.lat,a.lon];
@@ -6764,16 +8041,27 @@ if(!RECO_OK){
     var v=(t-0.5)/0.5;
     return [via.lat+(b.lat-via.lat)*v, via.lon+(b.lon-via.lon)*v];
   }
+  /* Zoom de suivi en vol. On reste au zoom NATIF du fond affiché : au-delà,
+     Leaflet agrandit l'image et la carte devient floue — exactement au moment où
+     l'on parle, écran de vol à l'appui. Les tuiles OACI étant désormais gravées
+     jusqu'au zoom carte 11 (planches reprises à 600 dpi, cf. commentaire de la
+     couche), le suivi en vol gagne un cran et se cale sur OpenStreetMap. */
+  function zoomVol(){ return 11; }
   function movePlane(t){
     if(!map||t==null) return;
     var p=legPoint(t);
     if(!F.planeMk){
-      F.planeMk=L.marker(p,{icon:L.divIcon({className:'vf-plane',html:PLANE,iconSize:[26,26],iconAnchor:[13,13]}),
-                            zIndexOffset:1000}).addTo(map);
+      F.planeMk=L.marker(p,{icon:L.divIcon({className:'vf-plane',html:silhouetteAvion(),
+                            iconSize:[28,28],iconAnchor:[14,14]}), zIndexOffset:1000}).addTo(map);
     } else F.planeMk.setLatLng(p);
+    // Orientation : on vise un point legerement en avant sur la meme branche.
+    var av=legPoint(Math.min(1,(t||0)+0.03));
+    if(av[0]!==p[0] || av[1]!==p[1]) F.capAvion=capRoute(p,av);
+    var sv=F.planeMk.getElement() && F.planeMk.getElement().querySelector('svg');
+    if(sv && F.capAvion!=null) sv.style.transform='rotate('+F.capAvion.toFixed(1)+'deg)';
     // En vol, la carte suit l'avion de près : elle sert de repère de situation,
     // pas de vue d'ensemble (le trajet complet est visible à la configuration).
-    if(F.running) map.setView(p, Math.max(map.getZoom(),10), {animate:true, duration:.7});
+    if(F.running) map.setView(p, Math.max(map.getZoom(),zoomVol()), {animate:true, duration:.7});
     else if(!map.getBounds().pad(-0.15).contains(L.latLng(p))) map.panTo(p,{animate:true,duration:.6});
   }
 
@@ -6794,8 +8082,12 @@ if(!RECO_OK){
     // avec un poste éteint.
     radio.act = (F.ctx.depF && F.ctx.depF.f) ? Number(F.ctx.depF.f) : null;
     radio.stby=null; radio.attendue=null;
-    radioSkin(); majRadio();
+    /* Transpondeur au départ : 7000, le code de veille VFR, mode altitude. */
+    xpdr.code='7000'; xpdr.saisie='7000'; xpdr.mode=2; xpdr.ident=false; xpdr.attendu=null;
+    F.echecFreq=0; F.echecCode=0; F.attend7600=false; aRevELer=[];
+    radioSkin(); majRadio(); majXpdr(); choisirAvionPhoto();
     $v('vfCall').textContent=state.call;        // indicatif rappelé en permanence
+    majAtisChip();                              // fréquence ATIS à côté de celle du terrain
     var ev=$v('vfEvit');
     if(F.ctx.evitMsg){ ev.innerHTML='<span>'+ICONS.warn+'</span><span><b>Trajet ajusté.</b> '+
         esc(F.ctx.evitMsg.replace('Trajet légèrement modifié : ',''))+'</span>';
@@ -6828,7 +8120,7 @@ if(!RECO_OK){
     if(map) setTimeout(function(){
       map.invalidateSize();
       // On démarre zoomé sur le terrain de départ ; movePlane() suit ensuite l'avion.
-      if(F.ctx&&F.ctx.dep) map.setView([F.ctx.dep.lat,F.ctx.dep.lon],11,{animate:false});
+      if(F.ctx&&F.ctx.dep) map.setView([F.ctx.dep.lat,F.ctx.dep.lon],zoomVol(),{animate:false});
     },40);
     renderStep();
     sauverVol();
@@ -6962,7 +8254,8 @@ if(!RECO_OK){
   }
 
   function endFlight(){
-    F.running=false; setRecoSink(null); oublierVol();
+    F.running=false; setRecoSink(null); oublierVol(); arreterAtis();
+    devoilerATC();   // vol terminé : le journal redevient entièrement lisible
     var tot=0, ok=0;
     F.results.forEach(function(r){ if(r) r.forEach(function(x){ tot++; if(x.found) ok++; }); });
     var pct=tot?Math.round(ok/tot*100):0;
@@ -7018,7 +8311,10 @@ if(!RECO_OK){
   }
   function restoreMap(){
     var wrap=sec.querySelector('.nav-mapwrap');
-    if(wrap) sec.querySelector('.nav-layout').insertBefore(wrap, sec.querySelector('.nav-form'));
+    // La carte retourne EN TETE de la colonne de gauche (.nav-col), au-dessus de
+    // l'historique — et non plus devant .nav-form, qui est l'autre colonne.
+    var col=sec.querySelector('.nav-col');
+    if(wrap && col) col.insertBefore(wrap, col.firstChild);
     document.body.classList.remove('in-flight');
     if(F.planeMk && map){ map.removeLayer(F.planeMk); F.planeMk=null; }
     if(map) setTimeout(function(){ map.invalidateSize(); },30);
@@ -7039,13 +8335,32 @@ if(!RECO_OK){
   });
   /* ---- Commandes de la radio ---- */
   $v('radioSwap').addEventListener('click',permuter);
+  /* Molettes : un cran par clic, mais l'appui MAINTENU fait défiler, de plus en
+     plus vite. Sans cela, passer de 121,200 à 118,800 en pas de 5 kHz demandait
+     des centaines de clics. */
   sec.querySelectorAll('[data-tune]').forEach(function(b){
-    b.addEventListener('click',function(){
-      var pas=parseFloat(b.dataset.tune);
+    var pas=parseFloat(b.dataset.tune), t=null, n=0;
+    function cran(){
       var base=(radio.stby!=null)?Number(radio.stby):(radio.act!=null?Number(radio.act):118);
       poserStby(Math.round((base+pas)*1000)/1000);
       $v('radioSaisie').value='';
+    }
+    function suite(){
+      cran(); n++;
+      t=setTimeout(suite, n<8 ? 110 : (n<25 ? 55 : 22));   // accélération progressive
+    }
+    function debut(e){
+      e.preventDefault(); arret();
+      cran(); n=0;
+      t=setTimeout(suite, 420);                            // délai avant le défilement
+    }
+    function arret(){ if(t){ clearTimeout(t); t=null; } }
+    b.addEventListener('pointerdown', debut);
+    ['pointerup','pointerleave','pointercancel'].forEach(function(ev){
+      b.addEventListener(ev, arret);
     });
+    // Clavier : le clic synthétique n'est pas précédé d'un pointerdown.
+    b.addEventListener('click',function(e){ if(e.detail===0) cran(); });
   });
   $v('radioSaisie').addEventListener('input',function(){
     var v=$v('radioSaisie').value.replace(',','.').replace(/[^0-9.]/g,'');
@@ -7054,6 +8369,18 @@ if(!RECO_OK){
   });
   $v('radioSaisie').addEventListener('keydown',function(e){
     if(e.key==='Enter'){ e.preventDefault(); permuter(); $v('radioSaisie').value=''; }
+  });
+
+  /* ---- Commandes du transpondeur ---- */
+  $v('xpdrExec').addEventListener('click', xpdrExecuter);
+  $v('xpdrMode').addEventListener('click',function(){
+    xpdr.mode=(xpdr.mode+1)%3; xpdr.ident=false; majXpdr();
+  });
+  $v('xpdrIdent').addEventListener('click',function(){
+    xpdr.ident=true; majXpdr();
+    // Le SPI dure quelques secondes sur un vrai poste ; ici on le garde le temps
+    // de l'échange en cours pour que l'élève voie l'effet de son appui.
+    suite7600();          // « ident observé, vous êtes en panne d'émission… » (p. 246)
   });
 
   bindPushToTalk($v('vfPtt'), function(){ if(F.running) startListening(); }, function(){ stopListening(); });
@@ -7065,11 +8392,18 @@ if(!RECO_OK){
     /* Émettre sur la mauvaise fréquence : personne ne répond, comme en vrai.
        On ne note pas l'échange, on renvoie vers la radio. */
     if(!surBonneFreq()){
-      var s=F.steps[F.i];
-      vfLog('sys','Aucune réponse — vous émettez sur '+fmtF(radio.act)+
-                  ' alors que '+(s.stn||'la station')+' écoute sur '+fmtF(s.freq)+'.');
+      reponseMauvaiseFreq(F.steps[F.i]);
       majAideRadio();
       $v('vfRadio').scrollIntoView({behavior:'smooth',block:'nearest'});
+      return;
+    }
+    /* Même logique pour le transpondeur : sans le code assigné, le contrôleur ne
+       vous identifie pas sur son écran et vous le fait savoir (manuel p. 186-187). */
+    if(!surBonCode()){
+      var sx=F.steps[F.i];
+      if(sx.identReq) reponsePasIdent(); else reponseMauvaisCode(sx);
+      majXpdr();
+      $v('vfXpdr').scrollIntoView({behavior:'smooth',block:'nearest'});
       return;
     }
     $v('vfValider').disabled=true;
@@ -7210,6 +8544,127 @@ if(!RECO_OK){
     majHistorique();
     initMap();
     setTimeout(function(){ map.invalidateSize(); if(!sel.dep) setTarget('dep'); },30);
+  });
+})();
+</script>
+
+<script>
+/* ============ CARTE — CONSULTATION PLEIN ÉCRAN (module autonome) ============
+   Page de lecture de la carte OACI, indépendante de la Navigation : celle-ci déplace
+   son conteneur (.nav-mapwrap) dans la vue de vol, donc on ne peut pas réutiliser son
+   instance Leaflet. Deux instances coexistent sans se gêner — Leaflet ne partage
+   aucun état global entre cartes.
+
+   Ce module ne lit AUCUN état de la Navigation et n'en écrit aucun : sélection de
+   terrain, route et zones restent l'affaire de la page Navigation. Ici on ne fait que
+   regarder la carte, avec deux interrupteurs : le fond (OACI ou OpenStreetMap) et
+   l'affichage des pastilles d'aérodrome. */
+(function(){
+  var TRANSPARENT='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  var map=null, oaci=null, osm=null, adLayer=null, showAd=true, oaciOk=true;
+
+  // Terrains : même jointure que la Navigation (AERODROMES pour le nom, NAV_AD_GEO
+  // pour les coordonnées), mais recalculée ici pour ne dépendre d'aucune variable
+  // interne à l'autre module.
+  function terrains(){
+    if(typeof AERODROMES==='undefined') return [];
+    var G=(typeof NAV_AD_GEO!=='undefined')?NAV_AD_GEO:{};
+    return AERODROMES.map(function(a){
+      var g=G[a.icao]||{};
+      return { icao:a.icao, nom:a.nom, lat:g.lat, lon:g.lon, alt:g.alt, freq:g.freq||{} };
+    }).filter(function(a){ return typeof a.lat==='number' && typeof a.lon==='number'; });
+  }
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function popup(a){
+    var f=Object.keys(a.freq).map(function(k){ return k+' '+a.freq[k]; }).join(' · ');
+    return '<div class="nav-adpop"><b>'+esc(a.icao)+'</b> — '+esc(a.nom)+
+           (typeof a.alt==='number' ? '<br><span class="pf">'+a.alt+' ft</span>' : '')+
+           '<br><span class="pf">'+(f||'fréquences non publiées')+'</span></div>';
+  }
+
+  function build(){
+    if(map) return;
+    /* minZoom 5 : c'est le zoom le plus large où les tuiles OACI existent. Cette page
+       n'existant que pour lire cette carte, on interdit de dézoomer au-delà plutôt que
+       de laisser l'utilisateur devant un fond OpenStreetMap nu. La France entière tient
+       au zoom 5 même sur un écran de 360 px, donc le cadrage initial reste possible.
+       maxBounds : garde-fou souple autour de la couverture, on ne part pas en Pologne. */
+    map=L.map('carteMap',{
+      zoomControl:true, attributionControl:true,
+      minZoom:5, maxZoom:17,
+      maxBounds:[[39.5,-8.5],[53.0,13.0]], maxBoundsViscosity:0.6
+    });
+    map.fitBounds([[41.3,-5.4],[51.2,9.8]]);
+
+    osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:17, attribution:'&copy; contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    osm.setZIndex(1);
+
+    /* Mêmes réglages que la couche de la page Navigation — voir le commentaire détaillé
+       là-bas (tuiles 2048 px, zoomOffset -3, grilles 2 à 8 = zooms carte 5 à 11). */
+    oaci=new OaciTiles('',{
+      tileSize:2048, zoomOffset:-3,
+      minNativeZoom:5, maxNativeZoom:11,
+      minZoom:5, maxZoom:17, errorTileUrl:TRANSPARENT,
+      attribution:'Carte OACI 1:500 000 &mdash; SIA / DGAC, édition 2026'
+    }).addTo(map);
+    oaci.setZIndex(2);
+
+    adLayer=L.layerGroup().addTo(map);
+    terrains().forEach(function(a){
+      L.marker([a.lat,a.lon],{
+        title:a.icao+' — '+a.nom,
+        icon:L.divIcon({ className:'nav-adhit',
+          html:'<span class="carte-admark"></span>', iconSize:[26,26], iconAnchor:[13,13] })
+      }).bindPopup(popup(a)).addTo(adLayer);
+    });
+
+    /* Tuiles non publiées (téléversement incomplet) : même sonde que la Navigation.
+       Sans elle, la couche resterait blanche sans explication. */
+    oaciSonde(oaci, function(){
+      oaciOk=false;
+      if(map.hasLayer(oaci)) map.removeLayer(oaci);
+      var b=document.getElementById('carteBasemap');
+      if(b){ b.classList.remove('on'); b.textContent='Fond OpenStreetMap'; b.disabled=true;
+             b.title='Tuiles assets/oaci/ introuvables sur ce serveur'; }
+      var h=document.getElementById('carteHint');
+      if(h) h.textContent='Carte OACI indisponible ici : le dossier assets/oaci/ n’est pas publié. Fond OpenStreetMap utilisé.';
+    });
+
+    var bm=document.getElementById('carteBasemap');
+    if(bm) bm.addEventListener('click',function(){
+      if(!oaciOk) return;
+      var on=map.hasLayer(oaci);
+      if(on){ map.removeLayer(oaci); }
+      else { oaci.addTo(map); oaci.setZIndex(2); }
+      bm.classList.toggle('on',!on);
+      bm.textContent=on?'Fond OpenStreetMap':'Carte OACI';
+    });
+
+    var ab=document.getElementById('carteAd');
+    if(ab) ab.addEventListener('click',function(){
+      showAd=!showAd;
+      if(showAd) adLayer.addTo(map); else map.removeLayer(adLayer);
+      ab.classList.toggle('on',showAd);
+      ab.setAttribute('aria-pressed',showAd?'true':'false');
+    });
+  }
+
+  window.addEventListener('rt:page',function(e){
+    if(e.detail.page!=='carte') return;
+    build();
+    // Un conteneur créé en display:none a une taille nulle : Leaflet doit recalculer
+    // ses dimensions une fois la page visible, sinon la carte reste grise.
+    setTimeout(function(){ map.invalidateSize(); },30);
+  });
+  // La hauteur dépend de la fenêtre (calc(100vh - 210px)) : à la rotation d'un
+  // téléphone, Leaflet ne se réajuste pas tout seul.
+  window.addEventListener('resize',function(){
+    if(map && document.getElementById('page-carte').classList.contains('active')) map.invalidateSize();
   });
 })();
 </script>

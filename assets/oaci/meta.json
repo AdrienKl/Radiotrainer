@@ -1,16 +1,165 @@
 {
- "format": "tuiles 2048 px, nommage plat {zoomGrille}_{x}_{y}.webp",
+ "format": "tuiles 2048 px, nommage plat {zoomGrille}_{x}_{y}.webp, grilles 2 a 8, reparties en DEUX dossiers (limite de 100 fichiers par envoi sur GitHub)",
  "leaflet": {
   "tileSize": 2048,
   "zoomOffset": -3,
-  "minZoom": 4,
-  "maxNativeZoom": 10
+  "minNativeZoom": 5,
+  "maxNativeZoom": 11,
+  "minZoom": 5,
+  "maxZoom": 17,
+  "crs": "EPSG:3857 (Web Mercator)"
  },
- "transform": {
-  "ax": 7563.7,
-  "kx": 1444.98,
-  "ay": 114229.2,
-  "ky": -2235.72
+ "grilles": {
+  "2": "zoom carte 5",
+  "3": "zoom carte 6",
+  "4": "zoom carte 7",
+  "5": "zoom carte 8",
+  "6": "zoom carte 9",
+  "7": "zoom carte 10",
+  "8": "zoom carte 11 (natif, planches 600 dpi)"
  },
- "source": "Carte OACI 1:500 000 — SIA/DGAC, édition 2026"
+ "source": "Carte OACI 1:500 000 - SIA/DGAC, edition 2026.",
+ "sources_image": [
+  {
+   "nom": "planches 500k rendues a 600 dpi",
+   "fichier": "originaux/500k_{nord_ouest,nord_est,sud_ouest_1,sud_est}.pdf",
+   "detail": "14025x9919 px chacune. 600 dpi est la resolution de GRAVURE des PDF du SIA (20 bandes JPEG de 13065 px de large par planche) : rendre plus fin n'apporterait rien. C'est exactement le double de la mosaique 300 dpi utilisee auparavant, d'ou une grille 8 (zoom carte 11) native."
+  },
+  {
+   "nom": "mosaique France (bouche-trou)",
+   "fichier": "carte oaci/carte_oaci_france_assemblee.png",
+   "detail": "11242x9922 px. Ne sert plus que sur les 1,4 % de bandes de raccord entre planches."
+  },
+  {
+   "nom": "bande ouest (Brest, Lanveoc, Ouessant)",
+   "fichier": "originaux/500k_nord_ouest.pdf a 600 dpi",
+   "detail": "absente de la mosaique ; fenetre reprise x 460-3300, y 4900-7390"
+  },
+  {
+   "nom": "carton Corse",
+   "fichier": "originaux/500k_sud_est.pdf a 600 dpi",
+   "detail": "carton hors cadre de la planche Sud-Est ; fenetre reprise x 11280-13460, y 5730-9700"
+  }
+ ],
+ "calage": {
+  "methode": "Quadrillage geographique imprime (maille 1x1 deg) detecte par filtrage adapte sous-pixel, puis ajustement iteratif d un modele Lambert conique conforme + affine, avec rejet des aberrants. Verification independante sur les symboles d aerodrome (coordonnees AIP) : biais residuel 0,7 px, aucune correction supplementaire appliquee.",
+  "modele": "X = rho*sin(theta), Y = -rho*cos(theta) avec rho = t(phi)^n, theta = n*lambda (lambda en radians, lambda0 = 0, absorbe par l affine), t(phi) = tan(pi/4 - phi/2) / ((1-e*sin phi)/(1+e*sin phi))^(e/2), ellipsoide WGS84 e = 0.081819190842622. Puis x = a*X + b*Y + c ; y = d*X + e*Y + f.",
+  "mosaique": {
+   "n": 0.7247,
+   "affine": {
+    "a": 115542.0877,
+    "b": 3505.0411,
+    "c": 5622.2078,
+    "d": 3459.4002,
+    "e": -115491.3736,
+    "f": -54290.7738
+   },
+   "unite": "pixels de la mosaique"
+  },
+  "planche_NO": {
+   "echelle": 1.000004,
+   "rotation_deg": 2.3679,
+   "tx": -36.16,
+   "ty": -9.78,
+   "rms_px": 0.19,
+   "note": "similitude planche -> mosaique, ajustee sur 161 vignettes"
+  },
+  "carton_corse": {
+   "n": 0.7247,
+   "affine": {
+    "a": 115154.5668,
+    "b": 7562.6969,
+    "c": 3037.9559,
+    "d": 7562.6969,
+    "e": -115154.5668,
+    "f": -60287.6416
+   },
+   "unite": "pixels du rendu 300 dpi de la planche Sud-Est",
+   "note": "similitude ajustee sur 7 symboles d aerodrome, rms 0,25 px ; predit l intersection 43N/9E du quadrillage imprime a 2 px"
+  },
+  "controle_quadrillage": {
+   "points": 94,
+   "rms_px": 1.1,
+   "median_px": 0.78,
+   "max_px": 2.79
+  },
+  "controle_aerodromes": {
+   "n": 199,
+   "unite": "px de tuile au zoom 10",
+   "median_px": 1.16,
+   "median_m": 124,
+   "p90_px": 2.64,
+   "p90_m": 273,
+   "corse": {
+    "n": 8,
+    "median_px": 0.87,
+    "median_m": 98
+   }
+  },
+  "planches_600dpi": {
+   "modele": "affine planche -> mosaique, ajustee sur ~550 vignettes recalees par correlation de phase",
+   "residu_px": {
+    "no": 0.149,
+    "so": 0.174,
+    "se": 0.534,
+    "ne": 1.4
+   },
+   "controle": "la methode retrouve le calage connu de la planche Nord-Ouest (sheet_sim.json) a 0,76 px pres"
+  }
+ },
+ "couverture": "Metropole et Corse : les 387 aerodromes de assets/aerodromes-geo.js sont couverts. Cartouches imprimes ecartes : hors couverture le canal alpha est nul et le fond OpenStreetMap apparait.",
+ "encodage": "WebP RGBA qualite 80",
+ "georeferencement": {
+  "refait": "2026-08-29",
+  "methode": "quadrillage geographique imprime (paralleles 30', meridiens 1 deg) trace au sous-pixel, puis raffinement sur les symboles d'aerodrome apparies aux coordonnees AIP",
+  "ecart_median_m": {
+   "nord_ouest": 428,
+   "nord_est": 495,
+   "sud_ouest": 469,
+   "sud_est": 493
+  },
+  "raccord": "Voronoi (planche la plus loin du bord) ; cartouches imprimes cedes a la planche voisine",
+  "limite_source": "les planches s'arretent a 51.14 N : le nord du CTR de Dunkerque reste tronque"
+ },
+ "composition": {
+  "principe": "Chaque planche n'est retenue que la ou elle CONCORDE avec la mosaique (comparaison sur images lissees). Ce test ecarte automatiquement les marges et les cartouches de legende imprimes par-dessus la carte, sans avoir a decrire la geometrie de chaque planche.",
+  "ponderation": "masque erode puis adouci, eleve au cube : une planche de bord ne peut pas contaminer une planche pleinement valide. Le lissage ne peut que retrecir la validite, jamais l'etendre.",
+  "couverture_planches_pct": 98.58,
+  "recours_mosaique_pct": 1.42
+ },
+ "verification": {
+  "methode": "symboles d aerodrome (coordonnees AIP) detectes sur le jeu de tuiles livrable, au zoom 10",
+  "nouveau": {
+   "n": 370,
+   "median_px": 0.94,
+   "median_m": 99
+  },
+  "ancien": {
+   "n": 269,
+   "median_px": 1.29,
+   "median_m": 136
+  },
+  "note": "meme methode de mesure appliquee aux deux jeux, donc directement comparables"
+ },
+ "jeu": {
+  "fichiers": 142,
+  "taille_Mo": 120.9,
+  "date": "2026-09-05"
+ },
+ "dossiers": {
+  "assets/oaci": {
+   "grilles": "2 a 7",
+   "zooms_carte": "5 a 10",
+   "fichiers": 49,
+   "taille_Mo": 43.7
+  },
+  "assets/oaci2": {
+   "grilles": "8",
+   "zooms_carte": "11",
+   "fichiers": 93,
+   "taille_Mo": 77.2
+  },
+  "routage": "OaciTiles.getTileUrl dans index.html : le numero de grille suffit a choisir le dossier, aucune requete perdue. Pour un troisieme dossier, etendre la fonction oaciDossier().",
+  "repli": "si assets/oaci2/ n'est pas publie, la sonde rabaisse maxNativeZoom a 10 : la carte reste utilisable, seul le zoom 11 natif est perdu."
+ }
 }

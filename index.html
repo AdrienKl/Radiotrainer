@@ -7288,10 +7288,30 @@ function oaciSonde(couche, surAbsenceTotale){
        (manuel DSNA p. 18). On marque les étapes après coup : le changement de
        fréquence lui-même est un collationnement, donc encore en forme abrégée —
        c'est l'appel initial sur la NOUVELLE fréquence qui repasse en complet. */
+    /* L'ORGANISME ne se nomme lui aussi qu'au premier contact : « Bordeaux Tour »
+       à l'appel initial, puis plus rien — on n'annonce que son indicatif. Le
+       répéter à chaque échange encombre la fréquence.
+       On l'enlève donc des éléments EXIGÉS hors premier contact, et de la phrase
+       d'exemple, qui doit montrer ce qu'on attend réellement. Le dire quand même
+       ne coûte rien : ce n'est pas une faute, juste superflu, et aucun contrôleur
+       ne vous reprendrait là-dessus.
+       Un retour sur une fréquence déjà quittée redevient un premier contact :
+       la comparaison ne porte que sur l'étape PRÉCÉDENTE, ce qui donne
+       exactement ce comportement. */
+    function sansOrganisme(txt, stn){
+      if(!txt || !stn) return txt;
+      var t=String(txt).replace(/^\s+/,'');
+      return (t.toLowerCase().indexOf(stn.toLowerCase()+',')===0)
+             ? t.slice(stn.length+1).replace(/^\s+/,'') : txt;
+    }
     var freqPrec=null;
     S.forEach(function(st){
       st.premierContact = (st.freq!==freqPrec);
       freqPrec = st.freq;
+      if(!st.premierContact){
+        st.motsCles = (st.motsCles||[]).filter(function(mc){ return mc.label!=='Organisme appelé'; });
+        st.attendu  = sansOrganisme(st.attendu, st.stn);
+      }
     });
     /* Une assignation de code n'a de valeur que si le code est ensuite AFFICHÉ.
        On l'exige donc sur l'échange suivant : au-delà, on ne bloque plus, pour ne

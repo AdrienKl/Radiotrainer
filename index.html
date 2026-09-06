@@ -4472,7 +4472,35 @@ function buildQueue(sc){
      parking (mise en route, tour de piste). Rien n'est inséré si le terrain ne
      publie pas d'ATIS : c'est le cas de la grande majorité des terrains VFR. */
   if(state.atis && (sc.id==='roulage' || sc.isCircuit)) raw = [tourAtis()].concat(raw);
-  return raw.map(finalizeStep);   // A + B2 : résolution ATC aléatoire / AFIS / {STN}
+  return marquerPremierContact(raw.map(finalizeStep));   // A + B2 : résolution ATC aléatoire / AFIS / {STN}
+}
+
+/* Même règle que dans le vol Navigation : l'organisme ne se nomme qu'au PREMIER
+   échange sur une fréquence — « Orléans Tour, F-BXYZ, demande mise en route »,
+   puis « F-BXYZ, demande roulage ». Le répéter à chaque fois encombre la fréquence.
+   finalizeStep vient de poser s.freq (freqScenario), on compare donc directement
+   les fréquences : passer du Sol à la Tour rouvre un premier contact.
+   Hors premier contact, la station sort des éléments EXIGÉS et disparaît de la
+   phrase d'exemple. La dire quand même reste sans conséquence : c'est superflu,
+   pas fautif. Les étapes sans fréquence (choix, quiz) ne sont pas touchées et ne
+   coupent pas la continuité. */
+function marquerPremierContact(steps){
+  let fPrec=null;
+  steps.forEach(s=>{
+    /* Repli sur stn : freqScenario() peut ne rien renvoyer (terrain sans fréquence
+       publiée), et la règle doit tenir quand même — Sol et Tour restent deux
+       contacts distincts. */
+    const cle = (s.freq!=null) ? s.freq : s.stn;
+    if(cle==null){ s.premierContact=true; return; }
+    const premier = (cle!==fPrec);
+    fPrec = cle;
+    s.premierContact = premier;
+    if(premier || !s.attendu) return;
+    s.motsCles = (s.motsCles||[]).filter(mc =>
+      mc.label!=='Station appelée' && mc.label!=='Nom du terrain');
+    s.attendu = String(s.attendu).replace(/^\s*\{ADRM\}\s+(?:Sol|Tour|Info)\s*,\s*/,'');
+  });
+  return steps;
 }
 
 /* C3 : avec 25% de proba, insère un aléa avant la dernière étape à répondre. */

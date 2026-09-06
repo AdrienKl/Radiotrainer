@@ -2073,6 +2073,10 @@
                 <div class="vf-transact">
                   <button class="btn small valider" id="vfValider" type="button" disabled><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Valider ma réponse</button>
                   <button class="btn small" id="vfRerec" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v5h-5"/></svg>Réenregistrer</button>
+                  <!-- « Suivant » vit ICI, sous la transcription : il était en bas du
+                       panneau, ce qui obligeait à descendre puis remonter au micro à
+                       chaque échange. Sur mobile la remontée était pire encore. -->
+                  <button class="btn small cta" id="vfNext" type="button" disabled>Suivant</button>
                 </div>
               </div>
               <div class="vf-trans" id="vfTrans"></div>
@@ -2081,7 +2085,6 @@
               <div class="vf-actions">
                 <button class="btn small" id="vfHint" type="button">Réponse</button>
                 <button class="btn small" id="vfSkip" type="button">Passer</button>
-                <button class="btn small cta" id="vfNext" type="button" disabled>Suivant</button>
               </div>
 
               <div class="vf-log" id="vfLog" aria-live="polite"></div>
@@ -2361,9 +2364,13 @@ function phoneticCallsign(callsign){
 const DIGIT_WORDS = {'0':'zéro','1':'unité','2':'deux','3':'trois','4':'quatre',
                      '5':'cinq','6':'six','7':'sept','8':'huit','9':'neuf'};
 function spokenDigits(text){
-  // À VÉRIFIER avec le manuel DGAC / mon instructeur : prononciation du séparateur
-  // décimal des fréquences ("décimale"). Ici le point est juste lu comme une pause.
-  return text.replace(/(\d)[.,](\d)/g,'$1 $2')
+  /* Séparateur décimal d'une FRÉQUENCE : il se dit « décimale » (« 120 décimale 75 »).
+     Le contrôleur le passait sous silence, ce qui donnait « cent vingt sept cinq ».
+     On ne cible que les nombres à partie entière de 3 chiffres, seule forme décimale
+     réellement énoncée ici (108,000 à 136,975) : visibilité et température sont
+     arrondies à l'entier par visMot()/tempMot(), rien d'autre ne porte de virgule. */
+  return text.replace(/(\d{3})[.,](\d{1,3})/g,'$1 décimale $2')
+             .replace(/(\d)[.,](\d)/g,'$1 $2')
              .replace(/\d/g, d => DIGIT_WORDS[d] + ' ')
              .replace(/\s{2,}/g,' ');
 }
@@ -2704,7 +2711,7 @@ const AERODROMES = [
   { icao:"LFPD", nom:"Bernay-Saint-Martin", pistes:[{ids:["10","28"],caps:[100,280]}] },
   { icao:"LFPE", nom:"Meaux-Esbly", pistes:[{ids:["07L","25R"],caps:[70,250]}, {ids:["07R","25L"],caps:[70,250]}, {ids:["16L","34R"],caps:[160,340]}, {ids:["16R","34L"],caps:[160,340]}] },
   { icao:"LFPF", nom:"Beynes Thiverval", pistes:[{ids:["12","30"],caps:[120,300]}] },
-  { icao:"LFPG", nom:"Paris-Charles-de-Gaulle", pistes:[{ids:["08H","26H"],caps:[85,265]}, {ids:["08L","26R"],caps:[85,265]}, {ids:["08R","26L"],caps:[85,265]}, {ids:["09L","27R"],caps:[85,265]}, {ids:["09R","27L"],caps:[86,266]}] },
+  { icao:"LFPG", nom:"Paris-Charles-de-Gaulle", pistes:[{ids:["08L","26R"],caps:[85,265]}, {ids:["08R","26L"],caps:[85,265]}, {ids:["09L","27R"],caps:[85,265]}, {ids:["09R","27L"],caps:[86,266]}] },
   { icao:"LFPH", nom:"Chelles-le-Pin", pistes:[{ids:["04","22"],caps:[37,217]}, {ids:["11","29"],caps:[107,287]}] },
   { icao:"LFPK", nom:"Coulommiers-Voisins", pistes:[{ids:["09","27"],caps:[91,271]}, {ids:["09C","27C"],caps:[90,270]}, {ids:["09L","27R"],caps:[91,271]}, {ids:["09R","27L"],caps:[91,271]}] },
   { icao:"LFPL", nom:"Lognes Emerainville", pistes:[{ids:["08","26"],caps:[82,262]}, {ids:["08R","26L"],caps:[82,262]}] },
@@ -2855,6 +2862,16 @@ const BIGRAMS = {
   'ju liette':'juliett', 'ju liet':'juliett',
   'in dia':'india',
   'char lie':'charlie',
+  /* Cas relevés à l'usage : Chrome rend « charlie » par des mots français courants
+     dès qu'il est prononcé vite entre deux autres lettres (« fox charlie delta »
+     ressortait « fox je serai delta »).
+     COMPROMIS ASSUMÉ : la table est sans contexte, donc « je serai en finale »
+     devient « charlie en finale ». Sans conséquence sur la notation — le mot-clé
+     « finale » reste trouvé — et le futur « je serai » n'appartient pas à la
+     phraséologie (le manuel dit « en finale », « en vent arrière »). À revoir si
+     un faux positif apparaît sur un indicatif contenant Charlie. */
+  'je serai':'charlie', 'je serais':'charlie', 'j ai serai':'charlie',
+  'char li':'charlie', 'shar lie':'charlie',
   'o scar':'oscar',
   'vent arriere':'vent arriere'
 };
@@ -2991,7 +3008,10 @@ const MISHEARD = {
   ouisky:'whiskey', ouiski:'whiskey', whiskeys:'whiskey', whiskys:'whiskey',
   ixray:'xray', iksray:'xray', xrai:'xray', exray:'xray',
   yankees:'yankee', yankey:'yankee', yanke:'yankee', yankis:'yankee',
-  zoulous:'zulu', zulou:'zulu', zoulo:'zulu'
+  zoulous:'zulu', zulou:'zulu', zoulo:'zulu',
+  // « roger » s'écrit sans S ; la reconnaissance ajoute volontiers le pluriel.
+  rogers:'roger', rogeur:'roger', rogez:'roger',
+  wilcox:'wilco', wilcau:'wilco'
 };
 
 function lev(a,b){
@@ -3028,6 +3048,25 @@ function fuzzyCorrect(text){
   return joinBigrams(normalize(text).split(' ').filter(Boolean)).map(correctToken).join(' ');
 }
 
+/* Transcription AFFICHÉE. On montrait le brut de la reconnaissance : l'élève lisait
+   « uniforme » ou « rogers » alors que la correction évaluait « uniform »/« roger »,
+   et croyait à une faute de sa part. On applique donc les tables SÛRES (recollage
+   des groupes + corrections connues), mais PAS la correction floue par distance :
+   afficher une substitution approximative comme si elle avait été prononcée
+   induirait en erreur. Un mot inchangé garde sa casse et ses accents d'origine. */
+function lissageTranscription(txt){
+  const bruts = (txt||'').trim().split(/\s+/).filter(Boolean);
+  if(!bruts.length) return txt||'';
+  const norm = bruts.map(w => normalize(w));
+  const out = [];
+  for(let i=0;i<bruts.length;i++){
+    const paire = norm[i]+' '+(norm[i+1]||'');
+    if(norm[i+1] && BIGRAMS[paire]){ out.push(BIGRAMS[paire]); i++; continue; }
+    out.push(MISHEARD[norm[i]] || bruts[i]);
+  }
+  return out.join(' ');
+}
+
 /* Variantes de reconnaissance pour un nombre (brut + chiffre-par-chiffre + cardinal) */
 /* Un code SSR ne s'écrit qu'avec des chiffres 0 à 7 (quatre digits octaux).
    On écarte les codes réservés : 7000 (veille VFR), 7500/7600/7700 (urgences),
@@ -3057,8 +3096,12 @@ function numVariants(str){
 const WORD2DIGIT = { zero:'0', un:'1', une:'1', unite:'1', deux:'2', trois:'3', quatre:'4',
                      cinq:'5', six:'6', sept:'7', huit:'8', neuf:'9' };
 function digitCanon(normText){
-  const d = (normText||"").split(' ')
+  let d = (normText||"").split(' ')
     .map(w => (WORD2DIGIT[w]!==undefined ? WORD2DIGIT[w] : w)).join(' ');
+  /* « deux » ressort très souvent « de » de la reconnaissance : « unité deux quatre »
+     devient « unité de 4 ». On ne le traite comme un chiffre que COINCÉ ENTRE deux
+     chiffres — isolé, « de » reste la préposition et ne doit pas être touché. */
+  d = d.replace(/(\d)\s+de\s+(?=\d)/g, '$1 2 ');
   // recolle les chiffres séparés par des espaces : "1 0 1 5" → "1015"
   return d.replace(/\d(?:\s+\d)+/g, m => m.replace(/\s+/g,''));
 }
@@ -3879,12 +3922,29 @@ function pttUI(on){
    tant que le bouton est enfoncé (souris OU tactile), et s'arrête au relâchement. Ne touche pas
    à la logique de reconnaissance : on ne fait que déclencher onStart/onStop. Helper global réutilisé
    par la section Exercices ET la section Épellation. */
+/* Traîne de fin d'émission. Le doigt quitte le bouton avant que la dernière
+   syllabe soit sortie : couper la capture pile au relâchement mange la fin du
+   message. On rend donc la main À L'ŒIL tout de suite — le bouton repasse au
+   repos — mais le micro continue d'enregistrer encore TRAINE_MS. */
+const TRAINE_MS = 500;
 function bindPushToTalk(btn, onStart, onStop){
   if(!btn) return;
-  let held=false;
+  let held=false, finTimer=null;
+  // Libellé de repos mémorisé au moment du branchement : chaque module a le sien.
+  const sp=btn.querySelector('span');
+  if(sp && !btn.dataset.labelRepos) btn.dataset.labelRepos=sp.textContent;
+  const visuel=(ecoute)=>{ btn.classList.toggle('listening',ecoute);
+    if(sp && !ecoute && btn.dataset.labelRepos) sp.textContent=btn.dataset.labelRepos; };
   const press=(e)=>{ if(e && e.type==='touchstart' && e.cancelable) e.preventDefault(); // évite le mousedown fantôme + le scroll
+                     if(finTimer){            // ré-appui pendant la traîne : la capture n'a jamais cessé
+                       clearTimeout(finTimer); finTimer=null; held=true; visuel(true); return; }
                      if(held) return; held=true; try{ onStart(); }catch(_){} };
-  const release=()=>{ if(!held) return; held=false; try{ onStop(); }catch(_){} };
+  const release=()=>{ if(!held) return; held=false;
+                      visuel(false);          // retour visuel immédiat…
+                      if(finTimer) clearTimeout(finTimer);
+                      finTimer=setTimeout(function(){   // …mais le micro tourne encore
+                        finTimer=null; try{ onStop(); }catch(_){}
+                      }, TRAINE_MS); };
   btn.addEventListener('mousedown', press);
   btn.addEventListener('mouseup', release);
   btn.addEventListener('mouseleave', release);
@@ -4014,6 +4074,15 @@ function mcFound(mc, corrected){
     const target = String(NUM_REF_VALUE[mc.ref]()).replace(/\D/g,'');
     if(target && digitCanon(corrected).includes(target)) return true;
   }
+  /* Suite de chiffres dictée un par un : la reconnaissance les regroupe au hasard
+     (« 5 6 0 3 » ressort « 5 6 03 »), et le mot-clé tombait en échec alors que le
+     collationnement était juste. On rejoue donc la comparaison après canonisation
+     des chiffres DES DEUX CÔTÉS — le regroupement devient sans effet. Réservé aux
+     variantes qui contiennent effectivement des chiffres. */
+  const dc = digitCanon(corrected);
+  if(vars.some(v => { if(!v) return false;
+                      const n = digitCanon(v);
+                      return /\d/.test(n) && dc.includes(n); })) return true;
   return false;
 }
 
@@ -4208,6 +4277,11 @@ function tempMot(t){ return t<0 ? 'moins '+Math.abs(t) : String(t); }
 /* Visibilité : en mètres sous 5 km (arrondie à la centaine), en kilomètres entiers
    au-delà — c'est la façon dont elle est diffusée. */
 function visMot(v){
+  /* Au-delà de 10 km, un ATIS n'annonce pas la valeur réelle : c'est plafonné
+     (9999 en METAR, « 10 km ou plus »). Les types « beau » et « couvert » tirant
+     jusqu'à 30 km, le message annonçait « visibilité 27 kilomètres », ce qui ne
+     se dit pas en l'air. */
+  if(v>=10) return '10 kilomètres';
   if(v>=5) return Math.round(v)+' kilomètres';
   return Math.round(v*1000/100)*100+' mètres';
 }
@@ -7579,6 +7653,25 @@ function oaciSonde(couche, surAbsenceTotale){
     }
   }
 
+  /* Message d'ACCUEIL d'une nouvelle station (atcBefore). En radio manuelle il ne
+     doit pas tomber tant que le pilote n'a pas affiché la fréquence : on entendait
+     le contrôleur du secteur suivant AVANT d'avoir quitté le précédent, ce qui
+     n'arrive évidemment jamais en vol. Même porte que l'ATIS juste au-dessus.
+     Hors radio manuelle, surBonneFreq() renvoie true : le message part aussitôt,
+     comportement inchangé. */
+  function majAccueilStation(){
+    var s=F.steps[F.i];
+    if(!F.running || !s || s.atisStep || !s.atcBefore || F.accueilDit) return;
+    if(!surBonneFreq()){
+      $v('vfAtc').innerHTML='<div class="vf-ecoute"><span class="qui">'+ICONS.son+
+        'Rien sur cette fréquence — affichez '+fmtF(s.freq)+' pour contacter '+
+        esc(s.stn||'la station')+'.</span></div>';
+      return;
+    }
+    F.accueilDit=true;
+    messageATC(s.stn, s.atcBefore);
+  }
+
   var aRevELer=[];                 // lignes de journal masquées, à dévoiler après la réponse
   function messageATC(stn, brut, urgent, muet){
     var texte=fillDisplay(brut), atc=$v('vfAtc');
@@ -7665,6 +7758,7 @@ function oaciSonde(couche, surAbsenceTotale){
     $v('radioSwap').classList.toggle('pret', pret);
     majAideRadio();
     if(typeof majEcouteAtis==='function') majEcouteAtis();
+    if(typeof majAccueilStation==='function') majAccueilStation();
   }
   function surBonneFreq(){
     var s=F.steps[F.i];
@@ -7721,6 +7815,17 @@ function oaciSonde(couche, surAbsenceTotale){
      fréquence « veillez … je répète … » (p. 247). */
   function reponseMauvaiseFreq(s){
     F.echecFreq=(F.echecFreq||0)+1;
+    /* En débutant, l'explication doit être SOUS LES YEUX : le journal défile et
+       l'élève croyait que sa phrase était mauvaise, alors que seule la fréquence
+       ne collait pas. En mode Réel, on ne souffle rien — le silence radio EST
+       l'information, comme en vol. */
+    if(level==='debutant'){
+      $v('vfFb').innerHTML='<div class="fb ko">'+ICONS.warn+
+        '<span><b>Votre message n\'est pas parti : mauvaise fréquence.</b> '+
+        'Vous émettez sur '+fmtF(radio.act)+', or '+esc(s.stn||'la station')+
+        ' écoute sur '+fmtF(s.freq)+'. Réglez le poste, puis reprenez votre message — '+
+        'votre phraséologie n\'est pas en cause.</span></div>';
+    }
     var prec0=stationSur(radio.act);
     if(F.echecFreq===1 || !prec0){
       vfLog('sys','Aucune réponse — vous émettez sur '+fmtF(radio.act)+
@@ -7966,8 +8071,9 @@ function oaciSonde(couche, surAbsenceTotale){
     var atc=$v('vfAtc');
     aRevELer=[];                                  // nouvelle étape : rien en attente
     arreterAtis();                                // une diffusion en cours s'arrête ici
+    F.accueilDit=false;                           // nouvelle étape : accueil pas encore donné
     if(s.atisStep) majEcouteAtis();               // l'ATIS ne se déclenche qu'une fois accordé
-    else if(s.atcBefore) messageATC(s.stn, s.atcBefore);
+    else if(s.atcBefore) majAccueilStation();     // idem : seulement une fois accordé
     else atc.innerHTML='';
     /* Débutant : la consigne détaille ce qu'il faut transmettre.
        Réel : plus de consigne du tout — SAUF quand elle porte une information qu'on
@@ -8003,8 +8109,32 @@ function oaciSonde(couche, surAbsenceTotale){
     devoilerATC();
     if(s.atcAfter) messageATC(s.stn, s.atcAfter);
     $v('vfNext').disabled=false;
+    /* Échange réussi : on enchaîne SEUL. Devoir cliquer « Suivant » juste après que
+       le contrôleur vous a répondu casse le réflexe — on a envie de répondre, pas
+       de chercher un bouton. On attend simplement que le contrôleur ait fini de
+       parler, sinon la synthèse suivante annulerait la sienne (speakATC coupe).
+       En cas d'erreur, au contraire, le bouton reste : on veut laisser le temps de
+       lire ce qui a manqué avant d'entendre la suite. */
+    if(ok===res.length && res.length){
+      vfLog('sys','Échange réussi — la suite arrive.');
+      enchainerAuto();
+    }
   }
+  /* Attend la fin de la parole ATC, puis passe à l'étape suivante. Garde-fou à 12 s :
+     si la synthèse ne rend jamais la main (onglet en arrière-plan, voix absente),
+     on avance quand même plutôt que de rester bloqué. */
+  function enchainerAuto(){
+    annulerAuto();
+    var t0=Date.now();
+    (function attendre(){
+      var parle = window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending);
+      if(parle && Date.now()-t0 < 12000){ F.autoNext=setTimeout(attendre,200); return; }
+      F.autoNext=setTimeout(function(){ F.autoNext=null; if(F.running) nextStep(); }, 600);
+    })();
+  }
+  function annulerAuto(){ if(F.autoNext){ clearTimeout(F.autoNext); F.autoNext=null; } }
   function nextStep(){
+    annulerAuto();      // clic manuel pendant l'attente : pas de double avance
     sauverVol();
     var s=F.steps[F.i];
     if(s && s.tuneTo) tune(s.tuneTo.stn,s.tuneTo.freq,true);   // changement de fréquence effectif
@@ -8084,7 +8214,7 @@ function oaciSonde(couche, surAbsenceTotale){
     radio.stby=null; radio.attendue=null;
     /* Transpondeur au départ : 7000, le code de veille VFR, mode altitude. */
     xpdr.code='7000'; xpdr.saisie='7000'; xpdr.mode=2; xpdr.ident=false; xpdr.attendu=null;
-    F.echecFreq=0; F.echecCode=0; F.attend7600=false; aRevELer=[];
+    F.echecFreq=0; F.echecCode=0; F.attend7600=false; aRevELer=[]; F.autoNext=null; F.accueilDit=false;
     radioSkin(); majRadio(); majXpdr(); choisirAvionPhoto();
     $v('vfCall').textContent=state.call;        // indicatif rappelé en permanence
     majAtisChip();                              // fréquence ATIS à côté de celle du terrain
@@ -8101,9 +8231,11 @@ function oaciSonde(couche, surAbsenceTotale){
                      L'élève relit, corrige une éventuelle erreur de transcription,
                      puis valide lui-même. */
                   final:function(t){
-                    $v('vfTransText').value=t;
-                    $v('vfValider').disabled=!t.trim();
-                    if(t.trim()) $v('vfTransText').focus();
+                    // Affichage lissé : l'élève lit la forme retenue, pas le brut.
+                    var lisse=lissageTranscription(t);
+                    $v('vfTransText').value=lisse;
+                    $v('vfValider').disabled=!lisse.trim();
+                    if(lisse.trim()) $v('vfTransText').focus();
                   },
                   // Erreurs micro affichées DANS la page de vol (avant, elles partaient
                   // dans le journal des Exercices et restaient donc invisibles ici).
@@ -8254,7 +8386,7 @@ function oaciSonde(couche, surAbsenceTotale){
   }
 
   function endFlight(){
-    F.running=false; setRecoSink(null); oublierVol(); arreterAtis();
+    F.running=false; annulerAuto(); setRecoSink(null); oublierVol(); arreterAtis();
     devoilerATC();   // vol terminé : le journal redevient entièrement lisible
     var tot=0, ok=0;
     F.results.forEach(function(r){ if(r) r.forEach(function(x){ tot++; if(x.found) ok++; }); });

@@ -4642,6 +4642,13 @@ function renderStep(){
   el.controls.style.display='';
   el.pttBtn.style.display='';
   el.stepLabel.textContent = sc.titre;
+  /* Indicatif COMPLET au premier échange sur une fréquence, abrégé ensuite
+     (manuel DSNA p. 18) — exactement comme dans le vol Navigation.
+     Seul ce dernier posait state.callForm : la valeur laissée par un vol
+     TRAÎNAIT ensuite dans les Scénarios, qui réclamaient donc « F-CD » dès le
+     premier appel alors que la phraséologie exige « F-ABCD ». Le poser ici
+     répare la fuite ET donne aux Scénarios le comportement attendu. */
+  state.callForm = step.premierContact ? 'full' : 'abbr';
 
   if(step.atc){
     el.atcBox.style.display='';

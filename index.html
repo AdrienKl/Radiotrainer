@@ -200,40 +200,17 @@
   /* ---------- Panel ---------- */
   .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow-md); margin:18px 0}
   .panel.hidden{display:none}
-  .panel-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:16px}
-  .stepline{color:var(--ink-2); font-size:12.5px; display:flex; flex-direction:column; gap:10px; font-weight:600}
-  .dots{display:flex; gap:6px; flex-wrap:wrap}
-  .dot{width:9px; height:9px; border-radius:50%; background:var(--surface-2); border:1px solid var(--border)}
-  .dot.done{background:var(--violet); border-color:var(--violet)}
-  .dot.current{background:var(--violet); border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft)}
-  .dot.choice{background:transparent; border:1px dashed var(--violet)}
   .terrain-toggle{display:flex; gap:6px; flex-wrap:wrap}
   .tt-btn{cursor:pointer; background:var(--surface); border:1px solid var(--border); border-radius:var(--pill); color:var(--ink); padding:6px 13px; font-size:12px; font-family:var(--mono); font-weight:600}
   .tt-btn[aria-pressed="true"]{border-color:var(--violet); color:#fff; background:var(--violet)}
   .tt-btn:disabled{opacity:.4; cursor:not-allowed}
-  .meteo{font-family:var(--mono); font-size:12.5px; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:8px 12px}
-  .meteo b{color:var(--ink)}
 
-  .atc-line{background:var(--surface-2); border:1px solid var(--border); border-left:4px solid var(--violet); border-radius:12px; padding:15px 17px; margin-bottom:12px}
-  .atc-line .who{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--violet); font-weight:700; margin-bottom:5px}
-  .atc-line .txt{font-family:var(--mono); font-size:15px; color:var(--ink)}
-  .situation{background:#eef7f4; border:1px dashed #b6e0d3; border-radius:12px; padding:13px 16px; margin-bottom:12px; color:#3a5a52; font-style:italic}
-  .consigne{margin:12px 0; font-size:15px}
-  .consigne b{color:var(--violet)}
   .controls{display:flex; gap:11px; flex-wrap:wrap; align-items:center; margin-top:15px}
 
-  .trans-wrap{margin-top:16px; display:none}
-  .trans-wrap.show{display:block}
-  .trans-wrap label{font-size:12px; font-weight:600; color:var(--ink-2); display:block; margin-bottom:6px}
-  .trans-wrap textarea{width:100%; min-height:68px; resize:vertical; background:var(--surface); border:1px solid var(--border); border-radius:12px; color:var(--ink); font-family:var(--mono); font-size:14px; padding:12px 14px}
-  .trans-wrap textarea:focus{outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft)}
   .trans-actions{display:flex; gap:11px; margin-top:10px; flex-wrap:wrap}
 
   .feedback{margin-top:16px; display:flex; flex-direction:column; gap:8px}
   /* Indicatif rappelé dans l'en-tête du panneau d'échange. */
-  .scall{ font-family:var(--mono); font-size:13px; font-weight:700; color:var(--violet-dark);
-    background:var(--violet-soft); border:1px solid var(--violet); border-radius:7px;
-    padding:2px 8px; white-space:nowrap; margin-left:10px; }
   .fb-item{display:flex; gap:9px; align-items:center; font-size:14.5px}
   .fb-item .mk{width:20px; text-align:center}
   .fb-item.ok{color:var(--ok)}
@@ -254,21 +231,11 @@
   .choice .opt.bad{border-color:var(--bad); background:#fdecea; color:var(--bad)}
   .choice .opt:disabled{cursor:default}
 
-  /* ---------- Recap / history / badges ---------- */
-  .recap{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--violet); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow-md); margin:18px 0}
-  .recap.hidden{display:none}
-  .recap h2{color:var(--ink); font-size:18px; margin-bottom:8px}
-  .recap .score{font-family:var(--mono); font-size:32px; color:var(--violet); font-weight:700; margin:6px 0}
-  .recap .score small{font-size:14px; color:var(--ink-2)}
-  .recap ul{margin:10px 0 0; padding-left:18px; color:var(--ink-2); font-size:13.5px}
+  /* ---------- Recap / history / badges ----------
+     Le debriefing et l'historique des Scenarios reprennent desormais les blocs du
+     vol (.nav-recap, .nav-hist) : les regles propres a l'ancien panneau ont ete
+     retirees avec lui. */
 
-  .history{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow-sm); margin:16px 0}
-  .history summary{cursor:pointer; color:var(--violet); font-size:15px; font-weight:700}
-  .history table{width:100%; border-collapse:collapse; margin-top:12px; font-size:13px; font-family:var(--mono)}
-  .history th, .history td{text-align:left; padding:8px 9px; border-bottom:1px solid var(--border)}
-  .history th{color:var(--ink-2); font-weight:600}
-  .history .none{color:var(--ink-2); font-size:14px; margin-top:8px}
-  .history .clear{margin-top:12px}
 
   .badges{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow-sm); margin:16px 0}
   .badges h3{color:var(--ink); font-size:15.5px; margin-bottom:12px}
@@ -283,16 +250,6 @@
   .badge.earned .t{color:var(--violet-dark)}
 
   /* ---------- Log (clair) ---------- */
-  .logwrap{margin:18px 0}
-  .logwrap h2{font-size:12.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-2); margin:0 0 9px; font-weight:700}
-  .log{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:15px 17px; max-height:280px; overflow:auto; font-family:var(--mono); font-size:13px; line-height:1.75; box-shadow:var(--shadow-sm)}
-  .log .rowl{white-space:pre-wrap; word-break:break-word; animation:fadein .25s ease}
-  @keyframes fadein{from{opacity:0; transform:translateY(2px)} to{opacity:1; transform:none}}
-  .log .ts{color:#9aa3b2}
-  .log .atc{color:var(--violet-dark)}
-  .log .you{color:var(--violet-dark)}
-  .log .sys{color:var(--ink-2)}
-  .log .empty{color:var(--ink-2)}
 
   /* ---------- Misc ---------- */
   .noreco{background:#fdecea; border:1px solid #f3c6c1; border-radius:var(--radius); padding:14px 17px; margin:14px 0; color:#9c352c; font-size:13.5px}
@@ -5213,10 +5170,14 @@ function renderStep(){
   el.situationBox.innerHTML = step.situation
     ? ICONS.warn+'<span>'+escapeHtml(fillDisplay(step.situation))+'</span>' : '';
   /* Mode Réel : plus de consigne détaillée — à vous de retrouver la formulation.
-     Sauf sur une écoute pure, où la consigne dit quoi régler sur le poste. */
-  el.consigne.innerHTML = (reel && !ecoute)
-    ? ''
-    : 'À vous : <b>'+escapeHtml(fillDisplay(step.consigne||''))+'</b>';
+     Même exception qu'en Navigation : on la garde quand elle porte une information
+     qu'on ne peut pas deviner, c'est-à-dire l'organisme à appeler au PREMIER
+     contact sur une fréquence. Et toujours sur une écoute pure, où elle dit quoi
+     régler sur le poste. */
+  const consigneVisible = !reel || ecoute || step.premierContact;
+  el.consigne.innerHTML = consigneVisible
+    ? 'À vous : <b>'+escapeHtml(fillDisplay(step.consigne||''))+'</b>'
+    : '';
 
   // reset zone réponse
   el.transText.value=''; el.validerBtn.disabled=true;

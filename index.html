@@ -3705,7 +3705,15 @@ function pickVoice(){
   // NB : on lit `voicePref` (et pas state.voiceName) car pickVoice() est appelée au
   // chargement, AVANT la déclaration `const state = {…}` — accéder à `state` ici lèverait
   // une ReferenceError (zone morte temporelle) qui stopperait tout le reste du script.
-  frVoice = frVoices.find(v=>v.name===voicePref) || frVoices[0] || null;
+  /* Chrome/macOS liste a la fois des voix LOCALES (Thomas, Amelie...) et des voix
+     DISTANTES (« Google francais »), synthetisees sur le reseau. Ces dernieres
+     demarrent parfois jamais et sont les premieres a etre coupees : prendre
+     simplement frVoices[0] suffisait a rendre Chrome muet la ou Safari — qui n'a
+     que des voix locales — fonctionnait. On prefere donc une voix locale, sauf
+     si l'eleve en a explicitement choisi une autre dans les Parametres. */
+  frVoice = frVoices.find(v=>v.name===voicePref)
+         || frVoices.find(v=>v.localService)
+         || frVoices[0] || null;
   // (Re)remplir le sélecteur — onvoiceschanged peut tirer plusieurs fois.
   const sel = document.getElementById('voiceSelect');
   if(sel){
@@ -3715,79 +3723,217 @@ function pickVoice(){
   }
 }
 if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-/* ---- Résilience de la synthèse vocale (défaut connu de Chrome) ----
-   Chrome interrompt la lecture au bout d'une quinzaine de secondes sur un texte
-   long, et laisse ensuite le moteur dans un état où PLUS RIEN ne sort — y compris
-   les messages courts qui suivent. Un ATIS complet, chiffres énoncés un par un,
-   dépasse très largement ce seuil : il suffisait d'en écouter un pour que tout le
-   contrôle devienne muet jusqu'au rechargement de la page.
-   Deux parades, les seules qui tiennent en pratique :
-     - entretenir la lecture par un resume() périodique tant que ça parle ;
-     - n'appeler cancel() que s'il y a réellement quelque chose à interrompre,
-       un cancel() à vide participant lui aussi au blocage. */
-/* AMORCE — indispensable sur Chrome, sans effet ailleurs.
-   Chrome n'accepte la synthese vocale qu'apres une interaction de l'utilisateur
-   AVEC LA PAGE, et rejette en silence les demandes issues d'un minuteur. Or le
-   premier message du controleur part d'un setTimeout declenche apres le clic
-   « Demarrer le vol » : la demande est donc hors du geste, et Chrome la jette
-   sans rien signaler — ni erreur, ni evenement. Safari est permissif, d'ou une
-   application parfaitement audible sur Safari et totalement muette sur Chrome.
-   On deverrouille donc le moteur au TOUT PREMIER geste, avec une utterance vide
-   et un volume nul : inaudible, c'est un deverrouillage, pas un message. */
+
+/* ---- AMORCE AUDIO (indispensable sur Chrome, sans effet ailleurs) ----
+   Chrome refuse en silence toute synthese vocale tant que la page n'a pas recu
+   un geste de l'utilisateur, et laisse suspendu tout AudioContext cree avant ce
+   geste. Safari est permissif : d'ou une application audible sur Safari et
+   totalement muette sur Chrome. On deverrouille donc les DEUX moteurs au tout
+   premier geste, avec une utterance de volume nul — c'est un deverrouillage, pas
+   un message. Le texte n'est volontairement pas vide : Chrome ignore purement et
+   simplement une utterance sans contenu, qui ne deverrouille alors rien. */
 (function(){
-  if(!window.speechSynthesis) return;
   var fait=false;
+  var EVTS=['pointerdown','keydown','touchstart'];
   function amorce(){
     if(fait) return; fait=true;
-    try{ var u=new SpeechSynthesisUtterance(' '); u.volume=0; u.lang='fr-FR';
-         speechSynthesis.speak(u); }catch(e){}
-    document.removeEventListener('pointerdown',amorce,true);
-    document.removeEventListener('keydown',amorce,true);
-    document.removeEventListener('touchstart',amorce,true);
+    if(window.speechSynthesis){
+      try{
+        var u=new SpeechSynthesisUtterance('bonjour');
+        u.volume=0; u.rate=1; u.lang='fr-FR';
+        speechSynthesis.speak(u);
+      }catch(e){}
+    }
+    try{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
+    EVTS.forEach(function(ev){ document.removeEventListener(ev,amorce,true); });
   }
-  document.addEventListener('pointerdown',amorce,true);
-  document.addEventListener('keydown',amorce,true);
-  document.addEventListener('touchstart',amorce,true);
+  EVTS.forEach(function(ev){ document.addEventListener(ev,amorce,true); });
 })();
 
-/* Un minuteur « d'entretien » appelait ici resume() toutes les 7 s pour contourner
-   la coupure de Chrome sur les textes longs. Il a ete RETIRE : arreterAtis()
-   annulait la parole sans l'arreter, il voyait donc speaking encore vrai — cancel()
-   n'etant pas instantane sous Chrome — et RANIMAIT la lecture qu'on venait
-   d'annuler. L'ATIS devenait impossible a arreter : ni le changement de frequence,
-   ni « Passer », ni la fin du vol n'y pouvaient quoi que ce soit, tous ces chemins
-   passant par arreterAtis(). Un mecanisme capable de relancer la parole n'a pas sa
-   place ici ; si la coupure sur texte long se manifeste un jour, elle sera traitee
-   pour elle-meme. */
-function voixCouper(){
-  if(!window.speechSynthesis) return;
-  if(speechSynthesis.speaking || speechSynthesis.pending){
-    try{ speechSynthesis.cancel(); }catch(e){}
+/* =========================================================================
+   MOTEUR DE PAROLE
+   -------------------------------------------------------------------------
+   Trois defauts de Chrome rendaient l'application muette la ou Safari parlait :
+     1. une utterance de plus d'une quinzaine de secondes est coupee, et laisse
+        ensuite le moteur dans un etat ou PLUS RIEN ne sort — un seul ATIS
+        (~385 caracteres une fois les chiffres epeles) suffisait a tout eteindre
+        jusqu'au rechargement de la page ;
+     2. un speak() emis dans la MEME tache qu'un cancel() est avale sans la
+        moindre erreur — or chaque message du controleur commencait justement par
+        couper le precedent puis parlait aussitot ;
+     3. une voix distante peut ne jamais demarrer, sans evenement d'erreur.
+   D'ou, respectivement : decoupage systematique en courtes phrases, speak()
+   differe apres tout cancel(), et surveillance du demarrage avec repli sur la
+   voix par defaut du navigateur.
+
+   Un JETON invalide d'un coup toutes les reprises en attente : stop() arrete
+   vraiment, et aucun minuteur ne peut ranimer la parole — c'est ce qui rendait
+   autrefois l'ATIS impossible a couper.
+   ========================================================================= */
+var Voix=(function(){
+  var MAX=140;                 // caracteres par utterance : ~6 s, moitie du seuil Chrome
+  var file=[];                 // messages en attente
+  var jeton=0;                 // invalide les reprises apres un stop()
+  var enCours=false;           // une utterance est en vol
+  var garde=null;              // surveillance du demarrage
+
+  /* Decoupe un texte en morceaux surs : d'abord aux fins de phrase, puis aux
+     virgules, enfin aux espaces. Aucun morceau ne depasse MAX caracteres. */
+  function decouper(t){
+    var brut=String(t==null?'':t).replace(/\s+/g,' ').trim();
+    if(!brut) return [];
+    var bouts=brut.split(/([.!?])\s+/), phrases=[], cur='';
+    for(var i=0;i<bouts.length;i++){
+      cur+=bouts[i];
+      if(/^[.!?]$/.test(bouts[i])){ phrases.push(cur.trim()); cur=''; }
+    }
+    if(cur.trim()) phrases.push(cur.trim());
+    var moyen=[];
+    phrases.forEach(function(p){
+      if(p.length<=MAX){ moyen.push(p); return; }
+      var acc='';
+      p.split(/,\s*/).forEach(function(b){
+        var essai=acc?acc+', '+b:b;
+        if(essai.length>MAX && acc){ moyen.push(acc); acc=b; } else acc=essai;
+      });
+      if(acc) moyen.push(acc);
+    });
+    var fin=[];
+    moyen.forEach(function(p){
+      while(p.length>MAX){
+        var c=p.lastIndexOf(' ',MAX); if(c<40) c=MAX;
+        fin.push(p.slice(0,c).trim()); p=p.slice(c).trim();
+      }
+      if(p) fin.push(p);
+    });
+    return fin.filter(Boolean);
   }
+
+  function annulerGarde(){ if(garde){ clearTimeout(garde); garde=null; } }
+
+  /* Arret franc : plus rien ne parle, plus rien ne reprendra. */
+  function stop(){
+    jeton++; file.length=0; enCours=false; annulerGarde();
+    if(window.speechSynthesis){ try{ speechSynthesis.cancel(); }catch(e){} }
+    if(typeof stopRadioNoise==='function') stopRadioNoise();
+  }
+
+  function pompe(){
+    if(enCours || !file.length) return;
+    var m=file[0];
+    if(m.i>=m.phrases.length){                 // message termine
+      file.shift();
+      if(m.opts.onFin){ try{ m.opts.onFin(); }catch(e){} }
+      pompe(); return;
+    }
+    enCours=true;
+    emettre(m, m.phrases[m.i]);
+  }
+
+  function emettre(m, phrase){
+    var mien=jeton;
+    if(!window.speechSynthesis){ enCours=false; return; }
+    var u=new SpeechSynthesisUtterance(phrase);
+    /* Chrome renouvelle periodiquement sa liste de voix : une reference gardee
+       d'un ancien getVoices() devient perimee et l'utterance reste muette. */
+    var dispo=speechSynthesis.getVoices()||[];
+    if(!frVoice || dispo.indexOf(frVoice)===-1) pickVoice();
+    u.lang='fr-FR';
+    // A la 3e tentative on abandonne la voix choisie : si elle ne demarre jamais
+    // (voix distante indisponible), celle par defaut, elle, parlera.
+    if(frVoice && m.essais<2) u.voice=frVoice;
+    u.rate   = m.opts.rate  !=null ? m.opts.rate   : 1;
+    u.pitch  = m.opts.pitch !=null ? m.opts.pitch  : 1;
+    u.volume = m.opts.volume!=null ? m.opts.volume : 1;
+    var parti=false, clos=false;
+    function avancer(){                        // phrase dite : on passe a la suivante
+      if(clos || mien!==jeton) return;
+      clos=true; annulerGarde(); enCours=false;
+      m.i++; m.essais=0; pompe();
+    }
+    function rater(){
+      if(clos || mien!==jeton) return;
+      if(parti){ avancer(); return; }          // coupee en route : on enchaine
+      clos=true; annulerGarde(); enCours=false;
+      if(m.essais<3){                          // n'a jamais demarre : on retente
+        m.essais++;
+        try{ speechSynthesis.cancel(); }catch(e){}
+        setTimeout(function(){ if(mien===jeton) pompe(); },160);
+      } else { m.i++; m.essais=0; pompe(); }   // on renonce a CETTE phrase, pas au message
+    }
+    u.onstart=function(){
+      if(mien!==jeton) return;
+      parti=true; annulerGarde();
+      if(!m.debut && m.opts.onDebut){ m.debut=true; try{ m.opts.onDebut(); }catch(e){} }
+    };
+    u.onend  = avancer;
+    u.onerror= rater;
+    try{ speechSynthesis.speak(u); }catch(e){ enCours=false; return; }
+    /* Chrome met parfois le moteur en pause de lui-meme. Un resume() ponctuel,
+       emis juste apres NOTRE propre speak(), le remet en marche. Il n'y a
+       volontairement aucun minuteur d'entretien : c'est lui qui, autrefois,
+       ranimait l'ATIS qu'on venait d'annuler. */
+    try{ if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
+    garde=setTimeout(rater, 2500);             // rien n'a demarre en 2,5 s : moteur bloque
+  }
+
+  /* Parole principale : remplace ce qui est en cours. */
+  function parler(texte, opts){
+    var phrases=decouper(texte);
+    stop();
+    if(!phrases.length) return;
+    file.push({phrases:phrases,i:0,essais:0,opts:opts||{}});
+    var mien=jeton;
+    // Chrome avale un speak() emis dans la meme tache qu'un cancel() : on laisse
+    // passer une tache avant de commencer.
+    setTimeout(function(){ if(mien===jeton) pompe(); },120);
+  }
+  /* Parole d'ambiance : s'empile derriere, sans rien couper. */
+  function empiler(texte, opts){
+    var phrases=decouper(texte);
+    if(!phrases.length) return;
+    file.push({phrases:phrases,i:0,essais:0,opts:opts||{}});
+    if(enCours) return;                        // la chaine en cours la prendra
+    /* Rien ne parle : c'est nous qui demarrons. Meme precaution que dans
+       parler() — un speak() emis dans la meme tache qu'un cancel() est avale par
+       Chrome, et l'appel d'ambiance suit de peu un message du controleur. */
+    var mien=jeton;
+    setTimeout(function(){ if(mien===jeton) pompe(); },120);
+  }
+  function occupe(){ return enCours || file.length>0; }
+  return { parler:parler, empiler:empiler, stop:stop, occupe:occupe };
+})();
+
+/* Coupe toute parole en cours. Conserve sous son ancien nom : il est appele un
+   peu partout (changement de frequence, fin de vol, abandon d'un scenario). */
+function voixCouper(){ Voix.stop(); }
+
+/* Arret COMPLET : la parole en cours, mais aussi les diffusions en boucle (ATIS).
+   Couper la seule parole ne suffit pas : la boucle garde un minuteur arme entre
+   deux passages du message, et repartait donc toute seule quelques secondes plus
+   tard. Chaque module y inscrit son propre arret de boucle. */
+var VOIX_ARRETS=[];
+function voixCouperTout(){
+  VOIX_ARRETS.forEach(function(f){ try{ f(); }catch(e){} });
+  Voix.stop();
 }
+/* Quitter la page ou masquer l'onglet doit couper la radio : sans ca, un ATIS
+   lance continuait a parler par-dessus le reste de l'application. */
+window.addEventListener('rt:page', voixCouperTout);
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden) voixCouperTout();
+});
 
 function speakATC(rawText, urgent){
-  if(!window.speechSynthesis) return;
-  voixCouper();
-  const u=new SpeechSynthesisUtterance(fillSpeech(rawText));
-  /* Chrome charge ses voix en differe et renouvelle la liste : une reference
-     conservee d'un ancien getVoices() devient perimee, et l'utterance reste
-     muette. On verifie donc qu'elle figure toujours dans la liste courante. */
-  const dispo = speechSynthesis.getVoices() || [];
-  if(frVoice && dispo.indexOf(frVoice) === -1) pickVoice();
-  u.lang='fr-FR'; if(frVoice) u.voice=frVoice;
-  // Débit/hauteur augmentés sur un message d'urgence (Mayday / Pan Pan) pour le stress réaliste.
-  u.rate  = urgent ? Math.min(state.voiceRate + 0.12, 1.35) : state.voiceRate;
-  u.pitch = urgent ? 1.1 : 1.0;
-  // Point 3 : le bruit de fond radio est branché sur les évènements "début/fin de
-  // parole ATC" via startRadioNoise()/stopRadioNoise(). Il ne joue donc QUE pendant
-  // que le contrôleur parle. Ce branchement ne dépend pas des détails internes de
-  // SpeechSynthesis : si le moteur de voix change plus tard, il suffira de rappeler
-  // ces deux fonctions sur les nouveaux évènements début/fin de parole.
-  u.onstart = startRadioNoise;
-  u.onend   = function(){ stopRadioNoise(); voixCouper(); };
-  u.onerror = function(){ stopRadioNoise(); voixCouper(); };
-  speechSynthesis.speak(u);
+  /* Le bruit de fond radio est branche sur le debut et la fin REELS de la parole
+     (onDebut/onFin) : il ne gresille donc que pendant que le controleur parle. */
+  Voix.parler(fillSpeech(rawText), {
+    // Debit et hauteur augmentes sur un message d'urgence (Mayday / Pan Pan).
+    rate   : urgent ? Math.min(state.voiceRate + 0.12, 1.35) : state.voiceRate,
+    pitch  : urgent ? 1.1 : 1.0,
+    onDebut: startRadioNoise,
+    onFin  : stopRadioNoise
+  });
 }
 
 /* Autres appareils sur la fréquence (terrain non contrôlé / AFIS). On empile une utterance
@@ -3803,10 +3949,7 @@ const TRAFIC_CALLS = [
 ];
 const TRAFIC_CS = ["F-GKLM","F-BUCG","F-HDBA","F-GJKP","F-BXQR","F-HBQL"];
 function speakExtra(rawText){
-  if(!window.speechSynthesis) return;
-  const u=new SpeechSynthesisUtterance(fillSpeech(rawText));
-  u.lang='fr-FR'; if(frVoice) u.voice=frVoice; u.rate=state.voiceRate; u.pitch=1.0; u.volume=0.9;
-  speechSynthesis.speak(u);   // empilé après la parole en cours (pas de cancel)
+  Voix.empiler(fillSpeech(rawText), { rate:state.voiceRate, pitch:1.0, volume:0.9 });
 }
 let _lastTrafKey=null;
 function maybeSpeakTraffic(step){
@@ -4190,6 +4333,7 @@ function freqScenario(stn, controlled){
 function tourAtis(){
   const a=state.atis;
   return { stn:'sol', station:a.nom+' ATIS', freq:a.freq, premierContact:true,
+    atisStep:true,                      // diffusion en boucle, calee sur SA fréquence
     atc:[a.texte],
     situation:"Avant tout appel, vous écoutez l'ATIS de "+a.nom+".",
     consigne:"Affichez la fréquence ATIS ("+a.freq.toFixed(3)+") sur le poste, écoutez le message, "+
@@ -4472,7 +4616,7 @@ el.voiceRate.addEventListener('change', ()=>{ state.voiceRate = parseFloat(el.vo
 el.voiceSelect.addEventListener('change', ()=>{
   voicePref = el.voiceSelect.value || null;   // source de vérité lue par pickVoice()
   state.voiceName = voicePref;                // miroir dans l'état global (cohérence)
-  frVoice = frVoices.find(v=>v.name===voicePref) || frVoices[0] || null;
+  pickVoice();                                // même règle de choix qu'au chargement
 });
 function onCtrlChange(){
   state.controlled = { dep: el.depCtrlSelect.value==='1', arr: el.arrCtrlSelect.value==='1' };
@@ -4678,6 +4822,7 @@ function currentStep(){ return state.queue[state.stepIndex]; }
 
 function renderStep(){
   majIndicatif();
+  scArreterAtis();          // nouvel échange : une diffusion ATIS en cours s'arrête ici
   scRadioPourEtape();
   const sc=SCENARIOS[state.scenarioIndex];
   const step=currentStep();
@@ -4713,13 +4858,21 @@ function renderStep(){
     el.atcTxt.textContent = reel ? 'Message radio — écoutez (voix seule).' : fillDisplay(step.atc);
     // En Réel, on ne consigne pas le texte du contrôleur dans le journal (sinon on pourrait le relire).
     logRow('atc', fillDisplay(step.station || sc.station)+(reel ? ' — (message vocal)' : ' — '+fillDisplay(step.atc)));
-    speakATC(step.atc, !!sc.emergency);
-    el.replayBtn.style.display = reel ? 'none' : '';   // pas de réécoute en Réel
+    /* L'ATIS n'est PAS un message qu'on nous adresse : il tourne en boucle sur sa
+       propre fréquence. On ne le joue donc pas ici — c'est le calage du poste sur
+       cette fréquence qui le déclenche (scMajEcouteAtis), et s'en écarter le coupe.
+       Pas de bouton « Réécouter » non plus : la boucle repasse toute seule. */
+    if(step.atisStep){ scMajEcouteAtis(); el.replayBtn.style.display='none'; }
+    else {
+      speakATC(step.atc, !!sc.emergency);
+      el.replayBtn.style.display = reel ? 'none' : '';   // pas de réécoute en Réel
+    }
   }else{
     el.atcBox.style.display='none';
     el.replayBtn.style.display='none';
   }
-  maybeSpeakTraffic(step);   // AFIS : on entend aussi les autres appareils sur la fréquence
+  // Sur la fréquence ATIS on n'entend QUE l'ATIS : aucun appareil n'y émet.
+  if(!step.atisStep) maybeSpeakTraffic(step);   // AFIS : on entend aussi les autres appareils
   el.situationBox.style.display = step.situation ? '' : 'none';
   el.situationBox.textContent = step.situation ? fillDisplay(step.situation) : '';
   el.consigne.innerHTML = 'À vous : <b>'+escapeHtml(step.consigne||'')+'</b>';
@@ -4960,11 +5113,56 @@ function scMajRadio(){
       ' est sur '+scFmt(s.freq)+'. Affichez-la en standby puis permutez.';
     a.classList.add('alerte');
   } else { a.textContent=''; a.classList.remove('alerte'); }
+  scMajEcouteAtis();          // se caler sur l'ATIS le lance, s'en écarter le coupe
 }
 function scBonneFreq(){
   var s=currentStep();
   if(!s || !s.freq || !scRadioManuelle()) return true;
   return scRadio.act!=null && Math.abs(Number(scRadio.act)-Number(s.freq))<0.0005;
+}
+
+/* ================= DIFFUSION ATIS EN BOUCLE (Scénarios) =================
+   Un ATIS tourne sans interruption : on ne l'« appelle » pas, on se cale sur sa
+   fréquence et on attend le passage qui nous intéresse. Il ne doit donc
+   s'entendre QUE lorsque le poste affiche cette fréquence, et se taire dès qu'on
+   se cale ailleurs — exactement comme dans le module Navigation. Le message
+   partait auparavant dès l'affichage de l'étape, quelle que soit la fréquence
+   réglée, et une seule fois. */
+var scAtisBoucle=null;
+function scArreterAtis(){
+  if(!scAtisBoucle) return;
+  scAtisBoucle.actif=false; clearTimeout(scAtisBoucle.t); scAtisBoucle=null;
+  Voix.stop();
+}
+function scLancerAtis(texte){
+  if(scAtisBoucle) return;                     // déjà en diffusion
+  var b={actif:true,t:null}; scAtisBoucle=b;
+  if(!window.speechSynthesis) return;
+  function tour(){
+    if(!b.actif || scAtisBoucle!==b) return;
+    Voix.parler(fillSpeech(texte), {
+      rate:state.voiceRate, pitch:1.0,
+      onDebut:startRadioNoise,
+      onFin:function(){
+        stopRadioNoise();
+        if(!b.actif || scAtisBoucle!==b) return;
+        b.t=setTimeout(tour, 2600);            // pause entre deux diffusions
+      }
+    });
+  }
+  tour();
+}
+/* Appelée à chaque manipulation de la radio : c'est le calage sur la fréquence
+   qui déclenche l'écoute, pas l'affichage de l'étape. */
+VOIX_ARRETS.push(function(){ scArreterAtis(); });
+function scMajEcouteAtis(){
+  var s=currentStep();
+  if(!s || !s.atisStep || !s.atc){ scArreterAtis(); return; }
+  if(scBonneFreq()){
+    if(!scAtisBoucle) scLancerAtis(s.atc);
+  } else {
+    scArreterAtis();
+  }
 }
 function scPoserStby(f){
   if(f==null) return;
@@ -5237,6 +5435,7 @@ function rendreFeedback(box, step, results, corrected, cls){
 }
 
 function evaluate(rawText){
+  scArreterAtis();          // on transmet : on ne reste pas sur la fréquence ATIS
   const step=currentStep();
   if(!step || !step.motsCles) return;
   const corrected = fuzzyCorrect(rawText);      // normalisé + corrigé (section D2/D3)
@@ -5274,6 +5473,7 @@ function tauxReussite(found,total){
   return Math.round(found/total*100)+' % de réussite';
 }
 function showRecap(){
+  scArreterAtis();          // fin de session : plus rien ne doit parler
   if(listening) stopListening();
   const sc=SCENARIOS[state.scenarioIndex];
   // Score de CE scénario
@@ -7730,48 +7930,30 @@ function oaciSonde(couche, surAbsenceTotale){
   function arreterAtis(){
     if(!atisBoucle) return;
     atisBoucle.actif=false; clearTimeout(atisBoucle.t); atisBoucle=null;
-    voixCouper();          // annulation protegee, comme partout ailleurs
-    stopRadioNoise();
+    Voix.stop();          // arret franc : aucune reprise en attente ne survit
   }
+  VOIX_ARRETS.push(function(){ arreterAtis(); });
+  /* Le decoupage en courtes phrases et la resistance aux blocages de Chrome sont
+     desormais assures par le moteur de parole (voir Voix, section 5). Ici on ne
+     s'occupe plus que de la BOUCLE : on redit le message apres une courte pause,
+     tant qu'on reste cale sur la frequence. */
   function lancerAtis(texte){
     if(atisBoucle) return;                       // deja en diffusion
-    if(!window.speechSynthesis){ atisBoucle={actif:true,t:null}; return; }
     var b={actif:true,t:null}; atisBoucle=b;
-    /* DECOUPAGE EN PHRASES. Chrome interrompt une utterance qui depasse une
-       quinzaine de secondes. Un ATIS complet fait ~385 caracteres une fois les
-       chiffres enonces un par un, soit une trentaine de secondes : il etait donc
-       coupe, voire jamais entendu. Une parade par resume() periodique avait ete
-       essayee puis retiree — elle ranimait la lecture et rendait l'ATIS impossible
-       a arreter.
-       On enonce donc les phrases A LA SUITE, chacune dans sa propre utterance :
-       la plus longue fait ~7 s, aucune n'atteint le seuil. On n'annule QU'AU
-       DEMARRAGE : un cancel() entre deux phrases couperait la diffusion. */
-    var phrases = fillSpeech(texte).split(/\.\s+/)
-                    .map(function(x){ return x.trim(); })
-                    .filter(Boolean)
-                    .map(function(x){ return /[.!?]$/.test(x) ? x : x+'.'; });
-    function dire(i){
-      if(!b.actif || !F.running) return;
-      if(i>=phrases.length){                    // message termine : on reprend au debut
-        stopRadioNoise();
-        b.t=setTimeout(function(){ dire(0); }, 2600);
-        return;
-      }
-      var u=new SpeechSynthesisUtterance(phrases[i]);
-      /* Meme precaution que dans speakATC : Chrome renouvelle sa liste de voix et
-         une reference perimee donne une utterance muette. */
-      var dispo=speechSynthesis.getVoices()||[];
-      if(frVoice && dispo.indexOf(frVoice)===-1) pickVoice();
-      u.lang='fr-FR'; if(frVoice) u.voice=frVoice;
-      u.rate=state.voiceRate; u.pitch=1.0;
-      if(i===0) u.onstart=startRadioNoise;
-      u.onend  =function(){ if(b.actif) dire(i+1); };
-      u.onerror=function(){ stopRadioNoise();
-                            if(b.actif) b.t=setTimeout(function(){ dire(0); },4000); };
-      speechSynthesis.speak(u);
+    if(!window.speechSynthesis) return;
+    function tour(){
+      if(!b.actif || !F.running || atisBoucle!==b) return;
+      Voix.parler(fillSpeech(texte), {
+        rate:state.voiceRate, pitch:1.0,
+        onDebut:startRadioNoise,
+        onFin:function(){
+          stopRadioNoise();
+          if(!b.actif || atisBoucle!==b) return;
+          b.t=setTimeout(tour, 2600);            // pause entre deux diffusions
+        }
+      });
     }
-    voixCouper();                               // une seule fois, avant la 1re phrase
-    dire(0);
+    tour();
   }
   /* Appelee a chaque manipulation de la radio : c'est le calage sur la frequence
      qui declenche l'ecoute, pas l'affichage de l'etape. */
@@ -7780,7 +7962,20 @@ function oaciSonde(couche, surAbsenceTotale){
     if(!F.running || !s || !s.atisStep){ arreterAtis(); return; }
     if(surBonneFreq()){
       if(!atisBoucle){
-        messageATC(s.stn, s.atcBefore, false, true);   // affichage seul : la boucle parle
+        /* Affichage propre à l'ATIS. On n'emprunte PAS messageATC() : en mode Réel
+           celui-ci pose un bouton « Réécouter » qui, en relançant une parole,
+           coupait la diffusion en cours et tuait la boucle pour de bon — alors
+           qu'un ATIS repasse tout seul. Il consigne aussi une ligne de journal à
+           dévoiler « après la réponse », or on ne répond pas sur cette fréquence :
+           la ligne serait restée masquée jusqu'à la fin du vol. */
+        if(level!=='reel'){
+          $v('vfAtc').innerHTML='<b>'+esc(s.stn||'ATIS')+' :</b> '+esc(fillDisplay(s.atcBefore));
+          vfLog('atc', fillDisplay(s.atcBefore));
+        } else {
+          $v('vfAtc').innerHTML='<div class="vf-ecoute"><span class="qui">'+ICONS.son+
+            esc(s.stn||'ATIS')+' — diffusion en cours, elle repasse en boucle.</span></div>';
+          vfLog('sys','Écoute de l\'ATIS sur '+fmtF(s.freq)+'.');
+        }
         lancerAtis(s.atcBefore);
       }
     } else {

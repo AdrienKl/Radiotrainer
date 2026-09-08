@@ -6920,11 +6920,14 @@ function oaciSonde(couche, surAbsenceTotale){
       push({ ph:'Écoute ATIS', src:'p. 213', stn:C.dep.nom+' ATIS', freq:C.atis.freq, leg:0,
         atcBefore:C.atis.texte,
         reel:'Affichez '+C.atis.freq.toFixed(3)+' et écoutez l\'ATIS.',
+        /* On n'ÉMET RIEN sur la fréquence ATIS : c'est une diffusion en boucle,
+           personne n'écoute en face. Annoncer la lettre ici n'a aucun sens — elle
+           se donne au contrôleur, plus tard, au premier appel. L'étape n'a donc ni
+           phrase attendue ni mots-clés : on écoute, on note, on passe à la suite. */
         consigne:'Affichez la fréquence ATIS ('+C.atis.freq.toFixed(3)+') et écoutez le message. '+
-                 'Annoncez ensuite la lettre d\'information reçue — c\'est elle que vous donnerez au contrôleur.',
-        attendu:'Information {ATIS}.',
-        motsCles:[ {label:'Information',variantes:['information','info','j ai information','avec information']},
-                   {label:'Lettre d\'information',variantes:atisVars(C.atis)} ],
+                 'Notez la piste en service, le QNH et la lettre d\'information — '+
+                 'c\'est elle que vous donnerez au contrôleur à votre premier appel. '+
+                 'Passez à la suite quand vous avez tout noté.',
         atisStep:true });
     }
 
@@ -8127,7 +8130,15 @@ function oaciSonde(couche, surAbsenceTotale){
     $v('vfPhase').textContent=s.ph;
     $v('vfSrc').textContent='Manuel DSNA '+s.src;
     $v('vfBar').style.width=Math.round((F.i/F.steps.length)*100)+'%';
-    $v('vfTrans').textContent=''; $v('vfFb').innerHTML=''; $v('vfNext').disabled=true;
+    $v('vfTrans').textContent=''; $v('vfFb').innerHTML='';
+    /* Étape d'écoute pure (ATIS) : rien à transmettre, donc pas de micro ni de zone
+       de réponse — et « Suivant » disponible tout de suite. Sans ça on restait
+       bloqué, le bouton n'étant débloqué que par une réponse validée. */
+    var ecoute = !!s.atisStep;
+    $v('vfTransWrap').classList.toggle('hidden', ecoute);
+    $v('vfPtt').classList.toggle('hidden', ecoute);
+    $v('vfHint').classList.toggle('hidden', ecoute);
+    $v('vfNext').disabled = !ecoute;
     $v('vfTransText').value=''; $v('vfValider').disabled=true;
     movePlane(s.leg);
     var atc=$v('vfAtc');
@@ -8223,7 +8234,12 @@ function oaciSonde(couche, surAbsenceTotale){
      l'on parle, écran de vol à l'appui. Les tuiles OACI étant désormais gravées
      jusqu'au zoom carte 11 (planches reprises à 600 dpi, cf. commentaire de la
      couche), le suivi en vol gagne un cran et se cale sur OpenStreetMap. */
-  function zoomVol(){ return 11; }
+  /* Zoom de suivi en vol. 10 et non 11 : au zoom 11 on a le nez sur la carte et on
+     perd la situation générale, alors qu'en vol on veut voir venir. Les tuiles OACI
+     sont natives jusqu'au zoom 11, la netteté n'entre donc plus en ligne de compte
+     — c'est un choix de cadrage, pas de piqué. Valeur fixe : le cadrage de départ
+     est le même à chaque vol. */
+  function zoomVol(){ return 10; }
   function movePlane(t){
     if(!map||t==null) return;
     var p=legPoint(t);

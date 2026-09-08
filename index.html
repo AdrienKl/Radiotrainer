@@ -183,6 +183,18 @@
   .sc-btn{text-align:left; cursor:pointer; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--ink); padding:17px; font-size:14.5px; font-weight:600; box-shadow:var(--shadow-sm); transition:transform .16s, box-shadow .18s, border-color .18s}
   .sc-btn .num{display:block; font-family:var(--mono); color:var(--violet); font-size:11.5px; font-weight:700; margin-bottom:7px}
   .sc-btn:hover{transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:#d3d6e2}
+  /* Carte de scénario : titre, une ligne de contenu, puis les conditions de jeu.
+     Elle porte maintenant assez d'information pour choisir sans deviner. */
+  .sc-btn{ display:flex; flex-direction:column; gap:6px; }
+  .sc-btn .sc-t{ font-size:15px; font-weight:800; color:var(--ink); line-height:1.3; }
+  .sc-btn .sc-d{ font-size:12.5px; font-weight:400; color:var(--ink-2); line-height:1.5; }
+  .sc-btn .sc-tags{ display:flex; flex-wrap:wrap; gap:5px; margin-top:3px; }
+  .sc-btn .sc-tags i{ font-style:normal; font-family:var(--mono); font-size:9.5px;
+    letter-spacing:.05em; text-transform:uppercase; font-weight:700; color:var(--ink-2);
+    background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--pill); padding:2px 7px; }
+  .sc-btn .sc-tags i.urg{ color:#96332f; background:rgba(199,74,74,.10); border-color:rgba(199,74,74,.32); }
+  .scenarios{ grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr)); }
   .sc-btn[aria-current="true"]{border-color:var(--violet); box-shadow:0 0 0 2px var(--violet-soft), var(--shadow-md)}
 
   /* ---------- Panel ---------- */
@@ -757,7 +769,8 @@
   .vf-transwrap.ecoute label,
   .vf-transwrap.ecoute textarea,
   .vf-transwrap.ecoute .valider,
-  .vf-transwrap.ecoute #vfRerec{ display:none; }
+  .vf-transwrap.ecoute #vfRerec,
+  .vf-transwrap.ecoute #reRecordBtn{ display:none; }
   .vf-transwrap.ecoute .vf-transact{ margin-top:0; }
   .vf-transwrap label{ display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
     text-transform:uppercase; color:var(--ink-2); margin-bottom:6px; }
@@ -766,7 +779,9 @@
     font-family:var(--mono); font-size:14px; line-height:1.5; color:var(--ink); }
   .vf-transwrap textarea:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
   .vf-transact{ display:flex; gap:8px; margin-top:9px; flex-wrap:wrap; }
-  .vf-transact .btn{ flex:1; }
+  /* Trois boutons sur une ligne : sans largeur plancher, « Valider ma réponse »
+     se coupait en deux lignes au milieu d'une rangée par ailleurs à l'aise. */
+  .vf-transact .btn{ flex:1 1 auto; min-width:158px; }
   .vf-trans{ font-family:var(--mono); font-size:12.5px; color:var(--ink-2); background:var(--surface-2);
     border:1px dashed var(--border); border-radius:9px; padding:9px 11px; margin-top:11px; min-height:16px;
     word-break:break-word; }
@@ -788,6 +803,72 @@
   .vf-log .r.atc{ color:var(--violet-dark); }
   .vf-log .r.you{ color:var(--ink); }
   .vf-log .r.sys{ color:var(--ink-2); }
+
+  /* =========================================================================
+     SCÉNARIOS — session en direct
+     Le module reprend la charpente du vol Navigation (.vf-*) : bandeau d'accord,
+     pile avionique, deux colonnes. Ne restent ici que les pièces qui lui sont
+     propres — la fiche du terrain, qui prend la place de la carte, et le
+     débriefing.
+     ========================================================================= */
+  .sc-fiche{ order:2; position:sticky; top:14px; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius); padding:17px 19px;
+    box-shadow:var(--shadow); }
+  .sc-fiche-tete{ display:flex; align-items:center; justify-content:space-between;
+    gap:10px; margin-bottom:12px; }
+  .sc-fiche h3{ font-family:var(--sans); font-size:15.5px; font-weight:800; color:var(--ink);
+    margin:0; line-height:1.25; }
+  .sc-fiche-tag{ flex:none; font-family:var(--mono); font-size:10px; letter-spacing:.07em;
+    text-transform:uppercase; font-weight:700; color:var(--violet-dark);
+    background:var(--violet-soft); border:1px solid var(--violet);
+    border-radius:var(--pill); padding:3px 9px; white-space:nowrap; }
+  .sc-fiche-tag:empty{ display:none; }
+  .sc-fiche .terrain-toggle{ margin-bottom:14px; }
+  .sc-fiche-l{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 15px;
+    margin:0; font-size:13.5px; align-items:baseline; }
+  .sc-fiche-l dt{ font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-2); white-space:nowrap; }
+  .sc-fiche-l dd{ margin:0; color:var(--ink); }
+  .sc-fiche-l dd b{ font-family:var(--mono); font-weight:700; }
+  .sc-fiche-l:empty{ display:none; }
+  .sc-fiche-note{ margin:14px 0 0; padding-top:12px; border-top:1px solid var(--border);
+    font-size:12px; line-height:1.55; color:var(--ink-2); }
+  .sc-fiche-note:empty{ display:none; padding:0; border:none; }
+
+  /* Débriefing de session — même boîte que celui du vol. */
+  .sc-score{ font-family:var(--mono); font-size:33px; line-height:1.1; color:var(--violet);
+    font-weight:700; margin:2px 0 14px; }
+  .sc-score small{ display:block; font-family:var(--sans); font-size:13px;
+    color:var(--ink-2); font-weight:600; margin-top:5px; }
+  .sc-recap-l{ margin:0 0 18px; padding-left:19px; font-size:13.5px; line-height:1.75;
+    color:var(--ink-2); }
+  .sc-manques{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
+    padding:13px 16px; margin:0 0 18px; }
+  .sc-manques h4{ font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-2); margin:0 0 6px; font-weight:700; }
+  .sc-manques p{ margin:0; font-size:13.5px; line-height:1.6; color:var(--ink); }
+
+  /* Pendant une session on ne montre QUE la session : le configurateur et la
+     grille de scénarios restaient sous le panneau, si bien qu'on répondait au
+     contrôleur avec le formulaire de réglages sous les yeux. Même principe que
+     body.in-flight en Navigation. */
+  body.in-session #page-exercices .config,
+  body.in-session #page-exercices .scenarios,
+  body.in-session #page-exercices .section-sub,
+  body.in-session #page-exercices #noreco,
+  body.in-session #page-exercices #historyPanel,
+  /* Le débriefing prend lui aussi toute la place : affiché sous le configurateur
+     et les sept cartes, il atterrissait tout en bas de la page, là où on ne le
+     voyait qu'après un long défilement. */
+  body.in-recap #page-exercices .config,
+  body.in-recap #page-exercices .scenarios,
+  body.in-recap #page-exercices .section-sub,
+  body.in-recap #page-exercices #noreco{ display:none; }
+
+  @media (max-width:980px){
+    .vf-layout{ grid-template-columns:minmax(0,1fr); }
+    .sc-fiche{ position:static; order:0; }
+  }
 
   /* Marqueur avion sur la carte pendant le vol */
   .vf-plane{ font-size:0; }
@@ -1695,38 +1776,26 @@
 
         <div class="scenarios" id="scenarios"></div>
 
-        <section class="panel hidden" id="panel" aria-live="polite">
-          <div class="panel-top">
-            <div class="stepline">
-              <span id="stepLabel">Échange 1</span>
-              <span class="scall" id="scCall" title="Votre indicatif">—</span>
-              <span class="dots" id="dots"></span>
+        <!-- ==================== SESSION EN DIRECT ====================
+             Même architecture que le vol Navigation, et pour les mêmes raisons :
+             un bandeau d'accord toujours visible (indicatif, station appelée,
+             fréquence active, ATIS), la pile avionique juste dessous, puis deux
+             colonnes — l'échange à gauche, la fiche du terrain à droite.
+             L'ancien panneau empilait tout en une colonne : on ne savait ni sur
+             quelle fréquence on émettait, ni où l'on en était dans la session. -->
+        <section class="nav-flight hidden" id="panel" aria-live="polite">
+          <div class="vf-top">
+            <div class="vf-tune">
+              <span class="vf-call" id="scCall" title="Votre indicatif">—</span>
+              <span class="vf-station" id="scStation">—</span>
+              <span class="vf-freq" id="scFreq">—</span>
+              <span class="vf-atis hidden" id="scAtisChip"></span>
             </div>
-            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end">
-              <div class="terrain-toggle" id="terrainToggle"></div>
-              <div class="meteo" id="meteo"></div>
-            </div>
+            <div class="vf-prog"><div class="vf-bar" id="scBar"></div></div>
+            <button class="btn ghost vf-quit" id="scQuit" type="button">Terminer la session</button>
           </div>
 
-          <div class="atc-line" id="atcBox">
-            <div class="who">ATC — <span id="atcStation"></span></div>
-            <div class="txt" id="atcTxt"></div>
-          </div>
-
-          <div class="situation" id="situationBox"></div>
-          <div class="consigne" id="consigne"></div>
-
-          <div class="controls" id="controls">
-            <button class="btn ptt" id="pttBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg>Parler (PTT)</button>
-            <button class="btn small" id="replayBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a4 4 0 0 1 0 7"/><path d="M18.5 6a7 7 0 0 1 0 12"/></svg>Réécouter l'ATC</button>
-            <button class="btn small" id="hintBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 18h5M10 21h4"/><path d="M12 3a6 6 0 0 0-3.8 10.6c.6.5 1 1 1.1 1.9h5.4c.1-.9.5-1.4 1.1-1.9A6 6 0 0 0 12 3z"/></svg>Réponse</button>
-            <button class="btn small" id="nextBtn" type="button" disabled>Échange suivant<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-          </div>
-
-          <!-- Radio COM : n'apparaît que sur les échanges qui portent une fréquence
-               (scénario Navigation / croisière). Même mécanique qu'en vol. -->
-          <!-- Pile avionique des Scénarios : n'apparaît que sur les exercices qui
-               comportent un changement de fréquence ou un code transpondeur. -->
+          <div class="avio-rang">
           <div class="avio hidden" id="scAvio">
             <div class="radio hidden" id="scRadio" data-skin="generic">
               <div class="radio-corps">
@@ -1774,42 +1843,89 @@
             </div>
           </div>
 
-          <div class="trans-wrap" id="transWrap">
-            <label for="transText">Transcription (modifiable avant validation)</label>
-            <textarea id="transText" placeholder="Ce que le micro a entendu s'affiche ici — corrigez si besoin, puis validez."></textarea>
-            <div class="trans-actions">
-              <button class="btn small valider" id="validerBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Valider ma réponse</button>
-              <button class="btn small" id="reRecordBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v5h-5"/></svg>Réenregistrer</button>
+            <!-- Photo d'avion, tirée au sort à chaque session. Purement décorative. -->
+            <figure class="vf-avion" id="scAvion" aria-hidden="true">
+              <img id="scAvionImg" alt="">
+              <figcaption id="scAvionLeg"></figcaption>
+            </figure>
+          </div>
+
+          <div class="vf-layout">
+            <div class="vf-radio">
+              <div class="vf-phase"><span id="stepLabel">—</span><span class="vf-src" id="scSrc"></span></div>
+
+              <div class="vf-atc" id="atcBox"><b id="atcStation"></b><span id="atcTxt"></span></div>
+              <div class="vf-situation hidden" id="situationBox"></div>
+              <div class="vf-consigne" id="consigne">—</div>
+
+              <button class="vf-ptt" id="pttBtn" type="button">
+                <svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg>
+                <span>Maintenir pour parler</span>
+              </button>
+              <p class="vf-noreco hidden" id="scNoreco">Reconnaissance vocale indisponible sur ce navigateur (utilisez Chrome ou Edge). Vous pouvez tout de même écouter le contrôleur et taper votre réponse.</p>
+
+              <div class="vf-transwrap" id="transWrap">
+                <label for="transText">Transcription (modifiable avant validation)</label>
+                <textarea id="transText" rows="2" placeholder="Ce que le micro a entendu s'affiche ici — corrigez si besoin, puis validez."></textarea>
+                <div class="vf-transact">
+                  <button class="btn small valider" id="validerBtn" type="button" disabled><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Valider ma réponse</button>
+                  <button class="btn small" id="reRecordBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v5h-5"/></svg>Réenregistrer</button>
+                  <!-- « Suivant » vit ici, sous la transcription, comme en Navigation :
+                       il était en bas du panneau, ce qui obligeait à redescendre puis
+                       remonter au micro à chaque échange. -->
+                  <button class="btn small cta" id="nextBtn" type="button" disabled>Suivant<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+                </div>
+              </div>
+
+              <div class="vf-fb" id="feedback"></div>
+
+              <div class="hint hidden" id="hint">
+                <span class="label">Phrase attendue (dérivée de la référence — à valider avec votre instructeur)</span>
+                <span id="hintTxt"></span>
+              </div>
+
+              <div class="choice hidden" id="choiceBox">
+                <div class="q" id="choiceQ"></div>
+                <div class="opts" id="choiceOpts"></div>
+              </div>
+
+              <div class="vf-actions">
+                <button class="btn small" id="hintBtn" type="button">Réponse</button>
+                <button class="btn small" id="replayBtn" type="button">Réécouter</button>
+                <button class="btn small" id="skipBtn" type="button">Passer</button>
+              </div>
+
+              <div class="vf-log" id="log" aria-live="polite"></div>
             </div>
-          </div>
 
-          <div class="feedback" id="feedback"></div>
-
-          <div class="hint hidden" id="hint">
-            <span class="label">Phrase attendue (dérivée de la référence — à valider avec votre instructeur)</span>
-            <span id="hintTxt"></span>
-          </div>
-
-          <div class="choice hidden" id="choiceBox">
-            <div class="q" id="choiceQ"></div>
-            <div class="opts" id="choiceOpts"></div>
+            <!-- Colonne de droite : la fiche du terrain. En Navigation c'est la carte
+                 qui occupe cette place ; ici, ce sont les paramètres qu'on doit avoir
+                 sous les yeux pour parler juste — piste en service, vent, QNH, lettre
+                 d'information — et qu'il fallait auparavant retrouver dans le journal. -->
+            <aside class="sc-fiche" id="scFiche">
+              <div class="sc-fiche-tete">
+                <h3 id="scFicheNom">Terrain</h3>
+                <span class="sc-fiche-tag" id="scFicheTag"></span>
+              </div>
+              <div class="terrain-toggle" id="terrainToggle"></div>
+              <dl class="sc-fiche-l" id="meteo"></dl>
+              <p class="sc-fiche-note" id="scFicheNote"></p>
+            </aside>
           </div>
         </section>
 
-        <section class="recap hidden" id="recap">
-          <h2>Récapitulatif</h2>
-          <div class="score"><span id="scoreNum">0</span></div>
-          <ul id="recapList"></ul>
-          <div class="controls" style="margin-top:12px">
+        <!-- Débriefing de fin de session, calqué sur celui du vol. -->
+        <section class="nav-recap hidden" id="recap">
+          <h3>Débriefing de la session</h3>
+          <div class="sc-score"><span id="scoreNum">0</span></div>
+          <ul class="sc-recap-l" id="recapList"></ul>
+          <div class="sc-manques" id="scRecapManques"></div>
+          <div class="vf-actions">
+            <button class="btn small cta" id="restartBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v5h-5"/></svg>Recommencer</button>
             <button class="btn small" id="copyBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M15 5h2a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>Copier le récap</button>
-            <button class="btn small" id="restartBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v5h-5"/></svg>Recommencer ce scénario</button>
+            <button class="btn small" id="backBtn" type="button">Retour aux scénarios</button>
           </div>
         </section>
-
-        <div class="logwrap">
-          <h2>Journal radio</h2>
-          <div class="log" id="log"><span class="empty">— Choisissez un aérodrome puis un scénario pour commencer —</span></div>
-        </div>
       </div>
     </section>
 
@@ -2200,10 +2316,31 @@
       <div class="container">
         <h2 class="section-title">Votre progression</h2>
         <p class="section-sub">Historique et badges enregistrés sur cet appareil (rien n'est envoyé sur Internet).</p>
-        <details class="history" id="historyPanel">
-          <summary>Historique des scores</summary>
-          <div id="historyBody"></div>
-        </details>
+        <!-- Historique repris de la Navigation : un en-tête repliable qui donne
+             d'emblée le dernier résultat et le nombre de sessions, des lignes
+             cliquables, et le détail d'une session sous forme de tuiles. Le tableau
+             précédent alignait cinq colonnes de texte sans jamais dire ce qui avait
+             manqué. -->
+        <div class="nav-hist" id="historyPanel" hidden>
+          <button class="nav-hist-head" id="scHistHead" type="button" aria-expanded="false">
+            <span class="nhh-l">
+              <span class="nhh-t">Historique des sessions</span>
+              <span class="nhh-s" id="scHistLast">—</span>
+            </span>
+            <span class="nhh-r"><span class="nhh-n" id="scHistCount">0</span>
+              <svg class="ic-svg nhh-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+          </button>
+          <div class="nav-hist-body hidden" id="historyBody"></div>
+        </div>
+        <div class="nav-hist-detail hidden" id="scHistDetail">
+          <button class="btn small" id="scHistBack" type="button">Retour à la liste</button>
+          <h3 id="scHistTitle">Session</h3>
+          <div id="scHistScore"></div>
+          <div class="nav-hist-actions">
+            <button class="btn small cta" id="scHistRefaire" type="button">Refaire ce scénario</button>
+            <button class="btn small" id="scHistClear" type="button">Effacer l'historique</button>
+          </div>
+        </div>
         <div class="badges" id="badgesPanel">
           <h3>Objectifs / badges</h3>
           <div class="badge-grid" id="badgeGrid"></div>
@@ -3974,6 +4111,11 @@ function voixCouperTout(){
 /* Quitter la page ou masquer l'onglet doit couper la radio : sans ca, un ATIS
    lance continuait a parler par-dessus le reste de l'application. */
 window.addEventListener('rt:page', voixCouperTout);
+/* Changer de page ferme la session et le debriefing : sans cela, revenir sur les
+   Scenarios montrait un configurateur masque, sans moyen de relancer quoi que ce soit. */
+window.addEventListener('rt:page', function(){
+  document.body.classList.remove('in-session','in-recap');
+});
 document.addEventListener('visibilitychange', function(){
   if(document.hidden) voixCouperTout();
 });
@@ -4167,8 +4309,12 @@ const ICONS = {
 
 function pttUI(on){
   if(recoSink && recoSink.ui){ recoSink.ui(on); return; }   // module Vol : son propre bouton
+  /* On ne reconstruit PLUS le contenu du bouton : il porte maintenant la même
+     structure que celui du vol (icône + libellé dans un <span>), et la réécrire
+     effaçait l'icône. On ne touche qu'au libellé et à l'état visuel. */
   el.pttBtn.classList.toggle('listening', on);
-  el.pttBtn.innerHTML = on ? '<span class="rec-dot"></span>Écoute… (relâchez pour arrêter)' : ICONS.mic+'Parler (PTT)';
+  var sp = el.pttBtn.querySelector('span');
+  if(sp) sp.textContent = on ? 'Écoute… relâchez pour arrêter' : 'Maintenir pour parler';
 }
 
 /* Étape 2 — « push-to-talk » maintenu (comme un vrai PTT avion) : le micro écoute UNIQUEMENT
@@ -4399,15 +4545,20 @@ function freqScenario(stn, controlled){
    contrôleur à l'appel suivant (manuel DSNA p. 39 et p. 213). */
 function tourAtis(){
   const a=state.atis;
+  /* ÉCOUTE PURE. On n'émet RIEN sur une fréquence ATIS : c'est une diffusion en
+     boucle, personne n'y répond. L'étape demandait auparavant d'annoncer la lettre
+     sur cette fréquence — une faute de phraséologie enseignée par l'exercice — et,
+     comme elle portait des mots-clés, elle comptait de surcroît comme un échange
+     raté dans le débriefing puisqu'on ne peut pas y répondre. La lettre reçue se
+     donne au PREMIER APPEL à l'organisme, où elle est bien notée (atisMot).
+     Même correction que celle déjà faite dans le vol Navigation. */
   return { stn:'sol', station:a.nom+' ATIS', freq:a.freq, premierContact:true,
-    atisStep:true,                      // diffusion en boucle, calee sur SA fréquence
+    atisStep:true,                      // diffusion en boucle, calée sur SA fréquence
     atc:[a.texte],
     situation:"Avant tout appel, vous écoutez l'ATIS de "+a.nom+".",
-    consigne:"Affichez la fréquence ATIS ("+a.freq.toFixed(3)+") sur le poste, écoutez le message, "+
-             "puis annoncez la lettre d'information reçue.",
-    attendu:"Information {ATIS}.",
-    motsCles:[ {label:"Information",variantes:["information","info"]},
-               {label:"Lettre d'information",variantes:atisVars(a)} ] };
+    consigne:"Affichez la fréquence ATIS ("+a.freq.toFixed(3)+") sur le poste et écoutez le "+
+             "message. Retenez la lettre d'information : vous l'annoncerez à votre premier "+
+             "appel au contrôle. N'émettez rien sur cette fréquence." };
 }
 
 /* Météo + piste en service (section B & G) */
@@ -4622,16 +4773,23 @@ const el={
   depCtrlSelect:$('depCtrlSelect'), arrCtrlSelect:$('arrCtrlSelect'),
   difficultySelect:$('difficultySelect'), badgeGrid:$('badgeGrid'),
   scenarios:$('scenarios'), panel:$('panel'),
-  stepLabel:$('stepLabel'), dots:$('dots'), terrainToggle:$('terrainToggle'), meteo:$('meteo'),
+  stepLabel:$('stepLabel'), terrainToggle:$('terrainToggle'), meteo:$('meteo'),
   atcBox:$('atcBox'), atcStation:$('atcStation'), atcTxt:$('atcTxt'),
-  situationBox:$('situationBox'), consigne:$('consigne'), controls:$('controls'),
+  situationBox:$('situationBox'), consigne:$('consigne'),
   pttBtn:$('pttBtn'), replayBtn:$('replayBtn'), hintBtn:$('hintBtn'), nextBtn:$('nextBtn'),
+  skipBtn:$('skipBtn'), backBtn:$('backBtn'), quitBtn:$('scQuit'),
   transWrap:$('transWrap'), transText:$('transText'), validerBtn:$('validerBtn'), reRecordBtn:$('reRecordBtn'),
   feedback:$('feedback'), hint:$('hint'), hintTxt:$('hintTxt'),
   choiceBox:$('choiceBox'), choiceQ:$('choiceQ'), choiceOpts:$('choiceOpts'),
   recap:$('recap'), scoreNum:$('scoreNum'), recapList:$('recapList'), copyBtn:$('copyBtn'), restartBtn:$('restartBtn'),
   historyPanel:$('historyPanel'), historyBody:$('historyBody'), scCall:$('scCall'),
-  log:$('log'), noreco:$('noreco'), toast:$('toast')
+  log:$('log'), noreco:$('noreco'), toast:$('toast'),
+  /* Bandeau d'accord + fiche terrain : les repères permanents du vol Navigation,
+     désormais présents aussi en Scénarios. */
+  scStation:$('scStation'), scFreq:$('scFreq'), scAtisChip:$('scAtisChip'), scBar:$('scBar'),
+  scSrc:$('scSrc'), scNoreco:$('scNoreco'),
+  scFicheNom:$('scFicheNom'), scFicheTag:$('scFicheTag'), scFicheNote:$('scFicheNote'),
+  scAvion:$('scAvion'), scAvionImg:$('scAvionImg'), scAvionLeg:$('scAvionLeg')
 };
 
 /* --- Autocomplete aérodrome --- */
@@ -4702,10 +4860,35 @@ el.noiseToggle.addEventListener('change', ()=>{
 });
 
 /* --- Boutons scénario --- */
+/* Ce que contient chaque scénario, en une ligne. La grille ne montrait qu'un
+   numéro et un titre : on choisissait à l'aveugle, sans savoir quels échanges on
+   allait devoir tenir ni ce que l'exercice demandait comme terrain. Les renvois
+   sont ceux déjà cités dans les échanges eux-mêmes. */
+const SC_DESC={
+  roulage:     "Du parking au point d'attente : demande de mise en route, puis de roulage. Manuel p. 39-44.",
+  decollage:   "Alignement, clairance de décollage et collationnement. Manuel p. 53-59.",
+  integration: "Arrivée sur un terrain : verticale, circuit, finale et atterrissage. Manuel p. 150-160.",
+  tourdepiste: "Un tour complet : vent arrière, base, finale, puis touch-and-go ou complet.",
+  navigation:  "En croisière avec un organisme d'information : contact, position, transit.",
+  urgence:     "Détresse et urgence : Mayday et Pan Pan, dans l'ordre imposé. Manuel p. 231.",
+  panneradio:  "Quiz de procédure : que faire, et dans quel ordre, en panne de radio. Manuel p. 246."
+};
+/* Terrain nécessaire pour lancer l'exercice — un scénario d'arrivée se joue sur le
+   terrain d'arrivée, deux d'entre eux n'en demandent aucun. */
+function scBesoinTerrain(sc){
+  if(sc.noTerrain) return 'Sans aérodrome';
+  return sc.defaultTerrain==='arr' ? "Terrain d'arrivée" : 'Terrain de départ';
+}
 SCENARIOS.forEach((sc,i)=>{
   const b=document.createElement('button');
   b.className='sc-btn'; b.type='button';
-  b.innerHTML='<span class="num">Scénario '+(i+1)+'</span>'+sc.titre;
+  b.innerHTML='<span class="num">Scénario '+(i+1)+'</span>'
+    +'<span class="sc-t">'+escapeHtml(sc.titre)+'</span>'
+    +'<span class="sc-d">'+escapeHtml(SC_DESC[sc.id]||'')+'</span>'
+    +'<span class="sc-tags"><i>'+escapeHtml(scBesoinTerrain(sc))+'</i>'
+    +(sc.controllable?'<i>Contrôlé ou AFIS</i>':'')
+    +(sc.emergency?'<i class="urg">Urgence</i>':'')
+    +(sc.quiz?'<i>Quiz</i>':'')+'</span>';
   // Changer de scénario en pleine session efface l'échange en cours : on demande.
   b.addEventListener('click', ()=>{
     if(!scenarioEnCours() || i===state.scenarioIndex) return launchScenario(i);
@@ -4843,9 +5026,16 @@ function startWithTerrain(){
   scRadio.act=null; scRadio.stby=null; scRadio.attendue=null;
   for(const st of state.queue){ if(st.freq!=null && !(state.atis && st.freq===state.atis.freq)){ scRadio.act=Number(st.freq); break; } }
   scEchecFreq=0; scEchecCode=0; scAttend7600=false;
+  state.atisEcoute=false;
   if(listening) stopListening();
   el.recap.classList.add('hidden');
   el.panel.classList.remove('hidden');
+  /* Session en cours : on ne montre que la session, comme en vol. Le configurateur
+     et la grille de scénarios restaient auparavant sous le panneau, si bien qu'on
+     répondait au contrôleur avec le formulaire de réglages sous les yeux. */
+  document.body.classList.add('in-session');
+  document.body.classList.remove('in-recap');
+  scRadioSkin(); scChoisirPhoto();
   // C2 : en examen blanc, journal continu (on ne vide pas entre scénarios).
   clearLog();
   const adLabel = state.activeAd ? (state.activeAd.icao+' '+state.activeAd.nom) : 'sans aérodrome';
@@ -4856,6 +5046,20 @@ function startWithTerrain(){
   maybeInsertAlea(sc);          // C3
   renderTerrainToggle();
   renderStep();
+}
+
+/* Photo d'avion tirée au sort, comme au début d'un vol. Purement décorative : elle
+   ne correspond pas à la machine choisie. Une image absente masque le bloc plutôt
+   que d'afficher un cadre cassé. */
+function scChoisirPhoto(){
+  const fig=el.scAvion; if(!fig) return;
+  const L=(typeof NAV_AVIONS!=='undefined') ? NAV_AVIONS : [];
+  if(!L.length){ fig.style.display='none'; return; }
+  const a=L[Math.floor(Math.random()*L.length)];
+  el.scAvionImg.src='assets/avions/'+a.f; el.scAvionImg.alt=a.nom;
+  el.scAvionLeg.innerHTML='<b>'+escapeHtml(a.nom)+'</b>';
+  el.scAvionImg.onerror=function(){ fig.style.display='none'; };
+  fig.style.display='';
 }
 
 function renderTerrainToggle(){
@@ -4872,16 +5076,83 @@ function renderTerrainToggle(){
   mk('dep', state.depAd, 'Départ');
   mk('arr', state.arrAd, 'Arrivée');
 }
+/* FICHE DU TERRAIN — colonne de droite de la session.
+   Ce sont les paramètres qu'il faut avoir sous les yeux pour parler juste : piste
+   en service, vent, QNH, lettre d'information. Ils n'étaient jusqu'ici qu'une
+   ligne de journal, aussitôt repoussée par les messages suivants. */
+function ligneFiche(dt, dd){ return '<dt>'+escapeHtml(dt)+'</dt><dd>'+dd+'</dd>'; }
 function renderMeteo(){
+  if(!el.meteo) return;
   const sc=SCENARIOS[state.scenarioIndex];
+  const ad=state.activeAd;
+  if(el.scFicheNom) el.scFicheNom.textContent = ad ? ad.nom : 'Sans aérodrome';
+  if(el.scFicheTag){
+    el.scFicheTag.textContent = (ad && sc && sc.controllable)
+      ? (ctrlOf(state.activeSide) ? 'Contrôlé' : 'AFIS')
+      : (ad ? (ad.ctrl ? 'Contrôlé' : 'AFIS') : '');
+  }
+  let h='';
+  if(ad) h+=ligneFiche('OACI','<b>'+escapeHtml(ad.icao)+'</b>');
   if(sc && sc.id==='navigation'){
-    el.meteo.innerHTML = 'Altitude <b>'+state.altCruise+' ft</b> · QNH <b>'+state.meteo.qnh+'</b>';
+    h+=ligneFiche('Altitude','<b>'+state.altCruise+' ft</b>');
+    h+=ligneFiche('QNH','<b>'+state.meteo.qnh+'</b>');
   }else if(sc && sc.id==='panneradio'){
-    el.meteo.innerHTML = 'Quiz de procédure';
-  }else if(!state.activeAd){
-    el.meteo.innerHTML = '';
-  }else{
-    el.meteo.innerHTML = 'Piste <b>'+state.rwy.id+'</b> · Vent <b>'+state.meteo.windDir+'°/'+state.meteo.windForce+'kt</b> · QNH <b>'+state.meteo.qnh+'</b>';
+    h+=ligneFiche('Exercice','Quiz de procédure');
+  }else if(ad){
+    h+=ligneFiche('Piste','<b>'+escapeHtml(state.rwy.id)+'</b>');
+    h+=ligneFiche('Vent','<b>'+state.meteo.windDir+'° / '+state.meteo.windForce+' kt</b>');
+    h+=ligneFiche('QNH','<b>'+state.meteo.qnh+'</b>');
+  }
+  if(state.atis) h+=ligneFiche('ATIS','<b>'+state.atis.freq.toFixed(3)+'</b> · information <b>'+escapeHtml(state.atis.mot)+'</b>');
+  el.meteo.innerHTML=h;
+  if(el.scFicheNote){
+    el.scFicheNote.textContent = state.atis
+      ? "Ce terrain diffuse un ATIS : affichez sa fréquence pour l'écouter, puis annoncez la lettre reçue à votre premier appel."
+      : (ad && !ctrlOf(state.activeSide) && sc && sc.controllable
+          ? "Terrain non contrôlé : vous vous auto-informez, l'agent AFIS ne délivre pas de clairance."
+          : '');
+  }
+}
+
+/* BANDEAU D'ACCORD — indicatif, station appelée, fréquence active, ATIS.
+   Repris du vol : on doit toujours savoir à qui l'on parle et sur quelle
+   fréquence on émet, sans avoir à chercher dans le poste. */
+/* Nom de l'organisme appelé. finalizeStep résout déjà {STN} sur les étapes qui
+   portent un `station`, mais beaucoup n'en portent pas : on retombe alors sur le
+   gabarit du scénario, où {STN} serait resté tel quel à l'écran. */
+function stationLabel(s){
+  if(!s) return '—';
+  if(s.station) return fillDisplay(s.station);
+  const sc=SCENARIOS[state.scenarioIndex];
+  const mot = ctrlOf(state.activeSide) ? ((s.stn||'tour')==='sol' ? 'Sol' : 'Tour') : 'Info';
+  return fillDisplay(String((sc && sc.station) || '{ADRM} {STN}').replace(/\{STN\}/g, mot));
+}
+function majEnTete(){
+  const s=currentStep();
+  if(el.scStation) el.scStation.textContent = stationLabel(s);
+  /* La fréquence du bandeau est celle de l'organisme à joindre, pas celle réglée
+     sur le poste : c'est la cible. L'état réel du poste, lui, est sous les yeux
+     dans la boîte ACTIVE / STANDBY. Même convention qu'en vol. */
+  if(el.scFreq){
+    const f = s ? s.freq : null;
+    el.scFreq.textContent = (f==null) ? '—' : Number(f).toFixed(3);
+    el.scFreq.classList.toggle('hidden', f==null);
+  }
+  if(el.scAtisChip){
+    const a=state.atis;
+    if(!a) el.scAtisChip.classList.add('hidden');
+    else {
+      el.scAtisChip.classList.remove('hidden');
+      /* La lettre n'apparaît qu'une fois l'ATIS écouté : la deviner n'a pas de sens,
+         aller la chercher fait partie de l'exercice. */
+      el.scAtisChip.innerHTML = state.atisEcoute
+        ? 'ATIS '+escapeHtml(a.freq.toFixed(3))+' &middot; <b>information '+escapeHtml(a.mot)+'</b>'
+        : 'ATIS '+escapeHtml(a.freq.toFixed(3));
+    }
+  }
+  if(el.scBar){
+    const n=state.queue.length||1;
+    el.scBar.style.width = Math.round((state.stepIndex/n)*100)+'%';
   }
 }
 
@@ -4897,19 +5168,25 @@ function renderStep(){
   renderMeteo();
 
   const reel = (state.difficulty==='reel');
-
-  // Le nombre d'échanges restants n'est plus affiché (les aléas peuvent en ajouter) :
-  // on masque les pastilles de progression et on n'affiche plus « X / N ».
-  el.dots.innerHTML=''; el.dots.style.display='none';
+  majEnTete();
 
   if(step.type==='choice'){ renderChoice(step); return; }
   if(step.type==='quiz'){ renderQuiz(step); return; }
 
   // Tour normal
   el.choiceBox.classList.add('hidden');
-  el.controls.style.display='';
-  el.pttBtn.style.display='';
+  /* Étape d'ÉCOUTE PURE (ATIS) : rien à transmettre, donc pas de micro ni de zone
+     de réponse — mais « Suivant » reste accessible, sans quoi on reste bloqué. */
+  const ecoute = !!step.atisStep;
+  /* Sur une écoute pure il n'y a pas de phrase attendue : ni micro, ni « Réponse ». */
+  scPanneau({ atc:!!step.atc, situation:!!step.situation, ptt:!ecoute, trans:!ecoute,
+              replay: !!step.atc && !ecoute && !reel, hint: !reel && !ecoute, skip:true });
   el.stepLabel.textContent = sc.titre;
+  /* Les échanges d'un scénario ne portent pas de renvoi au manuel comme les étapes
+     d'un vol : on affiche à la place le rang de l'échange. Le TOTAL n'est pas
+     annoncé — un aléa peut en ajouter en cours de route. Une écoute pure ne compte
+     pas comme un échange : on n'y transmet rien. */
+  el.scSrc.textContent = ecoute ? 'Écoute' : ('Échange '+rangEchange());
   /* Indicatif COMPLET au premier échange sur une fréquence, abrégé ensuite
      (manuel DSNA p. 18) — exactement comme dans le vol Navigation.
      Seul ce dernier posait state.callForm : la valeur laissée par un vol
@@ -4919,44 +5196,68 @@ function renderStep(){
   state.callForm = step.premierContact ? 'full' : 'abbr';
 
   if(step.atc){
-    el.atcBox.style.display='';
-    el.atcStation.textContent = fillDisplay(step.station || sc.station);
+    el.atcStation.textContent = stationLabel(step)+' : ';
     // Mode Réel : le texte du contrôleur est masqué (voix seule) ; Débutant : texte affiché.
     el.atcTxt.textContent = reel ? 'Message radio — écoutez (voix seule).' : fillDisplay(step.atc);
     // En Réel, on ne consigne pas le texte du contrôleur dans le journal (sinon on pourrait le relire).
-    logRow('atc', fillDisplay(step.station || sc.station)+(reel ? ' — (message vocal)' : ' — '+fillDisplay(step.atc)));
+    logRow('atc', stationLabel(step)+(reel ? ' — (message vocal)' : ' — '+fillDisplay(step.atc)));
     /* L'ATIS n'est PAS un message qu'on nous adresse : il tourne en boucle sur sa
        propre fréquence. On ne le joue donc pas ici — c'est le calage du poste sur
        cette fréquence qui le déclenche (scMajEcouteAtis), et s'en écarter le coupe.
        Pas de bouton « Réécouter » non plus : la boucle repasse toute seule. */
-    if(step.atisStep){ scMajEcouteAtis(); el.replayBtn.style.display='none'; }
-    else {
-      speakATC(step.atc, !!sc.emergency);
-      el.replayBtn.style.display = reel ? 'none' : '';   // pas de réécoute en Réel
-    }
-  }else{
-    el.atcBox.style.display='none';
-    el.replayBtn.style.display='none';
+    if(step.atisStep) scMajEcouteAtis();
+    else speakATC(step.atc, !!sc.emergency);
   }
   // Sur la fréquence ATIS on n'entend QUE l'ATIS : aucun appareil n'y émet.
   if(!step.atisStep) maybeSpeakTraffic(step);   // AFIS : on entend aussi les autres appareils
-  el.situationBox.style.display = step.situation ? '' : 'none';
-  el.situationBox.textContent = step.situation ? fillDisplay(step.situation) : '';
-  el.consigne.innerHTML = 'À vous : <b>'+escapeHtml(step.consigne||'')+'</b>';
+  el.situationBox.innerHTML = step.situation
+    ? ICONS.warn+'<span>'+escapeHtml(fillDisplay(step.situation))+'</span>' : '';
+  /* Mode Réel : plus de consigne détaillée — à vous de retrouver la formulation.
+     Sauf sur une écoute pure, où la consigne dit quoi régler sur le poste. */
+  el.consigne.innerHTML = (reel && !ecoute)
+    ? ''
+    : 'À vous : <b>'+escapeHtml(fillDisplay(step.consigne||''))+'</b>';
 
   // reset zone réponse
-  el.transWrap.classList.remove('show'); el.transText.value=''; el.validerBtn.disabled=true;
+  el.transText.value=''; el.validerBtn.disabled=true;
   el.feedback.innerHTML='';
   el.hint.classList.add('hidden'); el.hintTxt.textContent='';
-  el.nextBtn.disabled=true;
-  el.nextBtn.innerHTML = (isLastAnswerStep() ? 'Voir le récap' : 'Échange suivant') + ICONS.chevron;
+  /* Sur une écoute pure il n'y a rien à valider : « Suivant » est ouvert d'emblée. */
+  el.nextBtn.disabled = !ecoute;
+  el.nextBtn.innerHTML = (isLastAnswerStep() ? 'Voir le récap' : 'Suivant') + ICONS.chevron;
   el.pttBtn.disabled = !RECO_OK;
-  // Mode Réel : plus de bouton Indice du tout ; Débutant : indice disponible.
-  el.hintBtn.style.display = reel ? 'none' : '';
   el.hintBtn.disabled = false;
   el.hintBtn.title = '';
 }
 
+/* Chaque type d'étape n'utilise qu'une partie du panneau : un tour de radio a le
+   micro et la transcription, un quiz seulement les boutons, une décision rien du
+   tout. On centralise l'affichage plutôt que de manipuler six styles à la main. */
+function scPanneau(o){
+  o=o||{};
+  const mont=(e,v)=>{ if(e) e.classList.toggle('hidden', !v); };
+  mont(el.atcBox, !!o.atc);
+  mont(el.situationBox, !!o.situation);
+  mont(el.pttBtn, !!o.ptt);
+  mont(el.replayBtn, !!o.replay);
+  mont(el.hintBtn, !!o.hint);
+  mont(el.skipBtn, !!o.skip);
+  if(el.transWrap){
+    el.transWrap.classList.toggle('hidden', o.trans===false && o.suivant===false);
+    el.transWrap.classList.toggle('ecoute', !o.trans);
+  }
+  if(el.scNoreco) el.scNoreco.classList.toggle('hidden', RECO_OK || !o.ptt);
+}
+
+/* Rang de l'échange courant parmi ceux qui appellent une réponse. */
+function rangEchange(){
+  let n=0;
+  for(let i=0;i<=state.stepIndex && i<state.queue.length;i++){
+    const s=state.queue[i];
+    if(s && (s.motsCles || s.type==='choice' || s.type==='quiz')) n++;
+  }
+  return Math.max(1,n);
+}
 function isLastAnswerStep(){
   // vrai s'il ne reste plus aucune étape "à répondre" (tour, choix ou quiz) après l'index courant
   for(let i=state.stepIndex+1;i<state.queue.length;i++){
@@ -4968,14 +5269,12 @@ function isLastAnswerStep(){
 
 /* Rendu d'une étape quiz (B4) : QCM à réponse unique, scoré 1 point. */
 function renderQuiz(step){
-  el.controls.style.display='';                 // garder le bouton "suivant" visible
-  el.pttBtn.style.display='none'; el.replayBtn.style.display='none'; el.hintBtn.style.display='none';
-  el.atcBox.style.display='none';
-  el.situationBox.style.display='none';
+  // Un quiz n'a ni micro ni transcription : seul « Suivant » reste utile.
+  scPanneau({ atc:false, situation:false, ptt:false, trans:false, replay:false, hint:false, skip:false });
   el.consigne.innerHTML='';
-  el.transWrap.classList.remove('show');
   el.feedback.innerHTML='';
   el.hint.classList.add('hidden');
+  el.scSrc.textContent='';
   el.stepLabel.textContent='Quiz '+(state.stepIndex+1)+' / '+state.queue.length;
   el.choiceBox.classList.remove('hidden');
   el.choiceQ.textContent = fillDisplay(step.question);
@@ -5005,13 +5304,14 @@ function renderQuiz(step){
 }
 
 function renderChoice(step){
-  el.controls.style.display='none';
-  el.atcBox.style.display='none';
-  el.situationBox.style.display='none';
+  /* Une décision se prend sur les seules options : ni micro, ni transcription, ni
+     « Suivant » — c'est le choix lui-même qui fait avancer. */
+  scPanneau({ atc:false, situation:false, ptt:false, trans:false, suivant:false,
+              replay:false, hint:false, skip:false });
   el.consigne.innerHTML='';
-  el.transWrap.classList.remove('show');
   el.feedback.innerHTML='';
   el.hint.classList.add('hidden');
+  el.scSrc.textContent='';
   el.stepLabel.textContent='Décision';
   el.choiceBox.classList.remove('hidden');
   el.choiceQ.textContent = step.question;
@@ -5181,6 +5481,7 @@ function scMajRadio(){
     a.classList.add('alerte');
   } else { a.textContent=''; a.classList.remove('alerte'); }
   scMajEcouteAtis();          // se caler sur l'ATIS le lance, s'en écarter le coupe
+  majEnTete();                // la fréquence affichée dans le bandeau suit le poste
 }
 function scBonneFreq(){
   var s=currentStep();
@@ -5226,7 +5527,12 @@ function scMajEcouteAtis(){
   var s=currentStep();
   if(!s || !s.atisStep || !s.atc){ scArreterAtis(); return; }
   if(scBonneFreq()){
-    if(!scAtisBoucle) scLancerAtis(s.atc);
+    if(!scAtisBoucle){
+      scLancerAtis(s.atc);
+      /* On a entendu l'ATIS : la lettre peut apparaître dans le bandeau. Avant
+         l'écoute elle reste cachée — aller la chercher fait partie de l'exercice. */
+      state.atisEcoute=true; majEnTete();
+    }
   } else {
     scArreterAtis();
   }
@@ -5318,6 +5624,36 @@ bindPushToTalk(el.pttBtn,     ()=>{ if(RECO_OK && !listening) startListening(); 
 bindPushToTalk(el.reRecordBtn,()=>{ if(RECO_OK && !listening) startListening(); },
                               ()=>{ if(listening) stopListening(); scMajEcouteAtis(); });
 el.replayBtn.addEventListener('click', ()=>{ const s=currentStep(); if(s && s.atc) speakATC(s.atc); });
+
+/* --- Sortie de session, comme « Terminer le vol » en Navigation --- */
+function scFermerSession(){
+  scArreterAtis(); voixCouperTout();
+  if(listening) stopListening();
+  el.panel.classList.add('hidden');
+  document.body.classList.remove('in-session','in-recap');
+}
+if(el.quitBtn) el.quitBtn.addEventListener('click', ()=>{
+  if(!scenarioEnCours()) return scFermerSession();
+  rtConfirm('La session en cours sera abandonnée et ses échanges ne seront pas comptés.',
+            {title:'Terminer la session ?', ok:'Terminer'})
+    .then(ok=>{ if(ok){ scFermerSession(); state.scenarioIndex=-1;
+                        document.querySelectorAll('.sc-btn').forEach(b=>b.setAttribute('aria-current','false')); } });
+});
+/* « Passer » : on avance sans être noté, exactement comme en vol. L'échange
+   compte alors comme non répondu dans le débriefing. */
+if(el.skipBtn) el.skipBtn.addEventListener('click', ()=>{
+  const s=currentStep(); if(!s) return;
+  scArreterAtis();
+  logRow('sys','Échange passé.');
+  if(state.stepIndex < state.queue.length-1){ state.stepIndex++; renderStep(); }
+  else showRecap();
+});
+/* Retour à la liste des scénarios depuis le débriefing. */
+if(el.backBtn) el.backBtn.addEventListener('click', ()=>{
+  el.recap.classList.add('hidden');
+  document.body.classList.remove('in-session','in-recap');
+  const g=$('scenarios'); if(g) g.scrollIntoView({behavior:'smooth',block:'nearest'});
+});
 el.hintBtn.addEventListener('click', ()=>{ const s=currentStep(); el.hintTxt.textContent=fillDisplay(s.attendu); el.hint.classList.remove('hidden'); });
 /* ---- Commandes de la radio (Scénarios) ---- */
 if($('scRadioSwap')){
@@ -5571,8 +5907,21 @@ function showRecap(){
   lines.forEach(t=>{ const li=document.createElement('li'); li.textContent=t; el.recapList.appendChild(li); });
   el.scoreNum.innerHTML = totalFound+' <small>/ '+totalAll+' éléments corrects — '
     +tauxReussite(totalFound,totalAll)+'</small>';
+  /* Ce qui a manqué, en clair. Le récapitulatif ne donnait que des scores par
+     échange : on savait qu'on avait raté, pas quoi réviser. */
+  const rates=[...new Set(missed)];
+  const bloc=$('scRecapManques');
+  if(bloc){
+    bloc.innerHTML = rates.length
+      ? '<h4>À revoir</h4><p>'+rates.map(m=>escapeHtml(m)).join(' · ')+'</p>'
+      : '<h4>Rien à revoir</h4><p>Tous les éléments attendus ont été dits.</p>';
+  }
   el.recap.classList.remove('hidden');
-  el.recap.scrollIntoView({behavior:'smooth', block:'nearest'});
+  /* Le débriefing prend la place de la session : on quitte l'état « en session »
+     sans pour autant réafficher le configurateur derrière lui. */
+  document.body.classList.remove('in-session');
+  document.body.classList.add('in-recap');
+  window.scrollTo(0,0);
   saveHistory({
     date:new Date().toISOString(), scenario:sc.titre, scIdx:state.scenarioIndex,
     terrain: state.activeAd ? state.activeAd.icao : '',
@@ -5608,22 +5957,95 @@ function saveHistory(entry){
   try{ localStorage.setItem(LS_KEY, JSON.stringify(h.slice(0,50))); }catch(e){}
   renderHistory();
 }
+/* Historique des sessions, au format de celui des vols : un pourcentage coloré par
+   ligne, et le détail d'une session en tuiles avec ce qui a manqué — c'est la
+   seule information qui fait progresser. */
+function scPct(e){ return e.total ? Math.round(100*e.found/e.total) : 0; }
+function scClassePct(p){ return p>=80 ? 'bon' : (p>=50 ? 'moy' : 'bas'); }
+function scDateCourte(iso){
+  const d=new Date(iso);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' '
+       + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
 function renderHistory(){
   renderBadges();
-  const h=loadHistory();
-  if(!h.length){ el.historyBody.innerHTML='<div class="none">Aucun score enregistré pour l\'instant.</div>'; return; }
-  let html='<table><thead><tr><th>Date</th><th>Scénario</th><th>Mode</th><th>Terrain</th><th>Score</th></tr></thead><tbody>';
-  h.forEach(e=>{
-    const d=new Date(e.date);
-    const mode = e.mode==='reel' ? 'Réel' : 'Débutant';
-    html+='<tr><td>'+d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</td>'
-      +'<td>'+escapeHtml(e.scenario)+'</td><td>'+mode+'</td>'
-      +'<td>'+escapeHtml(e.terrain||'—')+(e.piste?('/'+escapeHtml(e.piste)):'')+'</td>'
-      +'<td>'+e.found+'/'+e.total+'</td></tr>';
+  const h=loadHistory(), box=el.historyPanel;
+  if(!box) return;
+  if(!h.length){ box.hidden=true; const d=$('scHistDetail'); if(d) d.classList.add('hidden'); return; }
+  box.hidden=false;
+  $('scHistCount').textContent=h.length;
+  const p0=scPct(h[0]);
+  $('scHistLast').textContent='Dernière : '+h[0].scenario+' · '+p0+' % · '+scDateCourte(h[0].date);
+  el.historyBody.innerHTML = h.map((e,i)=>{
+    const p=scPct(e);
+    return '<button class="nh-row" type="button" data-sess="'+i+'">'
+      + '<span class="nh-vol">'+escapeHtml(e.scenario)+'</span>'
+      + '<span class="nh-meta">'+scDateCourte(e.date)+' · '+escapeHtml(e.terrain||'sans terrain')
+      + (e.piste?(' / '+escapeHtml(e.piste)):'') + ' · '+(e.mode==='reel'?'Réel':'Débutant')+'</span>'
+      + '<span class="nh-pct '+scClassePct(p)+'">'+p+' %</span></button>';
+  }).join('');
+  el.historyBody.querySelectorAll('[data-sess]').forEach(b=>{
+    b.addEventListener('click', ()=> scOuvrirSession(parseInt(b.dataset.sess,10)));
   });
-  html+='</tbody></table><button class="btn small clear" id="clearHist" type="button">Effacer l\'historique</button>';
-  el.historyBody.innerHTML=html;
-  $('clearHist').addEventListener('click', ()=>{ localStorage.removeItem(LS_KEY); renderHistory(); });
+}
+let scSessionVue=null;
+function scOuvrirSession(i){
+  const e=loadHistory()[i]; if(!e) return;
+  scSessionVue=e;
+  const p=scPct(e), g=scClassePct(p);
+  $('scHistTitle').textContent=e.scenario;
+  let h='<div class="nhd-stats">'
+    + '<div class="nhd-tile g-'+g+'"><b>'+p+' <i>%</i></b><span>Éléments corrects</span></div>'
+    + '<div class="nhd-tile"><b>'+e.found+' <i>/ '+e.total+'</i></b><span>Détail</span></div>'
+    + '<div class="nhd-tile"><b>'+(e.mode==='reel'?'Réel':'Débutant')+'</b><span>Mode</span></div>'
+    + '</div>'
+    + '<div class="nhd-info"><span><b>Terrain</b>'+escapeHtml(e.terrain||'—')+'</span>'
+    + '<span><b>Piste</b>'+escapeHtml(e.piste||'—')+'</span>'
+    + '<span><b>Date</b>'+scDateCourte(e.date)+'</span></div>';
+  if(e.missed && e.missed.length){
+    h+='<div class="nav-hist-lignes"><div class="nhl ko"><div class="nhl-top">'
+      +'<span class="nhl-ph">Éléments manqués</span></div><div class="nhl-dit">'
+      + e.missed.map(m=>escapeHtml(m)).join(' · ')+'</div></div></div>';
+  }
+  $('scHistScore').innerHTML=h;
+  el.historyPanel.hidden=true;
+  $('scHistDetail').classList.remove('hidden');
+  $('scHistDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+if($('scHistHead')){
+  $('scHistHead').addEventListener('click',function(){
+    const b=el.historyBody, ouvert=!b.classList.contains('hidden');
+    b.classList.toggle('hidden', ouvert);
+    this.setAttribute('aria-expanded', ouvert?'false':'true');
+  });
+  $('scHistBack').addEventListener('click',function(){
+    $('scHistDetail').classList.add('hidden'); renderHistory();
+  });
+  $('scHistRefaire').addEventListener('click',function(){
+    if(!scSessionVue) return;
+    const i=(typeof scSessionVue.scIdx==='number') ? scSessionVue.scIdx
+          : SCENARIOS.findIndex(s=>s.titre===scSessionVue.scenario);
+    if(i<0){ showToast('Ce scénario n\'existe plus.'); return; }
+    /* On rétablit le décor de la session : sans son terrain, « Refaire » se contentait
+       de renvoyer sur la page en réclamant un aérodrome. */
+    if(scSessionVue.terrain){
+      const a=AERODROMES.filter(x=>x.icao===scSessionVue.terrain)[0];
+      if(a){ state.depAd=a; el.depInput.value=a.nom;
+             state.controlled={dep:!!a.ctrl, arr:state.controlled?state.controlled.arr:!!a.ctrl};
+             if(el.depCtrlSelect) el.depCtrlSelect.value = a.ctrl ? '1' : '0'; }
+    }
+    if(scSessionVue.mode){ state.difficulty=scSessionVue.mode;
+      if(el.difficultySelect) el.difficultySelect.value=scSessionVue.mode; }
+    $('scHistDetail').classList.add('hidden');
+    const lien=document.querySelector('.sidelink[data-page="exercices"]'); if(lien) lien.click();
+    setTimeout(()=>launchScenario(i), 120);
+  });
+  $('scHistClear').addEventListener('click',function(){
+    rtConfirm('Tout l\'historique des sessions sera effacé sur cet appareil.',
+              {title:'Effacer l\'historique ?', ok:'Effacer'})
+      .then(ok=>{ if(ok){ localStorage.removeItem(LS_KEY);
+                          $('scHistDetail').classList.add('hidden'); renderHistory(); } });
+  });
 }
 
 /* D1 : badges calculés à partir de l'historique localStorage. */
@@ -5688,11 +6110,15 @@ function renderBadges(){
    ========================================================================= */
 function ts(){ const d=new Date(), p=n=>String(n).padStart(2,'0'); return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
 function clearLog(){ el.log.innerHTML=''; }
+/* Journal radio, au format du vol Navigation : un libellé court en petites
+   capitales puis le texte, plutôt qu'un horodatage qui n'apprend rien. */
+const LOG_QUI={atc:'Contrôle', you:'Vous', sys:'Info'};
 function logRow(kind, text){
+  if(!el.log) return;
   if(el.log.querySelector('.empty')) el.log.innerHTML='';
   const row=document.createElement('div');
-  row.className='rowl';
-  row.innerHTML='<span class="ts">['+ts()+']</span> <span class="'+kind+'">'+escapeHtml(text)+'</span>';
+  row.className='r '+kind;
+  row.innerHTML='<span class="who">'+(LOG_QUI[kind]||kind)+'</span> '+escapeHtml(text);
   el.log.appendChild(row); el.log.scrollTop=el.log.scrollHeight;
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }

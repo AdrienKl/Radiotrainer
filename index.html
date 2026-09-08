@@ -8102,6 +8102,13 @@ function oaciSonde(couche, surAbsenceTotale){
   }
   function renderStep(){
     var s=F.steps[F.i]; if(!s) return endFlight();
+    /* VERROU. tune() ci-dessous passe par majRadio(), qui appelle majAccueilStation() :
+       sans ce verrou, l'accueil de la NOUVELLE étape partait dès cet instant (F.i est
+       déjà incrémenté) avec la valeur laissée par l'étape précédente. Il était alors
+       dit et journalisé DEUX fois, le second envoi annulant le premier en pleine
+       phrase. On bloque pendant toute la mise en place, on ouvre juste avant l'appel
+       explicite, plus bas. */
+    F.accueilDit=true;
     if(s.onEnter) s.onEnter();
     state.callForm = s.premierContact ? 'full' : 'abbr';
     /* Fréquence à afficher : celle de l'étape en cours si on n'y est pas encore. */
@@ -8164,32 +8171,17 @@ function oaciSonde(couche, surAbsenceTotale){
     devoilerATC();
     if(s.atcAfter) messageATC(s.stn, s.atcAfter);
     $v('vfNext').disabled=false;
-    /* Échange réussi : on enchaîne SEUL. Devoir cliquer « Suivant » juste après que
-       le contrôleur vous a répondu casse le réflexe — on a envie de répondre, pas
-       de chercher un bouton. On attend simplement que le contrôleur ait fini de
-       parler, sinon la synthèse suivante annulerait la sienne (speakATC coupe).
-       En cas d'erreur, au contraire, le bouton reste : on veut laisser le temps de
-       lire ce qui a manqué avant d'entendre la suite. */
-    if(ok===res.length && res.length){
-      vfLog('sys','Échange réussi — la suite arrive.');
-      enchainerAuto();
-    }
+    /* Échange réussi : on le SIGNALE, mais on n'enchaîne pas tout seul.
+       Un enchaînement automatique a été essayé puis retiré : il était armé juste
+       après messageATC(), or la synthèse vocale met un instant à démarrer. Au
+       premier sondage, speaking et pending valaient encore false, on passait donc
+       à l'étape suivante — dont le speakATC() annule la parole en cours. Résultat :
+       le contrôleur restait muet par intermittence.
+       C'est l'appui sur « Suivant » qui déclenche le message radio suivant, et lui
+       seul : le rythme reste au pilote, et la parole n'est jamais coupée. */
+    if(ok===res.length && res.length) vfLog('sys','Échange réussi.');
   }
-  /* Attend la fin de la parole ATC, puis passe à l'étape suivante. Garde-fou à 12 s :
-     si la synthèse ne rend jamais la main (onglet en arrière-plan, voix absente),
-     on avance quand même plutôt que de rester bloqué. */
-  function enchainerAuto(){
-    annulerAuto();
-    var t0=Date.now();
-    (function attendre(){
-      var parle = window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending);
-      if(parle && Date.now()-t0 < 12000){ F.autoNext=setTimeout(attendre,200); return; }
-      F.autoNext=setTimeout(function(){ F.autoNext=null; if(F.running) nextStep(); }, 600);
-    })();
-  }
-  function annulerAuto(){ if(F.autoNext){ clearTimeout(F.autoNext); F.autoNext=null; } }
   function nextStep(){
-    annulerAuto();      // clic manuel pendant l'attente : pas de double avance
     sauverVol();
     var s=F.steps[F.i];
     if(s && s.tuneTo) tune(s.tuneTo.stn,s.tuneTo.freq,true);   // changement de fréquence effectif
@@ -8269,7 +8261,7 @@ function oaciSonde(couche, surAbsenceTotale){
     radio.stby=null; radio.attendue=null;
     /* Transpondeur au départ : 7000, le code de veille VFR, mode altitude. */
     xpdr.code='7000'; xpdr.saisie='7000'; xpdr.mode=2; xpdr.ident=false; xpdr.attendu=null;
-    F.echecFreq=0; F.echecCode=0; F.attend7600=false; aRevELer=[]; F.autoNext=null; F.accueilDit=false;
+    F.echecFreq=0; F.echecCode=0; F.attend7600=false; aRevELer=[]; F.accueilDit=false;
     radioSkin(); majRadio(); majXpdr(); choisirAvionPhoto();
     $v('vfCall').textContent=state.call;        // indicatif rappelé en permanence
     majAtisChip();                              // fréquence ATIS à côté de celle du terrain
@@ -8441,7 +8433,7 @@ function oaciSonde(couche, surAbsenceTotale){
   }
 
   function endFlight(){
-    F.running=false; annulerAuto(); setRecoSink(null); oublierVol(); arreterAtis();
+    F.running=false; setRecoSink(null); oublierVol(); arreterAtis();
     devoilerATC();   // vol terminé : le journal redevient entièrement lisible
     var tot=0, ok=0;
     F.results.forEach(function(r){ if(r) r.forEach(function(x){ tot++; if(x.found) ok++; }); });

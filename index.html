@@ -3750,20 +3750,20 @@ if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickV
   document.addEventListener('touchstart',amorce,true);
 })();
 
-let voixPouls=null;
-function voixEntretien(){
-  if(voixPouls || !window.speechSynthesis) return;
-  voixPouls=setInterval(function(){
-    if(speechSynthesis.speaking){ try{ speechSynthesis.resume(); }catch(e){} }
-    else { clearInterval(voixPouls); voixPouls=null; }
-  }, 7000);
-}
+/* Un minuteur « d'entretien » appelait ici resume() toutes les 7 s pour contourner
+   la coupure de Chrome sur les textes longs. Il a ete RETIRE : arreterAtis()
+   annulait la parole sans l'arreter, il voyait donc speaking encore vrai — cancel()
+   n'etant pas instantane sous Chrome — et RANIMAIT la lecture qu'on venait
+   d'annuler. L'ATIS devenait impossible a arreter : ni le changement de frequence,
+   ni « Passer », ni la fin du vol n'y pouvaient quoi que ce soit, tous ces chemins
+   passant par arreterAtis(). Un mecanisme capable de relancer la parole n'a pas sa
+   place ici ; si la coupure sur texte long se manifeste un jour, elle sera traitee
+   pour elle-meme. */
 function voixCouper(){
   if(!window.speechSynthesis) return;
   if(speechSynthesis.speaking || speechSynthesis.pending){
     try{ speechSynthesis.cancel(); }catch(e){}
   }
-  if(voixPouls){ clearInterval(voixPouls); voixPouls=null; }
 }
 
 function speakATC(rawText, urgent){
@@ -3784,7 +3784,7 @@ function speakATC(rawText, urgent){
   // que le contrôleur parle. Ce branchement ne dépend pas des détails internes de
   // SpeechSynthesis : si le moteur de voix change plus tard, il suffira de rappeler
   // ces deux fonctions sur les nouveaux évènements début/fin de parole.
-  u.onstart = function(){ startRadioNoise(); voixEntretien(); };
+  u.onstart = startRadioNoise;
   u.onend   = function(){ stopRadioNoise(); voixCouper(); };
   u.onerror = function(){ stopRadioNoise(); voixCouper(); };
   speechSynthesis.speak(u);
@@ -7730,7 +7730,7 @@ function oaciSonde(couche, surAbsenceTotale){
   function arreterAtis(){
     if(!atisBoucle) return;
     atisBoucle.actif=false; clearTimeout(atisBoucle.t); atisBoucle=null;
-    try{ speechSynthesis.cancel(); }catch(e){}
+    voixCouper();          // annulation protegee, comme partout ailleurs
     stopRadioNoise();
   }
   function lancerAtis(texte){
@@ -7743,7 +7743,7 @@ function oaciSonde(couche, surAbsenceTotale){
       var u=new SpeechSynthesisUtterance(fillSpeech(texte));
       u.lang='fr-FR'; if(frVoice) u.voice=frVoice;
       u.rate=state.voiceRate; u.pitch=1.0;
-      u.onstart=function(){ startRadioNoise(); voixEntretien(); };
+      u.onstart=startRadioNoise;
       u.onend=function(){ stopRadioNoise(); if(b.actif) b.t=setTimeout(dire,2600); };
       u.onerror=function(){ stopRadioNoise(); if(b.actif) b.t=setTimeout(dire,4000); };
       speechSynthesis.speak(u);

@@ -750,6 +750,15 @@
 
   /* Zone de transcription éditable (Navigation) — calquée sur celle des Scénarios. */
   .vf-transwrap{ margin-top:13px; }
+  /* Étape d'ÉCOUTE PURE (ATIS) : rien à transmettre. On masque la saisie, le micro
+     et « Valider »… mais surtout PAS « Suivant », qui vit dans le même bloc : masquer
+     le bloc entier rendait le bouton invisible alors qu'il était bel et bien actif,
+     et l'élève restait planté sur l'écoute de l'ATIS. */
+  .vf-transwrap.ecoute label,
+  .vf-transwrap.ecoute textarea,
+  .vf-transwrap.ecoute .valider,
+  .vf-transwrap.ecoute #vfRerec{ display:none; }
+  .vf-transwrap.ecoute .vf-transact{ margin-top:0; }
   .vf-transwrap label{ display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
     text-transform:uppercase; color:var(--ink-2); margin-bottom:6px; }
   .vf-transwrap textarea{ width:100%; box-sizing:border-box; resize:vertical; min-height:56px;
@@ -3811,10 +3820,16 @@ var Voix=(function(){
 
   function annulerGarde(){ if(garde){ clearTimeout(garde); garde=null; } }
 
-  /* Arret franc : plus rien ne parle, plus rien ne reprendra. */
+  /* Arret franc : plus rien ne parle, plus rien ne reprendra.
+     On n'annule QUE s'il y a reellement quelque chose a interrompre : un cancel()
+     a vide, repete a chaque changement de page, participe lui aussi au blocage du
+     moteur de Chrome. */
   function stop(){
+    var avait = enCours;
     jeton++; file.length=0; enCours=false; annulerGarde();
-    if(window.speechSynthesis){ try{ speechSynthesis.cancel(); }catch(e){} }
+    if(window.speechSynthesis){
+      try{ if(avait || speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){}
+    }
     if(typeof stopRadioNoise==='function') stopRadioNoise();
   }
 
@@ -3851,14 +3866,18 @@ var Voix=(function(){
       clos=true; annulerGarde(); enCours=false;
       m.i++; m.essais=0; pompe();
     }
-    function rater(){
+    function rater(e){
       if(clos || mien!==jeton) return;
       if(parti){ avancer(); return; }          // coupee en route : on enchaine
+      /* « interrupted » / « canceled » veulent dire que NOUS avons coupe : il n'y
+         a rien a rattraper, et retenter ferait repartir une parole qu'on venait
+         d'arreter. */
+      var voulu = e && (e.error==='interrupted' || e.error==='canceled');
       clos=true; annulerGarde(); enCours=false;
+      if(voulu) return;
       if(m.essais<3){                          // n'a jamais demarre : on retente
         m.essais++;
-        try{ speechSynthesis.cancel(); }catch(e){}
-        setTimeout(function(){ if(mien===jeton) pompe(); },160);
+        setTimeout(function(){ if(mien===jeton) pompe(); },250);
       } else { m.i++; m.essais=0; pompe(); }   // on renonce a CETTE phrase, pas au message
     }
     u.onstart=function(){
@@ -3874,7 +3893,42 @@ var Voix=(function(){
        volontairement aucun minuteur d'entretien : c'est lui qui, autrefois,
        ranimait l'ATIS qu'on venait d'annuler. */
     try{ if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
-    garde=setTimeout(rater, 2500);             // rien n'a demarre en 2,5 s : moteur bloque
+    /* SURVEILLANCE DU DEMARRAGE — et rien de plus.
+       Une premiere version annulait l'utterance des que onstart tardait de plus de
+       deux secondes. C'etait le remede pire que le mal : Chrome met parfois une
+       poignee de secondes a delivrer onstart alors que la parole est bel et bien
+       prise en charge, et on coupait donc un message valide... pour le retenter,
+       et le couper encore. Mesure faite au navigateur : la parole partait, on
+       l'annulait, plus rien ne sortait.
+       On ne conclut donc a l'echec QUE si le moteur se declare au repos alors
+       qu'il devrait parler ; tant qu'il se dit occupe, on patiente. Et on
+       n'annule jamais : le seul cas d'echec est celui ou il n'y a rien a annuler. */
+    var patience=0, secoue=false;
+    function veiller(){
+      if(clos || parti || mien!==jeton) return;
+      var occupe=false;
+      try{ occupe = speechSynthesis.speaking || speechSynthesis.pending; }catch(e){}
+      if(!occupe){ rater(); return; }          // moteur au repos : l'utterance a ete perdue
+      patience++;
+      /* Le moteur se dit occupe mais rien ne sort. Mesure au navigateur : dans cet
+         etat l'utterance finit par demarrer... au bout de plusieurs secondes, ou
+         jamais. On procede par paliers, du plus doux au plus brutal, sans jamais
+         couper une parole qui a commence — a ce stade, rien n'a ete entendu. */
+      if(patience===4 && !secoue){              // ~5 s de silence : on secoue le moteur
+        secoue=true;
+        try{ speechSynthesis.pause(); speechSynthesis.resume(); }catch(e){}
+      } else if(patience>=8){                   // ~10 s : on repart de zero
+        clos=true; annulerGarde(); enCours=false;
+        if(m.essais<3){
+          m.essais++;
+          try{ speechSynthesis.cancel(); }catch(e){}
+          setTimeout(function(){ if(mien===jeton) pompe(); },300);
+        } else { m.i++; m.essais=0; pompe(); }
+        return;
+      }
+      garde=setTimeout(veiller,1200);
+    }
+    garde=setTimeout(veiller, 1500);
   }
 
   /* Parole principale : remplace ce qui est en cours. */
@@ -4137,7 +4191,15 @@ function bindPushToTalk(btn, onStart, onStop){
   const press=(e)=>{ if(e && e.type==='touchstart' && e.cancelable) e.preventDefault(); // évite le mousedown fantôme + le scroll
                      if(finTimer){            // ré-appui pendant la traîne : la capture n'a jamais cessé
                        clearTimeout(finTimer); finTimer=null; held=true; visuel(true); return; }
-                     if(held) return; held=true; try{ onStart(); }catch(_){} };
+                     if(held) return; held=true;
+                     /* On ne recoit pas pendant qu'on emet : presser l'alternat coupe
+                        la parole en cours ET les diffusions en boucle. C'est le
+                        comportement d'un vrai poste — et cela supprime au passage un
+                        defaut tenace : Safari mettait la synthese en pause au demarrage
+                        du micro puis la REPRENAIT au relachement, si bien qu'on
+                        entendait l'ATIS « repartir » a chaque appui sur le micro. */
+                     try{ voixCouperTout(); }catch(_){}
+                     try{ onStart(); }catch(_){} };
   const release=()=>{ if(!held) return; held=false;
                       visuel(false);          // retour visuel immédiat…
                       if(finTimer) clearTimeout(finTimer);
@@ -4146,7 +4208,12 @@ function bindPushToTalk(btn, onStart, onStop){
                       }, TRAINE_MS); };
   btn.addEventListener('mousedown', press);
   btn.addEventListener('mouseup', release);
-  btn.addEventListener('mouseleave', release);
+  /* PAS de release sur mouseleave. Appuyer sur l'alternat fait apparaitre la zone
+     de transcription : la mise en page se decale, le bouton glisse de sous le
+     curseur, et le navigateur emet un mouseleave — l'enregistrement s'arretait
+     donc de lui-meme 200 ms apres l'appui, sans que la souris ait bouge. Le
+     mouseup pose sur window ci-dessous couvre deja le vrai cas « relache
+     ailleurs que sur le bouton ». */
   btn.addEventListener('touchstart', press, {passive:false});
   btn.addEventListener('touchend', release);
   btn.addEventListener('touchcancel', release);
@@ -5244,8 +5311,12 @@ const MSG_ABANDON='La progression de l’échange en cours sera perdue et le sc�
 
 /* --- PTT / transcription / validation --- */
 // Étape 2 : PTT maintenu (souris + tactile) — maintenir enfoncé pour parler, relâcher pour arrêter.
-bindPushToTalk(el.pttBtn,     ()=>{ if(RECO_OK && !listening) startListening(); }, ()=>{ if(listening) stopListening(); });
-bindPushToTalk(el.reRecordBtn,()=>{ if(RECO_OK && !listening) startListening(); }, ()=>{ if(listening) stopListening(); });
+/* Au relachement, on redonne l'ecoute : un ATIS diffuse en permanence, on le
+   retrouve donc en repassant a la reception si le poste est reste sur sa frequence. */
+bindPushToTalk(el.pttBtn,     ()=>{ if(RECO_OK && !listening) startListening(); },
+                              ()=>{ if(listening) stopListening(); scMajEcouteAtis(); });
+bindPushToTalk(el.reRecordBtn,()=>{ if(RECO_OK && !listening) startListening(); },
+                              ()=>{ if(listening) stopListening(); scMajEcouteAtis(); });
 el.replayBtn.addEventListener('click', ()=>{ const s=currentStep(); if(s && s.atc) speakATC(s.atc); });
 el.hintBtn.addEventListener('click', ()=>{ const s=currentStep(); el.hintTxt.textContent=fillDisplay(s.attendu); el.hint.classList.remove('hidden'); });
 /* ---- Commandes de la radio (Scénarios) ---- */
@@ -8409,7 +8480,9 @@ function oaciSonde(couche, surAbsenceTotale){
        de réponse — et « Suivant » disponible tout de suite. Sans ça on restait
        bloqué, le bouton n'étant débloqué que par une réponse validée. */
     var ecoute = !!s.atisStep;
-    $v('vfTransWrap').classList.toggle('hidden', ecoute);
+    /* On ne masque plus tout le bloc : « Suivant » s'y trouve aussi. */
+    $v('vfTransWrap').classList.remove('hidden');
+    $v('vfTransWrap').classList.toggle('ecoute', ecoute);
     $v('vfPtt').classList.toggle('hidden', ecoute);
     $v('vfHint').classList.toggle('hidden', ecoute);
     $v('vfNext').disabled = !ecoute;
@@ -8852,8 +8925,10 @@ function oaciSonde(couche, surAbsenceTotale){
     suite7600();          // « ident observé, vous êtes en panne d'émission… » (p. 246)
   });
 
-  bindPushToTalk($v('vfPtt'), function(){ if(F.running) startListening(); }, function(){ stopListening(); });
-  bindPushToTalk($v('vfRerec'), function(){ if(F.running) startListening(); }, function(){ stopListening(); });
+  bindPushToTalk($v('vfPtt'), function(){ if(F.running) startListening(); },
+                 function(){ stopListening(); majEcouteAtis(); });
+  bindPushToTalk($v('vfRerec'), function(){ if(F.running) startListening(); },
+                 function(){ stopListening(); majEcouteAtis(); });
   // La notation n'a lieu qu'à la validation explicite.
   $v('vfValider').addEventListener('click',function(){
     var t=$v('vfTransText').value.trim();

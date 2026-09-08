@@ -7737,18 +7737,41 @@ function oaciSonde(couche, surAbsenceTotale){
     if(atisBoucle) return;                       // deja en diffusion
     if(!window.speechSynthesis){ atisBoucle={actif:true,t:null}; return; }
     var b={actif:true,t:null}; atisBoucle=b;
-    function dire(){
+    /* DECOUPAGE EN PHRASES. Chrome interrompt une utterance qui depasse une
+       quinzaine de secondes. Un ATIS complet fait ~385 caracteres une fois les
+       chiffres enonces un par un, soit une trentaine de secondes : il etait donc
+       coupe, voire jamais entendu. Une parade par resume() periodique avait ete
+       essayee puis retiree — elle ranimait la lecture et rendait l'ATIS impossible
+       a arreter.
+       On enonce donc les phrases A LA SUITE, chacune dans sa propre utterance :
+       la plus longue fait ~7 s, aucune n'atteint le seuil. On n'annule QU'AU
+       DEMARRAGE : un cancel() entre deux phrases couperait la diffusion. */
+    var phrases = fillSpeech(texte).split(/\.\s+/)
+                    .map(function(x){ return x.trim(); })
+                    .filter(Boolean)
+                    .map(function(x){ return /[.!?]$/.test(x) ? x : x+'.'; });
+    function dire(i){
       if(!b.actif || !F.running) return;
-      voixCouper();
-      var u=new SpeechSynthesisUtterance(fillSpeech(texte));
+      if(i>=phrases.length){                    // message termine : on reprend au debut
+        stopRadioNoise();
+        b.t=setTimeout(function(){ dire(0); }, 2600);
+        return;
+      }
+      var u=new SpeechSynthesisUtterance(phrases[i]);
+      /* Meme precaution que dans speakATC : Chrome renouvelle sa liste de voix et
+         une reference perimee donne une utterance muette. */
+      var dispo=speechSynthesis.getVoices()||[];
+      if(frVoice && dispo.indexOf(frVoice)===-1) pickVoice();
       u.lang='fr-FR'; if(frVoice) u.voice=frVoice;
       u.rate=state.voiceRate; u.pitch=1.0;
-      u.onstart=startRadioNoise;
-      u.onend=function(){ stopRadioNoise(); if(b.actif) b.t=setTimeout(dire,2600); };
-      u.onerror=function(){ stopRadioNoise(); if(b.actif) b.t=setTimeout(dire,4000); };
+      if(i===0) u.onstart=startRadioNoise;
+      u.onend  =function(){ if(b.actif) dire(i+1); };
+      u.onerror=function(){ stopRadioNoise();
+                            if(b.actif) b.t=setTimeout(function(){ dire(0); },4000); };
       speechSynthesis.speak(u);
     }
-    dire();
+    voixCouper();                               // une seule fois, avant la 1re phrase
+    dire(0);
   }
   /* Appelee a chaque manipulation de la radio : c'est le calage sur la frequence
      qui declenche l'ecoute, pas l'affichage de l'etape. */

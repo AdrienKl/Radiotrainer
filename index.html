@@ -3725,6 +3725,31 @@ if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickV
      - entretenir la lecture par un resume() périodique tant que ça parle ;
      - n'appeler cancel() que s'il y a réellement quelque chose à interrompre,
        un cancel() à vide participant lui aussi au blocage. */
+/* AMORCE — indispensable sur Chrome, sans effet ailleurs.
+   Chrome n'accepte la synthese vocale qu'apres une interaction de l'utilisateur
+   AVEC LA PAGE, et rejette en silence les demandes issues d'un minuteur. Or le
+   premier message du controleur part d'un setTimeout declenche apres le clic
+   « Demarrer le vol » : la demande est donc hors du geste, et Chrome la jette
+   sans rien signaler — ni erreur, ni evenement. Safari est permissif, d'ou une
+   application parfaitement audible sur Safari et totalement muette sur Chrome.
+   On deverrouille donc le moteur au TOUT PREMIER geste, avec une utterance vide
+   et un volume nul : inaudible, c'est un deverrouillage, pas un message. */
+(function(){
+  if(!window.speechSynthesis) return;
+  var fait=false;
+  function amorce(){
+    if(fait) return; fait=true;
+    try{ var u=new SpeechSynthesisUtterance(' '); u.volume=0; u.lang='fr-FR';
+         speechSynthesis.speak(u); }catch(e){}
+    document.removeEventListener('pointerdown',amorce,true);
+    document.removeEventListener('keydown',amorce,true);
+    document.removeEventListener('touchstart',amorce,true);
+  }
+  document.addEventListener('pointerdown',amorce,true);
+  document.addEventListener('keydown',amorce,true);
+  document.addEventListener('touchstart',amorce,true);
+})();
+
 let voixPouls=null;
 function voixEntretien(){
   if(voixPouls || !window.speechSynthesis) return;
@@ -3745,6 +3770,11 @@ function speakATC(rawText, urgent){
   if(!window.speechSynthesis) return;
   voixCouper();
   const u=new SpeechSynthesisUtterance(fillSpeech(rawText));
+  /* Chrome charge ses voix en differe et renouvelle la liste : une reference
+     conservee d'un ancien getVoices() devient perimee, et l'utterance reste
+     muette. On verifie donc qu'elle figure toujours dans la liste courante. */
+  const dispo = speechSynthesis.getVoices() || [];
+  if(frVoice && dispo.indexOf(frVoice) === -1) pickVoice();
   u.lang='fr-FR'; if(frVoice) u.voice=frVoice;
   // Débit/hauteur augmentés sur un message d'urgence (Mayday / Pan Pan) pour le stress réaliste.
   u.rate  = urgent ? Math.min(state.voiceRate + 0.12, 1.35) : state.voiceRate;

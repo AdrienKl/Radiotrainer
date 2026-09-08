@@ -3715,9 +3715,35 @@ function pickVoice(){
   }
 }
 if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+/* ---- Résilience de la synthèse vocale (défaut connu de Chrome) ----
+   Chrome interrompt la lecture au bout d'une quinzaine de secondes sur un texte
+   long, et laisse ensuite le moteur dans un état où PLUS RIEN ne sort — y compris
+   les messages courts qui suivent. Un ATIS complet, chiffres énoncés un par un,
+   dépasse très largement ce seuil : il suffisait d'en écouter un pour que tout le
+   contrôle devienne muet jusqu'au rechargement de la page.
+   Deux parades, les seules qui tiennent en pratique :
+     - entretenir la lecture par un resume() périodique tant que ça parle ;
+     - n'appeler cancel() que s'il y a réellement quelque chose à interrompre,
+       un cancel() à vide participant lui aussi au blocage. */
+let voixPouls=null;
+function voixEntretien(){
+  if(voixPouls || !window.speechSynthesis) return;
+  voixPouls=setInterval(function(){
+    if(speechSynthesis.speaking){ try{ speechSynthesis.resume(); }catch(e){} }
+    else { clearInterval(voixPouls); voixPouls=null; }
+  }, 7000);
+}
+function voixCouper(){
+  if(!window.speechSynthesis) return;
+  if(speechSynthesis.speaking || speechSynthesis.pending){
+    try{ speechSynthesis.cancel(); }catch(e){}
+  }
+  if(voixPouls){ clearInterval(voixPouls); voixPouls=null; }
+}
+
 function speakATC(rawText, urgent){
   if(!window.speechSynthesis) return;
-  speechSynthesis.cancel();
+  voixCouper();
   const u=new SpeechSynthesisUtterance(fillSpeech(rawText));
   u.lang='fr-FR'; if(frVoice) u.voice=frVoice;
   // Débit/hauteur augmentés sur un message d'urgence (Mayday / Pan Pan) pour le stress réaliste.
@@ -3728,9 +3754,9 @@ function speakATC(rawText, urgent){
   // que le contrôleur parle. Ce branchement ne dépend pas des détails internes de
   // SpeechSynthesis : si le moteur de voix change plus tard, il suffira de rappeler
   // ces deux fonctions sur les nouveaux évènements début/fin de parole.
-  u.onstart = startRadioNoise;
-  u.onend   = stopRadioNoise;
-  u.onerror = stopRadioNoise;
+  u.onstart = function(){ startRadioNoise(); voixEntretien(); };
+  u.onend   = function(){ stopRadioNoise(); voixCouper(); };
+  u.onerror = function(){ stopRadioNoise(); voixCouper(); };
   speechSynthesis.speak(u);
 }
 
@@ -7683,11 +7709,11 @@ function oaciSonde(couche, surAbsenceTotale){
     var b={actif:true,t:null}; atisBoucle=b;
     function dire(){
       if(!b.actif || !F.running) return;
-      try{ speechSynthesis.cancel(); }catch(e){}
+      voixCouper();
       var u=new SpeechSynthesisUtterance(fillSpeech(texte));
       u.lang='fr-FR'; if(frVoice) u.voice=frVoice;
       u.rate=state.voiceRate; u.pitch=1.0;
-      u.onstart=startRadioNoise;
+      u.onstart=function(){ startRadioNoise(); voixEntretien(); };
       u.onend=function(){ stopRadioNoise(); if(b.actif) b.t=setTimeout(dire,2600); };
       u.onerror=function(){ stopRadioNoise(); if(b.actif) b.t=setTimeout(dire,4000); };
       speechSynthesis.speak(u);

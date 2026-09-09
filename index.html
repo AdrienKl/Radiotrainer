@@ -322,12 +322,51 @@
      sombre dans les DEUX thèmes et définit ses propres couleurs (--sc-*). C'est ce
      qui garantit qu'un passage clair↔sombre ne peut pas y rendre un texte
      illisible : il n'y a qu'un seul jeu de couleurs à vérifier, pas deux. */
+  /* La toile de fond. Plaquée au CADRE de la fenêtre, elle couvre toute la zone
+     de contenu et s'arrête net au bord de la barre latérale : son bord gauche est
+     var(--side-w), la même variable que la marge de <main>. Replier le menu
+     élargit donc le décor du même mouvement, sans une ligne de JavaScript.
+     Fixée aussi au sens propre : elle ne défile pas — on garde la sensation d'une
+     baie vitrée devant laquelle on travaille. */
+  .epel-fond{ display:none; position:fixed; top:0; right:0; bottom:0; left:var(--side-w);
+    z-index:0; pointer-events:none; transition:left .22s ease; }
+  body.on-epellation .epel-fond{ display:block; }
+  /* Le décor est une couche positionnée : sans cela le contenu de <main>, non
+     positionné, passerait DESSOUS. */
+  body.on-epellation main{ position:relative; z-index:1; }
+  .epel-fond::before{ content:""; position:absolute; inset:0;
+    background:url("assets/images/aeroport-nuit.webp") center 58%/cover no-repeat; }
+  /* Le voile. C'est LUI qui garantit la lisibilité : la photo seule a des zones
+     claires (lampadaires) où un texte blanc disparaîtrait. Un halo froid en haut,
+     une vignette, un fondu vers le bas, plus une pointe de violet de marque. */
+  .epel-fond::after{ content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(120% 62% at 52% 2%, rgba(38,26,104,.30), transparent 64%),
+      radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(4,6,14,.52) 100%),
+      linear-gradient(180deg, rgba(5,8,18,.30) 0%, rgba(5,8,18,.26) 20%,
+                              rgba(5,8,18,.50) 52%, rgba(5,8,18,.66) 100%); }
+  /* Le thème clair n'éclaircit pas le décor (il resterait illisible à mi-chemin) :
+     il l'adoucit d'un cran, pour qu'il ne fasse pas un trou noir dans la page. */
+  :root[data-theme="light"] .epel-fond::after,
+  :root:not([data-theme="dark"]) .epel-fond::after{
+    background:
+      radial-gradient(120% 62% at 52% 2%, rgba(46,34,120,.26), transparent 64%),
+      radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(6,9,20,.48) 100%),
+      linear-gradient(180deg, rgba(9,13,26,.24) 0%, rgba(9,13,26,.20) 20%,
+                              rgba(9,13,26,.44) 52%, rgba(9,13,26,.60) 100%); }
+  /* Tiroir mobile : plus de barre latérale à contourner, le décor part du bord. */
+  @media (max-width:860px){ .epel-fond{ left:0; } }
+
+  /* La page couvre la fenêtre même quand son contenu est court — sans quoi le
+     décor s'arrêterait au milieu de rien — et prend toute la largeur : garder une
+     colonne de 1000 px centrée laisserait deux bandes de photo inutilisées. */
+  #page-epellation{ min-height:100vh; }
+  #page-epellation > .container{ position:relative; max-width:1160px;
+    padding-top:clamp(26px,4vw,48px); padding-bottom:clamp(26px,4vw,48px); }
+
   .spell-scene{
-    position:relative; isolation:isolate; overflow:hidden;
+    position:relative;
     color:var(--sc-ink);
-    margin:0 0 18px; padding:clamp(22px,3vw,34px);
-    border-radius:26px; border:1px solid rgba(255,255,255,.14);
-    box-shadow:0 26px 70px rgba(10,14,30,.34), 0 2px 6px rgba(10,14,30,.20);
     /* Palette locale de la scène. */
     --sc-ink:#f4f6fd;            /* texte principal            */
     --sc-ink-2:#aeb8d2;          /* texte secondaire           */
@@ -338,36 +377,9 @@
     --sc-line-2:rgba(255,255,255,.26);
     --sc-ok:#5fe0a4; --sc-bad:#ff8a86; --sc-warn:#ffc470;
   }
-  /* La photo. Cadrée bas (58 %) : la tour et le bandeau lumineux de l'aérogare
-     passent derrière la carte du code, la piste sombre derrière les boutons. */
-  .spell-scene::before{
-    content:""; position:absolute; inset:-2px; z-index:-2;
-    background:url("assets/images/aeroport-nuit.webp") center 58%/cover no-repeat;
-  }
-  /* Le voile. C'est LUI qui garantit la lisibilité : la photo seule a des zones
-     claires (lampadaires) où un texte blanc disparaîtrait. Deux couches — un halo
-     froid en haut, un fondu vers le bas — plus une pointe de violet de marque. */
-  .spell-scene::after{
-    content:""; position:absolute; inset:0; z-index:-1;
-    background:
-      radial-gradient(120% 62% at 52% 2%, rgba(38,26,104,.30), transparent 64%),
-      radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(4,6,14,.52) 100%),
-      linear-gradient(180deg, rgba(5,8,18,.30) 0%, rgba(5,8,18,.26) 20%,
-                              rgba(5,8,18,.50) 52%, rgba(5,8,18,.62) 100%);
-  }
-  /* Le thème clair n'éclaircit pas la scène (elle resterait illisible à mi-chemin) :
-     il l'adoucit d'un cran, pour qu'elle ne fasse pas un trou noir dans la page. */
-  :root[data-theme="light"] .spell-scene::after,
-  :root:not([data-theme="dark"]) .spell-scene::after{
-    background:
-      radial-gradient(120% 62% at 52% 2%, rgba(46,34,120,.26), transparent 64%),
-      radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(6,9,20,.48) 100%),
-      linear-gradient(180deg, rgba(9,13,26,.24) 0%, rgba(9,13,26,.20) 20%,
-                              rgba(9,13,26,.44) 52%, rgba(9,13,26,.58) 100%);
-  }
   /* Titre posé sur le décor. Bridé en largeur : la vigie de la photo tombe à
      droite, on lui laisse la place plutôt que de la couvrir de texte. */
-  .spell-hero{max-width:min(620px,72%); margin:0 0 clamp(20px,3vw,30px)}
+  .spell-hero{max-width:min(660px,68%); margin:0 0 clamp(22px,3vw,32px)}
   @media (max-width:820px){ .spell-hero{max-width:100%} }
   .spell-hero .sh-tag{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.16em;
     text-transform:uppercase; color:var(--sc-accent);
@@ -377,6 +389,12 @@
     letter-spacing:-.02em; color:#fff; text-shadow:0 2px 24px rgba(0,0,0,.55)}
   .spell-hero p{margin:0; font-size:15px; line-height:1.55; color:rgba(238,242,255,.80);
     text-shadow:0 1px 14px rgba(0,0,0,.55)}
+
+  /* Le bandeau d'alerte passe lui aussi en version nuit : sa teinte claire
+     d'origine faisait une tache laiteuse sur la photo. */
+  .noreco-nuit{ background:rgba(255,138,134,.13); border-color:rgba(255,138,134,.45);
+    color:#ffd3d1; }
+  .noreco-nuit b{ color:#ff8a86; }
 
   .spell-credit{display:block; margin-top:14px; text-align:right; font-size:11px;
     letter-spacing:.04em; color:rgba(255,255,255,.42)}
@@ -514,9 +532,8 @@
     .spell-line .lbl{padding-top:0}
   }
   @media (max-width:820px){
-    .spell-scene{border-radius:20px}
-    .spell-scene::before{background-image:url("assets/images/aeroport-nuit-800.webp");
-                         background-position:center 62%}
+    .epel-fond::before{background-image:url("assets/images/aeroport-nuit-800.webp");
+                       background-position:center 62%}
   }
 
   /* ============ Catalogue de cours ============ */
@@ -611,8 +628,15 @@
   .sidebar{ position:fixed; top:0; left:0; bottom:0; width:var(--side-w); box-sizing:border-box;
     flex-direction:column; gap:4px; background:var(--surface); border-right:1px solid var(--border);
     padding:18px 14px; z-index:120; }
+  .side-head{ display:flex; align-items:center; gap:6px; padding:2px 2px 14px; }
+  .side-toggle{ flex:none; display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:10px; cursor:pointer; color:var(--ink-2);
+    background:transparent; border:1px solid transparent; transition:.14s; }
+  .side-toggle:hover{ background:var(--surface-2); color:var(--ink); }
+  .side-toggle .ic-svg{ width:20px; height:20px; }
   .side-brand{ display:flex; align-items:center; gap:9px; font-family:var(--sans); font-weight:800; font-size:17px;
-    color:var(--ink); padding:6px 8px 16px; }
+    color:var(--ink); min-width:0; }
+  .side-brand > span:last-child{ white-space:nowrap; }
   .side-brand .logo{ color:var(--violet); display:inline-flex; }
   .side-brand .ic-svg{ width:22px; height:22px; }
   .side-nav{ display:flex; flex-direction:column; gap:3px; }
@@ -622,6 +646,20 @@
   .sidelink .ic-svg{ width:19px; height:19px; flex:none; }
   .sidelink:hover{ background:var(--surface-2); color:var(--ink); }
   .sidelink.current{ background:var(--violet-soft); color:var(--violet-dark); border-color:var(--violet); }
+  /* --- Menu replié : un rail d'icônes. La largeur vit dans --side-w, que la
+     marge de <main> et le décor de l'épellation suivent tous les deux : un seul
+     nombre à changer, rien à resynchroniser. --- */
+  body.side-collapsed{ --side-w:76px; }
+  .sidebar, body.state-app main{ transition:width .22s ease, margin-left .22s ease; }
+  @media (prefers-reduced-motion:reduce){ .sidebar, body.state-app main{ transition:none; } }
+  body.side-collapsed .sidebar{ padding:18px 12px; }
+  body.side-collapsed .side-head{ justify-content:center; }
+  body.side-collapsed .side-brand{ display:none; }
+  body.side-collapsed .sidelink,
+  body.side-collapsed .side-logout{ justify-content:center; padding-left:0; padding-right:0; gap:0; }
+  body.side-collapsed .sidelink > span,
+  body.side-collapsed .side-logout > span{ display:none; }
+
   .side-logout{ margin-top:auto; display:flex; align-items:center; gap:10px; cursor:pointer;
     background:transparent; border:1px solid var(--border); border-radius:11px; padding:10px 12px;
     font-family:var(--sans); font-size:13.5px; font-weight:600; color:var(--ink-2); transition:.14s; }
@@ -639,6 +677,14 @@
   .side-overlay{ position:fixed; inset:0; background:rgba(20,16,40,.42); z-index:115; }
 
   @media (max-width:860px){
+    /* Tiroir : le repli en rail n'a pas de sens ici, on l'annule entièrement. */
+    body.side-collapsed{ --side-w:242px; }
+    body.side-collapsed .side-brand{ display:flex; }
+    body.side-collapsed .sidelink, body.side-collapsed .side-logout{
+      justify-content:flex-start; padding-left:12px; padding-right:12px; gap:11px; }
+    body.side-collapsed .sidelink > span, body.side-collapsed .side-logout > span{ display:inline; }
+    body.side-collapsed .sidebar{ padding:18px 14px; }
+    .side-toggle{ display:none; }
     body.state-app main{ margin-left:0; }
     body.state-app .sidebar{ transform:translateX(-100%); transition:transform .22s ease; box-shadow:var(--shadow-lg); }
     body.state-app .sidebar.open{ transform:none; }
@@ -1686,7 +1732,17 @@
 
   <!-- ==================== BARRE LATÉRALE (visible uniquement une fois « connecté ») ==================== -->
   <aside class="sidebar" id="sidebar" aria-label="Navigation">
-    <div class="side-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>RadioTrainer</span></div>
+    <!-- Tête de la barre : le bouton 3 barres replie le menu en simple rail
+         d'icônes (il ne le fait pas disparaître — on garde la navigation à un
+         clic). Sur mobile la barre reste un tiroir, piloté par le hamburger de
+         la barre applicative : les deux mécanismes ne se marchent pas dessus. -->
+    <div class="side-head">
+      <button class="side-toggle" id="sideToggle" type="button"
+              aria-label="Réduire le menu" aria-expanded="true" title="Réduire le menu">
+        <svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <div class="side-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>RadioTrainer</span></div>
+    </div>
     <nav class="side-nav">
       <button class="sidelink" type="button" data-page="tableau"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="1.5"/></svg><span>Accueil</span></button>
       <button class="sidelink" type="button" data-page="exercices"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg><span>Scénarios</span></button>
@@ -1707,6 +1763,13 @@
     <button class="hamburger" id="hamburger" type="button" aria-label="Menu" aria-expanded="false"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
     <div class="brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>RadioTrainer</span></div>
   </div>
+
+  <!-- Toile de fond de l'Épellation. Elle vit ICI, hors de <main> : les sections
+       de page portent une animation d'entrée qui passe par transform, et un
+       ancêtre transformé fait perdre à position:fixed son ancrage au cadre — le
+       décor se retrouvait décalé et rogné pendant l'animation. Elle n'est peinte
+       que sur la page concernée (body.on-epellation). -->
+  <div class="epel-fond" id="epelFond" aria-hidden="true"></div>
 
   <main>
     <!-- ==================== ACCUEIL ==================== -->
@@ -2378,7 +2441,7 @@
     <!-- ==================== ÉPELLATION ==================== -->
     <section id="page-epellation" class="page">
       <div class="container">
-        <div id="spellNoreco" class="noreco hidden">
+        <div id="spellNoreco" class="noreco noreco-nuit hidden">
           <b>Reconnaissance vocale indisponible</b> sur ce navigateur. Utilisez <b>Google Chrome</b> ou
           <b>Microsoft Edge</b> sur ordinateur. Vous pouvez tout de même vous entraîner à l'oral et
           révéler la réponse attendue.
@@ -6397,6 +6460,8 @@ if(!RECO_OK){
     document.body.classList.add('state-'+st);
     setDrawer(false);
     PAGES.forEach(function(p){ if(pages[p]) pages[p].classList.toggle('active',p===name); });
+    // Le décor de nuit ne se peint que sur l'Épellation (il vit hors de <main>).
+    document.body.classList.toggle('on-epellation', name==='epellation');
     sideLinks.forEach(function(a){ a.classList.toggle('current',a.dataset.page===name); });
     if(push!==false && ('#'+name)!==location.hash){ try{history.pushState({p:name},'','#'+name);}catch(e){} }
     window.scrollTo(0,0);
@@ -6429,6 +6494,36 @@ if(!RECO_OK){
   // Menu mobile (hamburger + overlay).
   var hb=document.getElementById('hamburger'); if(hb) hb.addEventListener('click',function(){ setDrawer(!(sidebar&&sidebar.classList.contains('open'))); });
   var ov=document.getElementById('sideOverlay'); if(ov) ov.addEventListener('click',function(){ setDrawer(false); });
+
+  /* --- Menu repliable (bureau) ---
+     Le choix est mémorisé : replier son menu à chaque visite serait une corvée.
+     La largeur ne change qu'une variable CSS ; en revanche la zone de contenu,
+     elle, change bel et bien de taille — et Leaflet ne s'en aperçoit pas tout
+     seul. On lui envoie donc un resize À LA FIN de l'animation, sinon la carte
+     de la Navigation et celle de la Carte restent grises sur la bande libérée. */
+  var CLE_MENU='rt-menu-replie';
+  var stg=document.getElementById('sideToggle');
+  function majMenu(replie, memoriser){
+    document.body.classList.toggle('side-collapsed', !!replie);
+    if(stg){
+      stg.setAttribute('aria-expanded', replie?'false':'true');
+      var t = replie ? 'Déployer le menu' : 'Réduire le menu';
+      stg.setAttribute('aria-label', t); stg.title = t;
+    }
+    /* Replié, il ne reste que des icônes : sans infobulle il faut deviner. On
+       reprend le libellé masqué plutôt que d'écrire une seconde liste de noms. */
+    sideLinks.concat([document.getElementById('logoutBtn')]).forEach(function(b){
+      if(!b) return;
+      var sp=b.querySelector('span');
+      if(replie && sp) b.title=sp.textContent; else b.removeAttribute('title');
+    });
+    if(memoriser){ try{ localStorage.setItem(CLE_MENU, replie?'1':'0'); }catch(e){} }
+    setTimeout(function(){ try{ window.dispatchEvent(new Event('resize')); }catch(e){} }, 240);
+  }
+  try{ if(localStorage.getItem(CLE_MENU)==='1') majMenu(true,false); }catch(e){}
+  if(stg) stg.addEventListener('click', function(){
+    majMenu(!document.body.classList.contains('side-collapsed'), true);
+  });
 
   window.addEventListener('popstate',function(){ showPage((location.hash||'#accueil').slice(1),false); });
   window.addEventListener('scroll',function(){ revealNow(); },{passive:true});

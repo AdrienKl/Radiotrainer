@@ -1715,6 +1715,11 @@
   }
 
 </style>
+
+<!-- Console d'administration : styles isolés dans leur propre fichier (préfixe
+     .adm-, portés par #page-admin). Chargés après le <style> du site pour que les
+     rares chevauchements se résolvent en faveur de l'Admin. Voir ADMIN.md. -->
+<link rel="stylesheet" href="assets/admin/admin.css">
 </head>
 <body>
 
@@ -1753,6 +1758,10 @@
       <button class="sidelink" type="button" data-page="progression"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg><span>Progression</span></button>
       <button class="sidelink" type="button" data-page="parametres"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg><span>Paramètres</span></button>
       <button class="sidelink" type="button" data-page="compte"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Compte</span></button>
+      <!-- Console d'administration. Masquée tant que le drapeau de développement
+           n'est pas posé (Paramètres → Administration). Ce masquage n'est PAS une
+           sécurité — il évite seulement de proposer l'entrée à un élève. -->
+      <button class="sidelink" type="button" data-page="admin" id="sideAdmin" hidden><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8 4 6v6c0 4.6 3.3 8.4 8 9.2 4.7-.8 8-4.6 8-9.2V6z"/><path d="M9.2 12.2l1.9 2 3.7-3.9"/></svg><span>Administration</span></button>
     </nav>
     <button class="side-logout" id="logoutBtn" type="button"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg><span>Se déconnecter</span></button>
   </aside>
@@ -2682,6 +2691,15 @@
             </div>
           </div>
 
+          <div class="set-card">
+            <h3>Administration</h3>
+            <div class="set-row">
+              <div class="set-lbl"><b>Console d'administration</b><span>Affiche l'entrée « Administration » dans le menu et donne accès à <code>#admin</code>. Commodité de développement : ce n'est pas une sécurité, et rien de confidentiel n'y transite tant que le serveur n'est pas branché.</span></div>
+              <button class="switch" id="setAdmin" type="button" role="switch" aria-checked="false"><span></span></button>
+            </div>
+            <p class="set-note">La console lit soit un jeu de démonstration <b>fictif</b>, soit les données réelles de cet appareil. L'autorisation véritable viendra de Supabase (Auth + RLS), côté serveur.</p>
+          </div>
+
           <div class="set-card set-wide">
             <h3>Données locales</h3>
             <p class="set-note" id="setDataInfo">—</p>
@@ -2706,6 +2724,18 @@
           <p>Ici figureront prochainement vos informations de compte, vos préférences et la synchronisation de votre progression.</p>
         </div>
       </div>
+    </section>
+
+    <!-- ==================== ADMINISTRATION ====================
+         Coquille vide : toute la console est bâtie par assets/admin/*.js, et
+         seulement à la première entrée sur #admin. Un élève qui n'y va jamais
+         ne paie donc rien de plus qu'une <section> inerte.
+         L'accès n'est PAS sécurisé ici et ne peut pas l'être : un site statique
+         n'a aucun moyen de contrôler qui charge un fichier. La garde ci-dessous
+         évite qu'on y tombe par accident ; l'autorisation réelle viendra de
+         Supabase (Auth + RLS). Voir ADMIN.md § 11 et § 12. -->
+    <section id="page-admin" class="page">
+      <div id="admRoot"></div>
     </section>
   </main>
 
@@ -6426,8 +6456,14 @@ if(!RECO_OK){
 /* ============ ROUTEUR SPA + animations de navigation (n'affecte pas la logique métier ci-dessus) ============ */
 (function(){
   // Pages : vitrine (accueil), écrans d'auth (login/signup), et pages applicatives (dans la coquille).
-  var PAGES=['accueil','login','signup','tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte'];
+  var PAGES=['accueil','login','signup','tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte','admin'];
   var APP_PAGES=['tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte'];
+  /* La console d'administration est une page de plus, servie par CE routeur : une
+     seule application, un seul historique, une seule barre d'adresse. Elle est la
+     seule à porter des sous-routes (#admin/users/u_007) — d'où le découpage sur
+     « / » dans showPage(). Les douze routes existantes n'ont pas de « / » et
+     empruntent donc exactement le chemin d'avant. */
+  var ADMIN_PAGE='admin';
   var pages={}; PAGES.forEach(function(p){pages[p]=document.getElementById('page-'+p);});
   var sideLinks=[].slice.call(document.querySelectorAll('.sidelink'));
   var sidebar=document.getElementById('sidebar');
@@ -6435,7 +6471,12 @@ if(!RECO_OK){
   // État d'authentification : MOCK, uniquement en mémoire (pas de backend, pas de persistance,
   // pas de vérification, pas de stockage de mot de passe). Un rafraîchissement ramène à la vitrine.
   var authed=false, pendingTarget=null;
+  /* Dernière route effectivement peinte. Sert à ignorer les hashchange que l'on
+     provoque soi-même : sans ce garde-fou, un clic dans la console d'admin
+     déclencherait deux rendus (celui du clic, puis celui du hashchange). */
+  var routeAffichee=null;
   function macroState(name){
+    if(name===ADMIN_PAGE) return 'admin';
     if(name==='login'||name==='signup') return 'auth';
     if(APP_PAGES.indexOf(name)>=0) return 'app';
     return 'vitrine';
@@ -6451,25 +6492,42 @@ if(!RECO_OK){
   function observeReveals(){document.querySelectorAll('.reveal:not(.in)').forEach(function(el){io.observe(el);});}
   function revealNow(scope){(scope||document).querySelectorAll('.reveal:not(.in)').forEach(function(el){var r=el.getBoundingClientRect(); if(r.top<window.innerHeight*0.96){el.classList.add('in'); io.unobserve(el);}});}
 
-  function showPage(name,push){
-    if(PAGES.indexOf(name)<0) name='accueil';
+  function showPage(route,push){
+    /* Une route peut porter des segments (#admin/users/u_007). Seul le premier
+       désigne la <section> à afficher ; le reste est passé à la page concernée. */
+    var name=String(route||''), reste='';
+    var barre=name.indexOf('/');
+    if(barre>0){ reste=name.slice(barre+1); name=name.slice(0,barre); }
+    if(PAGES.indexOf(name)<0){ name='accueil'; reste=''; }
     // Garde d'accès : une page applicative exige d'être « connecté » → sinon, écran de connexion.
-    if(macroState(name)==='app' && !authed){ pendingTarget=name; name='login'; }
+    if(macroState(name)==='app' && !authed){ pendingTarget=name; name='login'; reste=''; }
+    /* Même garde pour l'Admin, et rien de plus : ce n'est PAS une sécurité (voir
+       ADMIN.md § 12). Elle évite seulement d'y arriver par accident. */
+    if(name===ADMIN_PAGE && !authed){ pendingTarget=route; name='login'; reste=''; }
+    var routeComplete = name + (reste ? '/'+reste : '');
+    routeAffichee = routeComplete;
     var st=macroState(name);
-    document.body.classList.remove('state-vitrine','state-auth','state-app');
+    document.body.classList.remove('state-vitrine','state-auth','state-app','state-admin');
     document.body.classList.add('state-'+st);
     setDrawer(false);
     PAGES.forEach(function(p){ if(pages[p]) pages[p].classList.toggle('active',p===name); });
     // Le décor de nuit ne se peint que sur l'Épellation (il vit hors de <main>).
     document.body.classList.toggle('on-epellation', name==='epellation');
     sideLinks.forEach(function(a){ a.classList.toggle('current',a.dataset.page===name); });
-    if(push!==false && ('#'+name)!==location.hash){ try{history.pushState({p:name},'','#'+name);}catch(e){} }
+    if(push!==false && ('#'+routeComplete)!==location.hash){
+      try{history.pushState({p:routeComplete},'','#'+routeComplete);}catch(e){}
+    }
     window.scrollTo(0,0);
     requestAnimationFrame(function(){ revealNow(pages[name]); });
     // Notifie les modules autonomes qu'une page vient d'être affichée. La carte Leaflet
     // en a besoin : un conteneur créé en display:none a une taille nulle et doit être
     // recalculé (invalidateSize) une fois visible.
-    try{ window.dispatchEvent(new CustomEvent('rt:page',{detail:{page:name}})); }catch(e){}
+    try{ window.dispatchEvent(new CustomEvent('rt:page',{detail:{page:name, route:routeComplete}})); }catch(e){}
+    /* La console d'administration se construit à la demande : elle écoute cet
+       événement et reçoit la route complète, sous-segments compris. */
+    if(name===ADMIN_PAGE){
+      try{ window.dispatchEvent(new CustomEvent('rt:admin',{detail:{route:routeComplete}})); }catch(e){}
+    }
   }
 
   // Liens directs de navigation (sidebar, bascules connexion↔inscription) : vont à la page nommée.
@@ -6485,7 +6543,8 @@ if(!RECO_OK){
     });
   });
   // Validation MOCK connexion/inscription : aucune vérification, on entre dans l'application.
-  function enterApp(){ authed=true; var t=pendingTarget||'tableau'; pendingTarget=null; showPage(t); }
+  function enterApp(){ authed=true; var t=pendingTarget||'tableau'; pendingTarget=null; showPage(t);
+    if(window.rtMajLienAdmin) window.rtMajLienAdmin(); }
   var loginSubmit=document.getElementById('loginSubmit'); if(loginSubmit) loginSubmit.addEventListener('click',enterApp);
   var signupSubmit=document.getElementById('signupSubmit'); if(signupSubmit) signupSubmit.addEventListener('click',enterApp);
   // Déconnexion : retour à la vitrine (utile pour re-tester le flux).
@@ -6526,6 +6585,16 @@ if(!RECO_OK){
   });
 
   window.addEventListener('popstate',function(){ showPage((location.hash||'#accueil').slice(1),false); });
+  /* Les liens internes de la console d'admin sont de vrais <a href="#admin/...">.
+     Une navigation de fragment déclenche 'hashchange', pas 'popstate' : sans cet
+     écouteur, l'URL changerait sans que la vue suive. */
+  window.addEventListener('hashchange',function(){
+    var r=(location.hash||'#accueil').slice(1);
+    if(r!==routeAffichee) showPage(r,false);
+  });
+  /* Navigation programmatique, pour les modules chargés séparément (console
+     d'administration). Ils n'ont pas accès à la portée de ce bloc. */
+  window.rtNaviguer=function(route){ showPage(route); };
   window.addEventListener('scroll',function(){ revealNow(); },{passive:true});
 
   // Contrôles segmentés (pilule) : couche VISUELLE au-dessus des <select> existants.
@@ -8871,11 +8940,19 @@ function oaciSonde(couche, surAbsenceTotale){
          {label:'Votre indicatif',ref:'callsign'} ])
   ];
 
+  /* Imprévu imposé depuis la console d'administration (#admin/test) : au lieu
+     d'attendre le tirage au sort, on demande CET imprévu-là pour le prochain vol.
+     Usage unique — la valeur est consommée dès la construction du vol suivant,
+     de sorte que la logique aléatoire normale reprend aussitôt la main. */
+  var aleaImpose=null;
+
   /* Insère AU PLUS un aléa majeur par vol, avant la phase d'arrivée.
      Probabilité plus forte en mode Réel, comme dans les scénarios. */
   function insererAleaMajeur(S, C){
+    var impose=aleaImpose; aleaImpose=null;             // consommé, quoi qu'il arrive
+    if(impose==='aucun') return;                        // « aucun imprévu », à la demande
     if(!C.arr) return;                                  // vol local : pas de déroutement
-    if(Math.random() >= 0.5) return;                    // environ un vol sur deux
+    if(!impose && Math.random() >= 0.5) return;         // environ un vol sur deux
     // Point d'insertion : juste avant l'intégration.
     var idx=-1;
     for(var i=0;i<S.length;i++) if(S[i].ph==='Intégration'){ idx=i; break; }
@@ -8888,6 +8965,9 @@ function oaciSonde(couche, surAbsenceTotale){
     if(alt) choix.push('ferme');
     for(var q=0;q<ALEAS_VOL.length;q++) choix.push('lib:'+q);
     var kind=choix[Math.floor(Math.random()*choix.length)];
+    /* Le terrain fermé n'a de sens qu'avec un dégagement : sans lui, l'imprévu
+       imposé retomberait sur un déroutement sans destination. */
+    if(impose && (impose!=='ferme' || alt)) kind=impose;
     var bloc;
     if(kind.indexOf('lib:')===0){
       bloc=ALEAS_VOL[parseInt(kind.slice(4),10)](stn,freq,leg,C);
@@ -9859,6 +9939,61 @@ function oaciSonde(couche, surAbsenceTotale){
     }
     startFlight();
   });
+
+  /* ==========================================================================
+     API de test, consommée par la console d'administration (#admin/test).
+     ---------------------------------------------------------------------------
+     Elle ne crée AUCUNE logique de vol : elle réinjecte une configuration dans
+     les mêmes variables que le formulaire, puis appelle startFlight() — c'est
+     exactement le chemin que suit déjà « Refaire ce vol » dans l'historique.
+     Rien n'est dupliqué, rien n'est contourné.
+     ========================================================================== */
+  window.RT_TEST = {
+    avions:      function(){ return AIRCRAFT.map(function(a){ return a.nom; }); },
+    /* cfg = {dep, arr, alt, mode, level, avion, fl, pax, alea} — tout est optionnel
+       sauf dep, et arr en mode « voyage ». Renvoie une chaîne d'erreur, ou null. */
+    lancerVol:   function(cfg){
+      cfg = cfg || {};
+      if(!cfg.dep) return 'Aérodrome de départ manquant.';
+      var m = AIRCRAFT.filter(function(a){ return a.nom===cfg.avion; })[0];
+      if(!m) return 'Type d\u2019avion inconnu : ' + (cfg.avion||'(vide)');
+      /* Un vol déjà en cours doit être clos par le chemin normal — endFlight()
+         débriefe et l'enregistre. fermerVol(), lui, ne referme que le panneau de
+         détail de l'historique : il ne stoppe rien. */
+      if(F.running) endFlight();
+      IN.dep.value=cfg.dep; sel.dep=cfg.dep;
+      if(cfg.arr){ IN.arr.value=cfg.arr; sel.arr=cfg.arr; } else { IN.arr.value=''; sel.arr=null; }
+      if(cfg.alt){ IN.alt.value=cfg.alt; sel.alt=cfg.alt; } else { IN.alt.value=''; sel.alt=null; }
+      mode = cfg.mode==='local' ? 'local' : 'voyage';
+      if(mode==='voyage' && !sel.arr) return 'Aérodrome d\u2019arrivée manquant en mode Voyage.';
+      sec.querySelectorAll('[data-volmode]').forEach(function(b){ b.classList.toggle('active',b.dataset.volmode===mode); });
+      document.body.classList.toggle('volmode-local',mode==='local');
+      level = cfg.level==='reel' ? 'reel' : 'debutant';
+      sec.querySelectorAll('[data-diff]').forEach(function(b){ b.classList.toggle('active',b.dataset.diff===level); });
+      acChoice=m; acInput.value=m.nom; acInput.classList.remove('champ-requis');
+      if(cfg.fl)  $v('navFl').value=cfg.fl;
+      if(cfg.pax!=null) $v('navPax').value=cfg.pax;
+      aleaImpose = cfg.alea || null;
+      redraw();
+      startFlight();
+      return null;
+    },
+    /* Imprévu imposé au PROCHAIN vol, sans le lancer tout de suite. */
+    forcerAlea:  function(kind){ aleaImpose = kind || null; },
+    aleaImpose:  function(){ return aleaImpose; },
+    /* Remise à zéro : on clôt le vol en cours EXACTEMENT comme le bouton
+       « Terminer le vol » (endFlight → débriefing + enregistrement), puis on
+       oublie la sauvegarde de reprise. Pas de second chemin de sortie : un vol
+       clos depuis la console est un vol clos comme un autre. */
+    reinitialiser:function(){
+      aleaImpose=null;
+      if(F.running) endFlight();
+      oublierVol();
+      try{ $v('navResume').classList.add('hidden'); }catch(e){}
+    },
+    enVol:       function(){ return !!F.running; }
+  };
+
   /* ---- Commandes de la radio ---- */
   $v('radioSwap').addEventListener('click',permuter);
   /* Molettes : un cran par clic, mais l'appui MAINTENU fait défiler, de plus en
@@ -10549,6 +10684,27 @@ function oaciSonde(couche, surAbsenceTotale){
     save(); sw($s('setRadio'), S.radioManuelle!==false);
   });
 
+  /* ---------- Administration (commodité de développement) ----------
+     Le drapeau vit dans sa PROPRE clé, pas dans rt-settings : ce n'est pas une
+     préférence d'utilisateur à synchroniser un jour, c'est un interrupteur de
+     développement que le futur rôle serveur remplacera purement et simplement. */
+  var admBtn=$s('setAdmin');
+  function admActif(){ try{ return localStorage.getItem('rt-admin-dev')==='1'; }catch(e){ return false; } }
+  function majLienAdmin(){
+    if(admBtn) sw(admBtn, admActif());
+    var lien=document.getElementById('sideAdmin');
+    if(lien) lien.hidden = !admActif();
+  }
+  window.rtMajLienAdmin = majLienAdmin;
+  if(admBtn) admBtn.addEventListener('click',function(){
+    var on=!admActif();
+    if(window.RTAdmin && window.RTAdmin.session) window.RTAdmin.session.setDevAdmin(on);
+    else { try{ on ? localStorage.setItem('rt-admin-dev','1') : localStorage.removeItem('rt-admin-dev'); }catch(e){} }
+    majLienAdmin();
+    showToast(on ? 'Console d\u2019administration accessible \u2014 menu \u00ab\u00a0Administration\u00a0\u00bb.'
+                 : 'Console d\u2019administration masqu\u00e9e.');
+  });
+
   /* ---------- Données locales ---------- */
   function histCount(){ try{ return (JSON.parse(localStorage.getItem(LS_KEY))||[]).length; }catch(e){ return 0; } }
   function volCount(){ try{ return (JSON.parse(localStorage.getItem('rt-vols')||'[]')).length; }catch(e){ return 0; } }
@@ -10607,6 +10763,7 @@ function oaciSonde(couche, surAbsenceTotale){
     sw($s('setNoise'),!!S.noise);
     sw($s('setRadio'), S.radioManuelle!==false);   // absent = radio manuelle active
     $s('setCall').value=S.call||'F-ABCD';
+    majLienAdmin();
     refreshData();
   }
   paint();
@@ -10622,6 +10779,32 @@ function oaciSonde(couche, surAbsenceTotale){
   },600);
 })();
 </script>
+
+<!-- ==================== CONSOLE D'ADMINISTRATION ====================
+     Scripts classiques (pas de modules ES) et namespace global window.RTAdmin :
+     même contrainte que le reste du projet — l'application doit rester ouvrable
+     par un simple double-clic (file://), où import/export échoue sur CORS.
+
+     Ordre imposé : le collecteur d'erreurs d'abord (pour capter ce qui suit),
+     puis le contrat, le kit d'interface, les sources de données, la coquille,
+     et enfin les pages — qui s'enregistrent auprès de la coquille.
+
+     Rien ne se construit au chargement : la console n'est bâtie qu'à la première
+     entrée sur #admin. Voir ADMIN.md. -->
+<script src="assets/admin/data/error-log.js"></script>
+<script src="assets/admin/data/contract.js"></script>
+<script src="assets/admin/ui/kit.js"></script>
+<script src="assets/admin/data/source-mock.js"></script>
+<script src="assets/admin/data/source-local.js"></script>
+<script src="assets/admin/data/source-supabase.js"></script>
+<script src="assets/admin/admin.js"></script>
+<script src="assets/admin/pages/dashboard.js"></script>
+<script src="assets/admin/pages/users.js"></script>
+<script src="assets/admin/pages/flights.js"></script>
+<script src="assets/admin/pages/analytics.js"></script>
+<script src="assets/admin/pages/exercises.js"></script>
+<script src="assets/admin/pages/errors.js"></script>
+<script src="assets/admin/pages/test.js"></script>
 
 </body>
 </html>

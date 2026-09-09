@@ -174,6 +174,11 @@
   .ac-item .code{color:var(--violet); font-weight:700; font-family:var(--mono)}
   .ac-item.active, .ac-item:hover{background:var(--violet-soft)}
   .ac-empty{padding:10px 13px; color:var(--ink-2); font-size:13.5px}
+  /* Nature du terrain retenu (contrôlé / AFIS) : information, pas réglage. */
+  .ad-kind{display:block; margin-top:7px; font-size:12.5px; font-weight:600; line-height:1.45;
+           padding:7px 11px; border-radius:10px; border:1px solid var(--violet);
+           background:var(--violet-soft); color:var(--violet-dark)}
+  .ad-kind.afis{border-color:var(--border); background:var(--surface-2); color:var(--ink-2)}
 
   .exam-bar{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:6px 0 18px}
   .exam-note{color:var(--ink-2); font-size:13px}
@@ -306,50 +311,96 @@
   @keyframes cueBounce{0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)}}
   @media (prefers-reduced-motion:reduce){ .scroll-cue{animation:none} }
 
-  /* ============ Épellation radio ============ */
-  .spell-head{text-align:center; padding:10px 0 20px}
-  .spell-kind{display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-    color:var(--violet); background:var(--violet-soft); border-radius:var(--pill); padding:5px 14px}
-  .spell-code{font-family:var(--mono); font-size:clamp(44px,10vw,84px); font-weight:800; letter-spacing:.08em;
-    color:var(--ink); margin:14px 0 6px; line-height:1}
-  .spell-sub{color:var(--ink-2); font-size:14px}
-  .spell-user{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:13px 15px;
-    min-height:48px; font-size:16px; color:var(--ink); word-break:break-word}
-  .spell-user.empty{color:var(--ink-2)}
-  .spell-expected{position:relative; background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
-    padding:13px 15px; min-height:48px; font-size:16px; font-weight:600; color:var(--ink); word-break:break-word;
-    transition:filter .2s ease}
+  /* ============ Épellation radio ============
+     Deux colonnes comme les autres modules : l'exercice à gauche, le suivi de
+     série à droite. L'ancienne version empilait un code géant, trois boutons et
+     deux zones de texte floutées, sans hiérarchie ni retour lisible. */
+  .spell-layout{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:20px; align-items:start}
+  @media (max-width:980px){ .spell-layout{grid-template-columns:1fr} }
+
+  .spell-main{padding:0; overflow:hidden}
+  /* Bandeau du code : c'est l'objet de l'exercice, il occupe le haut de la carte. */
+  .spell-head{position:relative; text-align:center; padding:26px 22px 24px;
+    background:linear-gradient(150deg, var(--violet-tint), var(--surface));
+    border-bottom:1px solid var(--border)}
+  .spell-kind{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--violet-dark); background:var(--surface); border:1px solid var(--violet);
+    border-radius:var(--pill); padding:5px 14px}
+  /* Le code est découpé en pastilles : chacune se colore d'après le mot épelé,
+     ce qui montre d'un coup d'œil OÙ ça a coincé. */
+  .spell-code{display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px;
+    margin:16px 0 10px}
+  .sp-char{display:grid; place-items:center; min-width:clamp(38px,7vw,58px); height:clamp(48px,9vw,70px);
+    padding:0 6px; border-radius:14px; background:var(--surface); border:1.5px solid var(--border);
+    font-family:var(--mono); font-size:clamp(24px,5vw,38px); font-weight:800; letter-spacing:.02em;
+    color:var(--ink); box-shadow:var(--shadow-sm); transition:border-color .2s, background .2s, color .2s}
+  .sp-char.sep{min-width:0; border:none; background:none; box-shadow:none; color:var(--ink-2); font-weight:600}
+  .sp-char.ok{border-color:var(--ok); background:rgba(47,163,107,.10); color:var(--ok)}
+  .sp-char.ko{border-color:var(--bad); background:rgba(217,83,79,.10); color:var(--bad)}
+  .spell-sub{color:var(--ink-2); font-size:13.5px; margin:0}
+
+  .spell-body{padding:20px 22px 22px; display:flex; flex-direction:column; gap:14px}
+  /* Micro au centre, chrono à sa droite : une seule action évidente. */
+  .spell-mic{display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap}
+  .spell-mic .ptt{min-width:250px}
+  .spell-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+
+  /* Comparaison attendu / entendu, en pastilles de mots. */
+  .spell-compare{display:grid; gap:10px}
+  .spell-line{display:grid; grid-template-columns:78px minmax(0,1fr); gap:12px; align-items:start}
+  .spell-line .lbl{font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-2); padding-top:9px}
+  .spell-words{display:flex; flex-wrap:wrap; gap:6px; min-height:40px; align-items:center;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:7px 9px}
+  .spell-words .w{display:inline-block; padding:5px 11px; border-radius:var(--pill); font-size:14px; font-weight:600;
+    background:var(--surface); border:1px solid var(--border); color:var(--ink)}
+  .spell-words .w.ok{border-color:var(--ok); color:var(--ok); background:rgba(47,163,107,.10)}
+  .spell-words .w.ko{border-color:var(--bad); color:var(--bad); background:rgba(217,83,79,.10)}
+  .spell-words .w.miss{border-style:dashed; color:var(--ink-2); background:none}
+  .spell-words .w.extra{border-color:var(--warn); color:var(--warn); background:rgba(224,145,42,.10)}
+  .spell-words .none{color:var(--ink-2); font-size:14px; padding:0 4px}
+  /* La réponse attendue reste floutée tant qu'on n'a pas répondu : la lire d'avance
+     viderait l'exercice de son sens. */
   .spell-expected.blurred{filter:blur(7px); user-select:none}
   .spell-expected.blurred.hoverable{cursor:pointer}
   .spell-expected.blurred.hoverable:hover{filter:none}
-  .spell-expected .ok{color:var(--violet)}
-  .spell-expected .ko{color:#c0392b; text-decoration:underline; text-decoration-style:wavy; text-underline-offset:3px}
-  .spell-verdict{display:flex; align-items:center; gap:9px; font-weight:700; font-size:15px; border-radius:12px; padding:12px 15px}
-  .spell-verdict.good{background:var(--violet-tint); color:var(--violet-dark); border:1px solid var(--violet)}
-  .spell-verdict.bad{background:#fdecec; color:#c0392b; border:1px solid #e7b3b3}
-  .spell-verdict .ic-svg{width:20px; height:20px}
-  /* La transcription étant masquée, le verdict est le seul retour : on lui donne
-     du poids visuel. */
-  /* .field impose display:flex, ce qui neutralise l'attribut [hidden] : il faut
-     une règle explicite pour masquer la transcription. */
-  .spell-hidden-user{display:none !important}
-  .spell-verdict{font-size:17px; padding:16px 19px; margin-top:4px}
-  .spell-verdict .ic-svg{width:24px; height:24px}
-  .spell-verdict.none{background:var(--surface-2); color:var(--ink-2); border:1px solid var(--border)}
+
+  .spell-verdict{display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; border-radius:12px;
+    padding:14px 17px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink-2)}
+  .spell-verdict .ic-svg{width:22px; height:22px; flex:none}
+  .spell-verdict small{display:block; font-weight:600; font-size:13px; opacity:.85; margin-top:2px}
+  .spell-verdict.good{background:rgba(47,163,107,.10); color:var(--ok); border-color:var(--ok)}
+  .spell-verdict.bad{background:rgba(217,83,79,.10); color:var(--bad); border-color:var(--bad)}
   :root[data-theme="dark"] .spell-verdict.bad{background:#301a19; color:#f3b4b0; border-color:#6b3330}
-  .spell-status{margin-top:12px; padding:10px 14px; border-radius:12px; font-size:13.5px; font-weight:600;
+
+  .spell-status{padding:10px 14px; border-radius:12px; font-size:13.5px; font-weight:600;
     background:var(--violet-soft); color:var(--violet-dark); border:1px solid var(--violet)}
   .spell-status.err{background:#fdecec; color:#c0392b; border-color:#e7b3b3}
+  :root[data-theme="dark"] .spell-status.err{background:#301a19; color:#f3b4b0; border-color:#6b3330}
 
-  /* Étape 3 — chronomètre d'épellation (à côté du bouton micro). */
+  /* Chronomètre, à côté du bouton micro. */
   .spell-timer{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-weight:700;
     font-size:15px; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--border);
-    border-radius:var(--pill); padding:6px 12px; min-width:66px; justify-content:center; font-variant-numeric:tabular-nums}
+    border-radius:var(--pill); padding:8px 14px; min-width:74px; justify-content:center; font-variant-numeric:tabular-nums}
   .spell-timer.running{color:var(--violet-dark); border-color:var(--violet); background:var(--violet-soft)}
   .spell-timer::before{content:""; width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.5}
   .spell-timer.running::before{opacity:1; animation:spellPulse 1s ease-in-out infinite}
   @keyframes spellPulse{0%,100%{opacity:1}50%{opacity:.25}}
   @media (prefers-reduced-motion: reduce){ .spell-timer.running::before{animation:none} }
+
+  /* Colonne de droite : série en cours et rappel de la règle. */
+  .spell-side{display:flex; flex-direction:column; gap:16px; position:sticky; top:84px}
+  @media (max-width:980px){ .spell-side{position:static} }
+  .spell-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .spell-stat{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:11px 12px}
+  .spell-stat b{display:block; font-family:var(--mono); font-size:22px; font-weight:800; color:var(--violet-dark); line-height:1.2}
+  .spell-stat span{font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2)}
+  .spell-tips{margin:0; padding-left:18px; color:var(--ink-2); font-size:13.5px; line-height:1.6}
+  .spell-tips li+li{margin-top:6px}
+  .spell-tips b{color:var(--ink)}
+  .spell-side .panel{margin:0; padding:18px}
+  .fiche-h{font-size:13px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
+           color:var(--ink-2); margin:0 0 12px}
 
   /* ============ Catalogue de cours ============ */
   /* 320px mini : à 260px, l'icône de 44px laissait une colonne de texte trop étroite
@@ -369,6 +420,24 @@
 
   /* ============ Cours : alphabet + chiffres ============ */
   .cours-h{font-size:18px; margin:28px 0 12px; color:var(--ink)}
+
+  /* ---- Manuel PDF intégré au cours ---- */
+  .pdf-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+  .pdf-bar .btn{text-decoration:none}
+  .pdf-hint{font-size:12.5px; color:var(--ink-2)}
+  /* Le visionneur occupe la hauteur utile de la fenêtre : un PDF de 281 pages
+     dans un cadre de 400 px ne se lit pas. */
+  .pdf-frame{position:relative; height:calc(100vh - 300px); min-height:460px;
+    border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+    background:var(--surface-2); box-shadow:var(--shadow-sm)}
+  .pdf-frame iframe{position:relative; z-index:1; width:100%; height:100%; border:0; display:block; background:var(--surface)}
+  /* Repli visible seulement si l'iframe ne peint rien par-dessus (iOS, lecteurs absents). */
+  .pdf-fallback{position:absolute; inset:0; z-index:0; margin:0; display:grid; place-items:center;
+    text-align:center; padding:24px; color:var(--ink-2); font-size:14.5px}
+  .pdf-src{margin-top:14px; font-size:12.5px; line-height:1.6; color:var(--ink-2);
+    background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px 15px}
+  .pdf-src b{color:var(--ink)}
+  @media (max-width:700px){ .pdf-frame{height:calc(100vh - 240px)} }
   .cours-note{color:var(--ink-2); font-size:13.5px; margin:-4px 0 14px}
   .alpha-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr)); gap:10px}
   .alpha-card{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border);
@@ -1444,7 +1513,7 @@
 
   /* Appareils sans survol : « Survoler pour démasquer » n'a aucun sens au doigt. */
   @media (hover:none){
-    .switch-line{ display:none; }
+    #page-epellation .switch-line{ display:none; }
   }
 
   /* Règle .hidden générique : les toggles JS classList.toggle('hidden') sur des éléments
@@ -1672,30 +1741,20 @@
             <label for="depInput">Aérodrome de départ</label>
             <input id="depInput" type="text" placeholder="Tapez un nom ou un code OACI (ex : LFPT)" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="depList">
             <div class="ac-list" id="depList" role="listbox"></div>
+            <!-- Contrôlé ou AFIS : ce n'est pas un choix, c'est un fait publié pour
+                 chaque terrain. On l'affiche donc, comme en Navigation. -->
+            <span class="ad-kind hidden" id="depKind"></span>
           </div>
           <div class="field">
             <label for="arrInput">Aérodrome d'arrivée</label>
             <input id="arrInput" type="text" placeholder="Optionnel — pour l'intégration/atterrissage" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="arrList">
             <div class="ac-list" id="arrList" role="listbox"></div>
+            <span class="ad-kind hidden" id="arrKind"></span>
           </div>
           <div class="row2" style="grid-column:1 / -1">
             <div class="field field-box">
               <label for="call">Indicatif avion (fictif)</label>
               <input id="call" type="text" value="F-ABCD" autocomplete="off" spellcheck="false">
-            </div>
-            <div class="field field-box">
-              <label for="depCtrlSelect">Terrain de départ</label>
-              <select id="depCtrlSelect" class="segmented">
-                <option value="1" selected>Contrôlé</option>
-                <option value="0" data-full="Non contrôlé (AFIS / Info)">AFIS</option>
-              </select>
-            </div>
-            <div class="field field-box">
-              <label for="arrCtrlSelect">Terrain d'arrivée</label>
-              <select id="arrCtrlSelect" class="segmented">
-                <option value="1" selected>Contrôlé</option>
-                <option value="0" data-full="Non contrôlé (AFIS / Info)">AFIS</option>
-              </select>
             </div>
             <div class="field field-box">
               <label for="difficultySelect">Difficulté</label>
@@ -2211,41 +2270,70 @@
           révéler la réponse attendue.
         </div>
 
-        <section class="panel">
-          <div class="spell-head">
-            <span class="spell-kind" id="spellKind">Immatriculation</span>
-            <div class="spell-code" id="spellCode">F-GXYZ</div>
-            <div class="spell-sub">Épelez lettre par lettre — chiffres compris.</div>
-          </div>
+        <div class="spell-layout">
+          <section class="panel spell-main">
+            <!-- Le code à épeler, en pastilles : chacune se colore après la réponse. -->
+            <header class="spell-head">
+              <span class="spell-kind" id="spellKind">Immatriculation</span>
+              <div class="spell-code" id="spellCode"></div>
+              <p class="spell-sub">Épelez lettre par lettre — chiffres compris.</p>
+            </header>
 
-          <div class="controls">
-            <button class="btn ptt" id="spellPtt" type="button">🎙 Parler (PTT)</button>
-            <span class="spell-timer" id="spellTimer" aria-live="off">0.0 s</span>
-            <button class="btn small" id="spellReplayBtn" type="button" disabled>Réécouter mon audio</button>
-            <button class="btn small" id="spellSkipBtn" type="button">Passer ▸</button>
-          </div>
+            <div class="spell-body">
+              <div class="spell-mic">
+                <button class="btn ptt" id="spellPtt" type="button"><span>Maintenir pour parler</span></button>
+                <span class="spell-timer" id="spellTimer" aria-live="off">0.0 s</span>
+              </div>
 
-          <div class="spell-status hidden" id="spellStatus" role="status" aria-live="polite"></div>
+              <div class="spell-status hidden" id="spellStatus" role="status" aria-live="polite"></div>
 
-          <!-- Transcription masquée : sur l'épellation la reconnaissance est fiable,
-               seul le verdict compte. L'élément reste dans le DOM car evaluate() en
-               lit le contenu pour découper les tokens. -->
-          <div class="field spell-hidden-user">
-            <label>Votre réponse</label>
-            <div class="spell-user" id="spellUser">—</div>
-          </div>
+              <div class="spell-actions">
+                <button class="btn small" id="spellReplayBtn" type="button" disabled>Réécouter mon audio</button>
+                <button class="btn small" id="spellReveal" type="button">Voir la réponse</button>
+                <button class="btn small" id="spellSkipBtn" type="button">Code suivant ▸</button>
+              </div>
 
-          <div class="feedback" id="spellFeedback"></div>
+              <div class="feedback" id="spellFeedback"></div>
 
-          <div class="field" style="margin-top:6px">
-            <label for="spellReveal">Réponse attendue</label>
-            <div class="spell-expected blurred" id="spellExpected"></div>
-            <div class="trans-actions">
-              <button class="btn small" id="spellReveal" type="button">Voir la réponse</button>
-              <label class="switch-line"><input type="checkbox" id="spellHover"><span>Survoler pour démasquer</span></label>
+              <!-- Attendu / entendu côte à côte. La transcription était masquée :
+                   quand la reconnaissance se trompait, le verdict semblait injuste
+                   et rien ne permettait de le vérifier. -->
+              <div class="spell-compare">
+                <div class="spell-line">
+                  <span class="lbl">Attendu</span>
+                  <div class="spell-words spell-expected blurred" id="spellExpected"></div>
+                </div>
+                <div class="spell-line">
+                  <span class="lbl">Entendu</span>
+                  <div class="spell-words" id="spellUser"><span class="none">— rien pour l'instant</span></div>
+                </div>
+              </div>
+
+              <label class="switch-line"><input type="checkbox" id="spellHover"><span>Survoler pour démasquer la réponse attendue</span></label>
             </div>
-          </div>
-        </section>
+          </section>
+
+          <aside class="spell-side">
+            <section class="panel">
+              <h3 class="fiche-h">Votre série</h3>
+              <div class="spell-stats">
+                <div class="spell-stat"><b id="spellStatOk">0</b><span>Réussis</span></div>
+                <div class="spell-stat"><b id="spellStatTot">0</b><span>Codes</span></div>
+                <div class="spell-stat"><b id="spellStatStreak">0</b><span>D'affilée</span></div>
+                <div class="spell-stat"><b id="spellStatBest">—</b><span>Meilleur</span></div>
+              </div>
+            </section>
+            <section class="panel">
+              <h3 class="fiche-h">Comment ça marche</h3>
+              <ul class="spell-tips">
+                <li><b>Maintenez</b> le bouton pendant que vous épelez, relâchez à la fin.</li>
+                <li>Les lettres se disent en <b>alphabet OACI</b> (Alpha, Bravo, Charlie…), les chiffres comme dans la vie courante.</li>
+                <li>Le tiret d'une immatriculation ne se prononce <b>pas</b> : « F-GXYZ » se dit « Foxtrot Golf X-ray Yankee Zoulou ».</li>
+                <li>La réponse attendue reste floutée tant que vous n'avez pas répondu.</li>
+              </ul>
+            </section>
+          </aside>
+        </div>
       </div>
     </section>
 
@@ -4371,7 +4459,16 @@ const state = {
   scenarioIndex:-1, queue:[], stepIndex:0, results:[]
 };
 // contrôlé ? pour un côté donné ('dep'/'arr'), avec repli défensif.
-function ctrlOf(side){ const c=state.controlled; return (side==='arr') ? !!c.arr : !!c.dep; }
+/* Contrôlé ou AFIS n'est plus un réglage : c'est une propriété du terrain (a.ctrl,
+   posé d'après les fréquences TWR publiées). Choisir Chavenay donnait auparavant
+   un contrôleur si la case était restée sur « Contrôlé » — un organisme qui
+   n'existe pas là-bas. Comme en Navigation, le terrain décide. Sans terrain
+   choisi, on retombe sur « contrôlé » : c'est le cas des scénarios sans aérodrome. */
+function ctrlOf(side){
+  const ad = (side==='arr') ? state.arrAd : state.depAd;
+  if(ad) return !!ad.ctrl;
+  const c=state.controlled; return (side==='arr') ? !!c.arr : !!c.dep;
+}
 
 function fillDisplay(raw){
   if(raw==null) return "";
@@ -4727,7 +4824,7 @@ const $=id=>document.getElementById(id);
 const el={
   depInput:$('depInput'), depList:$('depList'), arrInput:$('arrInput'), arrList:$('arrList'),
   call:$('call'), voiceRate:$('voiceRate'), voiceSelect:$('voiceSelect'), noiseToggle:$('noiseToggle'),
-  depCtrlSelect:$('depCtrlSelect'), arrCtrlSelect:$('arrCtrlSelect'),
+  depKind:$('depKind'), arrKind:$('arrKind'),
   difficultySelect:$('difficultySelect'), badgeGrid:$('badgeGrid'),
   scenarios:$('scenarios'), panel:$('panel'),
   stepLabel:$('stepLabel'), terrainToggle:$('terrainToggle'), meteo:$('meteo'),
@@ -4786,9 +4883,31 @@ function setupAutocomplete(input, list, onPick, filterFn){
     if(opts[active]) opts[active].scrollIntoView({block:'nearest'});
   });
 }
-// Filtre par côté : AFIS → seulement non contrôlés ; Contrôlé → seulement contrôlés.
-setupAutocomplete(el.depInput, el.depList, a=>{ state.depAd=a; }, a=> a.ctrl===ctrlOf('dep'));
-setupAutocomplete(el.arrInput, el.arrList, a=>{ state.arrAd=a; }, a=> a.ctrl===ctrlOf('arr'));
+/* Plus aucun filtre : tous les terrains sont proposés. C'est le terrain retenu qui
+   dit ensuite s'il est contrôlé ou AFIS — on n'a plus à le déclarer soi-même. */
+setupAutocomplete(el.depInput, el.depList, a=>{ state.depAd=a; onTerrainPick('dep'); });
+setupAutocomplete(el.arrInput, el.arrList, a=>{ state.arrAd=a; onTerrainPick('arr'); });
+
+/* Pastille « Contrôlé » / « AFIS » sous le champ : le renseignement que portaient
+   les deux sélecteurs supprimés, mais en lecture seule et toujours juste. */
+function majPastilleTerrain(side){
+  const box = (side==='arr') ? el.arrKind : el.depKind;
+  if(!box) return;
+  const ad = (side==='arr') ? state.arrAd : state.depAd;
+  if(!ad){ box.classList.add('hidden'); box.textContent=''; return; }
+  box.classList.remove('hidden');
+  box.classList.toggle('afis', !ad.ctrl);
+  box.textContent = ad.ctrl
+    ? 'Terrain contrôlé — vous parlez à une tour de contrôle.'
+    : "Terrain non contrôlé — AFIS ou auto-information, pas de contrôleur.";
+}
+function onTerrainPick(side){
+  state.controlled = { dep: state.depAd ? !!state.depAd.ctrl : state.controlled.dep,
+                       arr: state.arrAd ? !!state.arrAd.ctrl : state.controlled.arr };
+  majPastilleTerrain(side);
+  // Le terrain change : le scénario en cours doit être rejoué avec le bon organisme.
+  if(state.scenarioIndex>=0 && ((side==='arr')?state.arrAd:state.depAd)) startWithTerrain();
+}
 
 el.call.addEventListener('input', ()=>{ state.call = el.call.value.trim() || "F-XXXX"; majIndicatif(); refreshTexts(); });
 /* Rappel permanent de l'indicatif dans l'en-tête du panneau : c'est l'élément à
@@ -4800,16 +4919,6 @@ el.voiceSelect.addEventListener('change', ()=>{
   state.voiceName = voicePref;                // miroir dans l'état global (cohérence)
   pickVoice();                                // même règle de choix qu'au chargement
 });
-function onCtrlChange(){
-  state.controlled = { dep: el.depCtrlSelect.value==='1', arr: el.arrCtrlSelect.value==='1' };
-  // Les listes d'aérodromes se re-filtrent selon contrôlé/AFIS ; on vide un choix devenu incohérent.
-  if(state.depAd && ctrlOf('dep')!==!!state.depAd.ctrl){ state.depAd=null; el.depInput.value=''; }
-  if(state.arrAd && ctrlOf('arr')!==!!state.arrAd.ctrl){ state.arrAd=null; el.arrInput.value=''; }
-  // Rejouer le scénario en cours pour appliquer le changement contrôlé/AFIS
-  if(state.scenarioIndex>=0) startWithTerrain();
-}
-el.depCtrlSelect.addEventListener('change', onCtrlChange);
-el.arrCtrlSelect.addEventListener('change', onCtrlChange);
 el.difficultySelect.addEventListener('change', ()=>{ state.difficulty = el.difficultySelect.value; });
 el.noiseToggle.addEventListener('change', ()=>{
   state.noiseEnabled = el.noiseToggle.checked;
@@ -5154,16 +5263,21 @@ function renderStep(){
 
   if(step.atc){
     el.atcStation.textContent = stationLabel(step)+' : ';
-    // Mode Réel : le texte du contrôleur est masqué (voix seule) ; Débutant : texte affiché.
-    el.atcTxt.textContent = reel ? 'Message radio — écoutez (voix seule).' : fillDisplay(step.atc);
-    // En Réel, on ne consigne pas le texte du contrôleur dans le journal (sinon on pourrait le relire).
-    logRow('atc', stationLabel(step)+(reel ? ' — (message vocal)' : ' — '+fillDisplay(step.atc)));
     /* L'ATIS n'est PAS un message qu'on nous adresse : il tourne en boucle sur sa
-       propre fréquence. On ne le joue donc pas ici — c'est le calage du poste sur
-       cette fréquence qui le déclenche (scMajEcouteAtis), et s'en écarter le coupe.
-       Pas de bouton « Réécouter » non plus : la boucle repasse toute seule. */
-    if(step.atisStep) scMajEcouteAtis();
-    else speakATC(step.atc, !!sc.emergency);
+       propre fréquence. On ne le joue pas ici, et surtout on n'en ÉCRIT PAS le
+       texte — l'afficher d'emblée revenait à lire l'ATIS sans l'avoir affiché sur
+       le poste : la piste, le QNH et la lettre étaient donnés avant même d'avoir
+       touché la radio. C'est le calage sur la fréquence qui dévoile et déclenche
+       le message (scMajEcouteAtis), et s'en écarter le coupe. Même règle qu'en
+       vol Navigation. Pas de bouton « Réécouter » non plus : la boucle repasse. */
+    if(step.atisStep){ scMajEcouteAtis(); }
+    else {
+      // Mode Réel : le texte du contrôleur est masqué (voix seule) ; Débutant : texte affiché.
+      el.atcTxt.textContent = reel ? 'Message radio — écoutez (voix seule).' : fillDisplay(step.atc);
+      // En Réel, on ne consigne pas le texte du contrôleur dans le journal (sinon on pourrait le relire).
+      logRow('atc', stationLabel(step)+(reel ? ' — (message vocal)' : ' — '+fillDisplay(step.atc)));
+      speakATC(step.atc, !!sc.emergency);
+    }
   }
   // Sur la fréquence ATIS on n'entend QUE l'ATIS : aucun appareil n'y émet.
   if(!step.atisStep) maybeSpeakTraffic(step);   // AFIS : on entend aussi les autres appareils
@@ -5487,8 +5601,17 @@ VOIX_ARRETS.push(function(){ scArreterAtis(); });
 function scMajEcouteAtis(){
   var s=currentStep();
   if(!s || !s.atisStep || !s.atc){ scArreterAtis(); return; }
+  var reel = (state.difficulty==='reel');
   if(scBonneFreq()){
     if(!scAtisBoucle){
+      /* Le texte n'apparaît qu'ICI, une fois le poste accordé : c'est le moment
+         où l'on entend réellement la diffusion. En Réel, rien n'est écrit — on
+         écoute, comme en vol. */
+      if(el.atcStation) el.atcStation.textContent = stationLabel(s)+' : ';
+      if(el.atcTxt) el.atcTxt.textContent = reel
+        ? 'Diffusion en cours — elle repasse en boucle.'
+        : fillDisplay(s.atc);
+      logRow('atc', stationLabel(s)+(reel ? ' — (diffusion en boucle)' : ' — '+fillDisplay(s.atc)));
       scLancerAtis(s.atc);
       /* On a entendu l'ATIS : la lettre peut apparaître dans le bandeau. Avant
          l'écoute elle reste cachée — aller la chercher fait partie de l'exercice. */
@@ -5496,6 +5619,12 @@ function scMajEcouteAtis(){
     }
   } else {
     scArreterAtis();
+    /* Poste calé ailleurs : la fréquence ne porte rien. On le DIT, plutôt que de
+       laisser le message précédent ou une zone vide. */
+    if(el.atcStation) el.atcStation.textContent = '';
+    if(el.atcTxt) el.atcTxt.textContent =
+      "Rien sur cette fréquence — affichez "+(s.freq!=null?Number(s.freq).toFixed(3):"celle de l'ATIS")+
+      " sur le poste pour écouter l'ATIS.";
   }
 }
 function scPoserStby(f){
@@ -5991,9 +6120,9 @@ if($('scHistHead')){
        de renvoyer sur la page en réclamant un aérodrome. */
     if(scSessionVue.terrain){
       const a=AERODROMES.filter(x=>x.icao===scSessionVue.terrain)[0];
-      if(a){ state.depAd=a; el.depInput.value=a.nom;
+      if(a){ state.depAd=a; el.depInput.value=a.icao+' — '+a.nom;
              state.controlled={dep:!!a.ctrl, arr:state.controlled?state.controlled.arr:!!a.ctrl};
-             if(el.depCtrlSelect) el.depCtrlSelect.value = a.ctrl ? '1' : '0'; }
+             majPastilleTerrain('dep'); }
     }
     if(scSessionVue.mode){ state.difficulty=scSessionVue.mode;
       if(el.difficultySelect) el.difficultySelect.value=scSessionVue.mode; }
@@ -6254,13 +6383,49 @@ if(!RECO_OK){
   }
 
   var ALPHA_ICON='<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18l3.4-9 3.4 9"/><path d="M4.3 14.6h5"/><path d="M13.5 18V10a2.5 2.5 0 0 1 5 0v8"/><path d="M13.5 14h5"/></svg>';
+  var BOOK_ICON='<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M9 7.5h6M9 11h6"/></svg>';
+
+  /* ---- Manuel officiel, intégré tel quel ----
+     C'est la source unique de toute la phraséologie du simulateur : les échanges
+     y renvoient déjà par numéro de page (« Manuel p. 39-44 »). Le lire ailleurs
+     que dans l'application obligeait à jongler entre deux fenêtres.
+     Réutilisation : document produit par la DSNA, administration de l'État. Les
+     informations publiques sont librement réutilisables (code des relations entre
+     le public et l'administration, art. L321-1 et suivants), y compris à titre
+     commercial, à condition de ne pas en altérer le sens et d'en mentionner la
+     source et la date — ce que fait l'encart ci-dessous. Le document lui-même ne
+     porte aucune mention de restriction de reproduction. */
+  var MANUEL_PDF='Manuel_Phraseologie.pdf';
+  function renderManuel(host){
+    host.innerHTML=
+      '<div class="pdf-bar">'+
+        '<a class="btn small primary" href="'+MANUEL_PDF+'" target="_blank" rel="noopener">Ouvrir en plein écran</a>'+
+        '<a class="btn small" href="'+MANUEL_PDF+'" download>Télécharger le PDF</a>'+
+        '<span class="pdf-hint">281 pages · recherche par mots-clés avec Ctrl+F (Cmd+F sur Mac)</span>'+
+      '</div>'+
+      '<div class="pdf-frame">'+
+        '<iframe src="'+MANUEL_PDF+'#view=FitH" title="Manuel de phraséologie DSNA" loading="lazy"></iframe>'+
+        '<p class="pdf-fallback">Votre navigateur n\'affiche pas les PDF dans la page. '+
+          '<a href="'+MANUEL_PDF+'" target="_blank" rel="noopener">Ouvrez le manuel dans un nouvel onglet</a>.</p>'+
+      '</div>'+
+      '<p class="pdf-src"><b>Source</b> — <i>Manuel de phraséologie à l\'usage de la circulation aérienne '+
+        'générale</i>, DGAC — Direction des services de la navigation aérienne (DSNA), Direction des '+
+        'Opérations, avec l\'ENAC, '+
+        '10<sup>e</sup> édition, à jour au 15 avril 2023. Document reproduit intégralement et sans '+
+        'modification. Les renvois de page cités dans les exercices sont les pages imprimées du manuel.</p>';
+  }
 
   var COURSES=[
     { id:'alphabet',
       icon:ALPHA_ICON,
       title:'Alphabet phonétique',
       desc:"Les 26 lettres de l'alphabet OACI (Alpha…Zulu) et la prononciation des chiffres 0-9 en radiotéléphonie.",
-      render:renderAlphabet }
+      render:renderAlphabet },
+    { id:'manuel',
+      icon:BOOK_ICON,
+      title:'Manuel de phraséologie (DSNA)',
+      desc:"Le manuel officiel complet, 281 pages : c'est la source de tous les échanges du simulateur. Consultable ici, page par page.",
+      render:renderManuel }
     // → pour un nouveau cours, ajouter ici : { id:'…', icon:'…', title:'…', desc:'…', render:function(host){…} }
   ];
 
@@ -6332,15 +6497,28 @@ if(!RECO_OK){
     }
     return out;
   }
+  function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function norm(s){ return (typeof normalize==='function') ? normalize(s) : (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' '); }
   function tok(word){ return norm(word).replace(/\s+/g,''); }
-  /* Étape 1 — correction sur vocabulaire FERMÉ propre à l'épellation.
-     Le correcteur global correctToken() compare au grand vocabulaire aviation OUVERT (REF_WORDS,
-     des centaines de mots) : un mot OTAN mal entendu peut y être ramené à un mot non-phonétique,
-     ou rester brut si trop éloigné. Ici l'élève n'énonce QUE des mots de l'alphabet phonétique
-     (26) ou des chiffres (10) : on ramène donc chaque mot reconnu au mot valide LE PLUS PROCHE de
-     cette liste fermée. On réutilise lev() (distance de Levenshtein globale — pas de doublon) et la
-     map MISHEARD existante pour les erreurs de transcription déjà connues. */
+
+  /* =====================================================================
+     RECONNAISSANCE DES MOTS ÉPELÉS
+     Le verdict tombait « raté » sur des épellations pourtant justes. Trois
+     causes, toutes dues au fait que Chrome transcrit en FRANÇAIS COURANT :
+
+     1) « X-ray » ressort en DEUX mots (« x » puis « ray »). L'ancien code
+        recalait chaque mot isolément sur le vocabulaire le plus proche :
+        « ray » devenait « xray », et la réponse valait « x » + « xray ».
+     2) Les chiffres ressortent en CHIFFRES (« 250 », « 1 2 3 »), jamais en
+        lettres. Comparés à « deux/cinq/zéro », ils ne tombaient jamais juste.
+     3) Le moindre mot parasite (« euh », « alors », un « et » de liaison)
+        décalait toute la comparaison, faite par simple collage de chaînes.
+
+     On résout donc en trois temps : découpage, RECOLLAGE des fragments
+     (x + ray → xray), expansion des nombres (250 → deux cinq zéro), puis
+     alignement souple qui ignore les parasites.
+     ===================================================================== */
   var PHON_VOCAB=null;
   function phonVocab(){
     if(PHON_VOCAB) return PHON_VOCAB;
@@ -6350,69 +6528,226 @@ if(!RECO_OK){
     PHON_VOCAB=Object.keys(set);
     return PHON_VOCAB;
   }
-  function snapPhon(word){
-    var w=tok(word);                       // un seul mot normalisé, sans espace ni accent
-    if(!w) return word;
-    if(w.length<=1) return w;              // lettre isolée (ex. « x » de X-ray) : laissée à l'accumulateur d'evaluate()
-    var vocab=phonVocab();
-    // 1) correction connue (map MISHEARD globale) si elle pointe vers un mot du vocabulaire fermé
-    if(typeof MISHEARD!=='undefined' && MISHEARD[w]){ var mm=tok(MISHEARD[w]); if(vocab.indexOf(mm)!==-1) return mm; }
-    // 2) déjà un mot valide
-    if(vocab.indexOf(w)!==-1) return w;
-    // 3) sinon, mot valide le plus proche
-    var best=w, bd=99;
+  function estVocab(w){ return phonVocab().indexOf(w)!==-1; }
+
+  /* Formes françaises courantes rendues par Chrome pour un mot OACI ou un chiffre.
+     La distance de Levenshtein ne peut pas rattraper « quel beq » → « quebec ». */
+  var SPELL_ALIAS={
+    alfa:'alpha', alpha:'alpha', halfa:'alpha', alpa:'alpha',
+    bravo:'bravo', bravos:'bravo', brava:'bravo',
+    charlie:'charlie', charly:'charlie', charli:'charlie', charlot:'charlie',
+    delta:'delta', deltat:'delta',
+    echo:'echo', eco:'echo', ekko:'echo', ecco:'echo',
+    foxtrot:'foxtrot', fox:'foxtrot', foxtrott:'foxtrot', foxtrote:'foxtrot', foxstrot:'foxtrot',
+    golf:'golf', golfe:'golf', gulf:'golf', gaulf:'golf',
+    hotel:'hotel', otel:'hotel', hotell:'hotel',
+    india:'india', indya:'india', indien:'india', indiana:'india',
+    juliett:'juliett', juliet:'juliett', juliette:'juliett', julie:'juliett', julia:'juliett',
+    kilo:'kilo', quilo:'kilo', kilos:'kilo',
+    lima:'lima', limat:'lima', lyma:'lima',
+    mike:'mike', maik:'mike', maike:'mike', mick:'mike', mic:'mike',
+    november:'november', novembre:'november', novembers:'november',
+    oscar:'oscar', oskar:'oscar', oscars:'oscar',
+    papa:'papa', papat:'papa',
+    quebec:'quebec', kebec:'quebec', quebeck:'quebec', quaibec:'quebec',
+    romeo:'romeo', romeos:'romeo', romeau:'romeo',
+    sierra:'sierra', siera:'sierra', cierra:'sierra',
+    tango:'tango', tangot:'tango', tangos:'tango',
+    uniform:'uniform', uniforme:'uniform', uniformes:'uniform',
+    victor:'victor', victort:'victor', victorre:'victor',
+    whiskey:'whiskey', whisky:'whiskey', wiski:'whiskey', wisky:'whiskey', ouisky:'whiskey',
+    xray:'xray', exray:'xray', icsray:'xray', xrai:'xray',
+    yankee:'yankee', yanki:'yankee', yankie:'yankee', yanke:'yankee',
+    zulu:'zulu', zoulou:'zulu', zoulu:'zulu', zoulous:'zulu',
+    // chiffres énoncés en toutes lettres
+    zero:'zero', zeros:'zero', un:'un', une:'un', unite:'un', deux:'deux', d:'deux',
+    trois:'trois', quatre:'quatre', katre:'quatre', cinq:'cinq', sink:'cinq',
+    six:'six', sept:'sept', set:'sept', huit:'huit', wit:'huit', neuf:'neuf', neuve:'neuf'
+  };
+  /* Fragments qui n'ont de sens que collés au mot suivant : « x » + « ray ». */
+  var SPELL_COLLE={ x:1, ex:1, ics:1, iks:1, w:1, ou:1, juli:1, jul:1 };
+  /* Bruits de bouche à ignorer purement et simplement. */
+  var SPELL_BRUIT={ euh:1, heu:1, hum:1, et:1, e:1, alors:1, donc:1, voila:1, ok:1, oui:1, bon:1 };
+
+  /* « 250 » → ['deux','cinq','zero'] ; « 2 » → ['deux']. */
+  function chiffresEnMots(w){
+    var out=[];
+    for(var i=0;i<w.length;i++){ var d=DIGIT_FR[w[i]]; if(d) out.push(tok(d)); }
+    return out;
+  }
+  /* Mot le plus proche du vocabulaire fermé, ou null si trop éloigné. */
+  function plusProche(w){
+    if(!w) return null;
+    if(SPELL_ALIAS[w]) return SPELL_ALIAS[w];
+    if(estVocab(w)) return w;
+    if(typeof MISHEARD!=='undefined' && MISHEARD[w]){
+      var mm=tok(MISHEARD[w]); if(estVocab(mm)) return mm;
+    }
+    if(w.length<3) return null;                    // trop court pour décider seul
+    var vocab=phonVocab(), best=null, bd=99;
     for(var i=0;i<vocab.length;i++){
       var d=(typeof lev==='function')?lev(w,vocab[i]):(w===vocab[i]?0:99);
       if(d<bd){ bd=d; best=vocab[i]; }
     }
-    // Vocabulaire fermé : on remplace tant que le mot reste raisonnablement proche.
-    var cap=Math.max(2, Math.ceil(w.length/2));
-    return bd<=cap ? best : w;
+    // Seuil serré : à 1 faute près sur un mot court, 2 sur un mot long.
+    return (bd <= (w.length<=5 ? 1 : 2)) ? best : null;
   }
+  /* Transcription brute → suite de mots du vocabulaire (+ parasites conservés
+     tels quels, ils seront ignorés à l'alignement). */
   function userTokens(text){
-    var t=norm(text).split(' ').filter(Boolean);
-    return t.map(snapPhon);   // correction vocabulaire fermé (remplace correctToken pour l'épellation)
+    var raw=norm(text).split(' ').filter(Boolean), out=[], i=0;
+    while(i<raw.length){
+      var w=raw[i];
+      if(SPELL_BRUIT[w]){ i++; continue; }
+      if(/^\d+$/.test(w)){ out=out.concat(chiffresEnMots(w)); i++; continue; }
+      // recollage d'un fragment avec le mot suivant (« x » + « ray »)
+      if(i+1<raw.length){
+        var colle=plusProche(w+raw[i+1]);
+        if(colle && (SPELL_COLLE[w] || !plusProche(w))){ out.push(colle); i+=2; continue; }
+      }
+      var m=plusProche(w);
+      out.push(m || w);
+      i++;
+    }
+    return out;
   }
 
-  var current=null, expTok=[];
+  /* Alignement souple attendu ↔ entendu. Un mot entendu hors vocabulaire qui ne
+     correspond à rien est traité comme un parasite : on le signale, mais il ne
+     décale pas la suite de la comparaison. */
+  function aligner(exp, usr){
+    var marks=[], extras=[], i=0, j=0;
+    while(i<exp.length){
+      // on saute les parasites qui précèdent le bon mot
+      while(j<usr.length && usr[j]!==exp[i] && !estVocab(usr[j])
+            && (j+1<usr.length && usr[j+1]===exp[i])){ extras.push(usr[j]); j++; }
+      if(j<usr.length && usr[j]===exp[i]){ marks.push({w:exp[i], ok:true}); i++; j++; continue; }
+      // mot suivant correct → celui-ci est en trop
+      if(j+1<usr.length && usr[j+1]===exp[i]){ extras.push(usr[j]); j++; continue; }
+      // mot présent mais faux
+      if(j<usr.length){ marks.push({w:exp[i], ok:false, dit:usr[j]}); i++; j++; continue; }
+      marks.push({w:exp[i], ok:false, manque:true}); i++;      // plus rien d'entendu
+    }
+    while(j<usr.length){ extras.push(usr[j]); j++; }           // mots en trop à la fin
+    return {marks:marks, extras:extras};
+  }
+
+  var current=null, expTok=[], expWords=[], dernierTemps=0;
+  /* Compteurs de série, affichés dans la colonne de droite. */
+  var stats={ok:0, tot:0, streak:0, best:0};
+  function majStats(){
+    var e;
+    if((e=$('spellStatOk'))) e.textContent=stats.ok;
+    if((e=$('spellStatTot'))) e.textContent=stats.tot;
+    if((e=$('spellStatStreak'))) e.textContent=stats.streak;
+    if((e=$('spellStatBest'))) e.textContent=stats.best?((stats.best/1000).toFixed(1)+' s'):'—';
+  }
+
+  /* Le code s'affiche en pastilles, une par caractère épelé (le tiret n'en est
+     pas une : il ne se prononce pas). Chacune se colore après la réponse. */
+  function renderCode(code){
+    codeEl.innerHTML='';
+    for(var i=0;i<code.length;i++){
+      var ch=code[i].toUpperCase(), sp=document.createElement('span');
+      var parle = (ch>='A'&&ch<='Z')||(ch>='0'&&ch<='9');
+      sp.className = 'sp-char'+(parle?'':' sep');
+      sp.textContent = ch;
+      if(parle) sp.dataset.idx = String(codeEl.querySelectorAll('.sp-char:not(.sep)').length);
+      codeEl.appendChild(sp);
+    }
+  }
+  function pastilles(host, items, vide){
+    host.innerHTML='';
+    if(!items.length){ host.innerHTML='<span class="none">'+esc(vide||'—')+'</span>'; return; }
+    items.forEach(function(it){
+      var sp=document.createElement('span');
+      sp.className='w'+(it.cls?' '+it.cls:'');
+      sp.textContent=it.t;
+      host.appendChild(sp);
+    });
+  }
   function newCode(){
     current=nextCode();
     kindEl.textContent=current.kind;
-    codeEl.textContent=current.code;
-    var words=spellWords(current.code);
-    expTok=words.map(tok);
-    expEl.innerHTML=words.map(function(w){return '<span>'+w+'</span>';}).join(' ');
+    renderCode(current.code);
+    expWords=spellWords(current.code);
+    expTok=expWords.map(tok);
+    pastilles(expEl, expWords.map(function(w){ return {t:w}; }));
     expEl.classList.add('blurred');
     expEl.classList.toggle('hoverable', hoverChk && hoverChk.checked);
     if(revealBtn) revealBtn.textContent='Voir la réponse';
-    setUser(''); fbEl.innerHTML=''; setStatus('');
+    setUser([]); fbEl.innerHTML=''; setStatus('');
     if(replayBtn) replayBtn.disabled=true; audioURL=null;
-    resetTimer();   // Étape 3 : chrono remis à 0 à chaque nouveau code
+    resetTimer();
   }
-  function setUser(t){
-    userEl.textContent = t && t.trim() ? t : '—';
-    userEl.classList.toggle('empty', !(t && t.trim()));
+  function setUser(items){
+    pastilles(userEl, items||[], "rien pour l'instant");
   }
+  /* Transcription brute de la dernière écoute : c'est ELLE qu'on évalue.
+     L'ancienne version relisait le texte affiché dans le DOM — ce qui devenait
+     impossible dès qu'on y met des pastilles, et fragile de toute façon. */
+  var dernierBrut='';
+
   function evaluate(){
-    var ut=userTokens(userEl.textContent==='—'?'':userEl.textContent);
-    var expJoin=expTok.join(''), userJoin=ut.join('');
-    var correct = expJoin.length>0 && expJoin===userJoin;
-    var spans=expEl.querySelectorAll('span'), ui=0;
-    for(var i=0;i<spans.length;i++){
-      var target=expTok[i], acc="", oki=false, save=ui;
-      while(ui<ut.length){ acc+=ut[ui]; ui++; if(acc===target){oki=true;break;} if(acc.length>=target.length) break; }
-      if(!oki) ui=Math.min(save+1, ut.length);
-      spans[i].className = oki?'ok':'ko';
-    }
+    var ut = userTokens(dernierBrut);
     var C=(typeof ICONS!=='undefined')?ICONS:{check:'✓',warn:'✗'};
+    var chips=codeEl.querySelectorAll('.sp-char:not(.sep)');
+
     // Rien capté : ce n'est pas une faute d'épellation, on le dit distinctement.
-    if(!userJoin){
-      fbEl.innerHTML='<div class="spell-verdict none">'+C.warn+
-        '<span>Rien entendu — réessayez en parlant plus près du micro.</span></div>';
+    if(!ut.length){
+      setUser([]);
+      for(var k=0;k<chips.length;k++) chips[k].className='sp-char';
+      fbEl.innerHTML='<div class="spell-verdict">'+C.warn+
+        '<span>Rien entendu.<small>Maintenez le bouton pendant toute l’épellation, et parlez près du micro.</small></span></div>';
       return;
     }
+
+    var al=aligner(expTok, ut);
+    var justes=0;
+    al.marks.forEach(function(m,idx){
+      if(m.ok) justes++;
+      if(chips[idx]) chips[idx].className='sp-char '+(m.ok?'ok':'ko');
+    });
+    var correct = (justes===expTok.length) && !al.extras.length;
+
+    // Attendu : chaque mot coloré selon qu'il a été dit ou non.
+    pastilles(expEl, al.marks.map(function(m,idx){
+      return {t:expWords[idx], cls:(m.ok?'ok':(m.manque?'miss':'ko'))};
+    }));
+    // Entendu : la suite réellement reconnue, mots en trop signalés en orange.
+    var dits=[];
+    al.marks.forEach(function(m){
+      if(m.ok) dits.push({t:m.w, cls:'ok'});
+      else if(m.manque) dits.push({t:'(rien)', cls:'miss'});
+      else dits.push({t:m.dit, cls:'ko'});
+    });
+    al.extras.forEach(function(x){ dits.push({t:x, cls:'extra'}); });
+    setUser(dits);
+
+    // Compteurs de série.
+    stats.tot++;
+    if(correct){
+      stats.ok++; stats.streak++;
+      if(dernierTemps>0 && (!stats.best || dernierTemps<stats.best)) stats.best=dernierTemps;
+    } else stats.streak=0;
+    majStats();
+
+    var detail='';
+    if(!correct){
+      var manques=al.marks.filter(function(m){return m.manque;}).length;
+      var faux=al.marks.filter(function(m){return !m.ok && !m.manque;}).length;
+      var bouts=[];
+      if(faux)   bouts.push(faux+' mot'+(faux>1?'s':'')+' erroné'+(faux>1?'s':''));
+      if(manques)bouts.push(manques+' non dit'+(manques>1?'s':''));
+      if(al.extras.length) bouts.push(al.extras.length+' mot'+(al.extras.length>1?'s':'')+' en trop');
+      detail='<small>'+esc(bouts.join(' · '))+' — comparez les deux lignes ci-dessous.</small>';
+    } else if(dernierTemps>0){
+      detail='<small>'+(dernierTemps/1000).toFixed(1)+' s'+
+             (stats.streak>1?(' · '+stats.streak+' d’affilée'):'')+'</small>';
+    }
     fbEl.innerHTML='<div class="spell-verdict '+(correct?'good':'bad')+'">'+
-      (correct?C.check:C.warn)+'<span>'+(correct?'Correct — bien épelé !':'Raté — comparez avec la réponse attendue.')+'</span></div>';
+      (correct?C.check:C.warn)+'<span>'+(correct?'Correct — bien épelé !':'Raté.')+detail+'</span></div>';
+
     // La réponse attendue n'est dévoilée qu'en cas d'échec : sur un sans-faute,
     // l'afficher n'apprend rien et gâche l'exercice suivant.
     if(!correct){
@@ -6428,38 +6763,60 @@ if(!RECO_OK){
     if(!text){ statusEl.className='spell-status hidden'; statusEl.textContent=''; return; }
     statusEl.className='spell-status'+(isErr?' err':''); statusEl.textContent=text;
   }
+  /* Même bouton que le PTT des Scénarios et du vol : une icône et un <span> de
+     libellé qu'on réécrit, sans reconstruire le contenu (ce qui effaçait l'icône). */
   function pttUI(on){
     if(!pttBtn) return;
     pttBtn.classList.toggle('listening', on);
-    var M=(typeof ICONS!=='undefined')?ICONS.mic:'🎙 ';
-    pttBtn.innerHTML = on ? '<span class="rec-dot"></span>Écoute… (relâchez pour arrêter)' : M+'Parler (PTT)';
+    var sp=pttBtn.querySelector('span:not(.rec-dot)');
+    if(sp) sp.textContent = on ? 'Écoute… relâchez pour terminer' : 'Maintenir pour parler';
   }
 
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   var reco=null, recognizing=false, audioEnabled=true;
   var mediaStream=null, mediaRec=null, chunks=[], audioURL=null;
 
+  /* « Réécouter mon audio » ne marchait jamais. La cause est dans l'arrêt :
+     stopRecorder() remettait mediaRec à null AVANT que l'évènement onstop du
+     MediaRecorder n'arrive (il est asynchrone). Le gestionnaire lisait alors
+     mediaRec.mimeType sur null, levait une TypeError silencieuse, et l'URL de
+     lecture n'était jamais créée — le bouton restait donc grisé à vie. On
+     capture désormais l'enregistreur et le flux dans des variables LOCALES, et
+     c'est onstop qui libère le micro, une fois les données récupérées. */
   function startRecorder(){
     if(!audioEnabled){ slog('capture audio désactivée (conflit précédent)'); return; }
     if(!(navigator.mediaDevices && window.MediaRecorder)){ slog('MediaRecorder/getUserMedia non supporté'); return; }
-    navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){
-      if(!recognizing){ s.getTracks().forEach(function(t){t.stop();}); return; }
-      mediaStream=s; chunks=[];
-      try{ mediaRec=new MediaRecorder(s); }catch(err){ slog('MediaRecorder KO:', err && err.message); return; }
-      mediaRec.ondataavailable=function(e){ if(e.data && e.data.size) chunks.push(e.data); };
-      mediaRec.onstop=function(){
-        if(!chunks.length) return;
-        var blob=new Blob(chunks,{type:mediaRec.mimeType||'audio/webm'});
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(flux){
+      if(!recognizing){ flux.getTracks().forEach(function(t){t.stop();}); return; }
+      var rec;
+      try{ rec=new MediaRecorder(flux); }
+      catch(err){ slog('MediaRecorder KO:', err && err.message);
+                  flux.getTracks().forEach(function(t){t.stop();}); return; }
+      mediaStream=flux; mediaRec=rec; chunks=[];
+      rec.ondataavailable=function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+      rec.onerror=function(e){ slog('MediaRecorder erreur:', e && e.error); };
+      rec.onstop=function(){
+        // Le micro n'est relâché qu'ICI : couper les pistes trop tôt tronquait la fin.
+        try{ flux.getTracks().forEach(function(t){t.stop();}); }catch(_){}
+        if(mediaStream===flux) mediaStream=null;
+        if(!chunks.length){ slog('aucune donnée audio capturée'); return; }
+        var blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});
         if(audioURL) URL.revokeObjectURL(audioURL);
         audioURL=URL.createObjectURL(blob);
-        if(replayBtn) replayBtn.disabled=false; slog('audio prêt pour réécoute');
+        if(replayBtn) replayBtn.disabled=false;
+        slog('audio prêt pour réécoute ('+blob.size+' octets)');
       };
-      mediaRec.start(); slog('capture audio démarrée');
+      /* Tranches de 250 ms : sans argument, Chrome ne produit un blob qu'à
+         l'arrêt, et une écoute écourtée pouvait ne rien livrer du tout. */
+      rec.start(250); slog('capture audio démarrée');
     }).catch(function(err){ slog('getUserMedia (capture) refusé/indispo:', err && err.name); });
   }
   function stopRecorder(){
-    try{ if(mediaRec && mediaRec.state!=='inactive') mediaRec.stop(); }catch(e){}
-    mediaRec=null;
+    var rec=mediaRec; mediaRec=null;
+    if(rec && rec.state!=='inactive'){
+      try{ rec.stop(); return; }catch(e){ slog('stop() KO', e); }   // onstop libèrera le flux
+    }
+    // Jamais démarré (ou déjà arrêté) : on relâche le micro nous-mêmes.
     try{ if(mediaStream){ mediaStream.getTracks().forEach(function(t){t.stop();}); mediaStream=null; } }catch(e){}
   }
 
@@ -6470,7 +6827,13 @@ if(!RECO_OK){
   } else {
     reco=new SR(); reco.lang='fr-FR'; reco.continuous=true; reco.interimResults=true;
     reco.onstart=function(){ slog('reconnaissance démarrée'); setStatus('🎙 Écoute en cours… épelez le code, puis relâchez le bouton.'); startRecorder(); };
-    reco.onresult=function(ev){ var t=''; for(var i=0;i<ev.results.length;i++) t+=ev.results[i][0].transcript; setUser(t); slog('transcription:', JSON.stringify(t)); };
+    reco.onresult=function(ev){
+      var t=''; for(var i=0;i<ev.results.length;i++) t+=ev.results[i][0].transcript+' ';
+      dernierBrut=t;
+      // Aperçu en direct : on voit les mots retenus au fur et à mesure.
+      setUser(userTokens(t).map(function(w){ return {t:w}; }));
+      slog('transcription:', JSON.stringify(t));
+    };
     reco.onnomatch=function(){ slog('onnomatch (aucune correspondance)'); };
     reco.onerror=function(ev){
       var e=ev && ev.error; slog('ERREUR reconnaissance:', e);
@@ -6507,12 +6870,17 @@ if(!RECO_OK){
   }
   function cancelTick(){ if(timerRAF){ (typeof cancelAnimationFrame==='function')?cancelAnimationFrame(timerRAF):clearTimeout(timerRAF); timerRAF=null; } }
   function startTimer(){ if(!timerEl) timerEl=$('spellTimer'); if(timerEl) timerEl.classList.add('running'); timerStart=Date.now(); cancelTick(); timerTick(); }
-  function stopTimer(){ cancelTick(); if(!timerEl) timerEl=$('spellTimer'); if(timerEl){ timerEl.classList.remove('running'); if(timerStart) timerEl.textContent=fmtElapsed(Date.now()-timerStart); } }
+  function stopTimer(){ cancelTick(); if(!timerEl) timerEl=$('spellTimer');
+    if(timerStart) dernierTemps=Date.now()-timerStart;      // durée retenue pour le meilleur temps
+    if(timerEl){ timerEl.classList.remove('running'); if(timerStart) timerEl.textContent=fmtElapsed(dernierTemps); } }
   function resetTimer(){ cancelTick(); timerStart=0; if(!timerEl) timerEl=$('spellTimer'); if(timerEl){ timerEl.classList.remove('running'); timerEl.textContent='0.0 s'; } }
 
   function startSpell(){
     if(!reco) return;
-    setUser(''); fbEl.innerHTML=''; setStatus('Démarrage du micro…');
+    dernierBrut=''; dernierTemps=0; setUser([]); fbEl.innerHTML=''; setStatus('Démarrage du micro…');
+    // Nouvelle tentative : les pastilles du code repartent neutres.
+    var ch=codeEl.querySelectorAll('.sp-char:not(.sep)');
+    for(var k=0;k<ch.length;k++) ch[k].className='sp-char';
     recognizing=true; pttUI(true); startTimer(); slog('appui → démarrage de la reconnaissance');
     try{ reco.start(); slog('reco.start() appelé'); }
     catch(err){
@@ -6543,6 +6911,7 @@ if(!RECO_OK){
   });
   if(hoverChk) hoverChk.addEventListener('change', function(){ expEl.classList.toggle('hoverable', hoverChk.checked); });
 
+  majStats();
   newCode();
 })();
 </script>
@@ -9022,7 +9391,7 @@ function oaciSonde(couche, surAbsenceTotale){
     else ev.classList.add('hidden');
     $v('vfLog').innerHTML='';
     F.running=true;
-    setRecoSink({ // Aperçu pendant qu'on parle, dans le champ éditable.
+    setRecoSink(F.sink = { // Aperçu pendant qu'on parle, dans le champ éditable.
                   interim:function(t){ $v('vfTransText').value=t; $v('vfValider').disabled=!t.trim(); },
                   /* Fin d'écoute : on REMPLIT le champ, on ne note pas encore.
                      L'élève relit, corrige une éventuelle erreur de transcription,
@@ -9469,8 +9838,18 @@ function oaciSonde(couche, surAbsenceTotale){
     oublierVol(); $v('navResume').classList.add('hidden');
   });
 
+  /* Le micro est UNIQUE et partagé : le module Vol l'« emprunte » en posant un sink.
+     Il n'était rendu qu'à la fin du vol — quitter la page Navigation en plein vol
+     (barre latérale) laissait donc le sink en place, et le micro des Scénarios
+     déversait sa transcription dans le champ caché du vol : le bouton « Parler »
+     semblait mort. On rend le micro en sortant, on le reprend en revenant. */
   window.addEventListener('rt:page',function(e){
-    if(e.detail.page!=='navigation') return;
+    if(e.detail.page!=='navigation'){
+      if(typeof listening!=='undefined' && listening) stopListening();
+      setRecoSink(null);
+      return;
+    }
+    if(F.running && F.sink) setRecoSink(F.sink);
     majReprise();
     majHistorique();
     initMap();

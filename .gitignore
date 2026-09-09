@@ -4,8 +4,8 @@
 originaux/
 500k_*.pdf
 
-# Manuel de référence (2,4 Mo) : source de la phraséologie, pas nécessaire au site.
-Manuel_Phraseologie.pdf
+# Manuel de référence (2,4 Mo) : il est désormais PUBLIÉ — la page Cours l'intègre
+# telle quelle (cours « Manuel de phraséologie (DSNA) »). Il doit donc être versionné.
 
 # macOS
 .DS_Store

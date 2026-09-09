@@ -312,95 +312,212 @@
   @media (prefers-reduced-motion:reduce){ .scroll-cue{animation:none} }
 
   /* ============ Épellation radio ============
-     Deux colonnes comme les autres modules : l'exercice à gauche, le suivi de
-     série à droite. L'ancienne version empilait un code géant, trois boutons et
-     deux zones de texte floutées, sans hiérarchie ni retour lisible. */
-  .spell-layout{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:20px; align-items:start}
+     L'exercice se joue dans une SCÈNE : une photo d'aéroport de nuit, et par-dessus
+     des panneaux de verre dépoli. Le décor n'est pas décoratif au sens creux — il
+     donne à l'écran le contexte d'un poste de pilotage la nuit, moment où l'on
+     épelle le plus (relève de fréquence, indicatif à répéter).
+
+     RÈGLE ABSOLUE À L'INTÉRIEUR DE .spell-scene : ne jamais utiliser --ink,
+     --surface, --border ni aucune variable qui bascule avec le thème. La scène est
+     sombre dans les DEUX thèmes et définit ses propres couleurs (--sc-*). C'est ce
+     qui garantit qu'un passage clair↔sombre ne peut pas y rendre un texte
+     illisible : il n'y a qu'un seul jeu de couleurs à vérifier, pas deux. */
+  .spell-scene{
+    position:relative; isolation:isolate; overflow:hidden;
+    color:var(--sc-ink);
+    margin:0 0 18px; padding:clamp(22px,3vw,34px);
+    border-radius:26px; border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 26px 70px rgba(10,14,30,.34), 0 2px 6px rgba(10,14,30,.20);
+    /* Palette locale de la scène. */
+    --sc-ink:#f4f6fd;            /* texte principal            */
+    --sc-ink-2:#aeb8d2;          /* texte secondaire           */
+    --sc-accent:#a99cff;         /* violet éclairci pour fond sombre */
+    --sc-glass:rgba(11,15,28,.46);
+    --sc-glass-2:rgba(6,9,18,.42);
+    --sc-line:rgba(255,255,255,.15);
+    --sc-line-2:rgba(255,255,255,.26);
+    --sc-ok:#5fe0a4; --sc-bad:#ff8a86; --sc-warn:#ffc470;
+  }
+  /* La photo. Cadrée bas (58 %) : la tour et le bandeau lumineux de l'aérogare
+     passent derrière la carte du code, la piste sombre derrière les boutons. */
+  .spell-scene::before{
+    content:""; position:absolute; inset:-2px; z-index:-2;
+    background:url("assets/images/aeroport-nuit.webp") center 58%/cover no-repeat;
+  }
+  /* Le voile. C'est LUI qui garantit la lisibilité : la photo seule a des zones
+     claires (lampadaires) où un texte blanc disparaîtrait. Deux couches — un halo
+     froid en haut, un fondu vers le bas — plus une pointe de violet de marque. */
+  .spell-scene::after{
+    content:""; position:absolute; inset:0; z-index:-1;
+    background:
+      radial-gradient(120% 62% at 52% 2%, rgba(38,26,104,.30), transparent 64%),
+      radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(4,6,14,.52) 100%),
+      linear-gradient(180deg, rgba(5,8,18,.30) 0%, rgba(5,8,18,.26) 20%,
+                              rgba(5,8,18,.50) 52%, rgba(5,8,18,.62) 100%);
+  }
+  /* Le thème clair n'éclaircit pas la scène (elle resterait illisible à mi-chemin) :
+     il l'adoucit d'un cran, pour qu'elle ne fasse pas un trou noir dans la page. */
+  :root[data-theme="light"] .spell-scene::after,
+  :root:not([data-theme="dark"]) .spell-scene::after{
+    background:
+      radial-gradient(120% 62% at 52% 2%, rgba(46,34,120,.26), transparent 64%),
+      radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(6,9,20,.48) 100%),
+      linear-gradient(180deg, rgba(9,13,26,.24) 0%, rgba(9,13,26,.20) 20%,
+                              rgba(9,13,26,.44) 52%, rgba(9,13,26,.58) 100%);
+  }
+  /* Titre posé sur le décor. Bridé en largeur : la vigie de la photo tombe à
+     droite, on lui laisse la place plutôt que de la couvrir de texte. */
+  .spell-hero{max-width:min(620px,72%); margin:0 0 clamp(20px,3vw,30px)}
+  @media (max-width:820px){ .spell-hero{max-width:100%} }
+  .spell-hero .sh-tag{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--sc-accent);
+    background:rgba(169,156,255,.14); border:1px solid rgba(169,156,255,.40);
+    border-radius:var(--pill); padding:4px 12px}
+  .spell-hero h2{margin:12px 0 8px; font-size:clamp(28px,4.4vw,40px); font-weight:800;
+    letter-spacing:-.02em; color:#fff; text-shadow:0 2px 24px rgba(0,0,0,.55)}
+  .spell-hero p{margin:0; font-size:15px; line-height:1.55; color:rgba(238,242,255,.80);
+    text-shadow:0 1px 14px rgba(0,0,0,.55)}
+
+  .spell-credit{display:block; margin-top:14px; text-align:right; font-size:11px;
+    letter-spacing:.04em; color:rgba(255,255,255,.42)}
+
+  .spell-layout{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px; align-items:start}
   @media (max-width:980px){ .spell-layout{grid-template-columns:1fr} }
 
+  /* ---- Verre dépoli : le matériau commun des deux colonnes ---- */
+  .spell-scene .panel{
+    margin:0; color:var(--sc-ink);
+    background:var(--sc-glass);
+    border:1px solid var(--sc-line);
+    border-radius:20px;
+    box-shadow:0 18px 44px rgba(4,6,16,.42), inset 0 1px 0 rgba(255,255,255,.10);
+    -webkit-backdrop-filter:blur(26px) saturate(1.4);
+            backdrop-filter:blur(26px) saturate(1.4);
+  }
+  /* Sans backdrop-filter (Firefox ancien, navigateurs de bureau bridés), le verre
+     ne floute rien : on le rend franchement opaque plutôt que translucide sur une
+     photo, sinon le texte passerait sur les lampadaires. */
+  @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+    .spell-scene .panel{ background:rgba(11,15,27,.93) }
+  }
   .spell-main{padding:0; overflow:hidden}
-  /* Bandeau du code : c'est l'objet de l'exercice, il occupe le haut de la carte. */
-  .spell-head{position:relative; text-align:center; padding:26px 22px 24px;
-    background:linear-gradient(150deg, var(--violet-tint), var(--surface));
-    border-bottom:1px solid var(--border)}
-  .spell-kind{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
-    color:var(--violet-dark); background:var(--surface); border:1px solid var(--violet);
+  .spell-side{display:flex; flex-direction:column; gap:18px}
+  .spell-side .panel{padding:18px}
+
+  /* ---- Bandeau du code ---- */
+  .spell-head{position:relative; text-align:center; padding:28px 22px 26px;
+    background:linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.02) 78%);
+    border-bottom:1px solid var(--sc-line)}
+  .spell-kind{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--sc-accent);
+    background:rgba(169,156,255,.14); border:1px solid rgba(169,156,255,.42);
     border-radius:var(--pill); padding:5px 14px}
-  /* Le code est découpé en pastilles : chacune se colore d'après le mot épelé,
-     ce qui montre d'un coup d'œil OÙ ça a coincé. */
-  .spell-code{display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px;
+  /* Le code en pastilles : chacune se colore d'après le mot épelé. Éteintes elles
+     évoquent les feux de piste au repos, allumées elles se teintent. */
+  .spell-code{display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:9px;
     margin:16px 0 10px}
   .sp-char{display:grid; place-items:center; min-width:clamp(38px,7vw,58px); height:clamp(48px,9vw,70px);
-    padding:0 6px; border-radius:14px; background:var(--surface); border:1.5px solid var(--border);
+    padding:0 6px; border-radius:15px;
+    background:rgba(255,255,255,.07); border:1.5px solid var(--sc-line-2); color:var(--sc-ink);
     font-family:var(--mono); font-size:clamp(24px,5vw,38px); font-weight:800; letter-spacing:.02em;
-    color:var(--ink); box-shadow:var(--shadow-sm); transition:border-color .2s, background .2s, color .2s}
-  .sp-char.sep{min-width:0; border:none; background:none; box-shadow:none; color:var(--ink-2); font-weight:600}
-  .sp-char.ok{border-color:var(--ok); background:rgba(47,163,107,.10); color:var(--ok)}
-  .sp-char.ko{border-color:var(--bad); background:rgba(217,83,79,.10); color:var(--bad)}
-  .spell-sub{color:var(--ink-2); font-size:13.5px; margin:0}
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 6px 18px rgba(4,6,16,.34);
+    transition:border-color .25s, background .25s, color .25s, box-shadow .25s}
+  .sp-char.sep{min-width:0; border:none; background:none; box-shadow:none;
+    color:var(--sc-ink-2); font-weight:600}
+  .sp-char.ok{border-color:var(--sc-ok); background:rgba(95,224,164,.14); color:var(--sc-ok);
+    box-shadow:0 0 22px rgba(95,224,164,.26), inset 0 1px 0 rgba(255,255,255,.16)}
+  .sp-char.ko{border-color:var(--sc-bad); background:rgba(255,138,134,.14); color:var(--sc-bad);
+    box-shadow:0 0 22px rgba(255,138,134,.24), inset 0 1px 0 rgba(255,255,255,.16)}
+  .spell-sub{color:var(--sc-ink-2); font-size:13.5px; margin:0}
 
   .spell-body{padding:20px 22px 22px; display:flex; flex-direction:column; gap:14px}
-  /* Micro au centre, chrono à sa droite : une seule action évidente. */
   .spell-mic{display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap}
-  .spell-mic .ptt{min-width:250px}
   .spell-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
 
-  /* Comparaison attendu / entendu, en pastilles de mots. */
+  /* ---- Boutons : redéfinis pour fond sombre, sans toucher au .btn global ---- */
+  .spell-scene .btn{background:rgba(255,255,255,.10); color:var(--sc-ink);
+    border:1px solid var(--sc-line-2); box-shadow:0 4px 14px rgba(4,6,16,.30)}
+  .spell-scene .btn:hover{background:rgba(255,255,255,.17); border-color:rgba(255,255,255,.42)}
+  .spell-scene .btn:disabled{opacity:.46}
+  .spell-scene .ptt{min-width:250px; border:none; color:#fff;
+    background:linear-gradient(135deg,#7a68ff,#5b4bce);
+    box-shadow:0 10px 30px rgba(96,78,230,.52), inset 0 1px 0 rgba(255,255,255,.28)}
+  .spell-scene .ptt:hover{background:linear-gradient(135deg,#8877ff,#6a58e0);
+    box-shadow:0 14px 38px rgba(96,78,230,.62)}
+  .spell-scene .ptt.listening{background:linear-gradient(135deg,#ff6f6a,#d94a45);
+    box-shadow:0 10px 30px rgba(217,74,69,.52)}
+  .spell-scene .switch-line{background:rgba(255,255,255,.08); border:1px solid var(--sc-line);
+    color:var(--sc-ink-2)}
+  .spell-scene .switch-line input{accent-color:var(--sc-accent)}
+
+  /* ---- Comparaison attendu / entendu ---- */
   .spell-compare{display:grid; gap:10px}
   .spell-line{display:grid; grid-template-columns:78px minmax(0,1fr); gap:12px; align-items:start}
   .spell-line .lbl{font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
-    color:var(--ink-2); padding-top:9px}
+    color:var(--sc-ink-2); padding-top:9px}
   .spell-words{display:flex; flex-wrap:wrap; gap:6px; min-height:40px; align-items:center;
-    background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:7px 9px}
-  .spell-words .w{display:inline-block; padding:5px 11px; border-radius:var(--pill); font-size:14px; font-weight:600;
-    background:var(--surface); border:1px solid var(--border); color:var(--ink)}
-  .spell-words .w.ok{border-color:var(--ok); color:var(--ok); background:rgba(47,163,107,.10)}
-  .spell-words .w.ko{border-color:var(--bad); color:var(--bad); background:rgba(217,83,79,.10)}
-  .spell-words .w.miss{border-style:dashed; color:var(--ink-2); background:none}
-  .spell-words .w.extra{border-color:var(--warn); color:var(--warn); background:rgba(224,145,42,.10)}
-  .spell-words .none{color:var(--ink-2); font-size:14px; padding:0 4px}
-  /* La réponse attendue reste floutée tant qu'on n'a pas répondu : la lire d'avance
-     viderait l'exercice de son sens. */
+    background:var(--sc-glass-2); border:1px solid var(--sc-line); border-radius:13px; padding:7px 9px}
+  .spell-words .w{display:inline-block; padding:5px 11px; border-radius:var(--pill);
+    font-size:14px; font-weight:600;
+    background:rgba(255,255,255,.08); border:1px solid var(--sc-line-2); color:var(--sc-ink)}
+  .spell-words .w.ok{border-color:rgba(95,224,164,.65); color:var(--sc-ok); background:rgba(95,224,164,.13)}
+  .spell-words .w.ko{border-color:rgba(255,138,134,.65); color:var(--sc-bad); background:rgba(255,138,134,.13)}
+  .spell-words .w.miss{border-style:dashed; border-color:var(--sc-line); color:var(--sc-ink-2); background:none}
+  .spell-words .w.extra{border-color:rgba(255,196,112,.65); color:var(--sc-warn); background:rgba(255,196,112,.12)}
+  .spell-words .none{color:var(--sc-ink-2); font-size:14px; padding:0 4px}
+  /* La réponse attendue reste floutée tant qu'on n'a pas répondu. */
   .spell-expected.blurred{filter:blur(7px); user-select:none}
   .spell-expected.blurred.hoverable{cursor:pointer}
   .spell-expected.blurred.hoverable:hover{filter:none}
 
-  .spell-verdict{display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; border-radius:12px;
-    padding:14px 17px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink-2)}
+  /* ---- Verdict ---- */
+  .spell-verdict{display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px;
+    border-radius:13px; padding:14px 17px;
+    border:1px solid var(--sc-line); background:rgba(255,255,255,.07); color:var(--sc-ink-2)}
   .spell-verdict .ic-svg{width:22px; height:22px; flex:none}
-  .spell-verdict small{display:block; font-weight:600; font-size:13px; opacity:.85; margin-top:2px}
-  .spell-verdict.good{background:rgba(47,163,107,.10); color:var(--ok); border-color:var(--ok)}
-  .spell-verdict.bad{background:rgba(217,83,79,.10); color:var(--bad); border-color:var(--bad)}
-  :root[data-theme="dark"] .spell-verdict.bad{background:#301a19; color:#f3b4b0; border-color:#6b3330}
+  .spell-verdict small{display:block; font-weight:600; font-size:13px; opacity:.88; margin-top:2px}
+  .spell-verdict.good{background:rgba(95,224,164,.14); color:var(--sc-ok); border-color:rgba(95,224,164,.55)}
+  .spell-verdict.bad{background:rgba(255,138,134,.14); color:var(--sc-bad); border-color:rgba(255,138,134,.55)}
 
   .spell-status{padding:10px 14px; border-radius:12px; font-size:13.5px; font-weight:600;
-    background:var(--violet-soft); color:var(--violet-dark); border:1px solid var(--violet)}
-  .spell-status.err{background:#fdecec; color:#c0392b; border-color:#e7b3b3}
-  :root[data-theme="dark"] .spell-status.err{background:#301a19; color:#f3b4b0; border-color:#6b3330}
+    background:rgba(169,156,255,.14); color:var(--sc-accent); border:1px solid rgba(169,156,255,.42)}
+  .spell-status.err{background:rgba(255,138,134,.14); color:var(--sc-bad); border-color:rgba(255,138,134,.5)}
 
-  /* Chronomètre, à côté du bouton micro. */
+  /* ---- Chronomètre ---- */
   .spell-timer{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-weight:700;
-    font-size:15px; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--border);
-    border-radius:var(--pill); padding:8px 14px; min-width:74px; justify-content:center; font-variant-numeric:tabular-nums}
-  .spell-timer.running{color:var(--violet-dark); border-color:var(--violet); background:var(--violet-soft)}
+    font-size:15px; color:var(--sc-ink-2); background:rgba(255,255,255,.08);
+    border:1px solid var(--sc-line-2); border-radius:var(--pill); padding:8px 14px;
+    min-width:74px; justify-content:center; font-variant-numeric:tabular-nums}
+  .spell-timer.running{color:var(--sc-ink); border-color:rgba(169,156,255,.6); background:rgba(169,156,255,.16)}
   .spell-timer::before{content:""; width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.5}
   .spell-timer.running::before{opacity:1; animation:spellPulse 1s ease-in-out infinite}
   @keyframes spellPulse{0%,100%{opacity:1}50%{opacity:.25}}
   @media (prefers-reduced-motion: reduce){ .spell-timer.running::before{animation:none} }
 
-  /* Colonne de droite : série en cours et rappel de la règle. */
-  .spell-side{display:flex; flex-direction:column; gap:16px; position:sticky; top:84px}
-  @media (max-width:980px){ .spell-side{position:static} }
+  /* ---- Colonne de droite ---- */
   .spell-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-  .spell-stat{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:11px 12px}
-  .spell-stat b{display:block; font-family:var(--mono); font-size:22px; font-weight:800; color:var(--violet-dark); line-height:1.2}
-  .spell-stat span{font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2)}
-  .spell-tips{margin:0; padding-left:18px; color:var(--ink-2); font-size:13.5px; line-height:1.6}
+  .spell-stat{background:var(--sc-glass-2); border:1px solid var(--sc-line); border-radius:13px; padding:11px 12px}
+  .spell-stat b{display:block; font-family:var(--mono); font-size:22px; font-weight:800;
+    color:var(--sc-accent); line-height:1.2}
+  .spell-stat span{font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--sc-ink-2)}
+  .spell-tips{margin:0; padding-left:18px; color:var(--sc-ink-2); font-size:13.5px; line-height:1.6}
   .spell-tips li+li{margin-top:6px}
-  .spell-tips b{color:var(--ink)}
-  .spell-side .panel{margin:0; padding:18px}
+  .spell-tips b{color:var(--sc-ink)}
+  .spell-scene .fiche-h{color:var(--sc-ink-2)}
   .fiche-h{font-size:13px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
            color:var(--ink-2); margin:0 0 12px}
+
+  /* Écran étroit : la photo est cadrée plus serré et la version légère suffit. */
+  @media (max-width:560px){
+    .spell-line{grid-template-columns:1fr; gap:5px}
+    .spell-line .lbl{padding-top:0}
+  }
+  @media (max-width:820px){
+    .spell-scene{border-radius:20px}
+    .spell-scene::before{background-image:url("assets/images/aeroport-nuit-800.webp");
+                         background-position:center 62%}
+  }
 
   /* ============ Catalogue de cours ============ */
   /* 320px mini : à 260px, l'icône de 44px laissait une colonne de texte trop étroite
@@ -2261,15 +2378,28 @@
     <!-- ==================== ÉPELLATION ==================== -->
     <section id="page-epellation" class="page">
       <div class="container">
-        <h2 class="section-title">Épellation radio</h2>
-        <p class="section-sub">Épelez à voix haute l'immatriculation ou le code aéroport affiché, en alphabet aéronautique. Parlez au micro (Chrome ou Edge).</p>
-
         <div id="spellNoreco" class="noreco hidden">
           <b>Reconnaissance vocale indisponible</b> sur ce navigateur. Utilisez <b>Google Chrome</b> ou
           <b>Microsoft Edge</b> sur ordinateur. Vous pouvez tout de même vous entraîner à l'oral et
           révéler la réponse attendue.
         </div>
 
+        <!-- Décor : la photo de nuit est un CONTEXTE DE COULEUR à part entière.
+             Tout ce qui vit à l'intérieur définit ses couleurs en dur (variables
+             --sc-*) et ne touche JAMAIS à --ink / --surface : la scène est donc
+             identique en clair et en sombre, et aucune bascule de thème ne peut
+             y rendre un texte illisible. -->
+        <div class="spell-scene">
+          <!-- Le titre vit DANS la scène : il laisse au décor la bande haute où
+               passent le ciel et la tour, et évite de répéter deux fois le nom de
+               l'exercice. Le bloc est bridé en largeur pour dégager la droite,
+               là où se trouve la vigie. -->
+          <header class="spell-hero">
+            <span class="sh-tag">Exercice</span>
+            <h2>Épellation radio</h2>
+            <p>Épelez à voix haute l'immatriculation ou le code aéroport affiché, en
+               alphabet aéronautique. Parlez au micro (Chrome ou Edge).</p>
+          </header>
         <div class="spell-layout">
           <section class="panel spell-main">
             <!-- Le code à épeler, en pastilles : chacune se colore après la réponse. -->
@@ -2333,6 +2463,8 @@
               </ul>
             </section>
           </aside>
+        </div>
+          <span class="spell-credit">Aéroport de nuit — photo Rita Candeias, Unsplash</span>
         </div>
       </div>
     </section>
@@ -2516,7 +2648,7 @@
 
   <footer>
     Fonctionne hors-ligne (hors micro/synthèse du navigateur), <strong>à l'exception du fond de carte de la page Navigation</strong>, chargé depuis les serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap. Le reste du site n'envoie aucune donnée sur Internet.
-    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82.
+    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82. Décor de l'épellation : Unsplash — Rita Candeias.
   </footer>
 
   <div class="toast" id="toast"></div>
@@ -6352,7 +6484,7 @@ if(!RECO_OK){
     O:"Oscar",P:"Papa",Q:"Quebec",R:"Romeo",S:"Sierra",T:"Tango",U:"Uniform",V:"Victor",
     W:"Whiskey",X:"X-ray",Y:"Yankee",Z:"Zulu"};
   var DIGITS=[
-    {n:"0",fr:"Zéro",en:"Zero"},{n:"1",fr:"Un",en:"Wun"},{n:"2",fr:"Deux",en:"Too"},
+    {n:"0",fr:"Zéro",en:"Zero"},{n:"1",fr:"Unité",en:"Wun"},{n:"2",fr:"Deux",en:"Too"},
     {n:"3",fr:"Trois",en:"Tree"},{n:"4",fr:"Quatre",en:"Fower"},{n:"5",fr:"Cinq",en:"Fife"},
     {n:"6",fr:"Six",en:"Six"},{n:"7",fr:"Sept",en:"Seven"},{n:"8",fr:"Huit",en:"Eight"},
     {n:"9",fr:"Neuf",en:"Niner"}
@@ -6560,7 +6692,8 @@ if(!RECO_OK){
     yankee:'yankee', yanki:'yankee', yankie:'yankee', yanke:'yankee',
     zulu:'zulu', zoulou:'zulu', zoulu:'zulu', zoulous:'zulu',
     // chiffres énoncés en toutes lettres
-    zero:'zero', zeros:'zero', un:'un', une:'un', unite:'un', deux:'deux', d:'deux',
+    zero:'zero', zeros:'zero', unite:'unite', un:'unite', une:'unite', unitee:'unite',
+    deux:'deux', d:'deux',
     trois:'trois', quatre:'quatre', katre:'quatre', cinq:'cinq', sink:'cinq',
     six:'six', sept:'sept', set:'sept', huit:'huit', wit:'huit', neuf:'neuf', neuve:'neuf'
   };

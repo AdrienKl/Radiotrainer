@@ -369,9 +369,9 @@
     color:var(--sc-ink);
     /* Palette locale de la scène. */
     --sc-ink:#f4f6fd;            /* texte principal            */
-    --sc-ink-2:#aeb8d2;          /* texte secondaire           */
+    --sc-ink-2:#c3cbe0;          /* texte secondaire           */
     --sc-accent:#a99cff;         /* violet éclairci pour fond sombre */
-    --sc-glass:rgba(11,15,28,.30);
+    --sc-glass:rgba(11,15,28,.40);
     --sc-glass-2:rgba(6,9,18,.30);
     --sc-line:rgba(255,255,255,.15);
     --sc-line-2:rgba(255,255,255,.26);
@@ -402,21 +402,23 @@
   .spell-layout{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px; align-items:start}
   @media (max-width:980px){ .spell-layout{grid-template-columns:1fr} }
 
-  /* ---- Verre dépoli : le matériau commun des deux colonnes ---- */
+  /* ---- Le verre : le matériau commun des deux colonnes ---- */
+  /* Pas de backdrop-filter ici, et ce n'est pas un oubli. `.page.active` anime
+     l'opacité de 0 à 1 (keyframes pageIn) ; tant qu'elle ne vaut pas exactement 1,
+     la page forme une « backdrop root » et le backdrop-filter de ses enfants n'a
+     plus rien à échantillonner — le décor, lui, vit HORS de la page. Le verre
+     restait donc net une demi-seconde, puis le flou tombait d'un coup à la fin de
+     l'animation. Plutôt que de subir ce clignotement, on garde en permanence l'état
+     qui laisse le mieux voir la photo : une teinte, sans flou. C'est alors la teinte
+     seule qui porte la lisibilité, montée de 30 à 40 % — mesuré sur la photo réelle,
+     14:1 en moyenne et 5,4:1 sous le lampadaire le plus vif, soit le niveau que
+     tenait déjà le verre flouté (5,9:1). Reflouter ici ramènerait le clignotement. */
   .spell-scene .panel{
     margin:0; color:var(--sc-ink);
     background:var(--sc-glass);
     border:1px solid var(--sc-line);
     border-radius:20px;
     box-shadow:0 18px 44px rgba(4,6,16,.42), inset 0 1px 0 rgba(255,255,255,.10);
-    -webkit-backdrop-filter:blur(18px) saturate(1.35);
-            backdrop-filter:blur(18px) saturate(1.35);
-  }
-  /* Sans backdrop-filter (Firefox ancien, navigateurs de bureau bridés), le verre
-     ne floute rien : on le rend franchement opaque plutôt que translucide sur une
-     photo, sinon le texte passerait sur les lampadaires. */
-  @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
-    .spell-scene .panel{ background:rgba(11,15,27,.93) }
   }
   .spell-main{padding:0; overflow:hidden}
   .spell-side{display:flex; flex-direction:column; gap:18px}

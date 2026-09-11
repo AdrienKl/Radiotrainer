@@ -576,44 +576,46 @@
   /* ---- LE CASTING ----
      Quelle photo, sur quelle page, dans quel thème.
 
-     La règle : thème CLAIR → les photos sombres (nuit, couchant, crépuscule) ;
-     thème SOMBRE → les photos de jour (nuages, montagne, terminal). La scène,
-     elle, reste un verre sombre dans les deux thèmes (voir la règle absolue
-     plus bas) : ce que le thème change ici, c'est l'HEURE qu'il fait derrière
-     la vitre. Basculer clair↔sombre fait donc passer l'application du plein
-     jour au crépuscule, ce qui est exactement l'inverse de l'attendu — et
-     c'est voulu : chaque thème a son atmosphère au lieu d'être deux nuances
+     La règle : thème CLAIR → les photos de jour (montagne, nuages, terminal) ;
+     thème SOMBRE → les photos des heures basses (crépuscule, couchant, nuit).
+     La scène, elle, reste un verre sombre dans les DEUX thèmes (voir la règle
+     absolue plus bas) : ce que le thème change ici, c'est l'HEURE qu'il fait
+     derrière la vitre. Basculer clair↔sombre, c'est passer du plein jour à la
+     tombée du soir — chaque thème a son atmosphère au lieu d'être deux nuances
      du même gris.
 
-     Conséquence technique, et c'est tout l'intérêt de la séparer : les photos
-     de jour montent jusqu'à 0,46 de luminance moyenne contre 0,10 pour la
-     nuit. Le voile est donc nettement plus épais sous les photos claires.
-     Les valeurs ci-dessous ne sont pas décoratives : elles sont ce qui
-     maintient le texte blanc au-dessus du seuil AA dans les six cas. */
-  body.on-exercices { --scene-img:url("assets/images/aeroport-crepuscule.webp");
+     Conséquence technique, et c'est tout l'intérêt de séparer le voile de la
+     photo : les images de jour montent jusqu'à 0,46 de luminance moyenne contre
+     0,10 pour la nuit. Le voile est donc nettement plus épais sous les claires.
+     Les valeurs ci-dessous ne sont pas décoratives : elles sont ce qui maintient
+     le texte blanc au-dessus du seuil AA dans les six cas. Elles voyagent avec
+     leur photo — déplacer une image d'un thème à l'autre, c'est déplacer ses
+     trois molettes avec elle. */
+  body.on-exercices { --scene-img:url("assets/images/avion-nuages.webp");
+                      --scene-pos:center 48%; --scene-haut:.56; --scene-bas:.80; --scene-vignette:.60; }
+  body.on-navigation{ --scene-img:url("assets/images/jet-montagne.webp");
+                      --scene-pos:center 52%; --scene-haut:.60; --scene-bas:.82; --scene-vignette:.62; }
+  body.on-epellation{ --scene-img:url("assets/images/terminal-jour.webp");
+                      --scene-pos:center 54%; --scene-haut:.58; --scene-bas:.80; --scene-vignette:.60; }
+  :root[data-theme="dark"] body.on-exercices { --scene-img:url("assets/images/aeroport-crepuscule.webp");
                       --scene-pos:center 64%; --scene-haut:.38; --scene-bas:.70; --scene-vignette:.54; }
   /* Le couchant du Cessna laisse une braise au bord gauche, juste sous le titre :
      mesurée à 0,227 de luminance, elle ramenait le blanc à 3,7:1. D'où un haut
-     nettement plus épais ici qu'ailleurs — .44 contre .34 — qui la ramène à 4,6:1
-     sans toucher au soleil lui-même, qui vit plus bas dans l'image. */
-  body.on-navigation{ --scene-img:url("assets/images/cessna-couchant.webp");
+     nettement plus épais que ce que la photo laisserait croire — .44 — qui la
+     ramène à 4,6:1 sans toucher au soleil lui-même, qui vit plus bas dans l'image. */
+  :root[data-theme="dark"] body.on-navigation{ --scene-img:url("assets/images/cessna-couchant.webp");
                       --scene-pos:center 56%; --scene-haut:.44; --scene-bas:.68; --scene-vignette:.52; }
-  body.on-epellation{ --scene-img:url("assets/images/aeroport-nuit.webp");
+  :root[data-theme="dark"] body.on-epellation{ --scene-img:url("assets/images/aeroport-nuit.webp");
                       --scene-pos:center 58%; --scene-haut:.24; --scene-bas:.60; --scene-vignette:.48; }
-  :root[data-theme="dark"] body.on-exercices { --scene-img:url("assets/images/avion-nuages.webp");
-                      --scene-pos:center 48%; --scene-haut:.56; --scene-bas:.80; --scene-vignette:.60; }
-  :root[data-theme="dark"] body.on-navigation{ --scene-img:url("assets/images/jet-montagne.webp");
-                      --scene-pos:center 52%; --scene-haut:.60; --scene-bas:.82; --scene-vignette:.62; }
-  :root[data-theme="dark"] body.on-epellation{ --scene-img:url("assets/images/terminal-jour.webp");
-                      --scene-pos:center 54%; --scene-haut:.58; --scene-bas:.80; --scene-vignette:.60; }
   /* Écran étroit : la version légère de chaque photo (1100 px au lieu de 2000). */
   @media (max-width:820px){
-    body.on-exercices { --scene-img:url("assets/images/aeroport-crepuscule-800.webp"); }
-    body.on-navigation{ --scene-img:url("assets/images/cessna-couchant-800.webp"); }
-    body.on-epellation{ --scene-img:url("assets/images/aeroport-nuit-800.webp"); --scene-pos:center 62%; }
-    :root[data-theme="dark"] body.on-exercices { --scene-img:url("assets/images/avion-nuages-800.webp"); }
-    :root[data-theme="dark"] body.on-navigation{ --scene-img:url("assets/images/jet-montagne-800.webp"); }
-    :root[data-theme="dark"] body.on-epellation{ --scene-img:url("assets/images/terminal-jour-800.webp"); }
+    body.on-exercices { --scene-img:url("assets/images/avion-nuages-800.webp"); }
+    body.on-navigation{ --scene-img:url("assets/images/jet-montagne-800.webp"); }
+    body.on-epellation{ --scene-img:url("assets/images/terminal-jour-800.webp"); }
+    :root[data-theme="dark"] body.on-exercices { --scene-img:url("assets/images/aeroport-crepuscule-800.webp"); }
+    :root[data-theme="dark"] body.on-navigation{ --scene-img:url("assets/images/cessna-couchant-800.webp"); }
+    :root[data-theme="dark"] body.on-epellation{ --scene-img:url("assets/images/aeroport-nuit-800.webp");
+                      --scene-pos:center 62%; }
   }
 
   /* Le crédit photo suit le casting : chaque scène porte les deux mentions et
@@ -2662,8 +2664,8 @@
         <!-- Crédit photo. Les deux mentions sont dans le DOM, le thème en montre
              une : voir la règle .credit-clair / .credit-sombre. -->
         <p class="scene-credit">
-          <span class="credit-clair">Tarmac au crépuscule — photo benny1900, Pixabay</span>
-          <span class="credit-sombre">Montée dans les cumulus — photo anestiev, Pixabay</span>
+          <span class="credit-clair">Montée dans les cumulus — photo anestiev, Pixabay</span>
+          <span class="credit-sombre">Tarmac au crépuscule — photo benny1900, Pixabay</span>
         </p>
       </div>
     </section>
@@ -2968,8 +2970,8 @@
         <!-- Crédit photo. Les deux mentions sont dans le DOM, le thème en montre
              une : voir la règle .credit-clair / .credit-sombre. -->
         <p class="scene-credit">
-          <span class="credit-clair">Cessna 150 au couchant — photo Kim R. Hunter, Pixabay</span>
-          <span class="credit-sombre">Jet en montagne — photo noname_13, Pixabay</span>
+          <span class="credit-clair">Jet en montagne — photo noname_13, Pixabay</span>
+          <span class="credit-sombre">Cessna 150 au couchant — photo Kim R. Hunter, Pixabay</span>
         </p>
       </div>
     </section>
@@ -3080,8 +3082,8 @@
           </aside>
         </div>
           <span class="spell-credit">
-            <span class="credit-clair">Aéroport de nuit — photo Rita Candeias, Unsplash</span>
-            <span class="credit-sombre">Hall de terminal — photo TheDigitalWay, Pixabay</span>
+            <span class="credit-clair">Hall de terminal — photo TheDigitalWay, Pixabay</span>
+            <span class="credit-sombre">Aéroport de nuit — photo Rita Candeias, Unsplash</span>
           </span>
         </div>
       </div>

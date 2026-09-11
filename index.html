@@ -7513,6 +7513,12 @@ if(!RECO_OK){
      L'ancienne version relisait le texte affiché dans le DOM — ce qui devenait
      impossible dès qu'on y met des pastilles, et fragile de toute façon. */
   var dernierBrut='';
+  /* Série en cours : un passage sur la page d'épellation. Remise à zéro à
+     chaque arrivée, pour qu'une visite ne se rattache pas à la précédente. */
+  var serie = { jeton:null, n:0, ok:0, total:0 };
+  window.addEventListener('rt:page', function(ev){
+    if (ev.detail && ev.detail.page === 'epellation') serie = { jeton:null, n:0, ok:0, total:0 };
+  });
 
   function evaluate(){
     var ut = userTokens(dernierBrut);
@@ -7549,6 +7555,32 @@ if(!RECO_OK){
     });
     al.extras.forEach(function(x){ dits.push({t:x, cls:'extra'}); });
     setUser(dits);
+
+    /* ---- Enregistrement de la série ----
+       L'épellation ne gardait RIEN : ni score, ni durée, ni trace. C'était la
+       dernière des quatre mesures manquantes.
+       Une « série » est un passage sur la page, pas un code isolé : une ligne
+       par code noierait la table et ne dirait rien de plus. La séance est donc
+       ouverte au premier code évalué, puis re-close après chacun — l'écriture
+       étant un upsert sur un identifiant tiré côté client, la ligne reste la
+       même et son statut vaut « terminée à cet instant ». Aucun évènement de
+       fin à guetter, donc rien à rater quand l'onglet se ferme. */
+    if (window.RTSync && !serie.jeton){
+      serie.jeton = RTSync.demarrer({ kind:'spelling' });
+      serie.n = 0;
+    }
+    if (serie.jeton){
+      var attendu = expWords.join(' ');
+      var entendu = ut.join(' ');
+      var rates = al.marks.map(function(m,i){ return m.ok ? null : expWords[i]; })
+                          .filter(Boolean).concat(al.extras.map(function(x){ return 'en trop : '+x; }));
+      serie.ok += justes; serie.total += expTok.length;
+      RTSync.terminer(serie.jeton,
+        { kind:'spelling', score_ok:serie.ok, score_total:serie.total },
+        [{ idx:serie.n++, phase:(current && current.kind) || 'Épellation',
+           expected:attendu, said:entendu, answered:true,
+           missed:rates, score_ok:justes, score_total:expTok.length }]);
+    }
 
     // Compteurs de série.
     stats.tot++;
@@ -7736,6 +7768,16 @@ if(!RECO_OK){
     revealBtn.textContent = blurred ? 'Voir la réponse' : 'Masquer la réponse';
   });
   if(hoverChk) hoverChk.addEventListener('change', function(){ expEl.classList.toggle('hoverable', hoverChk.checked); });
+
+  /* Prise de test, sur le modèle de RT_TEST côté Navigation. Elle n'ajoute
+     aucune logique : dire() dépose une transcription là où la reconnaissance
+     vocale la dépose, puis appelle evaluate(). C'est le chemin exact d'un
+     relâchement de PTT — il n'existe pas de second circuit d'évaluation. */
+  window.RT_TEST_EPEL = {
+    attendu: function(){ return expTok.join(' '); },
+    dire:    function(txt){ dernierBrut = String(txt||''); evaluate(); },
+    suivant: function(){ newCode(); }
+  };
 
   majStats();
   newCode();

@@ -165,8 +165,12 @@
       s.status = (bilan && bilan.status) || 'completed';
       s.ended_at = new Date(fin).toISOString();
       s.duration_s = Math.max(0, Math.round((fin - jeton.debut)/1000));
+      /* L'index peut être imposé par l'appelant. L'épellation en a besoin : sa
+         série se prolonge code après code, et réémettre toute la liste à chaque
+         fois ferait grossir le trafic au carré. Elle n'envoie donc que le
+         dernier échange, avec son rang. */
       var et = (etapes || []).map(function(e, i){
-        return { session_id: jeton.id, idx: i,
+        return { session_id: jeton.id, idx: (e.idx != null ? e.idx : i),
                  phase:e.phase||null, station:e.station||null, freq:e.freq!=null?String(e.freq):null,
                  expected:e.expected||null, said:e.said||null,
                  answered: !!e.answered,

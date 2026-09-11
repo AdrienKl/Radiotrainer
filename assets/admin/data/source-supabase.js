@@ -43,9 +43,13 @@
   'use strict';
   var RT = window.RTAdmin; if (!RT || !RT.data) return;
 
+  /* Ces deux valeurs sont PUBLIQUES par conception. Elles n'ouvrent que ce que
+     les politiques RLS autorisent — c'est la base qui décide, pas ce fichier.
+     La clé `secret` (ex-`service_role`), elle, contourne RLS : elle n'a rien à
+     faire ici, ni dans aucun fichier servi au navigateur. */
   var CONFIG = {
-    url:'',        // ex. 'https://xxxxxxxxxxxx.supabase.co'
-    anonKey:''     // clé PUBLIQUE `anon` — jamais `service_role`
+    url:'https://vbziwjeuzcbvrbrihhrg.supabase.co',
+    anonKey:'sb_publishable_MPZNvFqgjunE2-ol_1Ueaw_f2LasuXO'
   };
 
   var client = null;

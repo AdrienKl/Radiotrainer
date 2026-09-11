@@ -834,6 +834,16 @@
   .auth-field input:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
   .auth-row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .auth-submit{ width:100%; margin-top:6px; }
+  /* Retour de l'authentification : échec en rouge, succès en vert. Le bloc ne
+     prend aucune place tant qu'il n'a rien à dire — sans quoi le formulaire
+     sauterait de quelques pixels au premier message. */
+  .auth-msg{ margin:2px 0 12px; padding:10px 13px; border-radius:10px;
+    font-size:13.5px; line-height:1.5; border:1px solid; }
+  .auth-msg.hidden{ display:none; }
+  .auth-msg--err{ background:rgba(217,83,79,.10); border-color:rgba(217,83,79,.42); color:#a8342f; }
+  .auth-msg--ok{  background:rgba(47,163,107,.10); border-color:rgba(47,163,107,.42); color:#1d7a4d; }
+  :root[data-theme="dark"] .auth-msg--err{ color:#ff9d99; }
+  :root[data-theme="dark"] .auth-msg--ok{  color:#6fe3ab; }
   .auth-switch{ text-align:center; font-size:13px; color:var(--ink-2); margin:16px 0 0; }
   .auth-link{ background:none; border:none; padding:0; cursor:pointer; color:var(--violet-dark);
     font-weight:700; font-size:13px; text-decoration:underline; font-family:var(--sans); }
@@ -2203,13 +2213,14 @@
           <h2 class="auth-title">Se connecter</h2>
           <p class="auth-sub">Accédez à vos exercices de phraséologie.</p>
           <div class="auth-field">
-            <label for="loginId">Identifiant ou email</label>
-            <input id="loginId" type="text" autocomplete="username" spellcheck="false" placeholder="votre identifiant ou email">
+            <label for="loginId">Adresse e-mail</label>
+            <input id="loginId" type="email" autocomplete="username" spellcheck="false" placeholder="vous@exemple.fr">
           </div>
           <div class="auth-field">
             <label for="loginPwd">Mot de passe</label>
             <input id="loginPwd" type="password" autocomplete="current-password" placeholder="••••••••">
           </div>
+          <p class="auth-msg hidden" id="loginMsg" role="status" aria-live="polite"></p>
           <button class="btn cta auth-submit" id="loginSubmit" type="button">Se connecter</button>
           <p class="auth-switch">Pas encore de compte ? <button class="auth-link" type="button" data-page="signup">S'inscrire</button></p>
         </div>
@@ -2233,7 +2244,7 @@
           </div>
           <div class="auth-field">
             <label for="suPwd">Mot de passe</label>
-            <input id="suPwd" type="password" autocomplete="new-password" placeholder="••••••••">
+            <input id="suPwd" type="password" autocomplete="new-password" placeholder="8 caractères au minimum">
           </div>
           <div class="auth-row2">
             <div class="auth-field">
@@ -2245,6 +2256,7 @@
               <input id="suPrenom" type="text" autocomplete="given-name" spellcheck="false">
             </div>
           </div>
+          <p class="auth-msg hidden" id="signupMsg" role="status" aria-live="polite"></p>
           <button class="btn cta auth-submit" id="signupSubmit" type="button">S'inscrire</button>
           <p class="auth-switch">Déjà un compte ? <button class="auth-link" type="button" data-page="login">Se connecter</button></p>
         </div>
@@ -6939,14 +6951,39 @@ if(!RECO_OK){
       if(authed){ showPage(target); } else { pendingTarget=target; showPage('login'); }
     });
   });
-  // Validation MOCK connexion/inscription : aucune vérification, on entre dans l'application.
+  /* --- Frontière avec l'authentification ---------------------------------
+     Le routeur ne décide plus qui entre. Il ne sait faire que trois choses :
+     ouvrir l'application, la refermer, et rejouer la route courante quand une
+     session est retrouvée au chargement. C'est assets/auth.js qui appelle,
+     après que Supabase a tranché.
+     `authed` n'est PAS une sécurité : il gouverne l'affichage, rien d'autre.
+     Le vrai contrôle est dans les politiques RLS, côté base — un visiteur qui
+     forcerait cette variable à true verrait l'interface se peindre et tous les
+     tableaux répondre « aucune donnée ». */
   function enterApp(){ authed=true; var t=pendingTarget||'tableau'; pendingTarget=null; showPage(t);
     if(window.rtMajLienAdmin) window.rtMajLienAdmin(); }
-  var loginSubmit=document.getElementById('loginSubmit'); if(loginSubmit) loginSubmit.addEventListener('click',enterApp);
-  var signupSubmit=document.getElementById('signupSubmit'); if(signupSubmit) signupSubmit.addEventListener('click',enterApp);
-  // Déconnexion : retour à la vitrine (utile pour re-tester le flux).
+  window.rtEntrer = enterApp;
+  window.rtSortir = function(){ authed=false; pendingTarget=null; showPage('accueil'); };
+  window.rtConnecte = function(){ return authed; };
+  /* Session déjà ouverte au chargement. On REJOUE la route affichée plutôt que
+     d'imposer le tableau de bord : quelqu'un qui arrive sur la vitrine avec une
+     session valide doit rester sur la vitrine, pas se faire happer. Et celui
+     qui visait #progression avant d'être renvoyé vers la connexion y atterrit. */
+  window.rtSessionOuverte = function(){
+    authed=true;
+    if(window.rtMajLienAdmin) window.rtMajLienAdmin();
+    var r = pendingTarget || routeAffichee || 'accueil';
+    if(r==='login' || r==='signup') r = pendingTarget || 'tableau';
+    pendingTarget=null;
+    showPage(r, false);
+  };
+  /* La déconnexion passe par Supabase quand il est là : sans signOut(), le jeton
+     resterait valide en stockage local et un simple rechargement rouvrirait la
+     session. Sans lui, on se contente de refermer l'interface. */
   var logoutBtn=document.getElementById('logoutBtn');
-  if(logoutBtn) logoutBtn.addEventListener('click',function(){ authed=false; pendingTarget=null; showPage('accueil'); });
+  if(logoutBtn) logoutBtn.addEventListener('click',function(){
+    if(window.RTAuth) RTAuth.deconnexion(); else window.rtSortir();
+  });
   // Menu mobile (hamburger + overlay).
   var hb=document.getElementById('hamburger'); if(hb) hb.addEventListener('click',function(){ setDrawer(!(sidebar&&sidebar.classList.contains('open'))); });
   var ov=document.getElementById('sideOverlay'); if(ov) ov.addEventListener('click',function(){ setDrawer(false); });
@@ -11268,9 +11305,12 @@ function oaciSonde(couche, surAbsenceTotale){
 
      Rien ne se construit au chargement : la console n'est bâtie qu'à la première
      entrée sur #admin. Voir ADMIN.md. -->
-<!-- Client Supabase — copie LOCALE (pas de CDN), comme leaflet.js : index.html
-     doit rester ouvrable en file://. Provenance et empreinte : assets/vendor/README.md. -->
+<!-- Supabase. L'ordre compte : les coordonnées, puis le client (copie LOCALE,
+     pas de CDN — comme leaflet.js, index.html doit rester ouvrable en file://),
+     puis l'authentification, qui a besoin des deux. -->
+<script src="assets/supabase-config.js"></script>
 <script src="assets/vendor/supabase.js"></script>
+<script src="assets/auth.js"></script>
 <script src="assets/admin/data/error-log.js"></script>
 <script src="assets/admin/data/contract.js"></script>
 <script src="assets/admin/ui/kit.js"></script>

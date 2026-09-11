@@ -43,21 +43,23 @@
   'use strict';
   var RT = window.RTAdmin; if (!RT || !RT.data) return;
 
-  /* Ces deux valeurs sont PUBLIQUES par conception. Elles n'ouvrent que ce que
-     les politiques RLS autorisent — c'est la base qui décide, pas ce fichier.
-     La clé `secret` (ex-`service_role`), elle, contourne RLS : elle n'a rien à
-     faire ici, ni dans aucun fichier servi au navigateur. */
-  var CONFIG = {
-    url:'https://vbziwjeuzcbvrbrihhrg.supabase.co',
-    anonKey:'sb_publishable_MPZNvFqgjunE2-ol_1Ueaw_f2LasuXO'
-  };
+  /* Les coordonnées vivent dans assets/supabase-config.js — un seul endroit à
+     changer pour tout le site. Les recopier ici garantirait qu'un jour la
+     console et l'authentification pointeraient sur deux projets différents. */
+  var CONFIG = window.RT_SUPABASE || { url:'', anonKey:'' };
 
   var client = null;
   function connecte(){
     if (client) return client;
     if (!CONFIG.url || !CONFIG.anonKey) return null;
     if (!window.supabase || !window.supabase.createClient) return null;
-    client = window.supabase.createClient(CONFIG.url, CONFIG.anonKey);
+    /* Même `storageKey` que assets/auth.js : les deux modules doivent partager
+       LA session. Avec deux clés distinctes, la console interrogerait la base en
+       anonyme et ne verrait jamais rien — les politiques RLS s'appuient toutes
+       sur auth.uid(). */
+    client = window.supabase.createClient(CONFIG.url, CONFIG.anonKey, {
+      auth:{ persistSession:true, autoRefreshToken:true, storageKey:'rt-auth' }
+    });
     return client;
   }
 

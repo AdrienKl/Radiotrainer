@@ -228,10 +228,18 @@ alter table public.sessions
 
 ### 4.3 Les vues (à ne pas transformer en tables)
 
+> **`security_invoker = true` n'est pas décoratif.** Une vue PostgreSQL
+> s'exécute par défaut avec les droits de son PROPRIÉTAIRE, pas de celui qui
+> l'interroge. Comme elle est créée ici par le rôle administrateur, les
+> politiques RLS des tables sous-jacentes ne s'appliqueraient pas : n'importe
+> quel compte connecté pourrait lire `v_user_progress` et y voir la progression
+> de tout le monde. L'option renverse la règle — la vue s'exécute avec les
+> droits de l'appelant, et RLS reprend la main. Ne la retirez d'aucune des trois.
+
 ```sql
 -- Journées de pratique (remplace rt-jours). Une table serait une seconde
 -- source de vérité à tenir synchronisée pour rien.
-create view public.v_daily_activity as
+create view public.v_daily_activity with (security_invoker = true) as
   select user_id, started_at::date as day, count(*) as sessions
     from public.sessions where status <> 'in_progress'
    group by 1, 2;
@@ -239,14 +247,14 @@ create view public.v_daily_activity as
 -- Éléments manqués, un par ligne. Alimente « erreurs les plus fréquentes » et
 -- les axes de compétence. L'axe est calculé côté client par RTAdmin.taxonomy,
 -- pour rester la MÊME règle que sur les sources mock et locale.
-create view public.v_missed_items as
+create view public.v_missed_items with (security_invoker = true) as
   select s.user_id, s.id as session_id, s.kind, s.started_at, m.label
     from public.session_steps st
     join public.sessions s on s.id = st.session_id
    cross join lateral unnest(st.missed) as m(label);
 
 -- Progression par utilisateur.
-create view public.v_user_progress as
+create view public.v_user_progress with (security_invoker = true) as
   select user_id,
          count(*) as sessions,
          count(*) filter (where kind = 'flight') as flights,
@@ -283,10 +291,34 @@ $$;
 
 -- --- profiles ---
 create policy "profil : lecture de soi"      on public.profiles for select using (id = auth.uid());
-create policy "profil : mise à jour de soi"  on public.profiles for update using (id = auth.uid())
-  with check (id = auth.uid() and role = (select role from public.profiles where id = auth.uid()));
-  --                                     ^ personne ne se promeut administrateur
+create policy "profil : mise à jour de soi"  on public.profiles for update
+  using (id = auth.uid()) with check (id = auth.uid());
 create policy "profil : lecture admin"       on public.profiles for select using (public.is_admin());
+create policy "profil : maj admin"           on public.profiles for update
+  using (public.is_admin()) with check (public.is_admin());
+
+/* Empêcher quelqu'un de se promettre administrateur ne peut PAS se faire dans la
+   politique elle-même : une sous-requête sur `profiles` à l'intérieur d'une
+   politique portant sur `profiles` est elle-même soumise à RLS, et PostgreSQL
+   s'arrête sur « infinite recursion detected in policy for relation profiles ».
+   On passe donc par un déclencheur, qui remet d'office les trois colonnes
+   sensibles à leur ancienne valeur quand l'auteur n'est pas administrateur.
+   is_admin() est `security definer` : appelée d'ici, elle lit `profiles` SANS
+   repasser par RLS, donc sans récursion. */
+create function public.profiles_garde() returns trigger
+  language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    new.role   := old.role;
+    new.status := old.status;
+    new.plan   := old.plan;
+  end if;
+  return new;
+end $$;
+
+create trigger profiles_garde_avant_maj
+  before update on public.profiles
+  for each row execute function public.profiles_garde();
 
 -- --- sessions et échanges ---
 create policy "séance : lecture de soi"  on public.sessions for select using (user_id = auth.uid());

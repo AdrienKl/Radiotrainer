@@ -557,13 +557,28 @@
   .scene-fond::before{ content:""; position:absolute; inset:0;
     background-image:var(--scene-img); background-size:cover; background-repeat:no-repeat;
     background-position:var(--scene-pos,center 58%); }
-  /* Le voile. C'est LUI qui garantit la lisibilité : la scène n'a qu'une seule
-     palette de texte (blanc cassé) et le voile doit donc ramener N'IMPORTE
-     QUELLE photo dans la même plage de luminance. Il est réglé par trois
-     molettes — vignette, haut, bas — que le casting ajuste photo par photo.
-     C'est la PHOTO qu'il compense, jamais le thème : une photo de plein jour
-     demande un voile deux fois plus épais qu'une photo de nuit. */
+  /* Le voile. C'est LUI qui garantit la lisibilité : il doit ramener la photo
+     dans une plage de luminance où la palette de texte de la scène tient.
+
+     Il a donc DEUX SENS, un par thème, et c'est tout le sujet :
+       — thème sombre : un voile NOIR, parce que le texte y est blanc ;
+       — thème clair  : un voile BLANC, parce que le texte y est foncé.
+     Un voile noir en thème clair assombrirait la photo jusqu'à lui donner
+     l'allure du thème sombre — c'était l'erreur de la première version.
+
+     Trois molettes dans les deux cas — vignette, haut, bas — que le casting
+     règle photo par photo. Elles voyagent avec leur image, mais PAS d'un thème
+     à l'autre : la même valeur ne veut pas dire la même chose selon le sens du
+     voile. Les valeurs claires sont plus basses, parce qu'un voile blanc qui
+     monte efface la photo bien plus vite qu'un voile noir. */
   .scene-fond::after{ content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(120% 62% at 52% 2%, rgba(255,255,255,.34), transparent 64%),
+      radial-gradient(112% 92% at 50% 46%, transparent 44%, rgba(250,251,255,var(--scene-vignette,.30)) 100%),
+      linear-gradient(180deg, rgba(250,251,255,var(--scene-haut,.52))  0%,
+                              rgba(250,251,255,var(--scene-haut,.52))  20%,
+                              rgba(250,251,255,var(--scene-bas,.30))  100%); }
+  :root[data-theme="dark"] .scene-fond::after{
     background:
       radial-gradient(120% 62% at 52% 2%, rgba(38,26,104,.28), transparent 64%),
       radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(4,6,14,var(--scene-vignette,.52)) 100%),
@@ -592,13 +607,13 @@
      leur photo — déplacer une image d'un thème à l'autre, c'est déplacer ses
      trois molettes avec elle. */
   body.on-exercices { --scene-img:url("assets/images/avion-nuages.webp");
-                      --scene-pos:center 48%; --scene-haut:.56; --scene-bas:.80; --scene-vignette:.60; }
+                      --scene-pos:center 48%; --scene-haut:.62; --scene-bas:.30; --scene-vignette:.30; }
   body.on-navigation{ --scene-img:url("assets/images/jet-montagne.webp");
-                      --scene-pos:center 52%; --scene-haut:.60; --scene-bas:.82; --scene-vignette:.62; }
+                      --scene-pos:center 52%; --scene-haut:.58; --scene-bas:.26; --scene-vignette:.28; }
   body.on-epellation{ --scene-img:url("assets/images/terminal-jour.webp");
-                      --scene-pos:center 54%; --scene-haut:.58; --scene-bas:.80; --scene-vignette:.60; }
+                      --scene-pos:center 54%; --scene-haut:.62; --scene-bas:.32; --scene-vignette:.30; }
   :root[data-theme="dark"] body.on-exercices { --scene-img:url("assets/images/aeroport-crepuscule.webp");
-                      --scene-pos:center 64%; --scene-haut:.38; --scene-bas:.70; --scene-vignette:.54; }
+                      --scene-pos:center 64%; --scene-haut:.44; --scene-bas:.70; --scene-vignette:.54; }
   /* Le couchant du Cessna laisse une braise au bord gauche, juste sous le titre :
      mesurée à 0,227 de luminance, elle ramenait le blanc à 3,7:1. D'où un haut
      nettement plus épais que ce que la photo laisserait croire — .44 — qui la
@@ -622,18 +637,17 @@
      n'en montre qu'une. Les photographes sont cités parce qu'ils doivent
      l'être, pas parce que la place manquait pour le cacher. */
   .scene-credit{ margin:22px 0 0; text-align:right; font-size:11px;
-    letter-spacing:.04em; color:rgba(255,255,255,.42); }
+    letter-spacing:.04em; color:var(--sc-credit); }
   .credit-sombre{ display:none; }
   :root[data-theme="dark"] .credit-clair{ display:none; }
   :root[data-theme="dark"] .credit-sombre{ display:inline; }
 
   /* ---- LA PALETTE DE SCÈNE ----
-     Ce qu'on pose sur la photo, c'est du verre dépoli : des panneaux sombres
-     et translucides, du texte blanc cassé.
-
-     RÈGLE ABSOLUE : la scène est sombre dans les DEUX thèmes. C'est ce qui
-     garantit qu'un passage clair↔sombre ne peut pas y rendre un texte
-     illisible — il n'y a qu'un seul jeu de couleurs à vérifier, pas deux.
+     Ce qu'on pose sur la photo, c'est du verre dépoli. Il a la couleur du
+     thème, pas celle de la photo : verre CLAIR et texte foncé en thème clair,
+     verre SOMBRE et texte blanc cassé en thème sombre. Poser du verre sombre
+     sur les deux revenait à n'avoir qu'un seul thème, le sombre, avec deux
+     photos — c'était le défaut de la première version.
 
      La façon de l'obtenir tient en une idée : plutôt que de réhabiller un par
      un les quarante composants qui vivent sur ces pages, .scene REDÉFINIT
@@ -642,18 +656,57 @@
      Les variables CSS héritent, donc la conversion est gratuite et, surtout,
      elle reste vraie pour tout composant ajouté demain.
 
-     Corollaire à ne pas oublier : les rares blocs qui écrivent leurs couleurs
-     en dur (.nav-warn, la radio) échappent à ce mécanisme et sont repris à la
-     main plus bas. */
+     Conséquence directe et heureuse : en thème clair la scène garde les
+     couleurs du thème clair. Les blocs qui écrivent les leurs en dur — les
+     avertissements ambrés, l'encart de situation — y sont déjà justes et n'ont
+     RIEN à reprendre. Il n'y a qu'en thème sombre qu'ils doivent être corrigés,
+     et le thème sombre le faisait déjà pour eux : la liste des reprises à la
+     main est donc tombée à deux lignes. */
   .scene{
     position:relative;
-    /* Les variables de thème, réécrites en verre sombre. */
-    --ink:#f4f6fd;               /* texte principal   */
-    --ink-2:#d0d6e6;             /* texte secondaire — mesuré : 4,7:1 sur le pire
-                                    pixel de fond des six scènes, donc AA partout */
+    /* --- Thème clair : du verre blanc, le texte du thème. --- */
     --bg:transparent;
-    --surface:rgba(11,15,28,.40);
-    --surface-2:rgba(6,9,18,.34);
+    /* Une photo est un fond BRUYANT : elle a des zones claires et des zones
+       sombres à quelques pixels d'écart, là où le fond plat du thème n'en a
+       aucune. Le texte du thème clair (#242838 / #6b7280) y perd pied — mesuré
+       à 2,8:1 pour le sous-titre. D'où une encre franchement plus dense ici. */
+    --ink:#161b2a;
+    --ink-2:#3a4356;
+    /* Le verre doit rester du verre — on veut voir la photo à travers — mais
+       assez couvrant pour que ce qui est écrit dessus ne dépende plus de ce qui
+       passe derrière. C'est le contrat de l'opacité : ni vitre, ni mur. */
+    --surface:rgba(255,255,255,.86);
+    --surface-2:rgba(255,255,255,.74);
+    --border:rgba(28,34,54,.20);
+    --shadow-sm:0 1px 2px rgba(20,26,44,.10);
+    --shadow-md:0 10px 30px rgba(20,26,44,.16);
+    --shadow-lg:0 24px 60px rgba(20,26,44,.22);
+    color:var(--ink);
+    color-scheme:light;
+    /* Les mêmes valeurs sous les noms --sc-*, pour l'Épellation qui les emploie
+       déjà partout. Une seule définition, deux vocabulaires. */
+    --sc-ink:var(--ink); --sc-ink-2:var(--ink-2); --sc-accent:var(--violet-dark);
+    --sc-glass:rgba(255,255,255,.78); --sc-glass-2:rgba(255,255,255,.66);
+    --sc-line:rgba(28,34,54,.15); --sc-line-2:rgba(28,34,54,.26);
+    --sc-ok:var(--ok); --sc-bad:var(--bad); --sc-warn:var(--warn);
+    /* --- La « pose » : la teinte qu'on dépose SUR le verre pour détacher un
+       bouton, une pastille, un interrupteur. Elle doit foncer sur verre clair
+       et éclaircir sur verre sombre — d'où une variable et non un rgba écrit
+       en dur, qui ne pourrait être juste que d'un côté. --- */
+    --sc-pose:rgba(28,34,54,.055); --sc-pose-2:rgba(28,34,54,.09); --sc-pose-3:rgba(28,34,54,.14);
+    --sc-pastille:rgba(91,75,206,.11); --sc-pastille-bord:rgba(91,75,206,.34);
+    --sc-ombre:rgba(20,26,44,.16);
+    --sc-credit:rgba(20,26,44,.52);
+  }
+  :root[data-theme="dark"] .scene{
+    /* --- Thème sombre : du verre sombre, et un texte qu'il faut redéfinir
+       parce que celui du thème sombre (#e7e9f2 sur #1b1e29) n'a pas été
+       éprouvé sur une photo. --sc-ink-2 vaut 4,7:1 sur le pire pixel de fond
+       des trois scènes sombres, donc AA partout. --- */
+    --ink:#f4f6fd;
+    --ink-2:#d0d6e6;
+    --surface:rgba(11,15,28,.62);
+    --surface-2:rgba(6,9,18,.54);
     --border:rgba(255,255,255,.22);
     --violet-dark:#a99cff;       /* sert de couleur de TEXTE : éclaircie */
     --violet-soft:rgba(169,156,255,.18);
@@ -662,57 +715,45 @@
     --shadow-sm:0 1px 2px rgba(0,0,0,.34);
     --shadow-md:0 10px 30px rgba(0,0,0,.42);
     --shadow-lg:0 24px 60px rgba(0,0,0,.52);
-    color:var(--ink);
     /* Les contrôles natifs — cases à cocher, listes déroulantes, ascenseurs —
        sont peints par le système, pas par notre CSS. Cette seule déclaration
        leur fait adopter leur variante sombre : sans elle, une case non cochée
        reste un carré blanc en plein milieu du verre. */
     color-scheme:dark;
-  }
-  /* Le même jeu sous les noms --sc-*, pour l'Épellation qui les emploie déjà
-     partout. Une seule définition, deux vocabulaires : changer le verre ici
-     change les trois scènes du même geste. */
-  .scene{
-    --sc-ink:var(--ink); --sc-ink-2:var(--ink-2); --sc-accent:var(--violet-dark);
-    --sc-glass:var(--surface); --sc-glass-2:var(--surface-2);
+    --sc-glass:rgba(11,15,28,.52); --sc-glass-2:rgba(6,9,18,.46);
     --sc-line:rgba(255,255,255,.15); --sc-line-2:rgba(255,255,255,.26);
-    --sc-ok:var(--ok); --sc-bad:var(--bad); --sc-warn:var(--warn);
+    --sc-pose:rgba(255,255,255,.08); --sc-pose-2:rgba(255,255,255,.13); --sc-pose-3:rgba(255,255,255,.20);
+    /* La pastille violette : sa teinte doit assombrir le verre, pas l'éclaircir,
+       sinon l'accent qu'elle porte perd le contraste qu'elle est censée lui
+       donner. Mesuré : 3,2:1 avec l'ancienne teinte claire, 5,6:1 avec celle-ci. */
+    --sc-pastille:rgba(24,20,52,.42); --sc-pastille-bord:rgba(169,156,255,.44);
+    --sc-ombre:rgba(4,6,16,.42);
+    --sc-credit:rgba(255,255,255,.42);
   }
-  /* Les blocs dont les couleurs sont écrites en dur — les avertissements ambrés,
-     le bandeau « reconnaissance vocale indisponible » — n'héritent d'aucune
-     variable : ils traverseraient la scène en plaque crème. On leur donne ici,
-     dans les DEUX thèmes, la version sombre qu'ils n'avaient qu'en thème sombre.
-     C'est la contrepartie annoncée du mécanisme par variables : elle tient en
-     sept lignes, et la liste est close — aucun autre bloc de l'application
-     n'écrit ses couleurs en dur. */
-  .scene .nav-warn, .scene .vf-noreco, .scene .vf-evit{
-    background:rgba(46,33,20,.74); border-color:#5c4426; color:#f0c99b; }
-  .scene .nav-warn{ border-left-color:#d9873c; }
-  .scene .nav-warn strong, .scene .vf-evit b{ color:#ffd9a8; }
-  .scene .nav-warn code{ background:rgba(255,255,255,.10); }
-  .scene .nav-warn.nav-fatal{ background:rgba(48,26,25,.76); border-color:#6b3330;
-    border-left-color:#d9534f; color:#f3b6b3; }
-  .scene .nav-warn.nav-fatal strong{ color:#ffcecb; }
-  .scene .noreco{ background:rgba(48,26,25,.74); border-color:#6b3330; color:#f3b6b3; }
-  .scene .vf-situation{ background:rgba(58,32,29,.76); border-color:#7a3b34; color:#f7c6c2; }
-  /* .hint a une bordure en dur et un fond en --violet-soft déjà réécrit : seule
-     la bordure claire dépasse. */
-  .scene .hint{ border-color:rgba(169,156,255,.34); }
-  /* Le gros chiffre du débriefing : --violet est une couleur de FOND de bouton,
-     trop sombre pour servir de texte sur le verre. C'est --violet-dark (éclaircie
-     dans la scène) qui joue ce rôle. */
-  .scene .sc-score{ color:var(--violet-dark); }
+  /* La seule reprise à la main : la bordure de .hint, écrite en dur en violet
+     clair, qui ne se voyait pas sur le verre sombre. */
+  :root[data-theme="dark"] .scene .hint{ border-color:rgba(169,156,255,.34); }
 
   /* Les champs de saisie : le verre seul ne suffit pas, on a besoin de voir où
-     l'on tape. Un cran plus opaque que les panneaux, et le curseur en clair. */
-  .scene input[type="text"], .scene input[type="number"], .scene input[type="email"],
-  .scene input[type="password"], .scene select, .scene textarea{
-    background:rgba(6,9,18,.52); color:var(--ink); border-color:var(--sc-line-2);
-    caret-color:var(--violet-dark); }
-  .scene input::placeholder, .scene textarea::placeholder{ color:rgba(196,204,224,.62); }
-  /* Un menu déroulant natif est peint par le système : du texte clair sur fond
-     clair y serait invisible. On lui rend un fond opaque. */
-  .scene select option{ background:#161a27; color:#f4f6fd; }
+     l'on tape. Un cran plus contrasté que les panneaux, dans les deux sens. */
+  /* .radio-saisie est exclue partout : c'est le champ de fréquence DANS la
+     radio, un bloc de matériel noir qui reste noir dans les deux thèmes. Lui
+     appliquer le verre de la scène rendait son texte gris sur fond noir. */
+  .scene input[type="text"]:not(.radio-saisie), .scene input[type="number"],
+  .scene input[type="email"], .scene input[type="password"], .scene select, .scene textarea{
+    background:rgba(255,255,255,.88); color:var(--ink); border-color:var(--sc-line-2);
+    caret-color:var(--violet); }
+  .scene input:not(.radio-saisie)::placeholder,
+  .scene textarea::placeholder{ color:rgba(36,40,56,.52); }
+  :root[data-theme="dark"] .scene input[type="text"]:not(.radio-saisie),
+  :root[data-theme="dark"] .scene input[type="number"],
+  :root[data-theme="dark"] .scene input[type="email"], :root[data-theme="dark"] .scene input[type="password"],
+  :root[data-theme="dark"] .scene select, :root[data-theme="dark"] .scene textarea{
+    background:rgba(6,9,18,.52); caret-color:var(--violet-dark); }
+  :root[data-theme="dark"] .scene input:not(.radio-saisie)::placeholder,
+  :root[data-theme="dark"] .scene textarea::placeholder{ color:rgba(196,204,224,.62); }
+  /* Un menu déroulant natif est peint par le système. */
+  :root[data-theme="dark"] .scene select option{ background:#161a27; color:#f4f6fd; }
 
   /* La page couvre la fenêtre même quand son contenu est court — sans quoi le
      décor s'arrêterait au milieu de rien — et prend toute la largeur : garder une
@@ -729,21 +770,31 @@
   @media (max-width:820px){ .spell-hero{max-width:100%} }
   .spell-hero .sh-tag{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.16em;
     text-transform:uppercase; color:var(--sc-accent);
-    background:rgba(169,156,255,.14); border:1px solid rgba(169,156,255,.40);
+    background:var(--sc-pastille); border:1px solid var(--sc-pastille-bord);
     border-radius:var(--pill); padding:4px 12px}
+  /* Le titre est posé À MÊME la photo, sans panneau dessous : c'est le seul
+     endroit de la scène où le halo porté fait le travail d'un fond. Il prend
+     donc la couleur du texte du thème, et son halo le sens du thème — sombre
+     sous un texte clair, clair sous un texte foncé. */
   .spell-hero h2{margin:12px 0 8px; font-size:clamp(28px,4.4vw,40px); font-weight:800;
-    letter-spacing:-.02em; color:#fff; text-shadow:0 2px 24px rgba(0,0,0,.55)}
-  .spell-hero p{margin:0; font-size:15px; line-height:1.55; color:rgba(238,242,255,.80);
-    text-shadow:0 1px 14px rgba(0,0,0,.55)}
+    letter-spacing:-.02em; color:var(--sc-ink); text-shadow:0 2px 24px rgba(255,255,255,.75)}
+  .spell-hero p{margin:0; font-size:15px; line-height:1.55; color:var(--sc-ink-2);
+    text-shadow:0 1px 14px rgba(255,255,255,.75)}
+  :root[data-theme="dark"] .spell-hero h2{ color:#fff; text-shadow:0 2px 24px rgba(0,0,0,.55) }
+  :root[data-theme="dark"] .spell-hero p{ color:rgba(238,242,255,.82);
+    text-shadow:0 1px 14px rgba(0,0,0,.55) }
 
   /* Le bandeau d'alerte passe lui aussi en version nuit : sa teinte claire
      d'origine faisait une tache laiteuse sur la photo. */
-  .noreco-nuit{ background:rgba(255,138,134,.13); border-color:rgba(255,138,134,.45);
-    color:#ffd3d1; }
-  .noreco-nuit b{ color:#ff8a86; }
+  .noreco-nuit{ background:rgba(217,83,79,.10); border-color:rgba(217,83,79,.42);
+    color:#8f2f2b; }
+  .noreco-nuit b{ color:#7a2622; }
+  :root[data-theme="dark"] .noreco-nuit{ background:rgba(255,138,134,.13);
+    border-color:rgba(255,138,134,.45); color:#ffd3d1; }
+  :root[data-theme="dark"] .noreco-nuit b{ color:#ff8a86; }
 
   .spell-credit{display:block; margin-top:14px; text-align:right; font-size:11px;
-    letter-spacing:.04em; color:rgba(255,255,255,.42)}
+    letter-spacing:.04em; color:var(--sc-credit)}
 
   .spell-layout{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px; align-items:start}
   @media (max-width:980px){ .spell-layout{grid-template-columns:1fr} }
@@ -764,7 +815,7 @@
     background:var(--sc-glass);
     border:1px solid var(--sc-line);
     border-radius:20px;
-    box-shadow:0 18px 44px rgba(4,6,16,.42), inset 0 1px 0 rgba(255,255,255,.10);
+    box-shadow:0 18px 44px var(--sc-ombre), inset 0 1px 0 rgba(255,255,255,.10);
   }
   .spell-main{padding:0; overflow:hidden}
   .spell-side{display:flex; flex-direction:column; gap:18px}
@@ -772,11 +823,11 @@
 
   /* ---- Bandeau du code ---- */
   .spell-head{position:relative; text-align:center; padding:28px 22px 26px;
-    background:linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.02) 78%);
+    background:linear-gradient(180deg, var(--sc-pose-2), transparent 78%);
     border-bottom:1px solid var(--sc-line)}
   .spell-kind{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.12em;
     text-transform:uppercase; color:var(--sc-accent);
-    background:rgba(169,156,255,.14); border:1px solid rgba(169,156,255,.42);
+    background:var(--sc-pastille); border:1px solid var(--sc-pastille-bord);
     border-radius:var(--pill); padding:5px 14px}
   /* Le code en pastilles : chacune se colore d'après le mot épelé. Éteintes elles
      évoquent les feux de piste au repos, allumées elles se teintent. */
@@ -784,9 +835,9 @@
     margin:16px 0 10px}
   .sp-char{display:grid; place-items:center; min-width:clamp(38px,7vw,58px); height:clamp(48px,9vw,70px);
     padding:0 6px; border-radius:15px;
-    background:rgba(255,255,255,.07); border:1.5px solid var(--sc-line-2); color:var(--sc-ink);
+    background:var(--sc-pose); border:1.5px solid var(--sc-line-2); color:var(--sc-ink);
     font-family:var(--mono); font-size:clamp(24px,5vw,38px); font-weight:800; letter-spacing:.02em;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 6px 18px rgba(4,6,16,.34);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 6px 18px var(--sc-ombre);
     transition:border-color .25s, background .25s, color .25s, box-shadow .25s}
   .sp-char.sep{min-width:0; border:none; background:none; box-shadow:none;
     color:var(--sc-ink-2); font-weight:600}
@@ -801,18 +852,18 @@
   .spell-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
 
   /* ---- Boutons : redéfinis pour fond sombre, sans toucher au .btn global ---- */
-  .spell-scene .btn{background:rgba(255,255,255,.10); color:var(--sc-ink);
+  .spell-scene .btn{background:var(--sc-pose-2); color:var(--sc-ink);
     border:1px solid var(--sc-line-2); box-shadow:0 4px 14px rgba(4,6,16,.30)}
-  .spell-scene .btn:hover{background:rgba(255,255,255,.17); border-color:rgba(255,255,255,.42)}
+  .spell-scene .btn:hover{background:var(--sc-pose-3); border-color:var(--sc-line-2)}
   .spell-scene .btn:disabled{opacity:.46}
   .spell-scene .ptt{min-width:250px; border:none; color:#fff;
-    background:linear-gradient(135deg,#7a68ff,#5b4bce);
+    background:linear-gradient(135deg,#6d5af0,#4e3fbb);
     box-shadow:0 10px 30px rgba(96,78,230,.52), inset 0 1px 0 rgba(255,255,255,.28)}
-  .spell-scene .ptt:hover{background:linear-gradient(135deg,#8877ff,#6a58e0);
+  .spell-scene .ptt:hover{background:linear-gradient(135deg,#7d6bff,#5e4dd2);
     box-shadow:0 14px 38px rgba(96,78,230,.62)}
   .spell-scene .ptt.listening{background:linear-gradient(135deg,#ff6f6a,#d94a45);
     box-shadow:0 10px 30px rgba(217,74,69,.52)}
-  .spell-scene .switch-line{background:rgba(255,255,255,.08); border:1px solid var(--sc-line);
+  .spell-scene .switch-line{background:var(--sc-pose); border:1px solid var(--sc-line);
     color:var(--sc-ink-2)}
   .spell-scene .switch-line input{accent-color:var(--sc-accent)}
 
@@ -825,7 +876,7 @@
     background:var(--sc-glass-2); border:1px solid var(--sc-line); border-radius:13px; padding:7px 9px}
   .spell-words .w{display:inline-block; padding:5px 11px; border-radius:var(--pill);
     font-size:14px; font-weight:600;
-    background:rgba(255,255,255,.08); border:1px solid var(--sc-line-2); color:var(--sc-ink)}
+    background:var(--sc-pose); border:1px solid var(--sc-line-2); color:var(--sc-ink)}
   .spell-words .w.ok{border-color:rgba(95,224,164,.65); color:var(--sc-ok); background:rgba(95,224,164,.13)}
   .spell-words .w.ko{border-color:rgba(255,138,134,.65); color:var(--sc-bad); background:rgba(255,138,134,.13)}
   .spell-words .w.miss{border-style:dashed; border-color:var(--sc-line); color:var(--sc-ink-2); background:none}
@@ -839,7 +890,7 @@
   /* ---- Verdict ---- */
   .spell-verdict{display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px;
     border-radius:13px; padding:14px 17px;
-    border:1px solid var(--sc-line); background:rgba(255,255,255,.07); color:var(--sc-ink-2)}
+    border:1px solid var(--sc-line); background:var(--sc-pose); color:var(--sc-ink-2)}
   .spell-verdict .ic-svg{width:22px; height:22px; flex:none}
   .spell-verdict small{display:block; font-weight:600; font-size:13px; opacity:.88; margin-top:2px}
   .spell-verdict.good{background:rgba(95,224,164,.14); color:var(--sc-ok); border-color:rgba(95,224,164,.55)}
@@ -851,7 +902,7 @@
 
   /* ---- Chronomètre ---- */
   .spell-timer{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-weight:700;
-    font-size:15px; color:var(--sc-ink-2); background:rgba(255,255,255,.08);
+    font-size:15px; color:var(--sc-ink-2); background:var(--sc-pose);
     border:1px solid var(--sc-line-2); border-radius:var(--pill); padding:8px 14px;
     min-width:74px; justify-content:center; font-variant-numeric:tabular-nums}
   .spell-timer.running{color:var(--sc-ink); border-color:rgba(169,156,255,.6); background:rgba(169,156,255,.16)}
@@ -1620,6 +1671,29 @@
       --shadow-md:0 8px 26px rgba(0,0,0,.45);
       --shadow-lg:0 24px 60px rgba(0,0,0,.55);
     }
+    /* --violet comme couleur de TEXTE : onze règles le font, et c'est une erreur
+       que le commentaire ci-dessus annonce sans l'avoir corrigée. #6b5ae0 est
+       un fond de bouton ; posé en texte sur le fond sombre il tombe à 2,5:1.
+       C'est --violet-dark (#b3a6ff) qui est la couleur de texte du thème, et
+       elle donne 7:1. Le défaut ne vient pas des décors photo — il se voyait
+       déjà sur le thème sombre nu — mais c'est en mesurant les scènes qu'il
+       est apparu. */
+    :root[data-theme="dark"] .ac-item .code,
+    :root[data-theme="dark"] .sc-btn .num,
+    :root[data-theme="dark"] .hint .label,
+    :root[data-theme="dark"] .choice .opt b,
+    :root[data-theme="dark"] .course-card .cic,
+    :root[data-theme="dark"] .alpha-card .ltr,
+    :root[data-theme="dark"] .digit-card .num,
+    :root[data-theme="dark"] .sc-score,
+    :root[data-theme="dark"] .tb-stat .tb-ic,
+    :root[data-theme="dark"] .tb-badge.ok .ic,
+    :root[data-theme="dark"] .radio-cible{ color:var(--violet-dark); }
+    /* Même histoire pour la pastille « Urgence », dont le rouge sombre (#96332f)
+       n'a jamais eu de variante nuit. */
+    :root[data-theme="dark"] .sc-btn .sc-tags i.urg{ color:#ff9b96;
+      background:rgba(224,100,95,.14); border-color:rgba(224,100,95,.42); }
+
     /* Blocs à couleurs figées (avertissements) : variante sombre lisible. */
     :root[data-theme="dark"] .nav-warn{ background:#2e2114; border-color:#5c4426; border-left-color:#d9873c; color:#f0c99b; }
     :root[data-theme="dark"] .nav-warn strong{ color:#ffd9a8; }

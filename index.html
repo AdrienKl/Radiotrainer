@@ -10239,6 +10239,23 @@ function oaciSonde(couche, surAbsenceTotale){
     },40);
     renderStep();
     sauverVol();
+    /* La séance est déclarée EN BASE dès maintenant, pas à l'arrivée. C'est ce
+       qui permet de compter les abandons : un vol commencé et jamais terminé
+       laisse une ligne « in_progress », requalifiée au lancement suivant. Et
+       l'heure de début est prise ici, pas déduite après coup — d'où une durée
+       enfin mesurée. L'envoi part en arrière-plan : rien n'attend le réseau. */
+    /* Heure de départ gardée à part : l'historique LOCAL en a besoin lui aussi,
+       et il doit continuer de fonctionner quand RTSync est absent (hors-ligne,
+       ouverture en file://). */
+    F.syncDebut = Date.now();
+    F.sync = (window.RTSync && F.ctx) ? RTSync.demarrer({
+      kind:'flight', level:level, mode:mode,
+      dep_icao:F.ctx.dep?F.ctx.dep.icao:null,
+      arr_icao:F.ctx.arr?F.ctx.arr.icao:null,
+      alt_icao:sel.alt||null,
+      runway:(F.ctx.depRwy&&F.ctx.depRwy.id)?String(F.ctx.depRwy.id):null,
+      aircraft:F.ctx.ac||null, cruise_alt_ft:F.ctx.cruise||null, pax:F.ctx.pax||null
+    }) : null;
     window.scrollTo(0,0);
   }
   /* ---- Reprise d'un vol interrompu ----
@@ -10408,7 +10425,13 @@ function oaciSonde(couche, surAbsenceTotale){
                attendu:F.attendus[i]||fillDisplay(st.attendu||''),
                dit:F.dits[i]||'',
                manquants:(r||[]).filter(function(x){return !x.found;}).map(function(x){return x.label;}),
-               repondu:!!r };
+               repondu:!!r,
+               /* Le score de CHAQUE échange, et non plus seulement le total du
+                  vol : sans lui, impossible de dire quel échange fait chuter la
+                  moyenne. Écrit aussi dans l'historique local, où il ne coûte
+                  que deux entiers par ligne. */
+               ok:(r||[]).filter(function(x){return x.found;}).length,
+               total:(r||[]).length };
     });
     var LIBH={moteur:'panne moteur (MAYDAY)', fumee:'fumée en cabine (MAYDAY)',
               malaise:'passager malade (PAN PAN)', cap:'changement de cap imposé',
@@ -10421,9 +10444,33 @@ function oaciSonde(couche, surAbsenceTotale){
       mode:mode, level:level, avion:C.ac, acftNom:C.ac,
       alt:C.cruise, pax:C.pax,
       ok:ok, total:tot, pct:pct,
+      /* Durée du vol, en secondes. Elle manquait : l'historique local ne
+         gardait que l'heure de fin, donc aucun temps d'entraînement n'était
+         calculable. F.sync porte l'heure de départ réelle. */
+      duree: (F.syncDebut ? Math.max(0, Math.round((Date.now()-F.syncDebut)/1000)) : null),
       alea: C.alea ? (LIBH[C.alea]||C.aleaNom||C.alea) : null,
       lignes:lignes
     });
+    /* Clôture en base. La MÊME ligne passe de « in_progress » à « completed » —
+       l'identifiant ayant été tiré côté client au démarrage, il n'y a pas de
+       seconde ligne. La trace échange par échange part avec. */
+    if (window.RTSync && F.sync){
+      RTSync.terminer(F.sync, {
+        kind:'flight', level:level, mode:mode,
+        dep_icao:C.dep?C.dep.icao:null,
+        arr_icao:C.arr?C.arr.icao:null,
+        alt_icao:sel.alt||null,
+        diverted_icao:C.arrReelle?C.arrReelle.icao:null,
+        runway:(C.depRwy&&C.depRwy.id)?String(C.depRwy.id):null,
+        aircraft:C.ac||null, cruise_alt_ft:C.cruise||null, pax:C.pax||null,
+        alea:C.alea||null, score_ok:ok, score_total:tot
+      }, lignes.map(function(l){
+        return { phase:l.ph, station:l.stn, freq:l.freq,
+                 expected:l.attendu, said:l.dit, answered:l.repondu,
+                 missed:l.manquants, score_ok:l.ok, score_total:l.total };
+      }));
+      F.sync = null;
+    }
     $v('navFlight').classList.add('hidden');
     recap.classList.remove('hidden');
     restoreMap();
@@ -11311,6 +11358,7 @@ function oaciSonde(couche, surAbsenceTotale){
 <script src="assets/supabase-config.js"></script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/auth.js"></script>
+<script src="assets/sync.js"></script>
 <script src="assets/admin/data/error-log.js"></script>
 <script src="assets/admin/data/contract.js"></script>
 <script src="assets/admin/ui/kit.js"></script>

@@ -106,7 +106,10 @@
         runway:null, aircraft:e.avion || e.acftNom || null,
         cruiseAlt:e.alt || null, pax:e.pax != null ? e.pax : null,
         level:e.level || null, mode:e.mode || null,
-        durationS:null,
+        /* Mesurée depuis que le vol horodate son départ. Les vols enregistrés
+           AVANT n'ont pas ce champ : ils restent à null, et la console affiche
+           « — » plutôt qu'un zéro qui passerait pour un vol instantané. */
+        durationS:(e.duree != null ? Number(e.duree) : null),
         scoreOk:e.ok || 0, scoreTotal:e.total || 0,
         scorePct:e.pct != null ? e.pct : U.pct(e.ok || 0, e.total || 0),
         /* Un vol enregistré est un vol allé au bout du débriefing. Un vol

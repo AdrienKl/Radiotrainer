@@ -308,7 +308,15 @@ create policy "profil : maj admin"           on public.profiles for update
 create function public.profiles_garde() returns trigger
   language plpgsql security definer set search_path = public as $$
 begin
-  if not public.is_admin() then
+  /* auth.uid() est NULL quand la requête ne vient PAS d'une session client :
+     éditeur SQL, tâche serveur, clé secrète. Ces contextes-là ont déjà tous les
+     droits — les brider ici n'ajoute aucune sécurité, et sans cette condition
+     il devient impossible de nommer le premier administrateur : l'UPDATE passe,
+     le déclencheur le défait aussitôt, et le rôle retombe à « user ».
+     Le garde ne concerne donc que les clients. Un client anonyme, lui, ne peut
+     de toute façon modifier aucune ligne : les deux politiques UPDATE exigent
+     id = auth.uid() ou is_admin(), toutes deux fausses sans session. */
+  if auth.uid() is not null and not public.is_admin() then
     new.role   := old.role;
     new.status := old.status;
     new.plan   := old.plan;
@@ -354,7 +362,24 @@ create policy "audit : lecture admin"    on public.admin_audit_log for select us
 est sûre *par construction* — l'admin lit grâce à `admin read all`, et toute
 écriture échoue sur `user_id = auth.uid()`. Aucun `if` côté navigateur n'est en jeu.
 
-### 4.5 Migrer les données locales existantes
+### 4.5 Nommer le premier administrateur
+
+Il n'y a pas d'amorçage automatique, et c'est voulu : une base fraîche ne doit
+contenir aucun compte privilégié par défaut. On promeut donc le premier à la
+main, depuis l'éditeur SQL, après avoir créé son compte par le formulaire du
+site comme n'importe quel utilisateur.
+
+```sql
+update public.profiles set role = 'admin' where email = 'votre@adresse.fr';
+select email, role from public.profiles;
+```
+
+Le `select` de contrôle n'est pas une politesse : sans la condition
+`auth.uid() is not null` dans `profiles_garde()`, l'`UPDATE` annonce
+« 1 row affected » et le déclencheur le défait dans la foulée. Le rôle est la
+seule preuve.
+
+### 4.6 Migrer les données locales existantes
 
 Le stockage local se transpose directement :
 

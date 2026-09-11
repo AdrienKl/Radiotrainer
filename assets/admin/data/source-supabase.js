@@ -63,11 +63,16 @@
     return client;
   }
 
+  /* Depuis que le projet est branché, « pas connecté » serait un mensonge : la
+     base répond, l'authentification fonctionne. Ce qui manque, ce sont les
+     requêtes de lecture de la console — écrites en commentaire au-dessus de
+     chaque méthode, pas encore en code. On le dit tel quel plutôt que de
+     laisser croire à un problème de configuration. */
   function nonConnecte(){
     var e = new Error(
-      "Supabase n'est pas connecté. Renseignez l'URL et la clé publique dans "
-      + "assets/admin/data/source-supabase.js, puis remplissez les requêtes "
-      + "(voir assets/admin/README.md).");
+      "La base est bien branchée, mais cette lecture n'est pas encore écrite "
+      + "dans l'adaptateur (assets/admin/data/source-supabase.js). La requête à "
+      + "poser est en commentaire au-dessus de la méthode correspondante.");
     e.rtUnavailable = true;
     e.rtSource = 'supabase';
     return e;

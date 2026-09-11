@@ -57,7 +57,11 @@
        exacte n'a pas d'intérêt — son adresse n'est pas acceptée, point. */
     [/unable to validate email|invalid format|address .* is invalid|email address.*invalid/i,
                                           "Cette adresse e-mail n'est pas acceptée. Vérifiez-la."],
-    [/signups? not allowed|signup is disabled/i, "Les inscriptions sont fermées pour le moment."],
+    /* Supabase formule ce refus d'au moins trois façons selon la version et le
+       réglage exact : « Signups not allowed », « signup is disabled »,
+       « Email signups are disabled ». Le motif couvre les trois. */
+    [/signups?\s+(?:not allowed|are disabled|is disabled)|signup is disabled/i,
+                                          "Les inscriptions sont fermées pour le moment."],
     [/for security purposes.*(\d+) seconds/i,
                                           "Trop d'essais. Patientez $1 secondes avant de réessayer."],
     /* Distinct du précédent : ce n'est pas l'utilisateur qui insiste, c'est le

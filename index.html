@@ -5706,6 +5706,16 @@ function startWithTerrain(){
   scEchecFreq=0; scEchecCode=0; scAttend7600=false;
   state.atisEcoute=false;
   if(listening) stopListening();
+  /* stopListening() ne remet le bouton au repos que dans onend, qui est
+     asynchrone : on le fait aussi tout de suite, sinon un exercice relancé
+     pendant une écoute s'ouvre avec l'alternat encore allumé. Le bouton est
+     touché directement, et non via pttUI(), qui redirige vers le module Vol
+     quand un vol a laissé son relais en place. */
+  if(el.pttBtn){
+    el.pttBtn.classList.remove('listening');
+    const _sp=el.pttBtn.querySelector('span');
+    if(_sp) _sp.textContent='Maintenir pour parler';
+  }
   el.recap.classList.add('hidden');
   el.panel.classList.remove('hidden');
   /* Session en cours : on ne montre que la session, comme en vol. Le configurateur
@@ -7396,6 +7406,10 @@ if(!RECO_OK){
     if(revealBtn) revealBtn.textContent='Voir la réponse';
     setUser([]); fbEl.innerHTML=''; setStatus('');
     if(replayBtn) replayBtn.disabled=true; audioURL=null;
+    /* L'alternat aussi repart au repos : passer au code suivant pendant une
+       écoute laissait le bouton rouge et le libellé « relâchez » sur un
+       exercice qui, lui, n'écoutait plus. */
+    pttUI(false);
     resetTimer();
   }
   function setUser(items){
@@ -10091,7 +10105,45 @@ function oaciSonde(couche, surAbsenceTotale){
   }
 
   // ---- Démarrage / fin ----
+  /* ---- Remise à l'état de repos du panneau de vol ----
+     renderStep() nettoie déjà tout ce qui dépend de l'échange en cours :
+     transcription, verdict, consigne, situation, barre de progression. Mais
+     trois choses vivent EN DEHORS du cycle des étapes, et survivaient donc d'un
+     vol au suivant :
+       · le bandeau d'erreur micro (« Écoute interrompue. »), qui n'est effacé
+         qu'au prochain appui sur l'alternat ;
+       · l'état visuel de l'alternat lui-même, si le vol a été quitté pendant
+         une écoute ;
+       · la fréquence tapée au clavier de la radio, qui n'appartient à aucune
+         étape.
+     On ouvrait donc un vol neuf avec l'erreur du vol précédent sous le bouton.
+     Plutôt que de rattraper ces trois-là un par un à chaque fois qu'on en
+     découvrira un quatrième, le panneau a désormais UN état de repos, et tout
+     vol commence par lui. */
+  var NORECO_DEFAUT = null;      // le bandeau est écrasé par les erreurs : on en garde l'original
+  function pttVolAuRepos(){
+    var b=$v('vfPtt'); if(!b) return;
+    b.classList.remove('listening');
+    var sp=b.querySelector('span'); if(sp) sp.textContent='Maintenir pour parler';
+  }
+  function panneauAuRepos(){
+    var n=$v('vfNoreco');
+    if(n){
+      if(NORECO_DEFAUT===null) NORECO_DEFAUT=n.textContent;   // capturé avant toute erreur
+      n.textContent=NORECO_DEFAUT; n.classList.add('hidden');
+    }
+    pttVolAuRepos();
+    var b=$v('vfPtt'); if(b) b.disabled=false;                // réarmé ; RECO_OK tranchera après
+    $v('radioSaisie').value='';
+    $v('vfTransText').value=''; $v('vfValider').disabled=true;
+    $v('vfTrans').textContent=''; $v('vfFb').innerHTML='';
+    $v('vfLog').innerHTML='';
+    $v('vfSituation').classList.add('hidden');
+    $v('vfAtc').innerHTML='';
+  }
+
   function startFlight(){
+    panneauAuRepos();
     buildFlight();
     sec.querySelector('.nav-layout').classList.add('hidden');
     sec.querySelector('.nav-mode').classList.add('hidden');
@@ -10118,7 +10170,6 @@ function oaciSonde(couche, surAbsenceTotale){
         esc(F.ctx.evitMsg.replace('Trajet légèrement modifié : ',''))+'</span>';
       ev.classList.remove('hidden'); }
     else ev.classList.add('hidden');
-    $v('vfLog').innerHTML='';
     F.running=true;
     setRecoSink(F.sink = { // Aperçu pendant qu'on parle, dans le champ éditable.
                   interim:function(t){ $v('vfTransText').value=t; $v('vfValider').disabled=!t.trim(); },
@@ -10281,6 +10332,11 @@ function oaciSonde(couche, surAbsenceTotale){
   }
 
   function endFlight(){
+    /* Le micro d'abord. setRecoSink(null) ne fait que débrancher l'affichage :
+       il ne coupe pas la capture. Quitter un vol en pleine écoute laissait donc
+       la reconnaissance tourner, et le bouton figé sur « Écoute… ». */
+    try{ if(listening) stopListening(); }catch(e){}
+    pttVolAuRepos();
     F.running=false; setRecoSink(null); oublierVol(); arreterAtis();
     devoilerATC();   // vol terminé : le journal redevient entièrement lisible
     var tot=0, ok=0;

@@ -93,20 +93,43 @@
      sans cela, un champ refusé par la base se traduirait par une file qui
      grossit sans que personne ne sache pourquoi. */
   var dernierEchec = null;
+
+  /* Tous les échecs ne se valent pas, et les confondre serait une faute.
+       · Réseau coupé, serveur injoignable : la séance repartira, il faut la
+         garder. C'est le cas du métro et de l'avion.
+       · Colonne refusée, contrainte violée, clé étrangère absente : la même
+         requête échouera de la même façon dans dix ans. La réessayer indéfini-
+         ment gonfle la file, noie le journal, et masque les vrais incidents.
+     PostgREST renvoie un `code` PostgreSQL (23503 pour une clé étrangère…) là
+     où une coupure ne renvoie qu'un TypeError de fetch. C'est ce qui les
+     sépare, et c'est plus sûr que de lire le texte du message. */
+  function definitif(e){
+    if (!e) return false;
+    if (e.code && /^[0-9A-Z]{5}$/.test(String(e.code))) return true;   // erreur PostgreSQL
+    if (e.status && e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429) return true;
+    return false;
+  }
+
   function tenter(paquet){
     return pousser(paquet).then(
       function(){ defiler(paquet.session.id); return true; },
       function(e){
+        var fatal = definitif(e);
         dernierEchec = { quand:new Date().toISOString(), id:paquet.session.id,
                          message:(e && e.message) || String(e),
-                         details:(e && (e.details || e.hint)) || null };
-        enfiler(paquet);
-        try{ console.warn('[RadioTrainer] séance mise en attente :', dernierEchec.message,
-                          dernierEchec.details || ''); }catch(x){}
+                         details:(e && (e.details || e.hint)) || null,
+                         definitif: fatal };
+        if (fatal) defiler(paquet.session.id);   // inutile d'y revenir
+        else       enfiler(paquet);
+        try{ console.warn('[RadioTrainer] séance ' + (fatal ? 'REFUSÉE' : 'mise en attente') + ' :',
+                          dernierEchec.message, dernierEchec.details || ''); }catch(x){}
         try{ if (window.RTAdmin && RTAdmin.logError)
-               RTAdmin.logError({ level:'warn', kind:'network',
-                 message:'Séance non enregistrée : ' + dernierEchec.message,
-                 key:'sync-seance' }); }catch(x){}
+               RTAdmin.logError({
+                 level: fatal ? 'error' : 'warn', kind:'network',
+                 message: (fatal ? 'Séance refusée par la base : ' : 'Séance non enregistrée : ')
+                          + dernierEchec.message,
+                 detail: dernierEchec.details || null,
+                 key: fatal ? 'sync-refus' : 'sync-attente' }); }catch(x){}
         return false;
       }
     );

@@ -5707,6 +5707,12 @@ function startWithTerrain(){
   state.atis = buildAtis(state.activeAd);
   state.queue = buildQueue(sc);
   state.stepIndex=0; state.results=[];
+  /* La trace fine des scénarios n'existait pas : on gardait le score, jamais ce
+     qui avait été attendu ni ce qui avait été dit. Les vols, eux, la gardaient
+     depuis toujours (rt-vols[].lignes[]). Même structure ici, pour que les deux
+     se lisent de la même façon — dans l'historique local comme en base. */
+  state.dits=[]; state.attendus=[];
+  state.debut = Date.now();
   /* Nouvel exercice : on repart d'une pile avionique neuve (7000 en veille VFR),
      sinon un code assigné au scénario précédent continuerait de clignoter. */
   scXpdr.code='7000'; scXpdr.saisie='7000'; scXpdr.mode=2; scXpdr.ident=false; scXpdr.attendu=null;
@@ -5746,6 +5752,13 @@ function startWithTerrain(){
   maybeInsertAlea(sc);          // C3
   renderTerrainToggle();
   renderStep();
+  /* Déclarée en base dès maintenant, comme un vol : c'est ce qui permet de
+     compter les scénarios commencés et jamais finis. */
+  state.sync = (window.RTSync) ? RTSync.demarrer({
+    kind:'scenario', level:state.difficulty, exercise_key:sc.id,
+    dep_icao: state.activeAd ? state.activeAd.icao : null,
+    runway: state.rwy ? String(state.rwy.id) : null
+  }) : null;
 }
 
 /* Photo d'avion tirée au sort, comme au début d'un vol. Purement décorative : elle
@@ -5894,6 +5907,10 @@ function renderStep(){
      premier appel alors que la phraséologie exige « F-ABCD ». Le poser ici
      répare la fuite ET donne aux Scénarios le comportement attendu. */
   state.callForm = step.premierContact ? 'full' : 'abbr';
+  /* Figée ICI, pas au récapitulatif : elle dépend de state.callForm, qui change
+     d'un échange à l'autre. La calculer à la fin donnerait la mauvaise forme
+     d'indicatif pour tous les échanges — même piège qu'en Navigation. */
+  if(step.attendu) state.attendus[state.stepIndex] = fillDisplay(step.attendu);
 
   if(step.atc){
     el.atcStation.textContent = stationLabel(step)+' : ';
@@ -6005,6 +6022,8 @@ function renderQuiz(step){
       if(!opt.correct) b.classList.add('bad');
       const good=!!opt.correct;
       state.results[state.stepIndex]=[{label:fillDisplay(step.question), found:good}];
+      state.attendus[state.stepIndex] = fillDisplay(step.question||'');
+      state.dits[state.stepIndex] = good ? '(bonne réponse)' : '(mauvaise réponse)';
       logRow('you','Réponse : '+opt.text+(good?' ✓':' ✗'));
       el.nextBtn.disabled=false;
     });
@@ -6574,6 +6593,7 @@ function evaluate(rawText){
 
   const results = step.motsCles.map(mc=>({ label:mc.label, found: mcFound(mc, corrected) }));
   state.results[state.stepIndex] = results;
+  state.dits[state.stepIndex] = rawText || '';        // conservé pour la trace fine
 
   rendreFeedback(el.feedback, step, results, corrected, 'fb-item');
   const ok=results.filter(r=>r.found).length;
@@ -6646,12 +6666,49 @@ function showRecap(){
   document.body.classList.remove('in-session');
   document.body.classList.add('in-recap');
   window.scrollTo(0,0);
+  /* La trace fine, au format des vols : un objet par échange, avec ce qui était
+     attendu, ce qui a été dit, et les éléments manqués. C'est la seule chose qui
+     permette de revoir une erreur précise plutôt qu'un score global. Les étapes
+     sans phrase attendue (écoute pure de l'ATIS, choix) sont écartées : il n'y a
+     rien à comparer. */
+  const lignes = [];
+  state.queue.forEach((step,idx)=>{
+    if(step.atisStep) return;
+    if(!step.motsCles && step.type!=='quiz') return;
+    const r = state.results[idx];
+    lignes.push({
+      ph: step.type==='quiz' ? 'Question' : (step.ph || sc.titre),
+      stn: step.stn || null, freq: step.freq != null ? step.freq : null,
+      attendu: state.attendus[idx] || (step.attendu ? fillDisplay(step.attendu) : ''),
+      dit: state.dits[idx] || '',
+      manquants: (r||[]).filter(x=>!x.found).map(x=>x.label),
+      repondu: !!r,
+      ok: (r||[]).filter(x=>x.found).length, total: (r||[]).length
+    });
+  });
+  const duree = state.debut ? Math.max(0, Math.round((Date.now()-state.debut)/1000)) : null;
+
   saveHistory({
     date:new Date().toISOString(), scenario:sc.titre, scIdx:state.scenarioIndex,
     terrain: state.activeAd ? state.activeAd.icao : '',
     piste: state.rwy.id, found:totalFound, total:totalAll,
-    missed:[...new Set(missed)], mode:state.difficulty
+    missed:[...new Set(missed)], mode:state.difficulty,
+    duree: duree, lignes: lignes
   });
+
+  if(window.RTSync && state.sync){
+    RTSync.terminer(state.sync, {
+      kind:'scenario', level:state.difficulty, exercise_key:sc.id,
+      dep_icao: state.activeAd ? state.activeAd.icao : null,
+      runway: state.rwy ? String(state.rwy.id) : null,
+      score_ok: totalFound, score_total: totalAll
+    }, lignes.map(l=>({
+      phase:l.ph, station:l.stn, freq:l.freq,
+      expected:l.attendu, said:l.dit, answered:l.repondu,
+      missed:l.manquants, score_ok:l.ok, score_total:l.total
+    })));
+    state.sync = null;
+  }
   state._lastRecapText = buildRecapText(sc, totalFound, totalAll, missed);
 }
 

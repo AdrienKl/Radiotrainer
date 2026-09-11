@@ -83,11 +83,21 @@
         dep:e.terrain || null, depName:nomAerodrome(e.terrain), arr:null, arrName:null,
         diverted:null, runway:e.piste || null, aircraft:null, cruiseAlt:null, pax:null,
         level:e.mode || null, mode:null,
-        durationS:null,                       // non mesurée aujourd'hui
+        /* Mesurées depuis que les scénarios horodatent leur début et gardent
+           leur trace, comme les vols. Les sessions enregistrées AVANT n'ont ni
+           l'un ni l'autre : elles restent à null, et la console affiche « — »
+           plutôt qu'un zéro qui passerait pour une session instantanée. */
+        durationS:(e.duree != null ? Number(e.duree) : null),
         scoreOk:ok, scoreTotal:tot, scorePct:U.pct(ok, tot),
         status:'completed',                   // seules les sessions terminées sont écrites
         alea:null, missed:e.missed || [],
-        steps:null                            // les scénarios ne gardent pas leur trace fine
+        steps:(e.lignes && e.lignes.length) ? e.lignes.map(function(l, k){
+          return { idx:k, phase:l.ph || null, station:l.stn || null,
+                   freq:l.freq != null ? String(l.freq) : null,
+                   expected:l.attendu || '', said:l.dit || '',
+                   answered:!!l.repondu, missed:l.manquants || [],
+                   scoreOk:l.ok || 0, scoreTotal:l.total || 0 };
+        }) : null
       };
     });
   }

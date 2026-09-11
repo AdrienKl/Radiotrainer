@@ -362,7 +362,42 @@ create policy "audit : lecture admin"    on public.admin_audit_log for select us
 est sûre *par construction* — l'admin lit grâce à `admin read all`, et toute
 écriture échoue sur `user_id = auth.uid()`. Aucun `if` côté navigateur n'est en jeu.
 
-### 4.5 Nommer le premier administrateur
+### 4.5 Remplir le catalogue des exercices
+
+```sql
+-- Le catalogue. Il ne contient QUE des métadonnées de pilotage : le déroulé des
+-- échanges reste dans le code (SCENARIOS, index.html), parce qu'il porte des
+-- variantes de reconnaissance et des références calculées à l'exécution — du
+-- comportement, pas du contenu.
+--
+-- `manual_ref` est volontairement NULL : le renvoi au manuel DSNA n'existe pas
+-- au niveau du scénario mais au niveau de chaque échange (« Manuel DSNA p. 53 »,
+-- affiché en cours de vol). Mettre une page approximative ici reviendrait à
+-- inventer une source.
+insert into public.exercises (key, title, category, level, station, is_active, sort_order) values
+  ('roulage',    'Mise en route + roulage',      'sol',      'debutant', 'sol',         true, 10),
+  ('decollage',  'Décollage',                    'depart',   'debutant', 'tour',        true, 20),
+  ('tourdepiste','Tour de piste',                'circuit',  'debutant', 'tour',        true, 30),
+  ('integration','Intégration + atterrissage',   'arrivee',  'debutant', 'tour',        true, 40),
+  ('navigation', 'Navigation / croisière',       'enroute',  'debutant', 'information', true, 50),
+  ('urgence',    'Urgence (Mayday / Pan Pan)',   'urgence',  'reel',     'tour',        true, 60),
+  ('panneradio', 'Panne radio (procédure)',      'urgence',  'reel',     null,          true, 70)
+on conflict (key) do update
+  set title = excluded.title, category = excluded.category,
+      level = excluded.level, station = excluded.station,
+      sort_order = excluded.sort_order, updated_at = now();
+```
+
+`on conflict do update` : le script se rejoue sans rien casser, et sert aussi à
+mettre le catalogue à jour quand un titre change dans le code.
+
+**À exécuter avant le premier scénario.** `sessions.exercise_key` référence
+`exercises(key)` : tant que la table est vide, la base refuse d'enregistrer une
+séance de scénario. Le refus n'est pas silencieux — la séance part en file
+d'attente et la cause apparaît dans le journal d'erreurs de la console — mais
+rien ne s'enregistrera.
+
+### 4.6 Nommer le premier administrateur
 
 Il n'y a pas d'amorçage automatique, et c'est voulu : une base fraîche ne doit
 contenir aucun compte privilégié par défaut. On promeut donc le premier à la
@@ -379,7 +414,7 @@ Le `select` de contrôle n'est pas une politesse : sans la condition
 « 1 row affected » et le déclencheur le défait dans la foulée. Le rôle est la
 seule preuve.
 
-### 4.6 Migrer les données locales existantes
+### 4.7 Migrer les données locales existantes
 
 Le stockage local se transpose directement :
 

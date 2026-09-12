@@ -176,15 +176,16 @@
         });
       })
       .then(function(etat){
-        return window.RTAuth.rechargerProfil().then(function(){ return etat; });
-      })
-      .then(function(etat){
+        /* L'écriture est faite : on le dit TOUT DE SUITE. Attendre la relecture
+           du profil et de la pratique — trois allers-retours de plus — pour
+           afficher « Enregistré » laissait plusieurs secondes pendant
+           lesquelles rien ne confirmait que le clic avait servi. La relecture
+           suit, et repeint la page quand elle arrive. */
         libre();
-        return charger().then(function(){
-          msg('cptIdMsg', etat.mailEnvoye
-              ? "Enregistré. Le changement d'adresse attend que vous cliquiez le lien envoyé par e-mail — tant que ce n'est pas fait, connectez-vous avec l'ancienne."
-              : 'Enregistré.', 'ok');
-        });
+        msg('cptIdMsg', etat.mailEnvoye
+            ? "Enregistré. Le changement d'adresse attend que vous cliquiez le lien envoyé par e-mail — tant que ce n'est pas fait, connectez-vous avec l'ancienne."
+            : 'Enregistré.', 'ok');
+        return window.RTAuth.rechargerProfil().then(charger, charger);
       })
       .catch(function(e){ libre(); msg('cptIdMsg', traduire(e)); });
   }

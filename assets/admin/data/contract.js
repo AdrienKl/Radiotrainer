@@ -146,7 +146,14 @@
   var sources = {};        // id → source
   var ordre   = [];        // ordre d'affichage dans le sélecteur
   var courant = null;      // id de la source active
-  var CLE = 'rt-admin-source';
+  /* La clé porte un numéro de version. Le choix de source est mémorisé, et il
+     doit l'être — on ne veut pas le refaire à chaque ouverture. Mais tout choix
+     enregistré AVANT que la base existe désignait forcément une source de
+     repli : le restaurer aujourd'hui ferait rouvrir la console sur des données
+     de démonstration alors que les vraies sont là. Changer la clé une fois fait
+     repartir tout le monde du défaut courant, puis la mémorisation reprend son
+     office normalement. */
+  var CLE = 'rt-admin-source-v2';
 
   var METHODES = ['overview','activity','alerts','users','user','userSessions',
                   'userWeaknesses','flights','flight','analytics','exercises',
@@ -215,11 +222,17 @@
                reason:(s.unavailableReason ? s.unavailableReason() : '') };
     });
   };
-  /* Choix mémorisé, appliqué une fois toutes les sources enregistrées. */
-  data.restoreSource = function(){
+  /* Choix mémorisé, appliqué une fois toutes les sources enregistrées.
+     `courant` vaut déjà quelque chose à ce stade : enregistrer() l'initialise
+     avec la PREMIÈRE source déclarée, pour qu'une page appelée trop tôt ne
+     tombe pas sur `null`. Ce n'est donc pas un choix, c'est un garde-fou — et
+     c'est pourquoi le défaut doit être appliqué ici explicitement plutôt que
+     testé par `if (!currentSource().id)`, qui n'est jamais vrai. */
+  data.restoreSource = function(defaut){
     var id = null;
     try { id = localStorage.getItem(CLE); } catch(e){}
-    if (id && sources[id]) courant = id;
+    if (id && sources[id]) { courant = id; return; }
+    if (defaut && sources[defaut]) courant = defaut;
   };
 
   RT.data = data;

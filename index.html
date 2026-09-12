@@ -3471,7 +3471,7 @@
 
   <footer>
     Fonctionne hors-ligne (hors micro/synthèse du navigateur), <strong>à l'exception du fond de carte de la page Navigation</strong>, chargé depuis les serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap. Le reste du site n'envoie aucune donnée sur Internet.
-    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82. Décor de l'épellation : Unsplash — Rita Candeias.
+    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
 
   <div class="toast" id="toast"></div>
@@ -7854,8 +7854,22 @@ if(!RECO_OK){
   /* Série en cours : un passage sur la page d'épellation. Remise à zéro à
      chaque arrivée, pour qu'une visite ne se rattache pas à la précédente. */
   var serie = { jeton:null, n:0, ok:0, total:0 };
+  /* La série se remet à zéro quand on ARRIVE sur la page — pas à chaque fois
+     que la page est réaffichée.
+
+     La nuance n'est pas cosmétique. « rt:page » est émis par showPage(), et
+     showPage() est rappelé pour la page COURANTE à chaque événement de session
+     (rafraîchissement de jeton, connexion dans un autre onglet). Sans la garde
+     ci-dessous, un jeton renouvelé au milieu d'une épellation coupait la série
+     en deux : la seconde moitié ouvrait une nouvelle séance, et la première
+     restait « in_progress » jusqu'à être requalifiée en ABANDON. La console
+     d'administration comptait donc des abandons que personne n'avait faits. */
+  var pageCourante = null;
   window.addEventListener('rt:page', function(ev){
-    if (ev.detail && ev.detail.page === 'epellation') serie = { jeton:null, n:0, ok:0, total:0 };
+    var page = ev.detail && ev.detail.page;
+    if (page === 'epellation' && pageCourante !== 'epellation')
+      serie = { jeton:null, n:0, ok:0, total:0 };
+    pageCourante = page;
   });
 
   function evaluate(){

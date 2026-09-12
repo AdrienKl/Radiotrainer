@@ -16,9 +16,12 @@
   var UI = RT.ui, U = RT.util;
   var el = UI.el, esc = UI.esc, I = UI.I;
 
-  /* Source affichée par défaut à la première ouverture. Le jour où Supabase est
-     branché : passer à 'supabase'. */
-  var DEFAUT_SOURCE = 'mock';
+  /* Source affichée par défaut à la première ouverture : la base. Les deux
+     autres restent dans le sélecteur — « Cet appareil » sert de banc d'essai au
+     contrat, « Démonstration » à montrer la console pleine quand la base est
+     vide. Elles sont marquées pour ce qu'elles sont, et la source fictive porte
+     la mention « fictif » partout où elle affiche un chiffre. */
+  var DEFAUT_SOURCE = 'supabase';
 
   /* ===========================================================================
      GARDE D'ACCÈS — lisez ceci avant de vous y fier.
@@ -253,19 +256,38 @@
   function majBandeau(){
     if (!elBandeau) return;
     var s = RT.data.currentSource();
+    /* Le texte du bandeau ne peut pas être écrit ici : « historique enregistré
+       dans ce navigateur » est vrai de la source locale et faux de la base.
+       C'est donc la source elle-même qui dit son périmètre, par la note de ses
+       capabilities() — la seule à le savoir. La façade étant asynchrone (elle
+       l'est pour toutes ses méthodes, sinon brancher un serveur aurait obligé à
+       reprendre chaque page), on peint d'abord une phrase neutre et vraie, puis
+       on la précise à l'arrivée de la note. */
     var nature = s.fictional
       ? { cls:'fict', ic:I.flask, t:'Données de démonstration — FICTIVES',
           d:'Aucune de ces personnes, aucun de ces vols n\'existe. Rien de ce qui est affiché ici n\'est une mesure réelle.' }
       : (s.available
           ? { cls:'reel', ic:I.db, t:'Données réelles — ' + s.label,
-              d:'Historique enregistré dans ce navigateur. Certains indicateurs restent vides : ils ne sont pas encore mesurés.' }
+              d:'Mesures réelles. Les indicateurs que cette source ne sait pas produire restent vides plutôt que d\'afficher un zéro.' }
           : { cls:'off', ic:I.db, t:s.label + ' — non connecté', d:s.reason });
     elBandeau.className = 'adm-banner adm-banner--' + nature.cls;
     elBandeau.innerHTML =
       '<span class="adm-banner__ic">' + nature.ic + '</span>' +
-      '<div class="adm-banner__txt"><b>' + esc(nature.t) + '</b><span>' + esc(nature.d) + '</span></div>' +
+      '<div class="adm-banner__txt"><b>' + esc(nature.t) + '</b><span class="adm-banner__d">'
+        + esc(nature.d) + '</span></div>' +
       '<span class="adm-banner__sec" title="Voir ADMIN.md § 12">' + I.lock +
-      'Accès non protégé — garde d\'interface, pas de sécurité. L\'autorisation réelle viendra du serveur (Supabase RLS).</span>';
+      'Accès non protégé — garde d\'interface, pas de sécurité. L\'autorisation réelle vient du serveur (Supabase RLS).</span>';
+
+    if (!s.fictional && s.available){
+      var cible = elBandeau.querySelector('.adm-banner__d');
+      var pour = s.id;
+      RT.data.capabilities().then(function(cap){
+        /* La source a pu changer pendant l'aller-retour : on n'écrit la note que
+           si elle décrit toujours celle qui est affichée. */
+        if (cap && cap.note && cible && RT.data.currentSource().id === pour)
+          cible.textContent = cap.note;
+      }, function(){});
+    }
   }
 
   /* ===========================================================================
@@ -352,8 +374,7 @@
      ======================================================================== */
   window.addEventListener('rt:admin', function(e){
     var route = (e.detail && e.detail.route) || 'admin';
-    RT.data.restoreSource();
-    if (!RT.data.currentSource().id) RT.data.setSource(DEFAUT_SOURCE);
+    RT.data.restoreSource(DEFAUT_SOURCE);
     if (!bati) batir();
     majSelecteurSource(); majBandeau();
     rendre(route);
@@ -366,7 +387,7 @@
 
   /* Choix de source mémorisé, appliqué dès le chargement pour que le premier
      rendu n'affiche pas la mauvaise source une fraction de seconde. */
-  RT.data.restoreSource();
+  RT.data.restoreSource(DEFAUT_SOURCE);
 
   /* Rattrapage : si la page est ouverte DIRECTEMENT sur #admin, le routeur a déjà
      émis 'rt:admin' pendant l'analyse du document, bien avant que ce fichier ne
@@ -376,7 +397,7 @@
     if (!document.body.classList.contains('state-admin')) return;
     var r = (location.hash || '#admin').slice(1);
     if (r.split('/')[0] !== 'admin') r = 'admin';
-    if (!RT.data.currentSource().id) RT.data.setSource(DEFAUT_SOURCE);
+    RT.data.restoreSource(DEFAUT_SOURCE);
     if (!bati) batir();
     majSelecteurSource(); majBandeau();
     rendre(r);

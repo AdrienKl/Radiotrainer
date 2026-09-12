@@ -61,23 +61,41 @@ Puis : ajouter l'entrée dans `NAV` (`admin.js`) et la balise `<script>` dans
 
 ## 4. Brancher Supabase
 
-### 4.1 Les cinq étapes
+### 4.1 Les cinq étapes — **faites**
 
-1. Vendre le client en local (comme `leaflet.js`), pour garder `file://` et le
+Le branchement est en place depuis le 12/09/2026. Les cinq étapes sont
+conservées parce qu'elles disent comment c'est monté, pas comme une liste de
+courses :
+
+1. Client vendu en local (comme `leaflet.js`), pour garder `file://` et le
    hors-ligne : `assets/vendor/supabase.js`, chargé **avant**
-   `source-supabase.js`.
-2. Renseigner `CONFIG` dans `source-supabase.js` — **URL du projet et clé `anon`
-   uniquement**. Ces deux valeurs sont publiques par conception. La clé
-   `service_role` n'a **jamais** sa place dans un client : elle contourne RLS.
-3. Exécuter le SQL du § 4.2.
-4. Remplacer chaque `throw nonConnecte()` par la requête indiquée en commentaire.
-   Les formes de retour sont déjà écrites : elles doivent respecter le contrat de
-   `contract.js` au caractère près.
-5. Passer `DEFAUT_SOURCE = 'supabase'` dans `admin.js`.
+   `source-supabase.js`. ✔
+2. Coordonnées dans `assets/supabase-config.js` — **URL du projet et clé `anon`
+   uniquement**, un seul endroit pour tout le site. Ces deux valeurs sont
+   publiques par conception. La clé `service_role` n'a **jamais** sa place dans
+   un client : elle contourne RLS. ✔
+3. SQL du § 4.2 exécuté. ✔
+4. Les quatorze méthodes sont écrites. Les agrégats sont calculés **en
+   JavaScript** plutôt qu'en SQL : PostgREST ne sait pas faire `group by`, et
+   compter ici garde la logique au même endroit que sur les deux autres
+   sources — donc les mêmes chiffres pour la même question. La constante
+   `PLAFOND` borne le rapatriement ; quand elle est atteinte, la console
+   **l'affiche** au lieu de tronquer en silence. C'est le signal qu'il faudra
+   passer en fonctions SQL (`rpc`). ✔
+5. `DEFAUT_SOURCE = 'supabase'` dans `admin.js`. La clé de mémorisation du choix
+   de source porte un numéro de version (`rt-admin-source-v2`) : sans cela, tout
+   choix enregistré avant l'existence de la base aurait rouvert la console sur
+   des données de démonstration. ✔
 
-Aucune page n'est à réécrire. La source « Cet appareil » reste disponible : elle
+Aucune page n'a été réécrite. La source « Cet appareil » reste disponible : elle
 sert de banc d'essai permanent — si une nouvelle méthode passe sur `local`, elle
-passera sur `supabase`.
+passera sur `supabase`. « Démonstration » reste elle aussi, marquée « fictif »
+dans le sélecteur, pour montrer la console pleine quand la base est vide.
+
+**Ce que la console montre dépend de qui la regarde, et c'est voulu.** Aucune
+méthode ne teste le rôle : ce sont les politiques RLS qui décident. Un élève qui
+ouvrirait `/admin` y verrait une console honnête sur ses propres données, jamais
+celles des autres — et la bannière le lui dit.
 
 ### 4.2 Le schéma
 

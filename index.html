@@ -3747,14 +3747,12 @@
             </div>
           </div>
 
-          <div class="set-card">
-            <h3>Administration</h3>
-            <div class="set-row">
-              <div class="set-lbl"><b>Console d'administration</b><span>Affiche l'entrée « Administration » dans le menu et donne accès à <code>#admin</code>. Commodité de développement : ce n'est pas une sécurité, et rien de confidentiel n'y transite tant que le serveur n'est pas branché.</span></div>
-              <button class="switch" id="setAdmin" type="button" role="switch" aria-checked="false"><span></span></button>
-            </div>
-            <p class="set-note">La console lit soit un jeu de démonstration <b>fictif</b>, soit les données réelles de cet appareil. L'autorisation véritable viendra de Supabase (Auth + RLS), côté serveur.</p>
-          </div>
+          <!-- La carte « Console d'administration » vivait ici. Elle portait un
+               interrupteur qui affichait l'entree du menu et ouvrait #admin en
+               ecrivant une cle dans le stockage local du navigateur. Elle est
+               retiree, et non pas masquee : l'acces se decide desormais sur
+               `profiles.role`, lu en base. Un interrupteur qui n'ouvre plus rien
+               n'aurait servi qu'a faire croire le contraire. -->
 
           <div class="set-card set-wide">
             <h3>Données locales</h3>
@@ -7761,6 +7759,27 @@ if(!RECO_OK){
      provoque soi-même : sans ce garde-fou, un clic dans la console d'admin
      déclencherait deux rendus (celui du clic, puis celui du hashchange). */
   var routeAffichee=null;
+
+  /* ---------- Le rôle d'administrateur -------------------------------------
+     Il vient de la base : `profiles.role`, lu par assets/auth.js au moment ou la
+     session s'ouvre. C'est EXACTEMENT la colonne que consultent les politiques
+     RLS, donc l'interface et le serveur ne peuvent pas dire deux choses
+     differentes. Rien dans le navigateur ne peut la contredire : ni une cle de
+     stockage local, ni un champ du jeton.
+
+     La lecture est synchrone, et elle est fiable : auth.js attend toujours la
+     fin de chargerProfil() avant d'appeler rtEntrer() ou rtSessionOuverte(), si
+     bien qu'au moment ou ce routeur en a besoin, le profil est la. Tant qu'il
+     n'est pas la, la reponse est « non » — le bon sens du doute pour une porte.
+
+     Ce n'est pas pour autant LA protection des donnees : un fichier servi par
+     GitHub Pages se lit de toute facon. La protection des donnees est en base
+     (RLS). Ceci ferme la porte de l'interface, ce qui restait a faire. */
+  function estAdminReel(){
+    return !!(window.RTAuth && RTAuth.estAdmin && RTAuth.estAdmin());
+  }
+  window.rtEstAdmin = estAdminReel;
+
   function macroState(name){
     if(name===ADMIN_PAGE) return 'admin';
     if(name==='login'||name==='signup') return 'auth';
@@ -7782,14 +7801,32 @@ if(!RECO_OK){
     /* Une route peut porter des segments (#admin/users/u_007). Seul le premier
        désigne la <section> à afficher ; le reste est passé à la page concernée. */
     var name=String(route||''), reste='';
+    /* Mis a vrai quand une garde reecrit la route : il faut alors corriger
+       l'adresse affichee meme si l'appelant demandait de ne pas y toucher. */
+    var detourne=false;
     var barre=name.indexOf('/');
     if(barre>0){ reste=name.slice(barre+1); name=name.slice(0,barre); }
     if(PAGES.indexOf(name)<0){ name='accueil'; reste=''; }
     // Garde d'accès : une page applicative exige d'être « connecté » → sinon, écran de connexion.
     if(macroState(name)==='app' && !authed){ pendingTarget=name; name='login'; reste=''; }
-    /* Même garde pour l'Admin, et rien de plus : ce n'est PAS une sécurité (voir
-       ADMIN.md § 12). Elle évite seulement d'y arriver par accident. */
+    /* La console d'administration exige le rôle, pas seulement une session. Deux
+       issues distinctes, parce que les deux situations n'ont rien de commun :
+
+         · personne n'est connecté → l'écran de connexion, destination mémorisée,
+           pour qu'un administrateur qui arrive par un lien direct y atterrisse
+           une fois identifié ;
+
+         · connecté mais sans le rôle → le tableau de bord, SANS passer par la
+           connexion. Renvoyer vers un formulaire de connexion quelqu'un qui est
+           déjà connecté ne lui apprendrait rien et ressemblerait à une panne ;
+           et le détour est signalé, pour que l'adresse affichée cesse de
+           promettre une page qu'on ne montre pas.
+
+       Voir ADMIN.md § 12 : la garde d'interface ne protège pas les données, elle
+       ferme la porte. Les données sont protégées en base, par les politiques RLS
+       adossées à la même colonne `profiles.role`. */
     if(name===ADMIN_PAGE && !authed){ pendingTarget=route; name='login'; reste=''; }
+    else if(name===ADMIN_PAGE && !estAdminReel()){ name='tableau'; reste=''; detourne=true; }
     var routeComplete = name + (reste ? '/'+reste : '');
     routeAffichee = routeComplete;
     var st=macroState(name);
@@ -7803,8 +7840,14 @@ if(!RECO_OK){
     SCENES.forEach(function(p){ document.body.classList.toggle('on-'+p, p===name); });
     document.body.classList.toggle('scene-on', SCENES.indexOf(name)>=0);
     sideLinks.forEach(function(a){ a.classList.toggle('current',a.dataset.page===name); });
-    if(push!==false && ('#'+routeComplete)!==location.hash){
-      try{history.pushState({p:routeComplete},'','#'+routeComplete);}catch(e){}
+    if((push!==false || detourne) && ('#'+routeComplete)!==location.hash){
+      /* replaceState sur un detour : l'adresse refusee n'a pas a s'installer
+         dans l'historique, sinon le bouton « precedent » y ramenerait en
+         boucle. */
+      try{
+        if(detourne) history.replaceState({p:routeComplete},'','#'+routeComplete);
+        else         history.pushState({p:routeComplete},'','#'+routeComplete);
+      }catch(e){}
     }
     window.scrollTo(0,0);
     requestAnimationFrame(function(){ revealNow(pages[name]); });
@@ -12193,25 +12236,34 @@ function oaciSonde(couche, surAbsenceTotale){
     save(); sw($s('setRadio'), S.radioManuelle!==false);
   });
 
-  /* ---------- Administration (commodité de développement) ----------
-     Le drapeau vit dans sa PROPRE clé, pas dans rt-settings : ce n'est pas une
-     préférence d'utilisateur à synchroniser un jour, c'est un interrupteur de
-     développement que le futur rôle serveur remplacera purement et simplement. */
-  var admBtn=$s('setAdmin');
-  function admActif(){ try{ return localStorage.getItem('rt-admin-dev')==='1'; }catch(e){ return false; } }
+  /* ---------- Administration ----------
+     L'entree « Administration » du menu suit le role lu en base, et rien d'autre.
+     L'interrupteur de developpement qui vivait ici a disparu avec sa carte de
+     Parametres ; on efface au passage la cle qu'il avait pu laisser, sinon les
+     navigateurs qui l'avaient cochee garderaient un drapeau devenu muet mais
+     toujours visible dans leurs outils — de quoi croire a un acces qui n'existe
+     plus. Une seule suppression suffit, la cle ne revient jamais. */
+  try{ localStorage.removeItem('rt-admin-dev'); }catch(e){}
   function majLienAdmin(){
-    if(admBtn) sw(admBtn, admActif());
     var lien=document.getElementById('sideAdmin');
-    if(lien) lien.hidden = !admActif();
+    if(lien) lien.hidden = !(window.rtEstAdmin && window.rtEstAdmin());
   }
   window.rtMajLienAdmin = majLienAdmin;
-  if(admBtn) admBtn.addEventListener('click',function(){
-    var on=!admActif();
-    if(window.RTAdmin && window.RTAdmin.session) window.RTAdmin.session.setDevAdmin(on);
-    else { try{ on ? localStorage.setItem('rt-admin-dev','1') : localStorage.removeItem('rt-admin-dev'); }catch(e){} }
+  /* Le profil arrive apres coup (une requete sur `profiles`), et il peut aussi
+     changer en cours de route — rechargerProfil() apres une ecriture, une
+     deconnexion, un role retire depuis Supabase. A chaque annonce on remet donc
+     l'entree du menu d'accord avec le role, et si quelqu'un se trouve sur la
+     console sans plus y avoir droit, la garde le reconduit. */
+  window.addEventListener('rt:auth', function(){
     majLienAdmin();
-    showToast(on ? 'Console d\u2019administration accessible \u2014 menu \u00ab\u00a0Administration\u00a0\u00bb.'
-                 : 'Console d\u2019administration masqu\u00e9e.');
+    /* Seulement si la session tient toujours : sur une deconnexion, auth.js
+       annonce l'etat AVANT d'appeler rtSortir(), et devancer ce dernier
+       n'ajouterait qu'un passage inutile par le tableau de bord — et une entree
+       d'historique — avant d'arriver sur la vitrine de toute facon. */
+    if(window.rtConnecte && window.rtConnecte()
+       && document.body.classList.contains('state-admin')
+       && !(window.rtEstAdmin && window.rtEstAdmin()))
+      if(window.rtNaviguer) window.rtNaviguer('tableau');
   });
 
   /* ---------- Données locales ---------- */

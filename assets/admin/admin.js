@@ -24,37 +24,49 @@
   var DEFAUT_SOURCE = 'supabase';
 
   /* ===========================================================================
-     GARDE D'ACCÈS — lisez ceci avant de vous y fier.
+     IDENTITÉ ET RÔLE — d'où ils viennent, et ce qu'ils valent.
      ---------------------------------------------------------------------------
-     Ce qui suit n'est PAS un dispositif de sécurité, et ne doit jamais être
-     présenté comme tel. Un site statique servi par GitHub Pages n'a aucun
-     moyen de contrôler qui charge un fichier : n'importe qui peut lire le code,
-     forcer le drapeau, ou taper l'adresse. La garde ci-dessous ne fait qu'une
-     chose utile : éviter qu'un élève tombe par accident sur la console.
+     Le rôle est lu en base : `profiles.role`, chargé par assets/auth.js quand la
+     session s'ouvre. Il y avait ici, avant, un drapeau dans le stockage local
+     (`rt-admin-dev`) qu'un interrupteur des Paramètres posait — visible par tout
+     le monde, et donc une porte ouverte dès que la console a cessé d'afficher des
+     données de démonstration pour lire la vraie base. Il a été retiré.
 
-     La VRAIE autorisation viendra de la base :
-        · Supabase Auth établit l'identité (JWT signé côté serveur) ;
-        · `profiles.role` porte le rôle, en base, hors d'atteinte du client ;
-        · les politiques RLS décident, requête par requête, de ce qui est lu.
-     Tant que ce n'est pas en place, l'Admin n'affiche que des données de
-     démonstration ou celles de l'appareil courant : il n'y a rien à protéger.
-     Voir ADMIN.md § 11 et § 12.
+     Ce que cette lecture fait, et ce qu'elle ne fait pas :
+
+       · elle décide de ce que l'interface MONTRE — l'entrée du menu, l'accès à
+         la route #admin (la garde est dans le routeur, index.html) ;
+
+       · elle ne protège AUCUNE donnée. Un site statique servi par GitHub Pages
+         ne contrôle pas qui charge un fichier : le code se lit, l'adresse se
+         tape, et un navigateur se laisse instrumenter. Rien de ce qui est écrit
+         ici n'y change quoi que ce soit.
+
+     Ce qui protège les données est en base, et nulle part ailleurs : les
+     politiques RLS, adossées à `public.is_admin()`, qui interroge cette même
+     colonne `profiles.role`. Interface et serveur consultent donc la même source
+     — un compte sans le rôle ne verrait de toute façon que ses propres lignes,
+     même en forçant l'affichage de la console. Voir ADMIN.md § 10 et § 12.
      ======================================================================== */
-  var CLE_DEV = 'rt-admin-dev';
   var session = {
-    /* Le jour du branchement : lire supabase.auth.getUser() puis profiles.role. */
     role:function(){
-      try { return localStorage.getItem(CLE_DEV) === '1' ? 'admin' : 'user'; }
-      catch(e){ return 'user'; }
+      var p = window.RTAuth && RTAuth.profil && RTAuth.profil();
+      return (p && p.role) || 'user';
     },
-    isAdmin:function(){ return session.role() === 'admin'; },
-    /* Commodité de développement, volontairement explicite dans son nom. */
-    setDevAdmin:function(on){
-      try { on ? localStorage.setItem(CLE_DEV, '1') : localStorage.removeItem(CLE_DEV); } catch(e){}
-      try { window.dispatchEvent(new CustomEvent('rt:admin-role')); } catch(e){}
+    /* Déléguée à auth.js plutôt que recalculée ici : 'moderator' compte aussi,
+       et le jour où cette liste bouge, elle ne doit bouger qu'à un seul endroit
+       — le même que celui dont dépend la garde du routeur. */
+    isAdmin:function(){
+      return !!(window.RTAuth && RTAuth.estAdmin && RTAuth.estAdmin());
     },
+    /* Renvoie null quand personne n'est connecté, au lieu d'un « Administrateur
+       (local) » inventé : la console ne doit jamais afficher d'identité qui
+       n'existe pas. */
     user:function(){
-      return { id:'admin-local', name:'Administrateur (local)', role:session.role() };
+      var u = window.RTAuth && RTAuth.utilisateur && RTAuth.utilisateur();
+      if (!u) return null;
+      var p = window.RTAuth && RTAuth.profil && RTAuth.profil();
+      return { id:u.id, name:(p && p.display_name) || u.email || null, role:session.role() };
     }
   };
   RT.session = session;
@@ -276,7 +288,8 @@
       '<div class="adm-banner__txt"><b>' + esc(nature.t) + '</b><span class="adm-banner__d">'
         + esc(nature.d) + '</span></div>' +
       '<span class="adm-banner__sec" title="Voir ADMIN.md § 12">' + I.lock +
-      'Accès non protégé — garde d\'interface, pas de sécurité. L\'autorisation réelle vient du serveur (Supabase RLS).</span>';
+      'Accès réservé au rôle « admin » lu en base. Ce qui est lisible, en revanche, '
+      + 'est décidé requête par requête par les politiques RLS du serveur — pas par cette page.</span>';
 
     if (!s.fictional && s.available){
       var cible = elBandeau.querySelector('.adm-banner__d');
@@ -373,6 +386,11 @@
      Branchement au routeur SPA d'index.html
      ======================================================================== */
   window.addEventListener('rt:admin', function(e){
+    /* Le routeur a déjà refusé l'entrée aux comptes sans le rôle ; ce second
+       contrôle ne sert pas à le doubler mais à tenir seul si un appelant futur
+       émettait 'rt:admin' sans passer par lui. Il ne coûte rien, et il évite
+       qu'une console se bâtisse pour quelqu'un à qui on ne la montre pas. */
+    if (!session.isAdmin()) return;
     var route = (e.detail && e.detail.route) || 'admin';
     RT.data.restoreSource(DEFAUT_SOURCE);
     if (!bati) batir();
@@ -380,10 +398,9 @@
     rendre(route);
   });
 
-  /* Le rôle change (interrupteur des Paramètres) → l'entrée du menu élève suit. */
-  window.addEventListener('rt:admin-role', function(){
-    if (window.rtMajLienAdmin) window.rtMajLienAdmin();
-  });
+  /* Le rôle ne change plus depuis cette console — il vient de la base. C'est
+     index.html qui écoute 'rt:auth' et remet l'entrée du menu d'accord avec lui ;
+     l'écouteur 'rt:admin-role' qui vivait ici n'avait plus d'émetteur. */
 
   /* Choix de source mémorisé, appliqué dès le chargement pour que le premier
      rendu n'affiche pas la mauvaise source une fraction de seconde. */
@@ -395,6 +412,10 @@
      après leur enregistrement. */
   setTimeout(function(){
     if (!document.body.classList.contains('state-admin')) return;
+    /* Meme raison qu'au-dessus. En pratique le macro-etat 'state-admin' suffit
+       deja, puisque seule la garde du routeur le pose ; on ne s'appuie pas sur
+       cette coincidence. */
+    if (!session.isAdmin()) return;
     var r = (location.hash || '#admin').slice(1);
     if (r.split('/')[0] !== 'admin') r = 'admin';
     RT.data.restoreSource(DEFAUT_SOURCE);

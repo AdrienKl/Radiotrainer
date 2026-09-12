@@ -421,7 +421,7 @@ n'y a pas accès et ne doit pas pouvoir en obtenir un.
 
 | Risque | Parade retenue |
 |---|---|
-| **`/admin` pris pour une page sécurisée** | Bandeau permanent en tête de la console : la garde est une commodité d'interface, pas une sécurité. Rien de sensible n'existe encore côté client. |
+| **`/admin` pris pour une page sécurisée** | Accès réservé au rôle `profiles.role` lu en base (voir § 12.1). Le bandeau de la console continue de dire que la lecture des données, elle, est décidée par les politiques RLS du serveur — pas par cette page. |
 | **Données fictives prises pour réelles** | Source affichée en permanence, mention « fictif » sur chaque vue de démonstration, et une source « Cet appareil » qui montre au contraire du vrai. |
 | **Casser le routeur existant** | La modification de `showPage()` est additive : découpage du hash sur `/`, nouveau macro-état. Les douze routes existantes empruntent exactement le même chemin qu'avant. |
 | **`index.html` devient ingérable** | Tout le code Admin vit dans `assets/admin/`. `index.html` gagne ~60 lignes. |
@@ -429,6 +429,67 @@ n'y a pas accès et ne doit pas pouvoir en obtenir un.
 | **Chargement inutile pour l'élève** | Les scripts Admin sont légers et ne s'exécutent qu'à l'entrée sur `#admin` (enregistrement seulement au chargement). |
 | **`file://` cassé** | Aucun module ES, aucun `fetch()` : scripts classiques et namespace global, comme le reste du projet. |
 | **Divergence future avec Supabase** | Le contrat est écrit avant les pages ; les trois sources l'implémentent à l'identique. La source « Cet appareil » sert de test permanent que le contrat tient sur de vraies données. |
+
+### 12.1 La garde d'accès — ce qu'elle est devenue
+
+Il y avait ici, jusqu'au 12 septembre 2026, un interrupteur dans **Paramètres →
+Console d'administration**. Il posait `rt-admin-dev=1` dans le stockage local du
+navigateur ; l'entrée du menu et la route `#admin` en dépendaient. Le routeur, de
+son côté, n'exigeait qu'une chose : être connecté.
+
+C'était assumé et documenté — « ce n'est pas une sécurité » — et c'était
+défendable **tant que la console n'affichait que des données de démonstration ou
+celles de l'appareil courant**. Cette condition a cessé d'être vraie le jour où
+`DEFAUT_SOURCE` est passé à `'supabase'` : la console s'ouvrait sur la vraie
+base. Personne n'est revenu fermer la porte. C'est le défaut, et il n'était pas
+dans le drapeau : il était dans le fait de ne pas avoir relu le drapeau quand sa
+justification a disparu.
+
+**Ce qui est en place désormais.**
+
+| Où | Quoi |
+|---|---|
+| `assets/auth.js` | `RTAuth.estAdmin()` — lit `profiles.role`, chargé en base à l'ouverture de session. Seule définition du rôle dans tout le client. |
+| `index.html`, `estAdminReel()` | L'adaptateur du routeur. Répond « non » tant que le profil n'est pas arrivé. |
+| `index.html`, `showPage()` | La garde. Pas connecté → connexion, destination mémorisée. Connecté sans le rôle → tableau de bord, et l'adresse est corrigée par `replaceState` (laisser `#admin` dans la barre promettrait une page qu'on ne montre pas, et le bouton « précédent » y ramènerait en boucle). |
+| `index.html`, écouteur `rt:auth` | Remet l'entrée du menu d'accord avec le rôle, et reconduit hors de la console quelqu'un qui perd le rôle en cours de route. |
+| `assets/admin/admin.js` | `RT.session` délègue à `RTAuth`. Second refus à la construction de la console, pour qu'elle tienne seule si un appelant futur émettait `rt:admin` sans passer par le routeur. |
+| Paramètres | La carte a été **retirée**, pas masquée. Un interrupteur qui n'ouvre plus rien ne servirait qu'à faire croire le contraire. La clé `rt-admin-dev` est effacée au chargement. |
+
+Ce que cette garde fait : décider ce que l'interface **montre**. Ce qu'elle ne
+fait pas : protéger une donnée. Un fichier servi par GitHub Pages se lit, l'adresse
+se tape, un navigateur s'instrumente.
+
+**La protection des données a été vérifiée, elle, et elle tient.** Mesuré le
+12 septembre 2026 sous une vraie session `role = 'user'`
+(`essai-epellation-6@webdesign28.com`), en interrogeant directement la base :
+
+| Table | Ce que le compte non-admin obtient |
+|---|---|
+| `profiles` | **1 ligne** — la sienne, alors que la base en compte plusieurs |
+| `sessions` | 41 lignes, **toutes** avec son `user_id` (vérifié par regroupement) |
+| `session_steps` | 168 lignes, son périmètre |
+| `app_errors`, `admin_audit_log` | 0 ligne |
+
+Et l'auto-promotion est repoussée : un `update profiles set role='admin'` sur sa
+propre ligne passe sans erreur mais ressort avec `role = 'user'` — le déclencheur
+`profiles_garde()` a restauré la valeur. Les politiques RLS sont donc bien en
+place et adossées à la même colonne que l'interface. La porte ouverte était un
+défaut réel, mais **elle n'a pas fait fuiter de données**.
+
+**Ce qui n'est pas dans le dépôt** : les politiques RLS elles-mêmes, posées
+directement dans la console Supabase. Le § 10 en donne la forme attendue, et les
+mesures ci-dessus confirment qu'elles s'y conforment — mais ce n'est pas un
+fichier rejouable. À reprendre le jour où l'on voudra pouvoir reconstruire le
+projet à partir du dépôt seul.
+
+**Une limite du banc d'essai, à savoir.** Aucun compte d'essai n'a le rôle
+`admin`. Les suites qui vérifient ce que la console *affiche* (`adm1.py`,
+`adm3.py`, et le § 5 de `reg.py`) substituent donc la réponse de `estAdmin()`
+pour franchir la porte, et le disent en commentaire. Elles ne contournent aucune
+protection : leurs lectures partent sous la vraie session, et le RLS ne leur
+renvoie que le périmètre de ce compte. Ce qui est testé pour de vrai, de bout en
+bout, c'est le **refus** — `adm_role.py`, avec un compte réellement non-admin.
 
 ## 13. Les étapes suivies
 

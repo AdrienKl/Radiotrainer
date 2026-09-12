@@ -60,6 +60,17 @@
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box}
+  /* L'attribut `hidden` du HTML ne vaut que par une regle de la feuille du
+     NAVIGATEUR (`[hidden]{display:none}`), que n'importe quelle regle de ce
+     fichier posant un `display` sur le meme element emporte. Le piege s'est
+     deja referme deux fois ici (`.nav-navlog`, `.modal`, corriges au cas par
+     cas plus bas) et une troisieme sur `.sidelink{display:flex}` : l'entree
+     « Administration » du menu portait bien `hidden`, et restait affichee pour
+     tout le monde. Corriger un selecteur de plus aurait laisse le suivant
+     passer. La regle ci-dessous vaut pour tous, presents et a venir ; le
+     `!important` est ici a sa place, puisque rien ne doit pouvoir rendre
+     visible ce que le HTML declare cache. */
+  [hidden]{ display:none !important; }
   html{scroll-behavior:smooth}
   html,body{margin:0}
   body{background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.55; min-height:100vh; -webkit-font-smoothing:antialiased}
@@ -2421,7 +2432,9 @@
       <button class="sidelink" type="button" data-page="cours"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg><span>Cours</span></button>
       <button class="sidelink" type="button" data-page="progression"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg><span>Progression</span></button>
       <button class="sidelink" type="button" data-page="parametres"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg><span>Paramètres</span></button>
-      <button class="sidelink" type="button" data-page="compte"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Compte</span></button>
+      <!-- L'entree « Compte » a disparu du menu : sa page est maintenant dans
+           « Parametres ». Deux entrees pour une seule page auraient oblige a
+           deviner laquelle mene ou. -->
       <!-- Console d'administration. Masquée tant que le drapeau de développement
            n'est pas posé (Paramètres → Administration). Ce masquage n'est PAS une
            sécurité — il évite seulement de proposer l'entrée à un élève. -->
@@ -3661,162 +3674,20 @@
     <section id="page-parametres" class="page">
       <div class="container">
         <h2 class="section-title">Paramètres</h2>
-        <p class="section-sub">Vos préférences sont enregistrées sur cet appareil uniquement.</p>
-
-        <div class="set-grid">
-
-          <div class="set-card">
-            <h3>Apparence</h3>
-            <div class="set-row">
-              <div class="set-lbl"><b>Thème</b><span>Sombre suit votre système si vous choisissez « Système ».</span></div>
-              <div class="seg3" role="group" aria-label="Thème">
-                <button class="seg3-opt" type="button" data-theme-opt="system">Système</button>
-                <button class="seg3-opt" type="button" data-theme-opt="light">Clair</button>
-                <button class="seg3-opt" type="button" data-theme-opt="dark">Sombre</button>
-              </div>
-            </div>
-            <div class="set-row">
-              <div class="set-lbl"><b>Animations</b><span>Désactive les transitions et apparitions progressives.</span></div>
-              <button class="switch" id="setAnim" type="button" role="switch" aria-checked="true"><span></span></button>
-            </div>
-          </div>
-
-          <div class="set-card">
-            <h3>Voix du contrôleur</h3>
-            <div class="set-row">
-              <div class="set-lbl"><b>Voix</b><span>Voix française disponible sur votre navigateur.</span></div>
-              <select id="setVoice" class="set-input"></select>
-            </div>
-            <div class="set-row">
-              <div class="set-lbl"><b>Débit</b><span>Vitesse d'élocution de l'ATC.</span></div>
-              <div class="seg3" role="group" aria-label="Débit">
-                <button class="seg3-opt" type="button" data-rate="0.8">Lent</button>
-                <button class="seg3-opt" type="button" data-rate="1">Normal</button>
-                <button class="seg3-opt" type="button" data-rate="1.15">Rapide</button>
-              </div>
-            </div>
-            <div class="set-row">
-              <div class="set-lbl"><b>Bruit de fond radio</b><span>Souffle pendant que le contrôleur parle.</span></div>
-              <button class="switch" id="setNoise" type="button" role="switch" aria-checked="false"><span></span></button>
-            </div>
-            <!-- Un bouton d'essai, parce que le réglage le plus important de cette
-                 carte est celui qu'on ne peut pas juger sans entendre. Et surtout :
-                 la synthèse vocale des navigateurs échoue silencieusement — voix
-                 distante qui ne démarre jamais, moteur qui attend une interaction,
-                 aucune voix française installée. Sans essai, on découvre la panne
-                 au milieu d'un exercice et on croit que c'est l'exercice. -->
-            <div class="set-row">
-              <div class="set-lbl"><b>Essai</b><span>Écoutez une vraie phrase de contrôleur, avec la voix et le débit choisis ci-dessus.</span></div>
-              <button class="btn small" id="setVoiceTest" type="button">Écouter un exemple</button>
-            </div>
-            <p class="set-note auth-msg hidden" id="setVoiceMsg" role="status" aria-live="polite"></p>
-          </div>
-
-          <div class="set-card">
-            <h3>Entraînement</h3>
-            <div class="set-row">
-              <div class="set-lbl"><b>Indicatif par défaut</b><span>Immatriculation fictive utilisée au démarrage.</span></div>
-              <input id="setCall" class="set-input set-short" type="text" spellcheck="false" placeholder="F-ABCD">
-            </div>
-            <div class="set-row">
-              <div class="set-lbl"><b>Difficulté par défaut</b><span>« Réel » masque le texte de l'ATC et ajoute des aléas.</span></div>
-              <div class="seg3 seg2" role="group" aria-label="Difficulté">
-                <button class="seg3-opt" type="button" data-diffset="debutant">Débutant</button>
-                <button class="seg3-opt" type="button" data-diffset="reel">Réel</button>
-              </div>
-            </div>
-            <div class="set-row">
-              <div class="set-lbl"><b>Silence avant fin d'écoute</b><span>Durée de blanc qui coupe le micro après votre message.</span></div>
-              <div class="seg3" role="group" aria-label="Silence">
-                <button class="seg3-opt" type="button" data-sil="1500">1,5 s</button>
-                <button class="seg3-opt" type="button" data-sil="2500">2,5 s</button>
-                <button class="seg3-opt" type="button" data-sil="4000">4 s</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Un objectif que l'eleve se fixe lui-même, et non un quota qu'on lui
-               impose : la difference est tout le sujet. Trois paliers courts,
-               parce qu'un objectif inatteignable se contourne le troisieme jour.
-               « Aucun » est un choix de plein droit, pas un oubli — quelqu'un qui
-               ne veut pas de compteur ne doit pas en heriter d'un par defaut. -->
-          <div class="set-card">
-            <h3>Objectif quotidien</h3>
-            <div class="set-row">
-              <div class="set-lbl"><b>Séances par jour</b>
-                <span>Votre avancement du jour apparaît alors sur la page Compte.</span></div>
-              <div class="seg3" role="group" aria-label="Objectif quotidien">
-                <button class="seg3-opt" type="button" data-obj="0">Aucun</button>
-                <button class="seg3-opt" type="button" data-obj="1">1</button>
-                <button class="seg3-opt" type="button" data-obj="3">3</button>
-                <button class="seg3-opt" type="button" data-obj="5">5</button>
-              </div>
-            </div>
-            <p class="set-note" id="setObjNote">—</p>
-          </div>
-
-          <div class="set-card">
-            <h3>Carte (Navigation)</h3>
-            <div class="set-row">
-              <div class="set-lbl"><b>Fond par défaut</b><span>Carte OACI officielle ou fond OpenStreetMap.</span></div>
-              <div class="seg3 seg2" role="group" aria-label="Fond de carte">
-                <button class="seg3-opt" type="button" data-base="oaci">Carte OACI</button>
-                <button class="seg3-opt" type="button" data-base="osm">OpenStreetMap</button>
-              </div>
-            </div>
-            <div class="set-row">
-              <div class="set-lbl"><b>Radio et transpondeur manuels</b><span>Afficher la nouvelle fréquence en standby puis permuter, et afficher le code SSR assigné, comme en vol réel. Désactivés, la radio s'accorde seule et le code n'est plus exigé.</span></div>
-              <button class="switch" id="setRadio" type="button" role="switch" aria-checked="true"><span></span></button>
-            </div>
-            <div class="set-row">
-              <div class="set-lbl"><b>Espaces affichés au départ</b><span>Les zones R/P/D surchargent la carte à petite échelle.</span></div>
-              <div class="set-chips">
-                <button class="nav-tgl" type="button" data-lay="ctr">CTR</button>
-                <button class="nav-tgl" type="button" data-lay="tma">TMA / CTA</button>
-                <button class="nav-tgl" type="button" data-lay="rpd">R / P / D</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- La carte « Console d'administration » vivait ici. Elle portait un
-               interrupteur qui affichait l'entree du menu et ouvrait #admin en
-               ecrivant une cle dans le stockage local du navigateur. Elle est
-               retiree, et non pas masquee : l'acces se decide desormais sur
-               `profiles.role`, lu en base. Un interrupteur qui n'ouvre plus rien
-               n'aurait servi qu'a faire croire le contraire. -->
-
-          <div class="set-card set-wide">
-            <h3>Données locales</h3>
-            <p class="set-note" id="setDataInfo">—</p>
-            <div class="set-actions">
-              <button class="btn small" id="setExport" type="button">Exporter mes données</button>
-              <button class="btn small" id="setClearHist" type="button">Effacer mes vols et mon historique</button>
-              <button class="btn small" id="setReset" type="button">Réinitialiser les paramètres</button>
-            </div>
-            <p class="set-note">Tout est stocké dans votre navigateur. Rien n'est envoyé sur Internet.</p>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== COMPTE (placeholder) ==================== -->
-    <!-- ==================== COMPTE ====================
-         Tout ce qui est affiché ici vient de la base : le profil (table
-         profiles) et la pratique (vue v_user_progress). Rien n'est calculé de
-         tête ni recopié de localStorage — quand la base est injoignable, la
-         page le DIT au lieu d'afficher des zéros qu'on prendrait pour un fait.
-         Le rôle et la formule sont en lecture seule, et ce n'est pas une
-         politesse d'interface : le déclencheur profiles_garde() en base remet
-         ces colonnes à leur valeur si un client tente de les changer. -->
-    <section id="page-compte" class="page">
-      <div class="container">
-        <h2 class="section-title">Compte</h2>
-        <p class="section-sub" id="cptSub">Vos informations, votre sécurité et votre pratique.</p>
+        <!-- « Compte » etait une page a part. Tout y est desormais regroupe : on
+             n'a plus a se demander si « changer son mot de passe » est un reglage
+             ou une information de compte. Le sous-titre ne peut plus dire
+             « enregistrees sur cet appareil uniquement » : c'etait vrai des
+             preferences, ca ne l'est pas de l'identite ni des seances, qui vivent
+             en base. Il dit donc les deux, puisque les deux sont ici. -->
+        <p class="section-sub">Votre compte et vos préférences. L'identité, le profil de pilote et la
+          pratique viennent de la base et vous suivent d'un appareil à l'autre ; l'apparence, la voix
+          et les réglages d'entraînement restent sur cet appareil.</p>
 
         <div class="nav-warn hidden" id="cptHorsLigne">
           <strong>Base injoignable.</strong>
-          <span id="cptHorsLigneTxt">Les informations ci-dessous ne peuvent pas être lues pour l'instant.</span>
+          <span id="cptHorsLigneTxt">Les informations de compte ne peuvent pas être lues pour l'instant.
+            Vos réglages d'apparence et d'entraînement, eux, restent modifiables.</span>
         </div>
 
         <div class="set-grid">
@@ -3940,6 +3811,127 @@
             <p class="set-note auth-msg hidden" id="cptMdpMsg"></p>
           </div>
 
+          <div class="set-card">
+            <h3>Apparence</h3>
+            <div class="set-row">
+              <div class="set-lbl"><b>Thème</b><span>Sombre suit votre système si vous choisissez « Système ».</span></div>
+              <div class="seg3" role="group" aria-label="Thème">
+                <button class="seg3-opt" type="button" data-theme-opt="system">Système</button>
+                <button class="seg3-opt" type="button" data-theme-opt="light">Clair</button>
+                <button class="seg3-opt" type="button" data-theme-opt="dark">Sombre</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Animations</b><span>Désactive les transitions et apparitions progressives.</span></div>
+              <button class="switch" id="setAnim" type="button" role="switch" aria-checked="true"><span></span></button>
+            </div>
+          </div>
+
+          <div class="set-card">
+            <h3>Voix du contrôleur</h3>
+            <div class="set-row">
+              <div class="set-lbl"><b>Voix</b><span>Voix française disponible sur votre navigateur.</span></div>
+              <select id="setVoice" class="set-input"></select>
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Débit</b><span>Vitesse d'élocution de l'ATC.</span></div>
+              <div class="seg3" role="group" aria-label="Débit">
+                <button class="seg3-opt" type="button" data-rate="0.8">Lent</button>
+                <button class="seg3-opt" type="button" data-rate="1">Normal</button>
+                <button class="seg3-opt" type="button" data-rate="1.15">Rapide</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Bruit de fond radio</b><span>Souffle pendant que le contrôleur parle.</span></div>
+              <button class="switch" id="setNoise" type="button" role="switch" aria-checked="false"><span></span></button>
+            </div>
+            <!-- Un bouton d'essai, parce que le réglage le plus important de cette
+                 carte est celui qu'on ne peut pas juger sans entendre. Et surtout :
+                 la synthèse vocale des navigateurs échoue silencieusement — voix
+                 distante qui ne démarre jamais, moteur qui attend une interaction,
+                 aucune voix française installée. Sans essai, on découvre la panne
+                 au milieu d'un exercice et on croit que c'est l'exercice. -->
+            <div class="set-row">
+              <div class="set-lbl"><b>Essai</b><span>Écoutez une vraie phrase de contrôleur, avec la voix et le débit choisis ci-dessus.</span></div>
+              <button class="btn small" id="setVoiceTest" type="button">Écouter un exemple</button>
+            </div>
+            <p class="set-note auth-msg hidden" id="setVoiceMsg" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="set-card">
+            <h3>Entraînement</h3>
+            <div class="set-row">
+              <div class="set-lbl"><b>Indicatif par défaut</b><span>Immatriculation fictive utilisée au démarrage.</span></div>
+              <input id="setCall" class="set-input set-short" type="text" spellcheck="false" placeholder="F-ABCD">
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Difficulté par défaut</b><span>« Réel » masque le texte de l'ATC et ajoute des aléas.</span></div>
+              <div class="seg3 seg2" role="group" aria-label="Difficulté">
+                <button class="seg3-opt" type="button" data-diffset="debutant">Débutant</button>
+                <button class="seg3-opt" type="button" data-diffset="reel">Réel</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Silence avant fin d'écoute</b><span>Durée de blanc qui coupe le micro après votre message.</span></div>
+              <div class="seg3" role="group" aria-label="Silence">
+                <button class="seg3-opt" type="button" data-sil="1500">1,5 s</button>
+                <button class="seg3-opt" type="button" data-sil="2500">2,5 s</button>
+                <button class="seg3-opt" type="button" data-sil="4000">4 s</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Un objectif que l'eleve se fixe lui-même, et non un quota qu'on lui
+               impose : la difference est tout le sujet. Trois paliers courts,
+               parce qu'un objectif inatteignable se contourne le troisieme jour.
+               « Aucun » est un choix de plein droit, pas un oubli — quelqu'un qui
+               ne veut pas de compteur ne doit pas en heriter d'un par defaut. -->
+          <div class="set-card">
+            <h3>Objectif quotidien</h3>
+            <div class="set-row">
+              <div class="set-lbl"><b>Séances par jour</b>
+                <span>Votre avancement du jour apparaît alors sur la page Compte.</span></div>
+              <div class="seg3" role="group" aria-label="Objectif quotidien">
+                <button class="seg3-opt" type="button" data-obj="0">Aucun</button>
+                <button class="seg3-opt" type="button" data-obj="1">1</button>
+                <button class="seg3-opt" type="button" data-obj="3">3</button>
+                <button class="seg3-opt" type="button" data-obj="5">5</button>
+              </div>
+            </div>
+            <p class="set-note" id="setObjNote">—</p>
+          </div>
+
+          <div class="set-card">
+            <h3>Carte (Navigation)</h3>
+            <div class="set-row">
+              <div class="set-lbl"><b>Fond par défaut</b><span>Carte OACI officielle ou fond OpenStreetMap.</span></div>
+              <div class="seg3 seg2" role="group" aria-label="Fond de carte">
+                <button class="seg3-opt" type="button" data-base="oaci">Carte OACI</button>
+                <button class="seg3-opt" type="button" data-base="osm">OpenStreetMap</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Radio et transpondeur manuels</b><span>Afficher la nouvelle fréquence en standby puis permuter, et afficher le code SSR assigné, comme en vol réel. Désactivés, la radio s'accorde seule et le code n'est plus exigé.</span></div>
+              <button class="switch" id="setRadio" type="button" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Espaces affichés au départ</b><span>Les zones R/P/D surchargent la carte à petite échelle.</span></div>
+              <div class="set-chips">
+                <button class="nav-tgl" type="button" data-lay="ctr">CTR</button>
+                <button class="nav-tgl" type="button" data-lay="tma">TMA / CTA</button>
+                <button class="nav-tgl" type="button" data-lay="rpd">R / P / D</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- La carte « Console d'administration » vivait ici. Elle portait un
+               interrupteur qui affichait l'entree du menu et ouvrait #admin en
+               ecrivant une cle dans le stockage local du navigateur. Elle est
+               retiree, et non pas masquee : l'acces se decide desormais sur
+               `profiles.role`, lu en base. Un interrupteur qui n'ouvre plus rien
+               n'aurait servi qu'a faire croire le contraire. -->
+
+
           <div class="set-card set-wide">
             <h3>Votre pratique</h3>
             <p class="set-note" id="cptPratiqueNote">Compté sur les séances enregistrées en base.</p>
@@ -3954,6 +3946,18 @@
                    Une tuile « 0 / 0 » ne dirait rien a personne. -->
               <div class="tb-stat hidden" id="cptStObjectifCase"><b id="cptStObjectif">—</b><span>Objectif du jour</span></div>
             </div>
+          </div>
+
+          <div class="set-card set-wide">
+            <h3>Données locales</h3>
+            <p class="set-note" id="setDataInfo">—</p>
+            <div class="set-actions">
+              <button class="btn small" id="setExport" type="button">Exporter mes données</button>
+              <button class="btn small" id="setClearHist" type="button">Effacer mes vols et mon historique</button>
+              <button class="btn small" id="setReset" type="button">Réinitialiser les paramètres</button>
+            </div>
+            <p class="set-note">Ces trois actions ne touchent QUE cet appareil : elles n'effacent rien
+              en base. Pour ce qui est enregistré sur votre compte, voyez la carte suivante.</p>
           </div>
 
           <div class="set-card set-wide">
@@ -3974,6 +3978,12 @@
         </div>
       </div>
     </section>
+
+    <!-- La page « Compte » vivait ici. Ses cartes sont maintenant dans
+         #page-parametres, dans l'ordre : qui vous etes, comment l'application se
+         comporte, ce qu'elle garde de vous. La route #compte continue de
+         repondre — les liens et les favoris d'avant ne doivent pas casser — mais
+         le routeur la renvoie sur #parametres. Voir showPage(). -->
 
     <!-- ==================== ADMINISTRATION ====================
          Coquille vide : toute la console est bâtie par assets/admin/*.js, et
@@ -7853,6 +7863,11 @@ if(!RECO_OK){
     var barre=name.indexOf('/');
     if(barre>0){ reste=name.slice(barre+1); name=name.slice(0,barre); }
     if(PAGES.indexOf(name)<0){ name='accueil'; reste=''; }
+    /* « Compte » a ete fondu dans « Parametres ». La route reste dans PAGES et
+       continue de repondre, parce que des liens et des favoris la designent —
+       la faire tomber sur l'accueil serait la casser silencieusement. On la
+       renvoie donc, en corrigeant l'adresse affichee. */
+    if(name==='compte'){ name='parametres'; reste=''; detourne=true; }
     // Garde d'accès : une page applicative exige d'être « connecté » → sinon, écran de connexion.
     if(macroState(name)==='app' && !authed){ pendingTarget=name; name='login'; reste=''; }
     /* La console d'administration exige le rôle, pas seulement une session. Deux

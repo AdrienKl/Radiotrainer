@@ -567,8 +567,12 @@
 
     /* La page se recharge à chaque arrivée : un vol terminé entre-temps doit
        apparaître dans « Votre pratique » sans avoir à rafraîchir l'onglet. */
+    /* La page « Compte » a ete fondue dans « Parametres » : c'est desormais
+       l'arrivee sur #parametres qui declenche la lecture. Le nom des identifiants
+       (cpt*) n'a pas bouge — les renommer aurait fait un diff illisible pour un
+       deplacement de balises, et « cpt » dit toujours ce qu'il designe. */
     window.addEventListener('rt:page', function(ev){
-      if (ev.detail && ev.detail.page === 'compte'){
+      if (ev.detail && ev.detail.page === 'parametres'){
         msg('cptIdMsg',''); msg('cptMdpMsg',''); msg('cptDonneesMsg',''); msg('cptQcmMsg','');
         charger();
       }
@@ -577,7 +581,7 @@
        ne doit pas laisser ici le profil de personne. */
     window.addEventListener('rt:auth', function(){
       if (document.body.classList.contains('state-app')
-          && location.hash.indexOf('#compte') === 0) charger();
+          && location.hash.indexOf('#parametres') === 0) charger();
     });
   }
 

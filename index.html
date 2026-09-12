@@ -1149,6 +1149,15 @@
   /* Une adresse e-mail est longue : les 210 px de .set-input la tronquaient en
      plein milieu, ce qui donne à lire une adresse fausse. */
   #cptMail{ max-width:300px; width:100%; }
+  /* Les objectifs sont la seule question à choix multiple : des cases à cocher,
+     empilées. En ligne, elles tomberaient en colonnes irrégulières selon la
+     longueur des libellés, et on ne saurait plus quelle case va avec quel mot. */
+  .cpt-coches{ display:flex; flex-direction:column; gap:7px; min-width:min(260px,100%); }
+  .cpt-coches label{ display:flex; align-items:flex-start; gap:8px; font-size:13px;
+    line-height:1.4; color:var(--ink); cursor:pointer; }
+  .cpt-coches input{ margin:1px 0 0; width:16px; height:16px; flex:none; accent-color:var(--violet); }
+  #cptQcm .set-row select{ min-width:min(260px,100%); }
+  #cptQcmDroits{ margin-top:14px; padding-top:13px; border-top:1px solid var(--border); }
   #page-compte .auth-msg{ display:block; }
   #page-compte .auth-msg.hidden{ display:none; }
 
@@ -3719,9 +3728,36 @@
           <div class="set-card">
             <h3>Identité</h3>
             <p class="set-note" id="cptIdNote">Ce que voit le contrôleur, et ce qui vous identifie.</p>
-            <div class="set-row">
+            <!-- « Nom affiché » est le champ d'AVANT la migration : à cette époque
+                 `profiles` n'avait ni prénom ni nom, et display_name était la seule
+                 chose qu'on savait de quelqu'un. Les deux blocs coexistent et
+                 s'excluent — compte.js montre l'un ou l'autre selon que les
+                 colonnes existent — pour que la page reste utilisable si le site
+                 est déployé avant l'exécution de sql/001-inscription.sql. -->
+            <div class="set-row" id="cptLigneNomAffiche">
               <div class="set-lbl"><b>Nom affiché</b><span>Utilisé dans la console et sur vos récapitulatifs.</span></div>
               <input class="set-input" id="cptNom" type="text" autocomplete="name" maxlength="60">
+            </div>
+            <div class="set-row hidden" id="cptLignePseudo">
+              <div class="set-lbl"><b>Nom d'utilisateur</b>
+                <span>Choisi à l'inscription, et unique. Écrivez-nous pour le changer.</span></div>
+              <span class="set-val" id="cptPseudo">—</span>
+            </div>
+            <div class="set-row hidden" id="cptLignePrenom">
+              <div class="set-lbl"><b>Prénom</b><span>L'application s'en sert pour vous appeler par votre nom.</span></div>
+              <input class="set-input" id="cptPrenom" type="text" autocomplete="given-name" maxlength="60">
+            </div>
+            <div class="set-row hidden" id="cptLigneNomFamille">
+              <div class="set-lbl"><b>Nom de famille</b>
+                <span>Facultatif, et aujourd'hui inutilisé. Vous pouvez le laisser vide, ou l'effacer.</span></div>
+              <input class="set-input" id="cptNomFamille" type="text" autocomplete="family-name" maxlength="60">
+            </div>
+            <div class="set-row hidden" id="cptLigneAero">
+              <div class="set-lbl"><b>Aérodrome habituel</b>
+                <span>Facultatif. Sert à vous proposer les fréquences et les exercices de votre terrain.</span></div>
+              <input class="set-input set-short" id="cptAero" type="text" list="cptAeroListe"
+                     spellcheck="false" placeholder="ex : LFOP">
+              <datalist id="cptAeroListe"></datalist>
             </div>
             <div class="set-row">
               <div class="set-lbl"><b>Indicatif radio</b><span>Votre immatriculation fictive, reprise par défaut dans les exercices.</span></div>
@@ -3746,6 +3782,37 @@
               <button class="btn small" id="cptAnnuler" type="button">Annuler</button>
             </div>
             <p class="set-note auth-msg hidden" id="cptIdMsg"></p>
+          </div>
+
+          <!-- ==== Le questionnaire d'inscription, rectifiable ====
+               Ce n'est pas un confort. Un questionnaire obligatoire dont les
+               réponses ne peuvent plus être corrigées ni retirées est un piège à
+               sens unique, et c'est exactement ce que le RGPD interdit
+               (art. 16, rectification, et art. 17, effacement). Les questions et
+               les choix sont lus dans assets/inscription.js : proposer ici
+               autre chose qu'à la collecte rendrait la correction illusoire.
+
+               La carte reste masquée tant que les colonnes n'existent pas, pour
+               que la page survive à un déploiement antérieur à la migration. -->
+          <div class="set-card hidden" id="cptCarteQcm">
+            <h3>Votre profil de pilote</h3>
+            <p class="set-note">Ce que vous avez répondu à l'inscription. Tout est modifiable, et
+              l'application s'en sert pour choisir vos exercices.</p>
+            <div id="cptQcm"></div>
+            <div class="set-actions">
+              <button class="btn cta small" id="cptQcmEnregistrer" type="button">Enregistrer</button>
+              <button class="btn small" id="cptQcmAnnuler" type="button">Annuler</button>
+            </div>
+            <p class="set-note auth-msg hidden" id="cptQcmMsg"></p>
+            <!-- Dire la vérité sur la portée de l'effacement plutôt que d'offrir
+                 un bouton qui n'effacerait rien d'utile. La question marketing
+                 repose sur le consentement : elle se retire vraiment. Les autres
+                 réponses font marcher le service ; les effacer sans fermer le
+                 compte laisserait une application incapable de choisir un
+                 exercice. Pour celles-là, l'effacement = la fermeture du compte. -->
+            <p class="set-note" id="cptQcmDroits">La réponse à « où nous avez-vous connu » peut être
+              retirée à tout moment : choisissez « aucune réponse ». Les autres réponses servent à faire
+              fonctionner les exercices — pour les effacer, il faut fermer le compte (voir plus bas).</p>
           </div>
 
           <div class="set-card">

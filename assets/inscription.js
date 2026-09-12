@@ -589,7 +589,27 @@
     _reponses:  function(){ return etat.reponses; },
     _manquante: function(){ var q = manquante(); return q ? q.id : null; },
     _aero:      function(v){ return resoudreAerodrome(v); },
-    _pseudoOk:  function(){ return pseudoLibre; }
+    _pseudoOk:  function(){ return pseudoLibre; },
+
+    /* La définition du questionnaire, pour la page Compte. Elle doit y afficher
+       EXACTEMENT les mêmes questions et les mêmes choix : la rectification
+       (RGPD art. 16) n'a aucun sens si le formulaire de correction propose
+       autre chose que le formulaire de collecte. Deux copies de ces listes
+       finiraient par divergier, et c'est la copie oubliée qui écrirait en base
+       une valeur que la contrainte CHECK refuse.
+       Copie de surface : la liste est à nous, les questions sont partagées. */
+    questions: function(){ return QUESTIONS.slice(); },
+    /* Le libellé d'une valeur enregistrée, pour l'afficher en clair. Le texte
+       libre d'« Autre » est stocké sous la forme « autre: hélico de montagne ». */
+    libelle: function(idQuestion, valeur){
+      var q = QUESTIONS.filter(function(x){ return x.id === idQuestion; })[0];
+      if (!q || !valeur) return '';
+      var v = String(valeur), libre = '';
+      if (v.indexOf('autre:') === 0){ libre = v.slice(6).trim(); v = 'autre'; }
+      var c = q.choix.filter(function(x){ return x[0] === v; })[0];
+      var t = c ? c[1] : v;
+      return libre ? (t + ' — ' + libre) : t;
+    }
   };
 
   window.addEventListener('rt:page', function(ev){

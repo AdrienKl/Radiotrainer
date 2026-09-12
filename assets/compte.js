@@ -87,14 +87,220 @@
     else bloc.classList.add('hidden');
   }
 
+  /* Les colonnes du questionnaire existent-elles ? On le lit dans la FORME du
+     profil, pas dans sa valeur : une colonne absente donne `undefined`, une
+     colonne vide donne `null`, et les deux sont fausses. Confondre les deux
+     ferait afficher un formulaire vide qui échouerait à l'enregistrement — ou,
+     pire, cacherait à quelqu'un ses propres réponses.
+     Tant que sql/001-inscription.sql n'a pas été exécuté, la page se replie
+     donc sur son ancien visage : « Nom affiché », et pas de questionnaire. */
+  function aLesColonnes(p){ return !!(p && ('pseudo' in p)); }
+
   function peindreProfil(p, email){
     profilAffiche = p;
+    var neuf = aLesColonnes(p);
+
     if ($('cptNom'))        $('cptNom').value        = (p && p.display_name) || '';
     if ($('cptIndicatif'))  $('cptIndicatif').value  = (p && p.callsign) || '';
     if ($('cptMail'))       $('cptMail').value       = email || (p && p.email) || '';
     if ($('cptDepuis'))     $('cptDepuis').textContent = dateFr(p && p.created_at);
     if ($('cptRole'))       $('cptRole').textContent = LABEL_ROLE[p && p.role] || (p && p.role) || '—';
     if ($('cptPlan'))       $('cptPlan').textContent = LABEL_PLAN[p && p.plan] || (p && p.plan) || '—';
+
+    /* L'ancien champ et les nouveaux s'excluent : « Nom affiché » se calcule
+       désormais à partir du prénom et du nom, et laisser les deux modifiables
+       créerait deux sources de vérité pour la même chose. */
+    montrer('cptLigneNomAffiche', !neuf);
+    ['cptLignePseudo','cptLignePrenom','cptLigneNomFamille','cptLigneAero'].forEach(function(id){
+      montrer(id, neuf);
+    });
+    montrer('cptCarteQcm', neuf);
+    if (!neuf) return;
+
+    if ($('cptPseudo'))     $('cptPseudo').textContent = (p && p.pseudo) || '—';
+    if ($('cptPrenom'))     $('cptPrenom').value     = (p && p.prenom) || '';
+    if ($('cptNomFamille')) $('cptNomFamille').value = (p && p.nom) || '';
+    if ($('cptAero'))       $('cptAero').value       = (p && p.aerodrome) || '';
+    remplirAerodromes();
+    peindreQcm(p);
+  }
+
+  function montrer(id, oui){
+    var e = $(id); if (e) e.classList.toggle('hidden', !oui);
+  }
+
+  function remplirAerodromes(){
+    var dl = $('cptAeroListe');
+    if (!dl || dl.childElementCount) return;
+    if (typeof AERODROMES === 'undefined') return;
+    AERODROMES.forEach(function(a){
+      if (!a || !a.icao) return;
+      var o = document.createElement('option');
+      o.value = a.icao; if (a.nom) o.label = a.nom;
+      dl.appendChild(o);
+    });
+  }
+
+  /* --------------------------------------------------------------------------
+     LE QUESTIONNAIRE, RECTIFIABLE
+     --------------------------------------------------------------------------
+     Les questions viennent de assets/inscription.js : c'est la MÊME définition
+     qu'à la collecte. Proposer ici d'autres choix rendrait la rectification
+     illusoire, et la copie oubliée finirait par écrire une valeur que la
+     contrainte CHECK refuse.
+
+     Des <select> et des cases à cocher, et non les gros boutons du parcours :
+     la page Compte est faite de lignes `.set-row`, et six blocs de boutons y
+     feraient une page trois fois plus longue que tout le reste réuni.
+     ----------------------------------------------------------------------- */
+  function questions(){
+    return (window.RTInscription && RTInscription.questions) ? RTInscription.questions() : [];
+  }
+
+  function peindreQcm(p){
+    var hote = $('cptQcm'); if (!hote) return;
+    hote.textContent = '';
+    var profilPilote = (p && p.profil_pilote) || '';
+    if (profilPilote.indexOf('autre:') === 0) profilPilote = 'autre';
+
+    questions().forEach(function(q){
+      var valeur = p ? p[q.colonne] : null;
+
+      var ligne = document.createElement('div');
+      ligne.className = 'set-row';
+      ligne.setAttribute('data-q', q.id);
+
+      var lbl = document.createElement('div');
+      lbl.className = 'set-lbl';
+      var b = document.createElement('b');
+      b.textContent = q.titre;
+      lbl.appendChild(b);
+      var sp = document.createElement('span');
+      /* Sur la page Compte, la mention « facultatif » doit être encore plus
+         nette qu'à l'inscription : c'est ici qu'on vient retirer une réponse. */
+      sp.textContent = q.facultative
+        ? "Facultatif — vous pouvez retirer votre réponse à tout moment."
+        : (q.sous || '');
+      lbl.appendChild(sp);
+      ligne.appendChild(lbl);
+
+      if (q.type === 'plusieurs'){
+        var pris = Array.isArray(valeur) ? valeur.map(racine) : [];
+        var groupe = document.createElement('div');
+        groupe.className = 'cpt-coches';
+        q.choix.forEach(function(c){
+          var l = document.createElement('label');
+          var i = document.createElement('input');
+          i.type = 'checkbox'; i.value = c[0];
+          i.checked = pris.indexOf(c[0]) >= 0;
+          l.appendChild(i);
+          l.appendChild(document.createTextNode(' ' + c[1]));
+          groupe.appendChild(l);
+        });
+        ligne.appendChild(groupe);
+      } else {
+        var sel = document.createElement('select');
+        sel.className = 'set-input';
+        /* L'option vide EST le droit à l'effacement, mis là où on le cherche.
+           Elle n'est offerte que sur les questions facultatives : vider
+           `profil_pilote` laisserait l'application sans niveau de départ. */
+        if (q.facultative){
+          var vide = document.createElement('option');
+          vide.value = ''; vide.textContent = '— aucune réponse —';
+          sel.appendChild(vide);
+        }
+        q.choix.forEach(function(c){
+          var o = document.createElement('option');
+          o.value = c[0]; o.textContent = c[1];
+          sel.appendChild(o);
+        });
+        sel.value = racine(valeur) || '';
+        if (q.id === 'profil') sel.addEventListener('change', function(){ majVisibiliteQcm(); });
+        ligne.appendChild(sel);
+      }
+
+      hote.appendChild(ligne);
+    });
+    majVisibiliteQcm();
+  }
+
+  /* « autre: hélico de montagne » → « autre ». La précision libre n'est pas
+     rééditable ici : un champ de plus par question pour un détail facultatif
+     alourdirait six lignes sur six. Elle est conservée telle quelle si le choix
+     ne change pas (voir champsQcm). */
+  function racine(v){
+    var x = String(v == null ? '' : v);
+    return x.indexOf('autre:') === 0 ? 'autre' : x;
+  }
+
+  function majVisibiliteQcm(){
+    var sel = document.querySelector('#cptQcm .set-row[data-q="profil"] select');
+    var courant = sel ? sel.value : '';
+    questions().forEach(function(q){
+      if (!q.siProfil) return;
+      var ligne = document.querySelector('#cptQcm .set-row[data-q="'+q.id+'"]');
+      if (ligne) ligne.classList.toggle('hidden', q.siProfil.indexOf(courant) < 0);
+    });
+  }
+
+  function champsQcm(){
+    var champs = {}, p = profilAffiche || {};
+    questions().forEach(function(q){
+      var ligne = document.querySelector('#cptQcm .set-row[data-q="'+q.id+'"]');
+      if (!ligne) return;
+
+      if (q.siProfil && ligne.classList.contains('hidden')){
+        champs[q.colonne] = (q.type === 'plusieurs') ? [] : null;
+        return;
+      }
+      if (q.type === 'plusieurs'){
+        champs[q.colonne] = [].map.call(ligne.querySelectorAll('input:checked'), function(i){
+          return conserverPrecision(q, i.value, p);
+        });
+        return;
+      }
+      var v = ligne.querySelector('select').value;
+      champs[q.colonne] = v ? conserverPrecision(q, v, p) : null;
+    });
+    return champs;
+  }
+
+  /* Si le choix reste « autre » et qu'une précision avait été saisie à
+     l'inscription, on la garde : la faire disparaître au premier enregistrement
+     depuis cette page serait une perte silencieuse. */
+  function conserverPrecision(q, v, p){
+    if (v !== 'autre') return v;
+    var avant = p[q.colonne];
+    if (q.type === 'plusieurs'){
+      var t = (Array.isArray(avant) ? avant : []).filter(function(x){ return String(x).indexOf('autre:') === 0; })[0];
+      return t || 'autre';
+    }
+    return (String(avant == null ? '' : avant).indexOf('autre:') === 0) ? avant : 'autre';
+  }
+
+  function enregistrerQcm(){
+    var c = cli(), u = window.RTAuth && window.RTAuth.utilisateur();
+    if (!c || !u) return msg('cptQcmMsg', "Vous n'êtes pas connecté.");
+
+    var champs = champsQcm();
+    /* Les mêmes obligations qu'à l'inscription, pour la même raison : ces deux
+       réponses règlent le choix des exercices, et l'application n'a pas de
+       comportement défini sans elles. Les questions facultatives, elles,
+       peuvent parfaitement repartir à vide — c'est le but. */
+    if (!champs.profil_pilote) return msg('cptQcmMsg', "Indiquez où vous en êtes : c'est ce qui règle la difficulté.");
+    if (!champs.niveau_radio)  return msg('cptQcmMsg', "Indiquez votre niveau à la radio.");
+    if (!(champs.objectifs && champs.objectifs.length))
+      return msg('cptQcmMsg', "Gardez au moins un objectif : c'est ce qui choisit vos exercices.");
+
+    msg('cptQcmMsg', '');
+    var libre = occuper($('cptQcmEnregistrer'), 'Enregistrement…');
+    c.from('profiles').update(champs).eq('id', u.id)
+      .then(function(r){
+        if (r.error) throw r.error;
+        libre(); msg('cptQcmMsg', 'Enregistré.', 'ok');
+        return window.RTAuth.rechargerProfil().then(charger, charger);
+      })
+      .catch(function(e){ libre(); msg('cptQcmMsg', traduire(e)); });
   }
 
   function peindrePratique(v, jours) {
@@ -152,10 +358,35 @@
     var c = cli(), u = window.RTAuth && window.RTAuth.utilisateur();
     if (!c || !u) return msg('cptIdMsg', "Vous n'êtes pas connecté.");
 
-    var nom  = ($('cptNom').value || '').trim();
+    var neuf = aLesColonnes(profilAffiche);
     var ind  = ($('cptIndicatif').value || '').trim().toUpperCase();
     var mail = ($('cptMail').value || '').trim();
-    if (!nom) return msg('cptIdMsg', "Le nom affiché ne peut pas être vide.");
+    var aEcrire = { callsign: ind || null };
+
+    if (!neuf){
+      /* Avant la migration : seul display_name existe. */
+      var nom = ($('cptNom').value || '').trim();
+      if (!nom) return msg('cptIdMsg', "Le nom affiché ne peut pas être vide.");
+      aEcrire.display_name = nom;
+    } else {
+      var prenom = ($('cptPrenom').value || '').trim();
+      var famille = ($('cptNomFamille').value || '').trim();
+      if (!prenom) return msg('cptIdMsg', "Votre prénom est nécessaire : l'application s'en sert pour vous appeler par votre nom.");
+
+      var aero = (window.RTInscription && RTInscription._aero)
+               ? RTInscription._aero($('cptAero').value) : { vide:true };
+      if (aero.inconnu)
+        return msg('cptIdMsg', "Ce terrain n'est pas dans notre base. Choisissez-le dans la liste, "
+                             + "ou laissez le champ vide — il est facultatif.");
+
+      aEcrire.prenom = prenom;
+      aEcrire.nom = famille || null;
+      aEcrire.aerodrome = aero.vide ? null : aero.icao;
+      /* display_name reste la colonne que lisent la barre latérale et la console
+         d'administration : on la recalcule ici, pour qu'il n'y ait jamais deux
+         réponses à « comment s'appelle cette personne ». */
+      aEcrire.display_name = [prenom, famille].filter(Boolean).join(' ');
+    }
 
     var mailAvant = u.email || '';
     var changeMail = mail && mail.toLowerCase() !== mailAvant.toLowerCase();
@@ -165,7 +396,7 @@
 
     /* Le profil d'abord. S'il échoue, on ne touche pas à l'adresse : mieux vaut
        une page inchangée qu'un compte à moitié modifié. */
-    c.from('profiles').update({ display_name:nom, callsign:ind || null })
+    c.from('profiles').update(aEcrire)
       .eq('id', u.id)
       .then(function(r){
         if (r.error) throw r.error;
@@ -275,6 +506,10 @@
       peindreProfil(profilAffiche, (window.RTAuth.utilisateur()||{}).email);
       msg('cptIdMsg', '');
     });
+    if ((e = $('cptQcmEnregistrer'))) e.addEventListener('click', enregistrerQcm);
+    if ((e = $('cptQcmAnnuler')))     e.addEventListener('click', function(){
+      peindreQcm(profilAffiche); msg('cptQcmMsg', '');
+    });
     if ((e = $('cptChangerMdp')))   e.addEventListener('click', changerMotDePasse);
     if ((e = $('cptExport')))       e.addEventListener('click', exporter);
     if ((e = $('cptDeconnexion')))  e.addEventListener('click', function(){
@@ -294,7 +529,7 @@
        apparaître dans « Votre pratique » sans avoir à rafraîchir l'onglet. */
     window.addEventListener('rt:page', function(ev){
       if (ev.detail && ev.detail.page === 'compte'){
-        msg('cptIdMsg',''); msg('cptMdpMsg',''); msg('cptDonneesMsg','');
+        msg('cptIdMsg',''); msg('cptMdpMsg',''); msg('cptDonneesMsg',''); msg('cptQcmMsg','');
         charger();
       }
     });

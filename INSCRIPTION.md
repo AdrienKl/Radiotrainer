@@ -145,7 +145,32 @@ prétendre vérifier l'âge réel serait un mensonge.
 | **Vérification anti-robot** | L'emplacement existe (`#insCaptcha`), il est vide, et il le dit. Le jour venu : hCaptcha ou Turnstile via Supabase → Auth → Settings → Bot protection, qui valide le jeton **côté serveur**. Un contrôle écrit dans la page ne protégerait rien — la page appartient au visiteur. |
 | **Le texte des CGU** | Les deux pages (`#cgu`, `#confidentialite`) s'annoncent comme des chantiers et décrivent ce qu'elles contiendront. Y écrire du faux juridique serait pire que de n'avoir rien : un texte inventé engage autant qu'un vrai. La version acceptée est enregistrée sous `brouillon-0`, ce qui permettra de retrouver tout le monde à qui redemander son accord : `where cgu_version = 'brouillon-0'`. |
 | **La suppression de compte** | Supprimer une ligne de `auth.users` exige la clé secrète, qui ne doit jamais approcher le navigateur. La page Compte explique donc la démarche au lieu d'offrir un bouton qui échouerait. |
-| **Les réponses modifiables** | **À faire, et c'est une obligation, pas un confort** (RGPD art. 16 et 17) : les réponses du questionnaire doivent être consultables, corrigeables et supprimables depuis la page Compte. Sans ça, un questionnaire obligatoire est un piège à sens unique. |
+| ~~Les réponses modifiables~~ | **Fait.** La page Compte affiche le questionnaire en entier, avec les mêmes questions et les mêmes choix (lus dans `RTInscription.questions()`). Voir § 4.1. |
+
+### 4.1 La rectification, sur la page Compte
+
+Un questionnaire obligatoire dont les réponses ne peuvent plus être corrigées ni
+retirées est un piège à sens unique — c'est précisément ce que le RGPD interdit
+(art. 16, rectification ; art. 17, effacement). La carte **« Votre profil de
+pilote »** affiche donc les six questions, telles quelles.
+
+- Les questions et les choix viennent de `RTInscription.questions()` : la
+  **même** définition qu'à la collecte. Proposer ici autre chose rendrait la
+  rectification illusoire, et la copie oubliée finirait par écrire une valeur
+  que la contrainte `CHECK` refuse.
+- **« Aucune réponse » n'est offert que sur les questions facultatives.** C'est
+  là que se retire un consentement, et c'est mis là où on le cherche. Vider
+  `profil_pilote` ou `niveau_radio` laisserait en revanche l'application sans
+  niveau de départ : pour ces réponses-là, l'effacement passe par la fermeture
+  du compte, et la carte le dit au lieu d'offrir un bouton qui mentirait.
+- La carte **« Identité »** a changé : « Nom affiché » cède la place au prénom,
+  au nom de famille, au nom d'utilisateur (en lecture seule) et à l'aérodrome.
+  `display_name` est désormais **calculé** à partir du prénom et du nom — laisser
+  les deux modifiables créerait deux réponses à « comment s'appelle cette
+  personne ».
+- Les deux cartes restent **masquées tant que les colonnes n'existent pas**, et
+  la page se replie sur son ancien visage. C'est ce qui lui permet de survivre à
+  un déploiement antérieur à la migration.
 
 ---
 
@@ -213,7 +238,16 @@ conditionnelle des heures de vol, questions obligatoires contre question
 facultative, champ libre d'« Autre », forme du nom d'utilisateur, résolution de
 l'aérodrome par code **ou** par nom, pages légales, secours par code.
 
-La suite détecte elle-même si la migration est passée et le dit.
+`scratchpad/cpt2.py` — la page Compte : le repli sur l'ancien visage avant la
+migration, et après elle les six questions, l'option « aucune réponse » présente
+sur la seule question facultative et absente des autres, et l'identité des
+listes avec celles de l'inscription.
+
+Les deux suites détectent elles-mêmes si la migration est passée et le disent.
+`cpt2.py` a deux moitiés : **relancez-la après la migration**, c'est la seconde
+qui vérifie le questionnaire. De même, `cpt1.py` § 4 confirme que
+`profiles_garde()` repousse une tentative de promotion — la migration
+**remplace** cette fonction, donc c'est le contrôle à refaire en premier.
 
 **Ce qui n'est pas testé automatiquement, et ne peut pas l'être** : l'aller-
 retour réel de l'e-mail. Personne ici ne peut lire votre boîte. Après les trois

@@ -194,6 +194,11 @@
   function emailPlausible(v){ return /^[^\s@]+@[^\s@.]+\.[^\s@]{2,}$/.test(v); }
 
   function envoyerCode(){
+    /* Le bandeau le dit déjà, mais il peut avoir été survolé : mieux vaut un
+       refus net qu'un code envoyé sur une adresse qui remplacerait la session
+       en cours au milieu du parcours. */
+    if (sessionEnTrop())
+      return msg(1, "Vous êtes déjà connecté. Déconnectez-vous d'abord pour créer un autre compte.");
     var email = ($('insEmail').value || '').trim();
     if (!emailPlausible(email)) return msg(1, "Vérifiez votre adresse e-mail.");
     if (!$('insCgu').checked)   return msg(1, "Vous devez accepter les conditions d'utilisation pour créer un compte.");
@@ -612,18 +617,49 @@
     }
   };
 
+  /* Session déjà ouverte sur l'étape 1 : on affiche un bandeau, on ne navigue
+     PAS. La première version appelait rtEntrer() ici, et cliquer « S'inscrire »
+     depuis l'écran de connexion ouvrait donc l'application sans qu'on ait rien
+     saisi. La session derrière était légitime, mais une navigation que
+     l'utilisateur n'a pas demandée reste un bug — et sur un poste partagé,
+     c'était la session du précédent qui s'ouvrait d'un clic. */
+  function bandeauDeja(oui){
+    var b = $('insDeja'); if (!b) return;
+    b.classList.toggle('hidden', !oui);
+    if (!oui) return;
+    var m = $('insDejaMail');
+    if (m) m.textContent = (window.RTAuth && (RTAuth.utilisateur()||{}).email) || 'cette adresse';
+  }
+
+  /* Créer un compte pendant qu'une session est ouverte écrirait les réponses du
+     questionnaire dans le profil de la session en cours si quoi que ce soit
+     tournait mal entre-temps. Exiger la déconnexion coûte un clic et supprime
+     toute la classe de demi-états. Ne concerne que l'étape 1 : une reprise de
+     parcours a forcément une session, et c'est normal. */
+  function sessionEnTrop(){
+    return !!(window.RTAuth && RTAuth.profil() && !RTInscription.aReprendre());
+  }
+
   window.addEventListener('rt:page', function(ev){
     if (!ev.detail || ev.detail.page !== 'signup') return;
     if (!window.RTAuth) return;
     if (RTInscription.aReprendre()){
       etat.email = (RTAuth.utilisateur() || {}).email || etat.email;
       var e = $('insRappelMail'); if (e) e.textContent = etat.email;
+      bandeauDeja(false);
       aller(etapeAReprendre());
-    } else if (RTAuth.profil()){
-      /* Compte complet arrivant sur l'inscription : rien à faire ici. Le laisser
-         devant un formulaire vide donnerait à croire qu'il doit se réinscrire. */
-      if (window.rtEntrer) window.rtEntrer();
+      return;
     }
+    bandeauDeja(!!RTAuth.profil());
+  });
+
+  /* Se déconnecter depuis le bandeau doit le faire disparaître sans recharger :
+     l'utilisateur vient de cliquer pour pouvoir s'inscrire, le laisser devant
+     un avertissement périmé serait absurde. */
+  window.addEventListener('rt:auth', function(){
+    if (!document.body.classList.contains('state-auth')) return;
+    if (location.hash.indexOf('#signup') !== 0) return;
+    bandeauDeja(sessionEnTrop());
   });
 
   /* --------------------------------------------------------------------------
@@ -637,6 +673,18 @@
     $('insMdpOk').addEventListener('click', poserMotDePasse);
     $('insQcmOk').addEventListener('click', enregistrerQcm);
     $('insTerminer').addEventListener('click', terminer);
+
+    $('insDejaSortir').addEventListener('click', function(){
+      msg(1, '');
+      /* La déconnexion ramène à l'accueil (rtSortir), or la personne vient de
+         cliquer pour pouvoir s'inscrire : on la remet sur l'inscription.
+         Il faut ATTENDRE la promesse. Une première version posait le hash après
+         60 ms : le minuteur partait avant que signOut() ne réponde, et le retour
+         à l'accueil l'écrasait — on atterrissait sur la vitrine. */
+      var revenir = function(){ location.hash = '#signup'; };
+      if (window.RTAuth) RTAuth.deconnexion().then(revenir, revenir);
+      else { if (window.rtSortir) window.rtSortir(); revenir(); }
+    });
 
     $('insRetourMail').addEventListener('click', function(){ msg(2, ''); aller(1); });
     $('insRenvoyer').addEventListener('click', function(){

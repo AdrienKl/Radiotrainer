@@ -1094,6 +1094,16 @@
      pas soumis au seuil, contrairement aux libellés du fil d'étapes. */
   .ins-liens span{ color:var(--ink-2); opacity:.5; }
   .ins-captcha:not([hidden]){ margin:0 0 16px; min-height:70px; }
+  /* Le bandeau « déjà connecté ». Traité comme un avertissement et non comme
+     une note : c'est lui qui remplace une navigation surprise, il doit donc se
+     voir avant qu'on ne commence à taper une adresse. */
+  .ins-deja{ margin:0 0 18px; padding:13px 15px; border-radius:11px;
+    background:var(--violet-soft); border:1px solid var(--border);
+    border-left:3px solid var(--violet);
+    font-size:13px; line-height:1.5; color:var(--ink); }
+  .ins-deja b{ color:var(--ink); }
+  .ins-deja #insDejaMail{ font-family:var(--mono); font-size:.94em; word-break:break-all; }
+  .ins-deja__act{ display:flex; flex-wrap:wrap; gap:8px; margin-top:11px; }
   /* Le secours par code, sur l'écran de connexion : présent mais discret. Mis
      en avant, il détournerait du mot de passe ceux qui s'en souviennent très
      bien — et chaque envoi coûte un des deux e-mails autorisés par heure. */
@@ -2650,6 +2660,22 @@
 
           <!-- ---------- ÉTAPE 1 : adresse, conditions, âge ---------- -->
           <div class="ins-etape" data-etape="1">
+            <!-- Arriver ici avec une session déjà ouverte : on le DIT, on ne
+                 bouge personne. La première version appelait rtEntrer() à la
+                 place, si bien que cliquer « S'inscrire » depuis l'écran de
+                 connexion ouvrait l'application sans rien saisir — ce qui, vu du
+                 siège de l'utilisateur, ressemble exactement à un trou de
+                 sécurité. Une navigation qu'on n'a pas demandée est toujours un
+                 bug, même quand la session derrière est légitime. Et sur un poste
+                 partagé, c'est la session de quelqu'un d'autre qui s'ouvrirait. -->
+            <div class="ins-deja hidden" id="insDeja">
+              <b>Vous êtes déjà connecté</b> avec <span id="insDejaMail">cette adresse</span>.
+              Pour créer un autre compte, déconnectez-vous d'abord.
+              <span class="ins-deja__act">
+                <button class="btn small cta" type="button" data-page="tableau">Aller à l'application</button>
+                <button class="btn small" type="button" id="insDejaSortir">Se déconnecter</button>
+              </span>
+            </div>
             <h2 class="auth-title">Créer un compte</h2>
             <p class="auth-sub">On commence par votre adresse. Nous vous y enverrons un code à six chiffres.</p>
             <div class="auth-field">

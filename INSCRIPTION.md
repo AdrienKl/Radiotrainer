@@ -96,6 +96,24 @@ formulaire ordinaire. Deux mécanismes le rattrapent :
   laisserait un compte mort **et** une adresse définitivement inutilisable,
   puisque déjà prise.
 
+### 2.2 Arriver sur l'inscription avec une session déjà ouverte
+
+Un bandeau le dit, et **rien ne bouge**. Une première version appelait
+`rtEntrer()` à cet endroit : cliquer « S'inscrire » depuis l'écran de connexion
+ouvrait alors l'application sans qu'on ait rien saisi. La session derrière était
+légitime — elle dormait en stockage local — mais du siège de l'utilisateur ça
+ressemble exactement à un trou de sécurité, et sur un poste partagé c'était la
+session du précédent qui s'ouvrait d'un clic.
+
+**Une navigation que l'utilisateur n'a pas demandée est toujours un bug**, même
+quand elle est techniquement justifiée. Le bandeau propose les deux issues
+possibles — aller à l'application, ou se déconnecter pour s'inscrire — et
+`envoyerCode()` refuse net tant qu'une session est ouverte, pour qu'un bandeau
+survolé ne suffise pas à envoyer un code qui remplacerait la session en cours au
+milieu du parcours.
+
+Garde-fou : `scratchpad/ins_deja.py`.
+
 ---
 
 ## 3. Obligatoire ou facultatif : le raisonnement
@@ -210,6 +228,18 @@ Nulle part dans le navigateur.
   assumé (tous les sites qui affichent « ce nom est pris » en sont un). Il n'y a
   **aucun** oracle sur les adresses e-mail : aucune fonction n'en prend en
   argument, et « identifiants incorrects » ne dit pas lequel des deux est faux.
+- **Le secours par code n'en est pas un non plus, mais il a fallu le corriger.**
+  Supabase répond `Signups not allowed for otp` quand on demande un code pour
+  une adresse sans compte. Le motif générique des traductions l'attrapait et
+  affichait « Les inscriptions sont fermées » — faux, et surtout **différent** du
+  message affiché quand le code part vraiment : comparer les deux réponses
+  suffisait à savoir quelles adresses ont un compte. Le gestionnaire affiche
+  désormais la **même** phrase au conditionnel dans les deux cas, par la même
+  fonction (`neutre()`), et ouvre le champ de code dans les deux cas. L'identité
+  est donc structurelle, pas seulement observée. Les autres pannes (réseau,
+  saturation d'envoi) continuent de se dire : les taire laisserait quelqu'un
+  attendre un code qui ne partira jamais. Garde-fou :
+  `scratchpad/ins_secours.py`.
 - **`inscription_jalon(text, text)`** — les cinq horodatages (`cgu_le`,
   `age_15_le`, `mdp_le`, `onboarding_le`, `cgu_version`) sont des **preuves**.
   Elles sont datées à l'horloge du serveur, et `profiles_garde()` interdit au
@@ -243,7 +273,20 @@ migration, et après elle les six questions, l'option « aucune réponse » pré
 sur la seule question facultative et absente des autres, et l'identité des
 listes avec celles de l'inscription.
 
-Les deux suites détectent elles-mêmes si la migration est passée et le disent.
+`scratchpad/ins_deja.py` — le bandeau « déjà connecté » : « S'inscrire » ne
+navigue plus, l'envoi du code est refusé tant qu'une session est ouverte, et la
+déconnexion depuis le bandeau ramène bien sur l'inscription.
+
+`scratchpad/ins_secours.py` — le secours par code répond la même chose que
+l'adresse ait un compte ou non.
+
+`scratchpad/ins_contraste.py` — 90 relevés de contraste sur les pixels réels,
+dans les deux thèmes.
+
+`scratchpad/lancer_tout.sh` — enchaîne les huit suites.
+
+Les deux suites du parcours détectent elles-mêmes si la migration est passée et
+le disent.
 `cpt2.py` a deux moitiés : **relancez-la après la migration**, c'est la seconde
 qui vérifie le questionnaire. De même, `cpt1.py` § 4 confirme que
 `profiles_garde()` repousse une tentative de promotion — la migration

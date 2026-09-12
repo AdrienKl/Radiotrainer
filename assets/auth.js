@@ -57,6 +57,18 @@
        exacte n'a pas d'intérêt — son adresse n'est pas acceptée, point. */
     [/unable to validate email|invalid format|address .* is invalid|email address.*invalid/i,
                                           "Cette adresse e-mail n'est pas acceptée. Vérifiez-la."],
+    /* AVANT l'entrée générique ci-dessous, et ce n'est pas un détail d'ordre :
+       Supabase répond « Signups not allowed for otp » quand on demande un code
+       pour une adresse SANS compte (shouldCreateUser:false). Le motif générique
+       l'attrapait et affichait « Les inscriptions sont fermées », ce qui est
+       faux — et surtout différent du message affiché quand le code part
+       vraiment, donc de quoi savoir quelles adresses ont un compte.
+       Le seul appelant (le secours de l'écran de connexion) ne montre de toute
+       façon jamais ce message : il affiche la même phrase neutre dans les deux
+       cas. Cette entrée est le filet, pour qu'un futur appelant ne retombe pas
+       dans le piège. */
+    [/signups? not allowed for otp|user not found|otp_disabled/i,
+                                          "Impossible d'envoyer un code à cette adresse."],
     /* Supabase formule ce refus d'au moins trois façons selon la version et le
        réglage exact : « Signups not allowed », « signup is disabled »,
        « Email signups are disabled ». Le motif couvre les trois. */
@@ -75,12 +87,6 @@
        et deviner serait mentir. */
     [/token has expired or is invalid|invalid.*(otp|token)|otp.*expired/i,
                                           "Code incorrect ou expiré. Demandez-en un nouveau."],
-    /* Renvoyé quand on demande un code pour une adresse sans compte alors que
-       la création est désactivée (le secours depuis l'écran de connexion). Même
-       prudence que pour « identifiants incorrects » : on ne révèle pas quelles
-       adresses ont un compte. */
-    [/signups not allowed for otp|user not found/i,
-                                          "Impossible d'envoyer un code à cette adresse."],
     [/new password should be different/i, "Le nouveau mot de passe doit être différent de l'ancien."],
     /* La contrainte d'unicité sur lower(pseudo). Deux personnes peuvent viser le
        même pseudo dans le même quart de seconde : la base tranche, pas nous. */
@@ -301,12 +307,25 @@
       if (!email) return msg('loginMsg', "Renseignez d'abord votre adresse e-mail.");
       msg('loginMsg','');
       var libre = occuper(bDem, 'Envoi…');
-      RTAuth.otpEnvoyer(email, false).then(function(){
+      /* La phrase est au conditionnel, et c'est voulu : elle est affichée à
+         l'identique que le compte existe ou non. Sans ça, comparer les deux
+         réponses suffirait à savoir quelles adresses ont un compte ici — la
+         même prudence que « adresse ou mot de passe incorrect », qui ne dit
+         pas lequel des deux est faux. */
+      var neutre = function(){
         libre();
         if (bloc) bloc.hidden = false;
         var c = $('logCode'); if (c) try{ c.focus(); }catch(e){}
         msg('loginMsg', "Si un compte existe pour cette adresse, un code vient d'y être envoyé.", 'ok');
-      }).catch(function(e){ libre(); msg('loginMsg', messageFr(e)); });
+      };
+      RTAuth.otpEnvoyer(email, false).then(neutre).catch(function(e){
+        var m = (e && e.message) || '';
+        /* « Pas de compte pour cette adresse » doit rester indiscernable du
+           succès. Les autres pannes, en revanche, doivent se dire : les taire
+           laisserait quelqu'un attendre un code qui ne partira jamais. */
+        if (/signups? not allowed for otp|user not found|otp_disabled/i.test(m)) return neutre();
+        libre(); msg('loginMsg', messageFr(e));
+      });
     });
 
     if (bVal) bVal.addEventListener('click', function(){

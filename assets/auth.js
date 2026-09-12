@@ -69,6 +69,32 @@
        service intégré). Lui dire « trop d'essais » l'enverrait chercher une
        faute de son côté. */
     [/email rate limit exceeded/i,        "Le service d'envoi d'e-mails est momentanément saturé. Réessayez dans une heure, ou contactez-nous."],
+    /* Parcours par code à 6 chiffres. Supabase emploie « token » pour désigner
+       le code ; l'utilisateur, lui, n'a jamais vu ce mot. On ne distingue pas
+       « expiré » de « faux » : le message de Supabase ne le fait pas non plus,
+       et deviner serait mentir. */
+    [/token has expired or is invalid|invalid.*(otp|token)|otp.*expired/i,
+                                          "Code incorrect ou expiré. Demandez-en un nouveau."],
+    /* Renvoyé quand on demande un code pour une adresse sans compte alors que
+       la création est désactivée (le secours depuis l'écran de connexion). Même
+       prudence que pour « identifiants incorrects » : on ne révèle pas quelles
+       adresses ont un compte. */
+    [/signups not allowed for otp|user not found/i,
+                                          "Impossible d'envoyer un code à cette adresse."],
+    [/new password should be different/i, "Le nouveau mot de passe doit être différent de l'ancien."],
+    /* La contrainte d'unicité sur lower(pseudo). Deux personnes peuvent viser le
+       même pseudo dans le même quart de seconde : la base tranche, pas nous. */
+    [/profils_pseudo_unique|duplicate key.*pseudo/i,
+                                          "Ce nom d'utilisateur vient d'être pris. Choisissez-en un autre."],
+    [/profils_pseudo_forme/i,             "Nom d'utilisateur invalide : 3 à 20 caractères, minuscules, chiffres, tiret ou souligné."],
+    [/inscription incomplete/i,           "Il manque une réponse. Revenez en arrière pour compléter."],
+    /* PostgREST répond ceci quand la fonction ou la colonne n'existe pas —
+       autrement dit quand la migration n'a pas été exécutée. Le message brut
+       (« Could not find the function public.inscription_jalon in the schema
+       cache ») n'aide personne ; celui-ci dit quoi faire. */
+    [/could not find the (function|column|table)|schema cache|does not exist/i,
+                                          "La base de données n'est pas à jour : la migration sql/001-inscription.sql n'a pas encore été exécutée."],
+    [/aucune session/i,                   "Votre session a expiré. Reprenez depuis le début."],
     [/rate limit|too many requests/i,     "Trop d'essais. Réessayez dans quelques minutes."],
     [/failed to fetch|network|load failed/i,
                                           "Serveur injoignable. Vérifiez votre connexion Internet."]
@@ -122,29 +148,92 @@
     /* Après une écriture sur `profiles`, la copie en mémoire est périmée. */
     rechargerProfil: function(){ return chargerProfil().then(function(p){ annoncer(); return p; }); },
 
+    /* ---------- Inscription par code à 6 chiffres --------------------------
+       Le parcours en plusieurs étapes demande l'adresse AVANT le mot de passe,
+       ce que signUp(email, password) ne sait pas faire : il exige les deux
+       d'un coup. On passe donc par signInWithOtp, primitive prévue pour ça —
+       elle crée le compte non confirmé et envoie un code.
+
+       Le code plutôt que le lien magique : un lien s'ouvre dans un nouvel
+       onglet, et le parcours reprendrait à zéro dans l'ancien. Le code se
+       saisit sur place. Les deux restent possibles cependant (detectSessionInUrl
+       est actif), et le formulaire avance aussi quand la session arrive par le
+       lien — quelqu'un qui clique n'est pas puni.
+
+       À SAVOIR, réglage Supabase : le gabarit « Magic Link » ne contient par
+       défaut que {{ .ConfirmationURL }}. Sans {{ .Token }} dedans, le message
+       arrive SANS code et cette étape est infranchissable autrement qu'en
+       cliquant le lien. Voir sql/001-inscription.sql et le README. */
+    otpEnvoyer: function(email, creer){
+      var c = C();
+      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      return c.auth.signInWithOtp({
+        email: String(email||'').trim(),
+        options:{ shouldCreateUser: creer !== false,
+                  emailRedirectTo: location.origin + location.pathname }
+      }).then(function(r){ if (r.error) throw r.error; return true; });
+    },
+
+    otpVerifier: function(email, code){
+      var c = C();
+      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      return c.auth.verifyOtp({
+        email: String(email||'').trim(),
+        token: String(code||'').replace(/\s+/g, ''),   // « 123 456 » recopié depuis l'e-mail
+        type: 'email'
+      }).then(function(r){ if (r.error) throw r.error; return r.data; });
+    },
+
+    /* Pose le mot de passe d'un compte qui vient d'être vérifié par code. Le
+       mot de passe part directement à Supabase : il n'est ni lu, ni comparé, ni
+       conservé ici — exactement comme dans connexion(). */
+    definirMotDePasse: function(mdp){
+      var c = C();
+      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      return c.auth.updateUser({ password: String(mdp||'') })
+        .then(function(r){ if (r.error) throw r.error; return r.data; });
+    },
+
+    /* ---------- Les deux fonctions de la base -----------------------------
+       pseudo_libre : le navigateur ne peut pas interroger `profiles` pour
+       savoir si un pseudo est pris — RLS ne lui montre que sa propre ligne, et
+       l'ouvrir livrerait la liste des utilisateurs. La base répond oui ou non.
+
+       inscription_jalon : consentement, mot de passe posé, parcours terminé.
+       Ces horodatages sont des preuves, donc datés par l'horloge du serveur ;
+       le déclencheur profiles_garde() interdit au client de les écrire
+       autrement. Voir sql/001-inscription.sql § 4 et § 5. */
+    pseudoLibre: function(p){
+      var c = C();
+      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      return c.rpc('pseudo_libre', { p: String(p||'') })
+        .then(function(r){ if (r.error) throw r.error; return r.data === true; });
+    },
+
+    jalon: function(nom, cguVersion){
+      var c = C();
+      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      return c.rpc('inscription_jalon',
+                   { p_jalon: String(nom||''), p_cgu_version: cguVersion || null })
+        .then(function(r){ if (r.error) throw r.error; return true; });
+    },
+
+    /* Écriture des réponses du questionnaire. Aucun contrôle d'autorisation
+       ici : la politique « profil : mise à jour de soi » borne la requête à sa
+       propre ligne, et le eq('id') ne fait que l'expliciter. */
+    majProfil: function(champs){
+      var c = C(), u = RTAuth.utilisateur();
+      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      if (!u)  return Promise.reject(new Error('aucune session'));
+      return c.from('profiles').update(champs).eq('id', u.id)
+        .then(function(r){ if (r.error) throw r.error; return true; });
+    },
+
     connexion: function(email, mdp){
       var c = C();
       if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
       return c.auth.signInWithPassword({ email:String(email||'').trim(), password:String(mdp||'') })
         .then(function(r){ if (r.error) throw r.error; return r.data; });
-    },
-
-    /* Renvoie {session:…} si le compte est utilisable tout de suite, ou
-       {confirmation:true} si Supabase attend un clic dans un e-mail. Les deux
-       cas sont normaux : c'est un réglage du projet, pas une erreur. */
-    inscription: function(o){
-      var c = C();
-      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
-      o = o || {};
-      var nomAffiche = [o.prenom, o.nom].filter(Boolean).join(' ').trim() || o.pseudo || '';
-      return c.auth.signUp({
-        email: String(o.email||'').trim(), password: String(o.mdp||''),
-        options:{ data:{ display_name:nomAffiche, pseudo:o.pseudo||'', nom:o.nom||'', prenom:o.prenom||'' },
-                  emailRedirectTo: location.origin + location.pathname }
-      }).then(function(r){
-        if (r.error) throw r.error;
-        return r.data && r.data.session ? { session:r.data.session } : { confirmation:true };
-      });
     },
 
     deconnexion: function(){
@@ -177,7 +266,7 @@
   }
 
   function brancher(){
-    var bLog = $('loginSubmit'), bIns = $('signupSubmit');
+    var bLog = $('loginSubmit');
 
     if (bLog) bLog.addEventListener('click', function(){
       var email = ($('loginId').value||'').trim(), mdp = $('loginPwd').value||'';
@@ -193,39 +282,59 @@
         .catch(function(e){ libre(); msg('loginMsg', messageFr(e)); });
     });
 
-    if (bIns) bIns.addEventListener('click', function(){
-      var o = { email:($('suEmail').value||'').trim(), mdp:$('suPwd').value||'',
-                pseudo:($('suUser').value||'').trim(),
-                nom:($('suNom').value||'').trim(), prenom:($('suPrenom').value||'').trim() };
-      if (!o.email || !o.mdp) return msg('signupMsg', "Une adresse e-mail et un mot de passe sont nécessaires.");
-      if (o.mdp.length < 8)   return msg('signupMsg', "Choisissez un mot de passe d'au moins 8 caractères.");
-      msg('signupMsg','');
-      var libre = occuper(bIns, 'Création…');
-      RTAuth.inscription(o).then(function(r){
-        libre(); $('suPwd').value='';
-        if (r.confirmation){
-          msg('signupMsg', "Compte créé. Ouvrez le message envoyé à " + o.email +
-                           " et cliquez sur le lien pour l'activer.", 'ok');
-          return;
-        }
-        return chargerProfil().then(function(){
-          annoncer(); if (window.rtEntrer) window.rtEntrer();
-        });
-      }).catch(function(e){ libre(); msg('signupMsg', messageFr(e)); });
+    /* ---- Secours : entrer avec un code reçu par e-mail ----------------
+       Deux usages pour un seul mécanisme : le mot de passe oublié, et le
+       compte dont l'inscription s'est arrêtée avant l'étape du mot de passe —
+       celui-là n'en a AUCUN, et le formulaire ci-dessus ne peut rien pour lui.
+
+       creer = false : cette porte ne crée jamais de compte. Sinon une faute de
+       frappe dans l'adresse fabriquerait un compte fantôme à chaque tentative.
+
+       Une fois le code validé, le reste se fait tout seul : Supabase ouvre la
+       session, auth.js appelle rtSessionOuverte(), et le routeur consulte
+       RTInscription.aReprendre() pour décider entre l'application et la suite
+       du parcours d'inscription. */
+    var bDem = $('logCodeDemander'), bVal = $('logCodeValider'), bloc = $('logCodeBloc');
+
+    if (bDem) bDem.addEventListener('click', function(){
+      var email = ($('loginId').value||'').trim();
+      if (!email) return msg('loginMsg', "Renseignez d'abord votre adresse e-mail.");
+      msg('loginMsg','');
+      var libre = occuper(bDem, 'Envoi…');
+      RTAuth.otpEnvoyer(email, false).then(function(){
+        libre();
+        if (bloc) bloc.hidden = false;
+        var c = $('logCode'); if (c) try{ c.focus(); }catch(e){}
+        msg('loginMsg', "Si un compte existe pour cette adresse, un code vient d'y être envoyé.", 'ok');
+      }).catch(function(e){ libre(); msg('loginMsg', messageFr(e)); });
     });
 
-    // Entrée = valider, sur les deux formulaires.
+    if (bVal) bVal.addEventListener('click', function(){
+      var email = ($('loginId').value||'').trim();
+      var code  = ($('logCode').value||'').replace(/\s+/g,'');
+      if (code.length < 6) return msg('loginMsg', "Saisissez le code à six chiffres reçu par e-mail.");
+      msg('loginMsg','');
+      var libre = occuper(bVal, 'Vérification…');
+      RTAuth.otpVerifier(email, code)
+        .then(function(){ return chargerProfil(); })
+        .then(function(){
+          libre(); $('logCode').value = '';
+          annoncer();
+          /* rtSessionOuverte plutôt que rtEntrer : c'est lui qui sait renvoyer
+             vers le parcours d'inscription quand celui-ci est inachevé. */
+          if (window.rtSessionOuverte) window.rtSessionOuverte();
+        })
+        .catch(function(e){ libre(); msg('loginMsg', messageFr(e)); });
+    });
+
+    // Entrée = valider.
     ['loginId','loginPwd'].forEach(function(id){
       var e=$(id); if(e) e.addEventListener('keydown', function(ev){ if(ev.key==='Enter' && bLog) bLog.click(); });
     });
-    ['suEmail','suUser','suPwd','suNom','suPrenom'].forEach(function(id){
-      var e=$(id); if(e) e.addEventListener('keydown', function(ev){ if(ev.key==='Enter' && bIns) bIns.click(); });
-    });
+    var cc=$('logCode');
+    if(cc) cc.addEventListener('keydown', function(ev){ if(ev.key==='Enter' && bVal) bVal.click(); });
 
-    if (!C()){
-      msg('loginMsg',  RTAuth.raisonIndisponible());
-      msg('signupMsg', RTAuth.raisonIndisponible());
-    }
+    if (!C()) msg('loginMsg', RTAuth.raisonIndisponible());
   }
 
   /* ---------- Reprise de session au chargement ------------------------------

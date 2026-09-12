@@ -1025,6 +1025,113 @@
   .auth-switch{ text-align:center; font-size:13px; color:var(--ink-2); margin:16px 0 0; }
   .auth-link{ background:none; border:none; padding:0; cursor:pointer; color:var(--violet-dark);
     font-weight:700; font-size:13px; text-decoration:underline; font-family:var(--sans); }
+  /* ---------- Inscription en cinq étapes ----------
+     La carte est plus large que celle de la connexion : le questionnaire y
+     déroule des listes de choix, qui deviennent illisibles à 424 px. */
+  .auth-card--parcours{ max-width:520px; }
+
+  /* Le fil d'étapes. Il dit où l'on en est et combien il reste — sans lui, un
+     parcours en cinq écrans donne l'impression de ne pas avoir de fin. Les
+     étapes franchies restent marquées : c'est ce qui donne le sentiment
+     d'avancer. */
+  .ins-fil{ display:flex; gap:6px; list-style:none; margin:0 0 22px; padding:0; }
+  .ins-fil li{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+    font-size:10.5px; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase;
+    color:var(--ink-2); opacity:.5; transition:opacity .18s ease; }
+  .ins-fil li b{ display:grid; place-items:center; width:26px; height:26px; border-radius:50%;
+    font-family:var(--sans); font-size:12.5px; font-weight:800;
+    background:var(--surface-2); border:1px solid var(--border); color:var(--ink-2); }
+  .ins-fil li.faite, .ins-fil li.ici{ opacity:1; }
+  .ins-fil li.ici b{ background:var(--violet); border-color:var(--violet); color:#fff; }
+  .ins-fil li.ici{ color:var(--ink); }
+  .ins-fil li.faite b{ background:var(--violet-soft); border-color:var(--violet-dark); color:var(--violet-dark); }
+  /* Le libellé disparaît avant le numéro : cinq mots côte à côte ne tiennent pas
+     sur un téléphone, cinq pastilles si. */
+  @media (max-width:520px){ .ins-fil li span{ display:none; } }
+
+  /* Une case à cocher et son libellé. align-items:flex-start et non center :
+     le libellé peut passer sur deux lignes, et la case doit rester en face de
+     la PREMIÈRE, pas au milieu du bloc. */
+  .ins-coche{ display:flex; align-items:flex-start; gap:10px; margin:0 0 11px; }
+  .ins-coche input{ margin:2px 0 0; width:17px; height:17px; flex:none; accent-color:var(--violet); }
+  .ins-coche label{ font-size:13px; line-height:1.45; color:var(--ink); cursor:pointer; }
+  /* Les liens vers les textes légaux vivent HORS du <label> : un <button> ou un
+     <a> à l'intérieur d'un label bascule la case quand on le clique. */
+  .ins-liens{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 16px; font-size:12.5px; }
+  .ins-liens a{ color:var(--violet-dark); font-weight:700; text-decoration:underline; }
+  .ins-liens span{ color:var(--ink-2); opacity:.5; }
+  .ins-captcha:not([hidden]){ margin:0 0 16px; min-height:70px; }
+  /* Le secours par code, sur l'écran de connexion : présent mais discret. Mis
+     en avant, il détournerait du mot de passe ceux qui s'en souviennent très
+     bien — et chaque envoi coûte un des deux e-mails autorisés par heure. */
+  .ins-secours{ margin:18px 0 0; padding-top:16px; border-top:1px solid var(--border); text-align:center; }
+  .ins-secours .auth-link{ font-size:12.5px; font-weight:600; }
+  .ins-secours #logCodeBloc:not([hidden]){ margin-top:14px; text-align:left; }
+
+  /* Le code à six chiffres : espacé et en chasse fixe, pour qu'on puisse le
+     relire caractère par caractère en le recopiant de l'e-mail. */
+  .ins-code{ font-family:var(--mono) !important; font-size:21px !important;
+    letter-spacing:.30em; text-align:center; }
+  .ins-aide{ font-size:12px; color:var(--ink-2); margin:6px 0 0; line-height:1.45; }
+  .ins-aide.nok{ color:#a8342f; }
+  .ins-aide.ok{   color:#1d7a4d; }
+  :root[data-theme="dark"] .ins-aide.nok{ color:#ff9d99; }
+  :root[data-theme="dark"] .ins-aide.ok{   color:#6fe3ab; }
+  /* « (facultatif) » : la mention que la CNIL demande de rendre visible. Elle
+     doit se lire sans effort, donc pas en gris pâle sur le gris du libellé. */
+  .ins-opt{ font-style:normal; font-weight:600; text-transform:none; letter-spacing:0;
+    color:var(--violet-dark); }
+
+  /* ---------- Le questionnaire ----------
+     Des boutons plutôt que des <select> : sur un téléphone, un menu déroulant
+     cache les autres réponses derrière un tiroir natif, et on ne compare plus
+     rien. Ici tout est visible d'un coup. */
+  .ins-q{ margin:0 0 20px; }
+  .ins-q > h3{ font-family:var(--sans); font-size:14.5px; font-weight:800; color:var(--ink);
+    margin:0 0 3px; letter-spacing:-.005em; }
+  .ins-q > p{ font-size:12.5px; color:var(--ink-2); margin:0 0 10px; }
+  .ins-choix{ display:flex; flex-direction:column; gap:7px; }
+  .ins-choix button{ text-align:left; font-family:var(--sans); font-size:13.5px; font-weight:600;
+    color:var(--ink); background:var(--surface-2); border:1px solid var(--border);
+    border-radius:11px; padding:11px 13px; cursor:pointer;
+    transition:border-color .15s ease, background .15s ease; }
+  .ins-choix button:hover{ border-color:var(--violet-dark); }
+  .ins-choix button:focus-visible{ outline:2px solid var(--violet); outline-offset:2px; }
+  .ins-choix button[aria-pressed="true"]{ background:var(--violet-soft);
+    border-color:var(--violet-dark); color:var(--violet-dark); }
+  /* Le choix « Autre » ouvre un champ libre, juste sous lui. */
+  .ins-libre{ margin:8px 0 0; }
+  .ins-libre input{ width:100%; box-sizing:border-box; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:10px; padding:10px 12px;
+    font-family:var(--sans); font-size:13.5px; color:var(--ink); }
+  .ins-libre input:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+
+  /* ---------- Pages légales ---------- */
+  .legal-wrap{ max-width:760px; padding-top:34px; padding-bottom:60px; }
+  .legal-fil{ margin:0 0 18px; }
+  .legal-h1{ font-family:var(--sans); font-size:clamp(25px,4vw,34px); font-weight:800;
+    color:var(--ink); margin:0 0 16px; letter-spacing:-.02em; }
+  .legal-h2{ font-family:var(--sans); font-size:17px; font-weight:800; color:var(--ink);
+    margin:30px 0 10px; letter-spacing:-.01em; }
+  .legal-p, .legal-liste li{ font-size:14.5px; line-height:1.62; color:var(--ink-2); }
+  .legal-liste{ margin:0; padding-left:20px; }
+  .legal-liste li{ margin:0 0 9px; }
+  .legal-liste li b, .legal-p b{ color:var(--ink); }
+  /* L'état du document, annoncé haut et clair : quelqu'un qui arrive ici doit
+     comprendre en une phrase que le texte n'est pas encore opposable. */
+  .legal-etat{ font-size:14px; line-height:1.6; color:var(--ink); margin:0 0 8px;
+    background:var(--violet-soft); border:1px solid var(--border);
+    border-left:3px solid var(--violet); border-radius:11px; padding:14px 16px; }
+  /* L'avertissement « ce n'est pas une référence opérationnelle » est le seul
+     passage de ces pages qui puisse éviter un incident. Il est traité comme
+     tel, et non comme un paragraphe parmi d'autres. */
+  .legal-avert{ font-size:14.5px; line-height:1.62; color:var(--ink); margin:14px 0;
+    background:rgba(217,83,79,.08); border:1px solid rgba(217,83,79,.42);
+    border-left:3px solid #d9534f; border-radius:11px; padding:15px 17px; }
+  .legal-note{ font-size:13px; line-height:1.6; color:var(--ink-2); margin:22px 0 0;
+    padding-top:16px; border-top:1px solid var(--border); }
+  .legal-mono{ font-family:var(--mono); font-size:.95em; }
+  .legal-retour{ margin:30px 0 0; }
   /* ---------- Compte ----------
      La page réutilise les cartes des Paramètres (.set-card / .set-row) : même
      grammaire visuelle, rien de neuf à apprendre pour l'œil. Il ne manquait que
@@ -2442,43 +2549,277 @@
           <p class="auth-msg hidden" id="loginMsg" role="status" aria-live="polite"></p>
           <button class="btn cta auth-submit" id="loginSubmit" type="button">Se connecter</button>
           <p class="auth-switch">Pas encore de compte ? <button class="auth-link" type="button" data-page="signup">S'inscrire</button></p>
+
+          <!-- ---- Secours : entrer avec un code ----
+               Un compte dont le parcours d'inscription s'est arrêté avant
+               l'étape « mot de passe » existe VRAIMENT en base, mais n'a pas de
+               mot de passe : le formulaire ci-dessus ne peut rien pour lui.
+               Sans cette porte, chaque inscription abandonnée laisserait un
+               compte mort ET une adresse définitivement inutilisable, puisque
+               déjà prise. Elle sert aussi de secours ordinaire à qui a oublié
+               son mot de passe.
+
+               Rien de nouveau à sécuriser : c'est la même primitive Supabase
+               que l'inscription — un code à six chiffres, envoyé à l'adresse,
+               vérifié par le serveur. shouldCreateUser vaut false ici : cette
+               porte ne doit pas pouvoir créer de compte. -->
+          <div class="ins-secours">
+            <button class="auth-link" type="button" id="logCodeDemander">Mot de passe oublié, ou inscription interrompue ? Recevoir un code par e-mail</button>
+            <div id="logCodeBloc" hidden>
+              <div class="auth-field">
+                <label for="logCode">Code reçu</label>
+                <input id="logCode" type="text" inputmode="numeric" autocomplete="one-time-code"
+                       maxlength="8" spellcheck="false" placeholder="123456" class="ins-code">
+              </div>
+              <button class="btn auth-submit" id="logCodeValider" type="button">Valider le code</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ==================== INSCRIPTION ==================== -->
+    <!-- ==================== INSCRIPTION (parcours en 5 étapes) ====================
+         Le parcours demande l'adresse AVANT le mot de passe, et ne la croit
+         qu'après un code reçu par e-mail. Les cinq étapes sont des panneaux de
+         CETTE section, pas des routes : #signup/3 serait une adresse à
+         mettre en favori, or une étape n'a aucun sens hors de sa séquence.
+
+         Les listes de réponses du questionnaire ne sont PAS écrites ici mais
+         dans assets/inscription.js : elles doivent rester identiques aux
+         contraintes CHECK de sql/001-inscription.sql, et deux endroits à tenir
+         d'accord valent mieux que trois. -->
     <section id="page-signup" class="page">
       <div class="auth-wrap">
-        <div class="auth-card">
+        <div class="auth-card auth-card--parcours">
           <div class="auth-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>RadioTrainer</span></div>
-          <h2 class="auth-title">S'inscrire</h2>
-          <p class="auth-sub">Créez votre compte pour commencer.</p>
-          <div class="auth-field">
-            <label for="suEmail">Email</label>
-            <input id="suEmail" type="email" autocomplete="email" spellcheck="false" placeholder="vous@exemple.fr">
-          </div>
-          <div class="auth-field">
-            <label for="suUser">Nom d'utilisateur</label>
-            <input id="suUser" type="text" autocomplete="username" spellcheck="false" placeholder="ex : pilote28">
-          </div>
-          <div class="auth-field">
-            <label for="suPwd">Mot de passe</label>
-            <input id="suPwd" type="password" autocomplete="new-password" placeholder="8 caractères au minimum">
-          </div>
-          <div class="auth-row2">
+
+          <ol class="ins-fil" id="insFil">
+            <li data-fil="1"><b>1</b><span>Adresse</span></li>
+            <li data-fil="2"><b>2</b><span>Code</span></li>
+            <li data-fil="3"><b>3</b><span>Mot de passe</span></li>
+            <li data-fil="4"><b>4</b><span>Vous</span></li>
+            <li data-fil="5"><b>5</b><span>Identité</span></li>
+          </ol>
+
+          <!-- ---------- ÉTAPE 1 : adresse, conditions, âge ---------- -->
+          <div class="ins-etape" data-etape="1">
+            <h2 class="auth-title">Créer un compte</h2>
+            <p class="auth-sub">On commence par votre adresse. Nous vous y enverrons un code à six chiffres.</p>
             <div class="auth-field">
-              <label for="suNom">Nom</label>
-              <input id="suNom" type="text" autocomplete="family-name" spellcheck="false">
+              <label for="insEmail">Adresse e-mail</label>
+              <input id="insEmail" type="email" autocomplete="email" spellcheck="false" placeholder="vous@exemple.fr">
+            </div>
+
+            <div class="ins-coche">
+              <input type="checkbox" id="insCgu">
+              <label for="insCgu">J'accepte les conditions d'utilisation et la politique de confidentialité.</label>
+            </div>
+            <div class="ins-coche">
+              <input type="checkbox" id="insAge">
+              <label for="insAge">Je déclare avoir 15 ans révolus.</label>
+            </div>
+            <p class="ins-liens">
+              <!-- Un onglet neuf plutôt qu'une navigation : quitter la page ferait
+                   perdre l'adresse déjà saisie et les cases déjà cochées. -->
+              <a href="#cgu" target="_blank" rel="noopener">Conditions d'utilisation</a>
+              <span aria-hidden="true">·</span>
+              <a href="#confidentialite" target="_blank" rel="noopener">Politique de confidentialité</a>
+            </p>
+
+            <!-- Emplacement de la vérification anti-robot. VIDE, et il faut qu'on
+                 le sache : rien ici ne protège quoi que ce soit aujourd'hui.
+                 Le jour où elle sera branchée, ce sera hCaptcha ou Turnstile via
+                 le réglage Supabase (Auth → Settings → Bot protection), qui
+                 valide le jeton CÔTÉ SERVEUR. Un contrôle posé dans cette page
+                 ne servirait à rien : la page appartient au visiteur. -->
+            <div id="insCaptcha" class="ins-captcha" hidden></div>
+
+            <p class="auth-msg hidden" id="insMsg1" role="status" aria-live="polite"></p>
+            <button class="btn cta auth-submit" id="insEnvoyer" type="button">Recevoir mon code</button>
+            <p class="auth-switch">Déjà un compte ? <button class="auth-link" type="button" data-page="login">Se connecter</button></p>
+          </div>
+
+          <!-- ---------- ÉTAPE 2 : le code reçu par e-mail ---------- -->
+          <div class="ins-etape" data-etape="2" hidden>
+            <h2 class="auth-title">Confirmez votre adresse</h2>
+            <p class="auth-sub">Nous avons envoyé un code à six chiffres à <b id="insRappelMail"></b>. Il est valable une heure.</p>
+            <div class="auth-field">
+              <label for="insCode">Code reçu</label>
+              <!-- inputmode numeric plutôt que type=number : ce dernier affiche des
+                   flèches d'incrémentation et avale les zéros de tête. -->
+              <input id="insCode" type="text" inputmode="numeric" autocomplete="one-time-code"
+                     maxlength="8" spellcheck="false" placeholder="123456" class="ins-code">
+            </div>
+            <p class="auth-msg hidden" id="insMsg2" role="status" aria-live="polite"></p>
+            <button class="btn cta auth-submit" id="insVerifier" type="button">Vérifier</button>
+            <p class="auth-switch">
+              Rien reçu ? Regardez vos indésirables, puis
+              <button class="auth-link" type="button" id="insRenvoyer">demandez un nouveau code</button>.
+              <br><button class="auth-link" type="button" id="insRetourMail">Corriger mon adresse</button>
+            </p>
+          </div>
+
+          <!-- ---------- ÉTAPE 3 : le mot de passe ---------- -->
+          <div class="ins-etape" data-etape="3" hidden>
+            <h2 class="auth-title">Choisissez un mot de passe</h2>
+            <p class="auth-sub">Votre adresse est confirmée. Il ne reste qu'à protéger le compte.</p>
+            <div class="auth-field">
+              <label for="insMdp1">Mot de passe</label>
+              <input id="insMdp1" type="password" autocomplete="new-password" placeholder="8 caractères au minimum">
             </div>
             <div class="auth-field">
-              <label for="suPrenom">Prénom</label>
-              <input id="suPrenom" type="text" autocomplete="given-name" spellcheck="false">
+              <label for="insMdp2">Confirmation</label>
+              <input id="insMdp2" type="password" autocomplete="new-password" placeholder="le même, pour être sûr">
             </div>
+            <p class="auth-msg hidden" id="insMsg3" role="status" aria-live="polite"></p>
+            <button class="btn cta auth-submit" id="insMdpOk" type="button">Continuer</button>
           </div>
-          <p class="auth-msg hidden" id="signupMsg" role="status" aria-live="polite"></p>
-          <button class="btn cta auth-submit" id="signupSubmit" type="button">S'inscrire</button>
-          <p class="auth-switch">Déjà un compte ? <button class="auth-link" type="button" data-page="login">Se connecter</button></p>
+
+          <!-- ---------- ÉTAPE 4 : le questionnaire (peint par inscription.js) ---------- -->
+          <div class="ins-etape" data-etape="4" hidden>
+            <h2 class="auth-title">Parlez-nous de vous</h2>
+            <p class="auth-sub">Cinq questions, pour adapter les exercices à votre niveau. Les questions facultatives sont signalées.</p>
+            <div id="insQcm"></div>
+            <p class="auth-msg hidden" id="insMsg4" role="status" aria-live="polite"></p>
+            <button class="btn cta auth-submit" id="insQcmOk" type="button">Continuer</button>
+          </div>
+
+          <!-- ---------- ÉTAPE 5 : identité ---------- -->
+          <div class="ins-etape" data-etape="5" hidden>
+            <h2 class="auth-title">Presque fini</h2>
+            <p class="auth-sub">Votre nom d'utilisateur vous identifie dans l'application. Il est unique.</p>
+            <div class="auth-field">
+              <label for="insPseudo">Nom d'utilisateur</label>
+              <input id="insPseudo" type="text" autocomplete="username" spellcheck="false"
+                     maxlength="20" placeholder="ex : pilote28">
+              <p class="ins-aide" id="insPseudoEtat">3 à 20 caractères : minuscules, chiffres, tiret ou souligné.</p>
+            </div>
+            <div class="auth-row2">
+              <div class="auth-field">
+                <label for="insPrenom">Prénom</label>
+                <input id="insPrenom" type="text" autocomplete="given-name" spellcheck="false" maxlength="60">
+              </div>
+              <div class="auth-field">
+                <label for="insNom">Nom <i class="ins-opt">(facultatif)</i></label>
+                <input id="insNom" type="text" autocomplete="family-name" spellcheck="false" maxlength="60">
+              </div>
+            </div>
+            <div class="auth-field">
+              <label for="insAero">Aérodrome habituel, ou le plus proche de chez vous <i class="ins-opt">(facultatif)</i></label>
+              <input id="insAero" type="text" list="insAeroListe" spellcheck="false" placeholder="ex : LFOP — Rouen Vallée de Seine">
+              <datalist id="insAeroListe"></datalist>
+              <p class="ins-aide">Il sert à vous proposer les fréquences et les exercices de votre terrain.</p>
+            </div>
+            <p class="auth-msg hidden" id="insMsg5" role="status" aria-live="polite"></p>
+            <button class="btn cta auth-submit" id="insTerminer" type="button">Créer mon compte</button>
+          </div>
+
         </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== CONDITIONS D'UTILISATION ====================
+         Ces deux pages sont des CHANTIERS DÉCLARÉS, pas des textes.
+         Y écrire du faux juridique serait pire que de n'avoir rien : un texte
+         inventé engage autant qu'un vrai, et personne ici n'est juriste. Elles
+         annoncent donc ce qu'elles contiendront, et l'application enregistre la
+         version acceptée (« brouillon-0 ») pour pouvoir redemander l'accord de
+         chacun le jour où le texte définitif existera. -->
+    <section id="page-cgu" class="page">
+      <div class="container legal-wrap">
+        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← RadioTrainer</button></p>
+        <h1 class="legal-h1">Conditions d'utilisation</h1>
+        <p class="legal-etat"><b>Texte en cours de rédaction.</b> Cette page n'est pas encore le document
+          définitif. Elle décrit ce qu'il contiendra, afin que vous sachiez à quoi vous vous engagez
+          avant de cocher la case à l'inscription.</p>
+
+        <h2 class="legal-h2">Ce que le texte définitif dira</h2>
+        <ul class="legal-liste">
+          <li><b>Qui édite le service</b> — identité de l'éditeur, adresse, moyen de contact, hébergeur.</li>
+          <li><b>À quoi sert RadioTrainer</b> — un entraînement à la phraséologie radio française, destiné
+            aux élèves pilotes et aux pilotes brevetés.</li>
+          <li><b>Âge minimum : 15 ans.</b> C'est l'âge à partir duquel, en France, on peut consentir seul
+            au traitement de ses données. En dessous, l'accord d'un représentant légal serait nécessaire.</li>
+          <li><b>Ce que vous vous engagez à faire</b> — donner des informations exactes, garder votre mot de
+            passe pour vous, ne pas partager votre compte.</li>
+          <li><b>Ce que le service ne garantit pas</b> — et c'est le point le plus important de tous :</li>
+        </ul>
+
+        <p class="legal-avert"><b>RadioTrainer est un outil d'entraînement, pas une référence
+          opérationnelle.</b> Il ne remplace ni votre instructeur, ni le manuel de phraséologie de la DSNA,
+          ni les documents officiels en vigueur. Aucune décision de vol ne doit être prise sur la foi de ce
+          site. Les fréquences, procédures et terrains qui y figurent peuvent être périmés ou erronés :
+          vérifiez toujours dans la documentation officielle.</p>
+
+        <ul class="legal-liste">
+          <li><b>Disponibilité</b> — le service peut être interrompu, modifié ou arrêté.</li>
+          <li><b>Compte et résiliation</b> — comment fermer son compte, et dans quels cas nous pourrions
+            suspendre un accès.</li>
+          <li><b>Propriété</b> — ce qui nous appartient, ce qui appartient à ses auteurs (les photographies
+            sont créditées en pied de page, le manuel de phraséologie est un document public de la DSNA).</li>
+          <li><b>Droit applicable</b> — droit français.</li>
+        </ul>
+
+        <p class="legal-note">Tant que ce texte n'est pas publié, la case cochée à l'inscription est
+          enregistrée avec la mention « brouillon-0 ». Lorsque la version définitive paraîtra, votre accord
+          vous sera redemandé explicitement.</p>
+
+        <p class="legal-retour"><button class="btn cta" type="button" data-page="signup">Retour à l'inscription</button></p>
+      </div>
+    </section>
+
+    <!-- ==================== POLITIQUE DE CONFIDENTIALITÉ ==================== -->
+    <section id="page-confidentialite" class="page">
+      <div class="container legal-wrap">
+        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← RadioTrainer</button></p>
+        <h1 class="legal-h1">Politique de confidentialité</h1>
+        <p class="legal-etat"><b>Texte en cours de rédaction.</b> En revanche, la liste ci-dessous est
+          exacte dès aujourd'hui : elle décrit ce que l'application enregistre réellement, telle qu'elle
+          fonctionne en ce moment.</p>
+
+        <h2 class="legal-h2">Ce qui est enregistré, et pourquoi</h2>
+        <ul class="legal-liste">
+          <li><b>Votre adresse e-mail</b> — elle identifie le compte et sert à le récupérer. Nécessaire.</li>
+          <li><b>Votre mot de passe</b> — jamais en clair et jamais lisible par nous. Il est confié à notre
+            prestataire d'authentification, qui n'en conserve qu'une empreinte chiffrée.</li>
+          <li><b>Votre nom d'utilisateur et votre prénom</b> — ils vous identifient dans l'application.</li>
+          <li><b>Votre nom de famille</b> — facultatif, et aujourd'hui inutilisé.</li>
+          <li><b>Vos réponses au questionnaire d'inscription</b> — profil, objectifs, type d'avion, niveau à
+            la radio, aérodrome : ils servent à choisir les exercices qu'on vous propose. Les heures de vol
+            sont enregistrées par tranche, jamais au chiffre près.</li>
+          <li><b>« Où nous avez-vous connu »</b> — facultatif, et de nature purement statistique. Vous
+            pouvez ne pas répondre sans conséquence.</li>
+          <li><b>Vos séances d'entraînement</b> — date, durée, exercices joués, réponses justes et fausses.
+            C'est ce qui permet d'afficher votre progression et de repérer vos points faibles.</li>
+          <li><b>Les erreurs techniques</b> — quand l'application plante, le message d'erreur est
+            enregistré pour être corrigé.</li>
+        </ul>
+
+        <h2 class="legal-h2">Ce qui n'est PAS fait</h2>
+        <ul class="legal-liste">
+          <li>Aucune donnée n'est vendue ni louée.</li>
+          <li>Aucun traceur publicitaire, aucun réseau social embarqué, aucune mesure d'audience externe.</li>
+          <li>Aucune géolocalisation. L'aérodrome que vous indiquez est un choix que vous faites, pas une
+            position relevée.</li>
+        </ul>
+
+        <h2 class="legal-h2">Vos droits</h2>
+        <p class="legal-p">Vous pouvez consulter, corriger et supprimer vos réponses depuis la page
+          <b>Compte</b>, et y exporter l'intégralité de vos données dans un fichier. Vous pouvez aussi
+          demander la suppression de votre compte. Si une demande reste sans réponse, vous pouvez saisir la
+          CNIL (<span class="legal-mono">cnil.fr</span>).</p>
+
+        <h2 class="legal-h2">Ce que le texte définitif devra encore préciser</h2>
+        <ul class="legal-liste">
+          <li>L'identité et l'adresse du responsable du traitement.</li>
+          <li>La durée de conservation exacte de chaque catégorie de données.</li>
+          <li>Le nom et le pays de chaque sous-traitant (hébergement, authentification, envoi d'e-mails),
+            et le cadre juridique des transferts éventuels hors Union européenne.</li>
+          <li>L'adresse de contact pour exercer vos droits.</li>
+        </ul>
+
+        <p class="legal-retour"><button class="btn cta" type="button" data-page="signup">Retour à l'inscription</button></p>
       </div>
     </section>
 
@@ -3470,7 +3811,14 @@
   </main>
 
   <footer>
-    Fonctionne hors-ligne (hors micro/synthèse du navigateur), <strong>à l'exception du fond de carte de la page Navigation</strong>, chargé depuis les serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap. Le reste du site n'envoie aucune donnée sur Internet.
+    <!-- Cette phrase disait « le reste du site n'envoie aucune donnée sur
+         Internet ». C'était vrai du site d'origine, dont la connexion était une
+         simple variable en mémoire ; ça a cessé de l'être le jour où les comptes
+         et la progression sont partis en base. Une affirmation fausse sur la vie
+         privée est exactement le genre de détail qui décrédibilise tout le reste
+         — et ici elle contredisait la politique de confidentialité. -->
+    Les exercices fonctionnent hors-ligne (hors micro et synthèse vocale du navigateur). Trois choses sortent cependant de votre machine : le <strong>fond de carte de la page Navigation</strong>, chargé depuis les serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données ; et les <strong>erreurs techniques</strong>, pour qu'on puisse les corriger. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
+    <br><button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
     <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
 
@@ -7253,7 +7601,10 @@ if(!RECO_OK){
 /* ============ ROUTEUR SPA + animations de navigation (n'affecte pas la logique métier ci-dessus) ============ */
 (function(){
   // Pages : vitrine (accueil), écrans d'auth (login/signup), et pages applicatives (dans la coquille).
-  var PAGES=['accueil','login','signup','tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte','admin'];
+  /* « cgu » et « confidentialite » sont des pages de vitrine : accessibles sans
+     compte, puisqu'il faut pouvoir les lire AVANT de s'inscrire. C'est une
+     obligation, pas un choix de confort (RGPD art. 13). */
+  var PAGES=['accueil','login','signup','cgu','confidentialite','tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte','admin'];
   var APP_PAGES=['tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte'];
   /* Les trois pages qui se jouent devant une photo. Cette liste est la seule
      source de vérité : le CSS a une règle body.on-<page> pour chacune, et rien
@@ -7355,7 +7706,18 @@ if(!RECO_OK){
      Le vrai contrôle est dans les politiques RLS, côté base — un visiteur qui
      forcerait cette variable à true verrait l'interface se peindre et tous les
      tableaux répondre « aucune donnée ». */
-  function enterApp(){ authed=true; var t=pendingTarget||'tableau'; pendingTarget=null; showPage(t);
+  /* Un parcours d'inscription inachevé n'a pas de compte utilisable derrière :
+     sans mot de passe, on ne pourra plus s'y reconnecter ; sans questionnaire,
+     les exercices n'ont pas de niveau de départ. On renvoie donc à l'étape où
+     il s'est arrêté, plutôt que de déposer quelqu'un sur un tableau de bord
+     qu'il ne pourra pas retrouver. C'est assets/inscription.js qui répond.
+     (La migration sql/001-inscription.sql § 6 remplit onboarding_le des comptes
+     antérieurs — sans quoi TOUS seraient vus comme inachevés et piégés ici.) */
+  function routeUtile(t){
+    if(window.RTInscription && RTInscription.aReprendre()) return 'signup';
+    return t;
+  }
+  function enterApp(){ authed=true; var t=routeUtile(pendingTarget||'tableau'); pendingTarget=null; showPage(t);
     if(window.rtMajLienAdmin) window.rtMajLienAdmin(); }
   window.rtEntrer = enterApp;
   window.rtSortir = function(){ authed=false; pendingTarget=null; showPage('accueil'); };
@@ -7369,6 +7731,7 @@ if(!RECO_OK){
     if(window.rtMajLienAdmin) window.rtMajLienAdmin();
     var r = pendingTarget || routeAffichee || 'accueil';
     if(r==='login' || r==='signup') r = pendingTarget || 'tableau';
+    r = routeUtile(r);
     pendingTarget=null;
     showPage(r, false);
   };
@@ -11811,6 +12174,7 @@ function oaciSonde(couche, surAbsenceTotale){
 <script src="assets/auth.js"></script>
 <script src="assets/sync.js"></script>
 <script src="assets/compte.js"></script>
+<script src="assets/inscription.js"></script>
 <script src="assets/admin/data/error-log.js"></script>
 <script src="assets/admin/data/contract.js"></script>
 <script src="assets/admin/ui/kit.js"></script>

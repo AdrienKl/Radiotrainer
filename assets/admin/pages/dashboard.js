@@ -79,7 +79,13 @@
       hote.appendChild(stats);
 
       var grille = el('div', 'adm-grid');
-      var cCourbe = UI.carte('Activité', { sub:'Séances terminées, par jour et par type.' });
+      /* « Lancées », pas « terminées » : sessionsPerDay compte toute séance
+         DÉMARRÉE dans la journée, abandons et séances en cours comprises — sur
+         les trois sources. Le sous-titre disait « terminées », ce qui était
+         faux ; ça ne se voyait pas tant que la seule source réelle était le
+         stockage local, qui n'écrit jamais un abandon. La part menée à terme se
+         lit juste à droite, dans « Réussite moyenne ». */
+      var cCourbe = UI.carte('Activité', { sub:'Séances lancées, par jour et par type.' });
       cCourbe.classList.add('c8');
       var cScore = UI.carte('Réussite moyenne', { sub:'Tous types de séances confondus.' });
       cScore.classList.add('c4');

@@ -37,6 +37,19 @@
     --violet:#5b4bce; --violet-dark:#4a3bb8; --violet-soft:rgba(91,75,206,.10); --violet-tint:#efecfb;
     --grad-top:#3d2b83; --grad-mid:#6b3f97; --grad-bot:#ef8a6d;
     --ink:#242838; --ink-2:#6b7280;
+    /* ENCRE SECONDAIRE RENFORCÉE. --ink-2 (#6b7280) donne 4,83:1 sur le blanc en
+       théorie, mais 4,07:1 MESURÉ sur les pixels d'un texte de 13,5 px : à ces
+       tailles l'antialiasing n'atteint jamais la couleur pleine, et le noyau des
+       glyphes reste plus clair que la valeur déclarée. Le seuil AA est 4,5:1.
+       Ce jeton sert donc partout où du texte secondaire descend sous ~15 px.
+       La valeur est choisie avec de la marge (8,5:1 en théorie, 7:1 mesuré sur
+       la plupart des lignes) : un jeton calé au ras du seuil rebascule en échec
+       au premier changement de fond ou de graisse.
+       --ink-2 n'est PAS modifié : il est employé dans tout le site, et le
+       rebasculer demanderait un audit de chaque page — pas une retouche au
+       passage. Les endroits qui restent à reprendre sont listés dans
+       INSCRIPTION.md § 8. */
+    --ink-2-fort:#464d5a;
     --bg:#f7f8fb; --surface:#ffffff; --surface-2:#f1f3f8; --border:#b9bec9;
     --ok:#2fa36b; --warn:#e0912a; --bad:#d9534f;
     --shadow-sm:0 1px 2px rgba(36,40,56,.06), 0 1px 3px rgba(36,40,56,.05);
@@ -1003,10 +1016,18 @@
   .auth-brand .logo{ color:var(--violet); display:inline-flex; }
   .auth-brand .ic-svg{ width:20px; height:20px; }
   .auth-title{ font-family:var(--sans); font-size:23px; font-weight:800; color:var(--ink); margin:0 0 4px; letter-spacing:-.01em; }
-  .auth-sub{ font-size:13.5px; color:var(--ink-2); margin:0 0 20px; }
+  /* --ink-2 EST TROP PÂLE POUR CES DEUX TAILLES. Mesuré sur les pixels réels des
+     cartes de connexion et d'inscription : 4,07:1 pour le sous-titre (13,5 px) et
+     2,97:1 pour l'étiquette (11 px en chasse fixe, dont l'antialiasing mange le
+     noyau des glyphes). Le seuil AA est 4,5:1, et ces deux défauts sont
+     ANTÉRIEURS au parcours en cinq étapes — ils étaient déjà sur l'écran de
+     connexion. Le correctif est borné aux cartes d'authentification : --ink-2
+     sert partout dans le site, et le rebasculer globalement demanderait un audit
+     de toutes les pages, pas une retouche au passage. */
+  .auth-sub{ font-size:13.5px; color:var(--ink-2-fort); margin:0 0 20px; }
   .auth-field{ margin-bottom:14px; }
   .auth-field label{ display:block; font-family:var(--mono); font-size:11px; letter-spacing:.06em;
-    text-transform:uppercase; color:var(--ink-2); margin-bottom:6px; }
+    text-transform:uppercase; color:var(--ink); margin-bottom:6px; }
   .auth-field input{ width:100%; box-sizing:border-box; background:var(--surface-2); border:1px solid var(--border);
     border-radius:10px; padding:11px 13px; font-family:var(--sans); font-size:14.5px; color:var(--ink); }
   .auth-field input:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
@@ -1022,7 +1043,7 @@
   .auth-msg--ok{  background:rgba(47,163,107,.10); border-color:rgba(47,163,107,.42); color:#1d7a4d; }
   :root[data-theme="dark"] .auth-msg--err{ color:#ff9d99; }
   :root[data-theme="dark"] .auth-msg--ok{  color:#6fe3ab; }
-  .auth-switch{ text-align:center; font-size:13px; color:var(--ink-2); margin:16px 0 0; }
+  .auth-switch{ text-align:center; font-size:13px; color:var(--ink-2-fort); margin:16px 0 0; }
   .auth-link{ background:none; border:none; padding:0; cursor:pointer; color:var(--violet-dark);
     font-weight:700; font-size:13px; text-decoration:underline; font-family:var(--sans); }
   /* ---------- Inscription en cinq étapes ----------
@@ -1035,15 +1056,25 @@
      étapes franchies restent marquées : c'est ce qui donne le sentiment
      d'avancer. */
   .ins-fil{ display:flex; gap:6px; list-style:none; margin:0 0 22px; padding:0; }
+  /* PAS D'OPACITÉ SUR LE TEXTE, et ce n'est pas un détail de goût : ces libellés
+     étaient à opacity .5, soit 1,98:1 sur le blanc — un échec franc du seuil AA
+     (4,5:1 pour 10,5 px). Et l'opacité n'était pas rattrapable : même à 1, cette
+     encre-là ne monte qu'à 4,83:1, donc il n'existait aucune valeur intermédiaire
+     acceptable. C'est la PASTILLE qui porte l'état — remplie pour l'étape en
+     cours, cerclée pour les étapes franchies, grise pour la suite — et le texte
+     reste lisible du début à la fin. */
   .ins-fil li{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
     font-size:10.5px; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase;
-    color:var(--ink-2); opacity:.5; transition:opacity .18s ease; }
+    color:var(--ink); }
+  /* Le numéro en var(--ink) et non var(--ink-2) : sur --surface-2, la seconde
+     encre plafonne à 4,35:1, juste sous le seuil. La distinction entre les trois
+     états se lit de toute façon sur le FOND de la pastille, pas sur le chiffre. */
   .ins-fil li b{ display:grid; place-items:center; width:26px; height:26px; border-radius:50%;
     font-family:var(--sans); font-size:12.5px; font-weight:800;
-    background:var(--surface-2); border:1px solid var(--border); color:var(--ink-2); }
-  .ins-fil li.faite, .ins-fil li.ici{ opacity:1; }
+    background:var(--surface-2); border:1px solid var(--border); color:var(--ink);
+    transition:background .18s ease, border-color .18s ease; }
+  .ins-fil li.ici{ color:var(--ink); font-weight:700; }
   .ins-fil li.ici b{ background:var(--violet); border-color:var(--violet); color:#fff; }
-  .ins-fil li.ici{ color:var(--ink); }
   .ins-fil li.faite b{ background:var(--violet-soft); border-color:var(--violet-dark); color:var(--violet-dark); }
   /* Le libellé disparaît avant le numéro : cinq mots côte à côte ne tiennent pas
      sur un téléphone, cinq pastilles si. */
@@ -1059,6 +1090,8 @@
      <a> à l'intérieur d'un label bascule la case quand on le clique. */
   .ins-liens{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 16px; font-size:12.5px; }
   .ins-liens a{ color:var(--violet-dark); font-weight:700; text-decoration:underline; }
+  /* Le point de séparation est décoratif (aria-hidden) : son contraste n'est
+     pas soumis au seuil, contrairement aux libellés du fil d'étapes. */
   .ins-liens span{ color:var(--ink-2); opacity:.5; }
   .ins-captcha:not([hidden]){ margin:0 0 16px; min-height:70px; }
   /* Le secours par code, sur l'écran de connexion : présent mais discret. Mis
@@ -1072,7 +1105,7 @@
      relire caractère par caractère en le recopiant de l'e-mail. */
   .ins-code{ font-family:var(--mono) !important; font-size:21px !important;
     letter-spacing:.30em; text-align:center; }
-  .ins-aide{ font-size:12px; color:var(--ink-2); margin:6px 0 0; line-height:1.45; }
+  .ins-aide{ font-size:12px; color:var(--ink-2-fort); margin:6px 0 0; line-height:1.45; }
   .ins-aide.nok{ color:#a8342f; }
   .ins-aide.ok{   color:#1d7a4d; }
   :root[data-theme="dark"] .ins-aide.nok{ color:#ff9d99; }
@@ -1089,7 +1122,7 @@
   .ins-q{ margin:0 0 20px; }
   .ins-q > h3{ font-family:var(--sans); font-size:14.5px; font-weight:800; color:var(--ink);
     margin:0 0 3px; letter-spacing:-.005em; }
-  .ins-q > p{ font-size:12.5px; color:var(--ink-2); margin:0 0 10px; }
+  .ins-q > p{ font-size:12.5px; color:var(--ink-2-fort); margin:0 0 10px; }
   .ins-choix{ display:flex; flex-direction:column; gap:7px; }
   .ins-choix button{ text-align:left; font-family:var(--sans); font-size:13.5px; font-weight:600;
     color:var(--ink); background:var(--surface-2); border:1px solid var(--border);
@@ -1113,7 +1146,7 @@
     color:var(--ink); margin:0 0 16px; letter-spacing:-.02em; }
   .legal-h2{ font-family:var(--sans); font-size:17px; font-weight:800; color:var(--ink);
     margin:30px 0 10px; letter-spacing:-.01em; }
-  .legal-p, .legal-liste li{ font-size:14.5px; line-height:1.62; color:var(--ink-2); }
+  .legal-p, .legal-liste li{ font-size:14.5px; line-height:1.62; color:var(--ink-2-fort); }
   .legal-liste{ margin:0; padding-left:20px; }
   .legal-liste li{ margin:0 0 9px; }
   .legal-liste li b, .legal-p b{ color:var(--ink); }
@@ -1128,7 +1161,7 @@
   .legal-avert{ font-size:14.5px; line-height:1.62; color:var(--ink); margin:14px 0;
     background:rgba(217,83,79,.08); border:1px solid rgba(217,83,79,.42);
     border-left:3px solid #d9534f; border-radius:11px; padding:15px 17px; }
-  .legal-note{ font-size:13px; line-height:1.6; color:var(--ink-2); margin:22px 0 0;
+  .legal-note{ font-size:13px; line-height:1.6; color:var(--ink-2-fort); margin:22px 0 0;
     padding-top:16px; border-top:1px solid var(--border); }
   .legal-mono{ font-family:var(--mono); font-size:.95em; }
   .legal-retour{ margin:30px 0 0; }
@@ -1798,6 +1831,11 @@
          sur le fond sombre. --violet-dark, elle, sert de couleur de TEXTE : très claire. */
       --violet:#6b5ae0; --violet-dark:#b3a6ff; --violet-soft:rgba(139,124,240,.18); --violet-tint:#241f3d;
       --ink:#e7e9f2; --ink-2:#9aa2b8;
+      /* En sombre, --ink-2 est clair sur fond foncé et passe largement le seuil :
+         le jeton renforcé n'a rien à corriger, il reprend --ink-2. Il doit
+         néanmoins être REDÉFINI ici — sinon il garderait la valeur du thème
+         clair (#4d5462), soit un gris foncé sur un fond presque noir. */
+      --ink-2-fort:var(--ink-2);
       --bg:#12141c; --surface:#1b1e29; --surface-2:#242836; --border:#3b4256;
       --ok:#45c187; --warn:#e8a94a; --bad:#e0645f;
       --shadow-sm:0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
@@ -2687,7 +2725,10 @@
           <!-- ---------- ÉTAPE 4 : le questionnaire (peint par inscription.js) ---------- -->
           <div class="ins-etape" data-etape="4" hidden>
             <h2 class="auth-title">Parlez-nous de vous</h2>
-            <p class="auth-sub">Cinq questions, pour adapter les exercices à votre niveau. Les questions facultatives sont signalées.</p>
+            <!-- Pas de décompte annoncé : la question des heures de vol apparaît
+                 pour qui se déclare pilote, donc « cinq questions » devient faux
+                 aussitôt qu'on répond. -->
+            <p class="auth-sub">Quelques questions, pour adapter les exercices à votre niveau. Les questions facultatives sont signalées.</p>
             <div id="insQcm"></div>
             <p class="auth-msg hidden" id="insMsg4" role="status" aria-live="polite"></p>
             <button class="btn cta auth-submit" id="insQcmOk" type="button">Continuer</button>

@@ -253,3 +253,37 @@ qui vérifie le questionnaire. De même, `cpt1.py` § 4 confirme que
 retour réel de l'e-mail. Personne ici ne peut lire votre boîte. Après les trois
 réglages du § 1, faites **une** inscription complète à la main, de bout en bout,
 avec une adresse à vous. C'est la seule vérification qui manque.
+
+---
+
+## 8. Un défaut de contraste plus large, constaté et non corrigé
+
+En mesurant le contraste du parcours sur les pixels réels (et non sur les
+valeurs CSS, qui mentent : à petite taille l'antialiasing n'atteint jamais la
+couleur pleine), deux textes **antérieurs** à ce travail sont sortis sous le
+seuil AA en mode clair :
+
+| Élément | Taille | Mesuré | Seuil |
+|---|---|---|---|
+| `.auth-sub` (sous-titre des cartes de connexion et d'inscription) | 13,5 px | **4,07:1** | 4,5:1 |
+| `.auth-field label` (étiquette de champ, chasse fixe) | 11 px | **2,97:1** | 4,5:1 |
+
+La cause commune est `--ink-2` (`#6b7280`) : **4,83:1 en théorie sur le blanc,
+mais 4,07:1 mesuré** dès qu'on descend sous ~15 px.
+
+Ce qui a été fait : un jeton `--ink-2-fort` (`#464d5a`, ~7:1 mesuré), appliqué
+aux cartes d'authentification, au parcours et aux deux pages légales. Tout y
+passe désormais, dans les deux thèmes — `scratchpad/ins_contraste.py` le vérifie
+sur 90 relevés.
+
+**Ce qui n'a pas été fait, et qu'il faudra décider :** `--ink-2` est employé
+dans tout le site (tableau de bord, cours, progression, paramètres, console
+d'administration). Partout où il porte du texte sous ~15 px, le même défaut est
+là. Le corriger revient à basculer `--ink-2` en clair vers une valeur plus
+sombre, ce qui touche **toutes** les pages : c'est un audit, pas une retouche au
+passage, et ce n'est pas à faire en même temps qu'une inscription.
+
+Le mode sombre n'est pas concerné : `--ink-2` y est clair sur fond foncé et
+mesure 5,56:1 au minimum. `--ink-2-fort` y reprend simplement `--ink-2` — mais
+il doit malgré tout être **redéfini** dans le thème sombre, sinon il garderait
+la valeur claire, soit un gris foncé sur un fond presque noir.

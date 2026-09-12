@@ -3699,6 +3699,17 @@
               <div class="set-lbl"><b>Bruit de fond radio</b><span>Souffle pendant que le contrôleur parle.</span></div>
               <button class="switch" id="setNoise" type="button" role="switch" aria-checked="false"><span></span></button>
             </div>
+            <!-- Un bouton d'essai, parce que le réglage le plus important de cette
+                 carte est celui qu'on ne peut pas juger sans entendre. Et surtout :
+                 la synthèse vocale des navigateurs échoue silencieusement — voix
+                 distante qui ne démarre jamais, moteur qui attend une interaction,
+                 aucune voix française installée. Sans essai, on découvre la panne
+                 au milieu d'un exercice et on croit que c'est l'exercice. -->
+            <div class="set-row">
+              <div class="set-lbl"><b>Essai</b><span>Écoutez une vraie phrase de contrôleur, avec la voix et le débit choisis ci-dessus.</span></div>
+              <button class="btn small" id="setVoiceTest" type="button">Écouter un exemple</button>
+            </div>
+            <p class="set-note auth-msg hidden" id="setVoiceMsg" role="status" aria-live="polite"></p>
           </div>
 
           <div class="set-card">
@@ -3722,6 +3733,26 @@
                 <button class="seg3-opt" type="button" data-sil="4000">4 s</button>
               </div>
             </div>
+          </div>
+
+          <!-- Un objectif que l'eleve se fixe lui-même, et non un quota qu'on lui
+               impose : la difference est tout le sujet. Trois paliers courts,
+               parce qu'un objectif inatteignable se contourne le troisieme jour.
+               « Aucun » est un choix de plein droit, pas un oubli — quelqu'un qui
+               ne veut pas de compteur ne doit pas en heriter d'un par defaut. -->
+          <div class="set-card">
+            <h3>Objectif quotidien</h3>
+            <div class="set-row">
+              <div class="set-lbl"><b>Séances par jour</b>
+                <span>Votre avancement du jour apparaît alors sur la page Compte.</span></div>
+              <div class="seg3" role="group" aria-label="Objectif quotidien">
+                <button class="seg3-opt" type="button" data-obj="0">Aucun</button>
+                <button class="seg3-opt" type="button" data-obj="1">1</button>
+                <button class="seg3-opt" type="button" data-obj="3">3</button>
+                <button class="seg3-opt" type="button" data-obj="5">5</button>
+              </div>
+            </div>
+            <p class="set-note" id="setObjNote">—</p>
           </div>
 
           <div class="set-card">
@@ -3837,10 +3868,22 @@
               <div class="set-lbl"><b>Membre depuis</b><span>Date de création du compte.</span></div>
               <span class="set-val" id="cptDepuis">—</span>
             </div>
+            <!-- Deux lignes plutot qu'une. « Role et formule » melangeait ce qui
+                 concerne l'eleve (sa formule) et ce qui ne le concerne pas : son
+                 role vaut « Eleve » pour tout le monde, et la mention « modifiable
+                 par un administrateur » ne lui apprenait rien qu'il puisse faire.
+                 La ligne du role n'apparait donc que pour les comptes qui en ont
+                 un autre que 'user' — c'est compte.js qui decide, sur le role lu
+                 en base. -->
             <div class="set-row">
-              <div class="set-lbl"><b>Rôle et formule</b>
-                <span>Modifiables par un administrateur seulement — la base le fait respecter, pas cette page.</span></div>
-              <span class="set-chips"><span class="set-chip" id="cptRole">—</span><span class="set-chip" id="cptPlan">—</span></span>
+              <div class="set-lbl"><b>Formule</b>
+                <span>Votre offre. Elle se change depuis l'espace de facturation, pas ici.</span></div>
+              <span class="set-chips"><span class="set-chip" id="cptPlan">—</span></span>
+            </div>
+            <div class="set-row hidden" id="cptLigneRole">
+              <div class="set-lbl"><b>Rôle</b>
+                <span>Vos droits sur l'application. Modifiable par un administrateur seulement — la base le fait respecter, pas cette page.</span></div>
+              <span class="set-chips"><span class="set-chip" id="cptRole">—</span></span>
             </div>
             <div class="set-actions">
               <button class="btn cta small" id="cptEnregistrer" type="button">Enregistrer</button>
@@ -3907,6 +3950,9 @@
               <div class="tb-stat"><b id="cptStScore">—</b><span>Score moyen</span></div>
               <div class="tb-stat"><b id="cptStJours">—</b><span>Jours de pratique</span></div>
               <div class="tb-stat"><b id="cptStDerniere">—</b><span>Dernière séance</span></div>
+              <!-- N'apparait que si un objectif est fixe dans les Parametres.
+                   Une tuile « 0 / 0 » ne dirait rien a personne. -->
+              <div class="tb-stat hidden" id="cptStObjectifCase"><b id="cptStObjectif">—</b><span>Objectif du jour</span></div>
             </div>
           </div>
 
@@ -12218,6 +12264,77 @@ function oaciSonde(couche, surAbsenceTotale){
     b.addEventListener('click',function(){ S.silence=b.getAttribute('data-sil'); save(); segSet(null,S.silence,'data-sil'); });
   });
 
+  /* ---------- Objectif quotidien ----------
+     Stocke un nombre de seances par jour. Il n'impose rien et ne bloque rien :
+     c'est la page Compte qui compare ce nombre aux seances reellement
+     enregistrees en base pour la journee. Zero = aucun objectif. */
+  function majObjNote(){
+    var n = parseInt(S.objectif || 0, 10) || 0;
+    var e = $s('setObjNote'); if (!e) return;
+    e.textContent = n
+      ? ('Objectif : ' + n + ' séance' + (n > 1 ? 's' : '') + ' par jour. Il est compté sur '
+         + 'les séances enregistrées en base, pas sur cet appareil — vous le retrouverez '
+         + 'donc sur un autre navigateur.')
+      : "Aucun objectif. Rien ne sera compté ni affiché ; votre série de jours de pratique, elle, continue d'être tenue.";
+  }
+  sec.querySelectorAll('[data-obj]').forEach(function(b){
+    b.addEventListener('click',function(){
+      S.objectif=b.getAttribute('data-obj'); save();
+      segSet(null,S.objectif,'data-obj'); majObjNote();
+    });
+  });
+
+  /* ---------- Essai de la voix ----------
+     La synthese vocale echoue sans rien dire : une voix distante qui ne demarre
+     jamais, un moteur qui attend une interaction, aucune voix francaise
+     installee. On ne se contente donc pas de lancer la parole — on attend la
+     PREUVE qu'elle a commence (onDebut), et faute de preuve au bout de quatre
+     secondes on le dit. Mieux vaut l'apprendre ici qu'au milieu d'un exercice. */
+  var essaiJeton = 0;
+  function essayerVoix(){
+    var btn = $s('setVoiceTest'), msg = $s('setVoiceMsg');
+    function dire(txt, ok){
+      if (!msg) return;
+      msg.textContent = txt;
+      msg.classList.remove('hidden','ok');
+      if (ok) msg.classList.add('ok');
+    }
+    if (!window.speechSynthesis || !window.Voix)
+      return dire("Ce navigateur n'a pas de synthèse vocale. Les exercices resteront muets : essayez Chrome, Edge ou Safari à jour.", false);
+
+    var voix = window.speechSynthesis.getVoices() || [];
+    var fr = voix.filter(function(v){ return /^fr/i.test(v.lang); });
+    var mien = ++essaiJeton, parti = false;
+
+    if (btn){ btn.disabled = true; btn.textContent = 'Écoute…'; }
+    dire('Envoi…', true);
+
+    /* Une phrase reelle du manuel plutot qu'un « test, test » : ce qu'on veut
+       juger, c'est l'intelligibilite des lettres et des chiffres epeles, et
+       c'est precisement la que les voix se distinguent. */
+    window.Voix.parler(
+      "Fox-trot Golf Kilo Lima Mike, autorisé décollage piste zéro cinq, vent deux cinq zéro degrés, un zéro nœuds.",
+      { rate: parseFloat(S.rate || 1) || 1,
+        onDebut: function(){ parti = true; if (mien === essaiJeton) dire('La voix fonctionne.', true); },
+        onFin: function(){ if (mien === essaiJeton) fini(); } }
+    );
+
+    function fini(){
+      if (btn){ btn.disabled = false; btn.textContent = 'Écouter un exemple'; }
+    }
+    setTimeout(function(){
+      if (mien !== essaiJeton || parti) return;
+      fini();
+      dire(fr.length
+        ? "Aucun son n'est sorti. Sur Chrome, les voix « Google » passent par le réseau et "
+          + "restent parfois muettes : choisissez une voix locale ci-dessus (Thomas, Amélie…), puis réessayez."
+        : "Aucune voix française n'est installée sur cet appareil. Les exercices parleront avec "
+          + "un accent étranger, ou pas du tout. Sur Windows : Paramètres → Heure et langue → Voix.",
+        false);
+    }, 4000);
+  }
+  if ($s('setVoiceTest')) $s('setVoiceTest').addEventListener('click', essayerVoix);
+
   /* ---------- Carte : fond + calques par défaut (lus par le module Navigation) ---------- */
   sec.querySelectorAll('[data-base]').forEach(function(b){
     b.addEventListener('click',function(){ S.basemap=b.getAttribute('data-base'); save(); segSet(null,S.basemap,'data-base'); });
@@ -12318,6 +12435,8 @@ function oaciSonde(couche, surAbsenceTotale){
     segSet(null,S.rate||'1','data-rate');
     segSet(null,S.diff||'debutant','data-diffset');
     segSet(null,S.silence||'2500','data-sil');
+    segSet(null,String(parseInt(S.objectif||0,10)||0),'data-obj');
+    majObjNote();
     segSet(null,S.basemap||'oaci','data-base');
     var L=S.layers||{ctr:true,tma:true,rpd:false};
     sec.querySelectorAll('[data-lay]').forEach(function(b){ b.classList.toggle('on',!!L[b.getAttribute('data-lay')]); });

@@ -104,8 +104,15 @@
     if ($('cptIndicatif'))  $('cptIndicatif').value  = (p && p.callsign) || '';
     if ($('cptMail'))       $('cptMail').value       = email || (p && p.email) || '';
     if ($('cptDepuis'))     $('cptDepuis').textContent = dateFr(p && p.created_at);
-    if ($('cptRole'))       $('cptRole').textContent = LABEL_ROLE[p && p.role] || (p && p.role) || '—';
     if ($('cptPlan'))       $('cptPlan').textContent = LABEL_PLAN[p && p.plan] || (p && p.plan) || '—';
+    /* Le rôle ne se montre qu'à qui en a un autre que celui de tout le monde.
+       Afficher « Rôle : Élève » à un élève, avec la mention qu'un administrateur
+       seul peut le changer, c'était lui décrire une porte qui ne s'ouvre pas —
+       et l'inviter à la pousser. On lit le rôle en base, comme la garde de la
+       console : les deux ne peuvent pas se contredire. */
+    var role = (p && p.role) || 'user';
+    montrer('cptLigneRole', role !== 'user');
+    if ($('cptRole'))       $('cptRole').textContent = LABEL_ROLE[role] || role;
 
     /* L'ancien champ et les nouveaux s'excluent : « Nom affiché » se calcule
        désormais à partir du prénom et du nom, et laisser les deux modifiables
@@ -303,14 +310,47 @@
       .catch(function(e){ libre(); msg('cptQcmMsg', traduire(e)); });
   }
 
-  function peindrePratique(v, jours) {
+  /* L'objectif quotidien se règle dans les Paramètres (clé partagée
+     `rt-settings`) et se COMPTE en base : `v_daily_activity` donne le nombre de
+     séances par journée, et l'on cherche celle d'aujourd'hui. Le compter sur le
+     stockage local aurait donné un chiffre différent d'un navigateur à l'autre
+     pour la même personne, ce qui est précisément ce que la page Compte ne doit
+     pas faire — tout ce qu'elle affiche vient de la base.
+
+     Le jour est pris dans le fuseau de l'appareil, comme `v_daily_activity`
+     l'expose, et non en UTC : quelqu'un qui s'entraîne à 23 h à Paris doit voir
+     sa séance comptée le jour où il l'a faite. */
+  function jourLocal(d){
+    var x = d || new Date();
+    return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0')
+                           + '-' + String(x.getDate()).padStart(2,'0');
+  }
+  function objectifDuJour(){
+    try { return parseInt((JSON.parse(localStorage.getItem('rt-settings')||'{}')).objectif||0,10) || 0; }
+    catch(e){ return 0; }
+  }
+
+  function peindrePratique(v, journees) {
     var vide = '—';
+    var jours = (journees == null) ? null : journees.length;
     if ($('cptStSeances'))  $('cptStSeances').textContent  = v ? String(v.sessions || 0) : vide;
     if ($('cptStVols'))     $('cptStVols').textContent     = v ? String(v.flights || 0) : vide;
     if ($('cptStTemps'))    $('cptStTemps').textContent    = v ? duree(v.training_s || 0) : vide;
     if ($('cptStScore'))    $('cptStScore').textContent    = (v && v.avg_pct != null) ? (v.avg_pct + ' %') : vide;
     if ($('cptStJours'))    $('cptStJours').textContent    = (jours == null) ? vide : String(jours);
     if ($('cptStDerniere')) $('cptStDerniere').textContent = v ? dateCourteFr(v.last_seen_at) : vide;
+
+    var but = objectifDuJour();
+    /* Pas d'objectif fixé, ou base injoignable : la tuile disparaît. Afficher
+       « — / 3 » laisserait croire à zéro séance alors qu'on ne sait rien. */
+    montrer('cptStObjectifCase', !!but && journees != null);
+    if (but && journees != null && $('cptStObjectif')){
+      var hui = jourLocal(), fait = 0;
+      journees.forEach(function(l){
+        if (String(l.day||'').slice(0,10) === hui) fait += (l.sessions || 0);
+      });
+      $('cptStObjectif').textContent = fait + ' / ' + but;
+    }
   }
 
   function charger(){
@@ -337,14 +377,14 @@
     return Promise.all([
       c.from('profiles').select('*').eq('id', u.id).maybeSingle(),
       c.from('v_user_progress').select('*').eq('user_id', u.id).maybeSingle(),
-      c.from('v_daily_activity').select('day').eq('user_id', u.id)
+      c.from('v_daily_activity').select('day,sessions').eq('user_id', u.id)
     ]).then(function(r){
       var pr = r[0], pg = r[1], jr = r[2];
       var premiere = (pr.error || pg.error || jr.error);
       if (premiere){ horsLigne(traduire(premiere)); }
       else horsLigne('');
       peindreProfil(pr.error ? null : pr.data, u.email);
-      peindrePratique(pg.error ? null : pg.data, jr.error ? null : (jr.data || []).length);
+      peindrePratique(pg.error ? null : pg.data, jr.error ? null : (jr.data || []));
     }, function(e){
       horsLigne(traduire(e));
       peindreProfil(null, ''); peindrePratique(null, null);
@@ -546,5 +586,11 @@
   else brancher();
 
   /* Prise de test : même chemin que l'interface, aucun circuit parallèle. */
-  window.RT_TEST_COMPTE = { charger:charger, profil:function(){ return profilAffiche; } };
+  window.RT_TEST_COMPTE = { charger:charger, profil:function(){ return profilAffiche; },
+    /* Peindre un profil donné, sans passer par la base. Necessaire pour
+       verifier les lignes conditionnelles — celle du role, notamment — quand
+       aucun compte d'essai ne porte le role en question. C'est la MEME
+       fonction que celle appelee apres une lecture reelle : pas de circuit
+       parallele, donc pas de test qui passerait sur du code mort. */
+    peindre:peindreProfil };
 })();

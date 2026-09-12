@@ -432,6 +432,15 @@ n'y a pas accès et ne doit pas pouvoir en obtenir un.
 
 ### 12.1 La garde d'accès — ce qu'elle est devenue
 
+**Côté élève aussi.** La page Compte affichait une ligne « Rôle et formule » qui
+disait « Élève » à tout le monde, avec la mention « modifiable par un
+administrateur seulement ». Elle décrivait une porte qui ne s'ouvre pas et
+invitait à la pousser. La ligne du rôle est désormais réservée aux comptes dont
+`profiles.role` vaut autre chose que `'user'` ; la formule, elle, reste visible
+puisqu'elle concerne l'élève. Même source que la garde de la console : les deux
+ne peuvent pas se contredire.
+
+
 Il y avait ici, jusqu'au 12 septembre 2026, un interrupteur dans **Paramètres →
 Console d'administration**. Il posait `rt-admin-dev=1` dans le stockage local du
 navigateur ; l'entrée du menu et la route `#admin` en dépendaient. Le routeur, de

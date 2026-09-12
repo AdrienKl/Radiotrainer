@@ -1025,8 +1025,25 @@
   .auth-switch{ text-align:center; font-size:13px; color:var(--ink-2); margin:16px 0 0; }
   .auth-link{ background:none; border:none; padding:0; cursor:pointer; color:var(--violet-dark);
     font-weight:700; font-size:13px; text-decoration:underline; font-family:var(--sans); }
-  .account-placeholder{ background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius);
-    padding:22px; color:var(--ink-2); margin-top:14px; line-height:1.6; }
+  /* ---------- Compte ----------
+     La page réutilise les cartes des Paramètres (.set-card / .set-row) : même
+     grammaire visuelle, rien de neuf à apprendre pour l'œil. Il ne manquait que
+     trois choses — une valeur en lecture seule, une pastille, et la grille de
+     chiffres, qui reprend .tb-stat du tableau de bord. */
+  .set-val{ font-size:13.5px; color:var(--ink); font-family:var(--mono); }
+  .set-chip{ display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.03em;
+    padding:4px 11px; border-radius:var(--pill); background:var(--violet-soft);
+    border:1px solid var(--border); color:var(--violet-dark); }
+  .cpt-stats{ display:grid; gap:12px; margin-top:14px;
+    grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr)); }
+  /* Les chiffres du compte peuvent être des durées ou des dates : on laisse la
+     taille s'adapter plutôt que de laisser « 4 h 30 » déborder de sa tuile. */
+  .cpt-stats .tb-stat b{ font-size:clamp(17px,2.2vw,24px); word-break:break-word; }
+  /* Une adresse e-mail est longue : les 210 px de .set-input la tronquaient en
+     plein milieu, ce qui donne à lire une adresse fausse. */
+  #cptMail{ max-width:300px; width:100%; }
+  #page-compte .auth-msg{ display:block; }
+  #page-compte .auth-msg.hidden{ display:none; }
 
   /* --- Barre latérale (application) --- */
   .sidebar{ position:fixed; top:0; left:0; bottom:0; width:var(--side-w); box-sizing:border-box;
@@ -3338,12 +3355,103 @@
     </section>
 
     <!-- ==================== COMPTE (placeholder) ==================== -->
+    <!-- ==================== COMPTE ====================
+         Tout ce qui est affiché ici vient de la base : le profil (table
+         profiles) et la pratique (vue v_user_progress). Rien n'est calculé de
+         tête ni recopié de localStorage — quand la base est injoignable, la
+         page le DIT au lieu d'afficher des zéros qu'on prendrait pour un fait.
+         Le rôle et la formule sont en lecture seule, et ce n'est pas une
+         politesse d'interface : le déclencheur profiles_garde() en base remet
+         ces colonnes à leur valeur si un client tente de les changer. -->
     <section id="page-compte" class="page">
       <div class="container">
         <h2 class="section-title">Compte</h2>
-        <p class="section-sub">Espace réservé — la gestion de compte arrivera avec le serveur (aucune authentification réelle pour l'instant).</p>
-        <div class="account-placeholder">
-          <p>Ici figureront prochainement vos informations de compte, vos préférences et la synchronisation de votre progression.</p>
+        <p class="section-sub" id="cptSub">Vos informations, votre sécurité et votre pratique.</p>
+
+        <div class="nav-warn hidden" id="cptHorsLigne">
+          <strong>Base injoignable.</strong>
+          <span id="cptHorsLigneTxt">Les informations ci-dessous ne peuvent pas être lues pour l'instant.</span>
+        </div>
+
+        <div class="set-grid">
+
+          <div class="set-card">
+            <h3>Identité</h3>
+            <p class="set-note" id="cptIdNote">Ce que voit le contrôleur, et ce qui vous identifie.</p>
+            <div class="set-row">
+              <div class="set-lbl"><b>Nom affiché</b><span>Utilisé dans la console et sur vos récapitulatifs.</span></div>
+              <input class="set-input" id="cptNom" type="text" autocomplete="name" maxlength="60">
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Indicatif radio</b><span>Votre immatriculation fictive, reprise par défaut dans les exercices.</span></div>
+              <input class="set-input set-short" id="cptIndicatif" type="text" autocomplete="off"
+                     spellcheck="false" maxlength="12" placeholder="F-ABCD">
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Adresse e-mail</b><span id="cptMailNote">Sert à vous connecter.</span></div>
+              <input class="set-input" id="cptMail" type="email" autocomplete="email">
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Membre depuis</b><span>Date de création du compte.</span></div>
+              <span class="set-val" id="cptDepuis">—</span>
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Rôle et formule</b>
+                <span>Modifiables par un administrateur seulement — la base le fait respecter, pas cette page.</span></div>
+              <span class="set-chips"><span class="set-chip" id="cptRole">—</span><span class="set-chip" id="cptPlan">—</span></span>
+            </div>
+            <div class="set-actions">
+              <button class="btn cta small" id="cptEnregistrer" type="button">Enregistrer</button>
+              <button class="btn small" id="cptAnnuler" type="button">Annuler</button>
+            </div>
+            <p class="set-note auth-msg hidden" id="cptIdMsg"></p>
+          </div>
+
+          <div class="set-card">
+            <h3>Sécurité</h3>
+            <p class="set-note">Le mot de passe n'est jamais lu ni conservé par l'application : il part chiffré chez Supabase, qui seul le vérifie.</p>
+            <div class="set-row">
+              <div class="set-lbl"><b>Nouveau mot de passe</b><span>Huit caractères au minimum.</span></div>
+              <input class="set-input" id="cptMdp1" type="password" autocomplete="new-password">
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Confirmation</b><span>Retapez-le à l'identique.</span></div>
+              <input class="set-input" id="cptMdp2" type="password" autocomplete="new-password">
+            </div>
+            <div class="set-actions">
+              <button class="btn cta small" id="cptChangerMdp" type="button">Changer le mot de passe</button>
+            </div>
+            <p class="set-note auth-msg hidden" id="cptMdpMsg"></p>
+          </div>
+
+          <div class="set-card set-wide">
+            <h3>Votre pratique</h3>
+            <p class="set-note" id="cptPratiqueNote">Compté sur les séances enregistrées en base.</p>
+            <div class="cpt-stats">
+              <div class="tb-stat"><b id="cptStSeances">—</b><span>Séances</span></div>
+              <div class="tb-stat"><b id="cptStVols">—</b><span>Vols</span></div>
+              <div class="tb-stat"><b id="cptStTemps">—</b><span>Temps d'entraînement</span></div>
+              <div class="tb-stat"><b id="cptStScore">—</b><span>Score moyen</span></div>
+              <div class="tb-stat"><b id="cptStJours">—</b><span>Jours de pratique</span></div>
+              <div class="tb-stat"><b id="cptStDerniere">—</b><span>Dernière séance</span></div>
+            </div>
+          </div>
+
+          <div class="set-card set-wide">
+            <h3>Vos données</h3>
+            <p class="set-note" id="cptDonneesNote">Un export contient votre profil, vos séances et le détail de chaque échange.</p>
+            <div class="set-actions">
+              <button class="btn small" id="cptExport" type="button">Exporter mes données (JSON)</button>
+              <button class="btn small" id="cptDeconnexion" type="button">Se déconnecter</button>
+            </div>
+            <p class="set-note" id="cptSuppression">
+              <b>Supprimer le compte.</b> Cette opération ne peut pas se faire depuis le navigateur :
+              effacer un compte exige une clé serveur, qui n'a rien à faire dans une page web.
+              Écrivez-nous et le compte sera supprimé avec toutes ses séances.
+            </p>
+            <p class="set-note auth-msg hidden" id="cptDonneesMsg"></p>
+          </div>
+
         </div>
       </div>
     </section>
@@ -11688,6 +11796,7 @@ function oaciSonde(couche, surAbsenceTotale){
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/auth.js"></script>
 <script src="assets/sync.js"></script>
+<script src="assets/compte.js"></script>
 <script src="assets/admin/data/error-log.js"></script>
 <script src="assets/admin/data/contract.js"></script>
 <script src="assets/admin/ui/kit.js"></script>

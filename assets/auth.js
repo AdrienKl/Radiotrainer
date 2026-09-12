@@ -110,6 +110,18 @@
     profil:      function(){ return profil; },
     estAdmin:    function(){ return !!profil && (profil.role==='admin' || profil.role==='moderator'); },
 
+    /* Le client, pour les modules qui doivent lire ou écrire en base sous LA
+       session en cours (la page Compte, la console d'administration). En créer
+       un second ailleurs marcherait — même storageKey, même session — mais
+       multiplierait les connexions temps réel et les jetons rafraîchis en
+       parallèle pour rien. */
+    client: function(){ return C(); },
+    /* Le message d'erreur traduit en français, pour que tous les modules disent
+       la même chose de la même panne. */
+    message: messageFr,
+    /* Après une écriture sur `profiles`, la copie en mémoire est périmée. */
+    rechargerProfil: function(){ return chargerProfil().then(function(p){ annoncer(); return p; }); },
+
     connexion: function(email, mdp){
       var c = C();
       if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));

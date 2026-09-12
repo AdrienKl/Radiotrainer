@@ -36,7 +36,7 @@
      est la seule façon honnête de le dire : le jour où la version 1 paraîtra,
      un simple « where cgu_version = 'brouillon-0' » retrouve tout le monde à qui
      il faut redemander son accord. */
-  var CGU_VERSION = 'brouillon-0';
+  var CGU_VERSION = 'brouillon-1';
 
   var QUESTIONS = [
     { id:'decouverte', colonne:'decouverte', type:'un', facultative:true,

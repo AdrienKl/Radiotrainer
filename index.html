@@ -1185,7 +1185,45 @@
   .legal-note{ font-size:13px; line-height:1.6; color:var(--ink-2-fort); margin:22px 0 0;
     padding-top:16px; border-top:1px solid var(--border); }
   .legal-mono{ font-family:var(--mono); font-size:.95em; }
-  .legal-retour{ margin:30px 0 0; }
+  .legal-retour{ margin:30px 0 0; display:flex; flex-wrap:wrap; gap:9px; }
+  .legal-maj{ font-size:12.5px; color:var(--ink-2-fort); margin:-6px 0 18px;
+    font-family:var(--mono); letter-spacing:.02em; }
+
+  /* Un champ que seul l'editeur peut remplir. Il doit se VOIR : une page
+     juridique a laquelle il manque l'identite du responsable n'est pas
+     conforme, et rien ne serait pire qu'elle en ait l'air. */
+  .legal-vide{ display:inline-block; font-family:var(--mono); font-size:.88em;
+    /* PAS var(--warn) : l'ambre du reste de l'interface (#e0912a) tombe a
+       2,40:1 sur le fond clair, tres en dessous du 4,5:1 exige pour ce corps.
+       Le marqueur le plus important de ces pages aurait ete le moins lisible.
+       Teinte foncee mesuree a 5,50:1 sur son propre fond ambre. Le theme sombre
+       garde var(--warn), qui y passe deja largement (8,93:1). */
+    color:#8a5300; background:rgba(224,145,42,.10);
+    border:1px dashed rgba(224,145,42,.62); border-radius:7px;
+    padding:1px 7px; white-space:normal; }
+  :root[data-theme="dark"] .legal-vide{ color:var(--warn); }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .legal-vide{ color:var(--warn); }
+  }
+
+  /* Tableaux : un inventaire de donnees se lit en colonnes, pas en phrases.
+     Le conteneur defile seul quand l'ecran est etroit — c'est lui qui porte
+     overflow-x, sinon c'est la PAGE qui defilerait lateralement. */
+  .legal-tabwrap{ overflow-x:auto; margin:12px 0 4px;
+    border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+  .legal-tab{ border-collapse:collapse; width:100%; min-width:520px; }
+  .legal-tab th, .legal-tab td{ text-align:left; vertical-align:top;
+    padding:10px 13px; font-size:13.5px; line-height:1.55;
+    border-bottom:1px solid var(--border); }
+  .legal-tab thead th{ font-family:var(--sans); font-weight:800; font-size:11.5px;
+    letter-spacing:.05em; text-transform:uppercase; color:var(--ink);
+    background:var(--surface-2); white-space:nowrap; }
+  .legal-tab tbody td{ color:var(--ink-2-fort); }
+  .legal-tab tbody td b{ color:var(--ink); }
+  .legal-tab tbody tr:last-child td{ border-bottom:none; }
+  @media (max-width:620px){
+    .legal-tab th, .legal-tab td{ padding:9px 11px; font-size:13px; }
+  }
   /* ---------- Compte ----------
      La page réutilise les cartes des Paramètres (.set-card / .set-row) : même
      grammaire visuelle, rien de neuf à apprendre pour l'œil. Il ne manquait que
@@ -2710,6 +2748,8 @@
               <a href="#cgu" target="_blank" rel="noopener">Conditions d'utilisation</a>
               <span aria-hidden="true">·</span>
               <a href="#confidentialite" target="_blank" rel="noopener">Politique de confidentialité</a>
+              <span aria-hidden="true">·</span>
+              <a href="#mentions" target="_blank" rel="noopener">Mentions légales</a>
             </p>
 
             <!-- Emplacement de la vérification anti-robot. VIDE, et il faut qu'on
@@ -2808,109 +2848,471 @@
     </section>
 
 
+    <!-- ==================== MENTIONS LÉGALES ====================
+         Obligation de l'article 6-III de la loi pour la confiance dans
+         l'économie numérique (LCEN) : tout service en ligne doit permettre
+         d'identifier son éditeur. Les champs que seul l'éditeur connaît sont
+         laissés VISIBLEMENT vides — écrire un nom ou une adresse plausible
+         serait pire que de ne rien écrire, puisque la page aurait alors l'air
+         conforme. -->
+    <section id="page-mentions" class="page">
+      <div class="container legal-wrap">
+        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← RadioTrainer</button></p>
+        <h1 class="legal-h1">Mentions légales</h1>
+        <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 12 septembre 2026.</p>
+
+        <p class="legal-etat"><b>Trois champs manquent, et ils sont obligatoires.</b> L'identité de
+          l'éditeur, son adresse et son adresse de contact ne peuvent être renseignées que par lui.
+          Tant qu'elles sont vides, cette page n'est pas conforme à l'article 6-III de la LCEN. Le reste
+          du document, lui, est exact et vérifié.</p>
+
+        <h2 class="legal-h2">1. Éditeur du service</h2>
+        <ul class="legal-liste">
+          <li><b>Nom ou dénomination sociale</b> — <span class="legal-vide">à compléter</span></li>
+          <li><b>Statut</b> — <span class="legal-vide">particulier / auto-entrepreneur / société (à préciser)</span></li>
+          <li><b>Adresse</b> — <span class="legal-vide">à compléter</span></li>
+          <li><b>Adresse de contact</b> — <span class="legal-vide">à compléter</span></li>
+          <li><b>Directeur de la publication</b> — <span class="legal-vide">à compléter</span></li>
+          <li><b>Si société</b> — forme juridique, capital social, numéro RCS, numéro de TVA
+            intracommunautaire : <span class="legal-vide">à compléter</span></li>
+        </ul>
+        <p class="legal-note">Un éditeur <b>non professionnel</b> peut, au titre du même article 6-III-2,
+          ne pas rendre publics son nom et son adresse, à condition de les avoir communiqués à son
+          hébergeur et de publier l'identité de celui-ci — elle figure au § 2. Un éditeur
+          <b>professionnel</b>, ou dès qu'une formule payante existe, doit en revanche tout publier.</p>
+
+        <h2 class="legal-h2">2. Hébergement</h2>
+        <p class="legal-p">Le service repose sur deux hébergeurs distincts, qui ne détiennent pas les
+          mêmes choses.</p>
+        <div class="legal-tabwrap">
+        <table class="legal-tab">
+          <thead><tr><th>Hébergeur</th><th>Ce qu'il héberge</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>GitHub, Inc.</b> (service GitHub&nbsp;Pages)<br>
+                  88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis<br>
+                  <span class="legal-mono">github.com</span></td>
+              <td>Les fichiers du site : pages, styles, scripts, images et tuiles de carte. Aucune donnée
+                  de compte. En servant ces fichiers, GitHub voit nécessairement votre adresse IP.</td>
+            </tr>
+            <tr>
+              <td><b>Supabase, Inc.</b><br>
+                  <span class="legal-mono">supabase.com</span><br>
+                  Projet <span class="legal-mono">vbziwjeuzcbvrbrihhrg</span></td>
+              <td>Les comptes (adresse e-mail, empreinte du mot de passe), les profils, les séances
+                  d'entraînement et les erreurs techniques. Autrement dit : tout ce qui vous concerne.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="legal-note"><b>Région d'hébergement de la base : <span class="legal-vide">à confirmer</span>.</b>
+          Elle se lit dans le tableau de bord Supabase (Project Settings → General → Region) et détermine si
+          vos données quittent l'Union européenne. C'est une information que cette page doit donner, et que
+          seul le tableau de bord peut fournir avec certitude.</p>
+
+        <h2 class="legal-h2">3. Propriété intellectuelle et sources</h2>
+        <p class="legal-p">Le code et les textes de RadioTrainer sont l'œuvre de son éditeur. Les données
+          et les contenus repris de tiers restent la propriété de leurs auteurs, aux conditions
+          suivantes.</p>
+        <ul class="legal-liste">
+          <li><b>Phraséologie</b> — les exercices sont bâtis sur le <i>Manuel de phraséologie</i> publié
+            par la DSNA, document public. Il reste la seule référence ; ce site n'en est qu'un support
+            d'entraînement.</li>
+          <li><b>Aérodromes et fréquences</b> — OurAirports, domaine public.</li>
+          <li><b>Espaces aériens</b> — SIA / DGAC via <span class="legal-mono">data.gouv.fr</span>,
+            Licence Ouverte 2.0. Conversion communautaire du 11 mars 2020 : non officielle et non à jour.</li>
+          <li><b>Fond OpenStreetMap</b> — © les contributeurs OpenStreetMap, licence ODbL.</li>
+          <li><b>Carte OACI 1:500&nbsp;000</b> — SIA / DGAC, édition 2026. <b>Le titre exact permettant
+            d'en rediffuser les images sur ce site reste à établir</b> : consulter les conditions de
+            réutilisation du SIA et de l'IGN avant toute mise en ligne publique. Voir la note ci-dessous.</li>
+          <li><b>Bibliothèque cartographique</b> — Leaflet, licence BSD 2-clauses.</li>
+          <li><b>Photographies</b> — créditées en pied de page (Unsplash, Pixabay, rawpixel).</li>
+        </ul>
+        <p class="legal-avert"><b>Point à vérifier avant toute ouverture au public.</b> Le site embarque
+          environ 116 Mo de tuiles de la carte OACI-VFR. Consulter une carte est une chose, en
+          <b>rediffuser</b> les images depuis son propre serveur en est une autre, et cela relève du droit
+          du producteur. Aucune information présente dans ce dépôt ne permet de dire sous quel titre ces
+          tuiles y figurent. C'est le seul point de ce dossier qui ne se règle pas en écrivant du texte.</p>
+
+        <h2 class="legal-h2">4. Signalement d'un contenu</h2>
+        <p class="legal-p">Toute personne peut signaler un contenu qu'elle estime illicite à l'adresse de
+          contact du § 1. Les signalements relatifs à une erreur de phraséologie ou de fréquence sont
+          particulièrement bienvenus : une information périmée sur ce site est un risque, pas une
+          imperfection.</p>
+
+        <p class="legal-retour">
+          <button class="btn" type="button" data-page="cgu">Conditions d'utilisation</button>
+          <button class="btn" type="button" data-page="confidentialite">Politique de confidentialité</button>
+        </p>
+      </div>
+    </section>
+
     <!-- ==================== CONDITIONS D'UTILISATION ====================
-         Ces deux pages sont des CHANTIERS DÉCLARÉS, pas des textes.
-         Y écrire du faux juridique serait pire que de n'avoir rien : un texte
-         inventé engage autant qu'un vrai, et personne ici n'est juriste. Elles
-         annoncent donc ce qu'elles contiendront, et l'application enregistre la
-         version acceptée (« brouillon-0 ») pour pouvoir redemander l'accord de
-         chacun le jour où le texte définitif existera. -->
+         Ce texte est le contrat. Il est écrit pour être lu par un élève pilote,
+         pas pour se protéger derrière des formules : une clause qu'on ne
+         comprend pas n'est pas opposable, et surtout elle ne prévient personne.
+         L'avertissement du § 3 est la raison d'être du document. -->
     <section id="page-cgu" class="page">
       <div class="container legal-wrap">
         <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← RadioTrainer</button></p>
         <h1 class="legal-h1">Conditions d'utilisation</h1>
-        <p class="legal-etat"><b>Texte en cours de rédaction.</b> Cette page n'est pas encore le document
-          définitif. Elle décrit ce qu'il contiendra, afin que vous sachiez à quoi vous vous engagez
-          avant de cocher la case à l'inscription.</p>
+        <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 12 septembre 2026.</p>
 
-        <h2 class="legal-h2">Ce que le texte définitif dira</h2>
+        <p class="legal-etat">Ce texte est complet et vous engage dès que vous cochez la case à
+          l'inscription. Une seule chose y manque : l'identité de l'éditeur, qui figurera aux
+          <button class="auth-link" type="button" data-page="mentions">mentions légales</button>.
+          La version acceptée est enregistrée avec votre compte ; si le texte change sur le fond, votre
+          accord vous sera redemandé.</p>
+
+        <h2 class="legal-h2">1. Objet</h2>
+        <p class="legal-p">RadioTrainer est un service d'entraînement à la phraséologie radiotéléphonique
+          française pour le vol à vue. Il s'adresse aux élèves pilotes, aux pilotes brevetés qui veulent
+          se remettre en état, et à quiconque s'intéresse aux communications air-sol. Il est gratuit.</p>
+
+        <h2 class="legal-h2">2. Qui édite le service</h2>
+        <p class="legal-p">L'éditeur, son adresse et son contact figurent aux
+          <button class="auth-link" type="button" data-page="mentions">mentions légales</button>.</p>
+
+        <h2 class="legal-h2">3. Ce que RadioTrainer n'est pas — à lire en entier</h2>
+        <p class="legal-avert"><b>RadioTrainer est un outil d'entraînement. Ce n'est pas une référence
+          opérationnelle, et aucune décision de vol ne doit être prise sur la foi de ce site.</b><br><br>
+          Il ne remplace ni votre instructeur, ni le <i>Manuel de phraséologie</i> de la DSNA, ni les
+          cartes VFR, ni les documents d'information aéronautique en vigueur. Les fréquences, les
+          procédures, les terrains, les espaces aériens et les cartes qui y figurent <b>peuvent être
+          périmés, incomplets ou erronés</b> : certaines données proviennent de conversions
+          communautaires non officielles, et aucune n'est mise à jour au rythme de l'information
+          aéronautique. Avant un vol, la seule source valable est la documentation officielle en
+          vigueur.<br><br>
+          Réussir un exercice ici n'atteste d'aucune compétence, ne vaut aucune qualification et ne
+          prépare pas à lui seul à un examen.</p>
+
+        <h2 class="legal-h2">4. Compte et âge minimum</h2>
         <ul class="legal-liste">
-          <li><b>Qui édite le service</b> — identité de l'éditeur, adresse, moyen de contact, hébergeur.</li>
-          <li><b>À quoi sert RadioTrainer</b> — un entraînement à la phraséologie radio française, destiné
-            aux élèves pilotes et aux pilotes brevetés.</li>
-          <li><b>Âge minimum : 15 ans.</b> C'est l'âge à partir duquel, en France, on peut consentir seul
-            au traitement de ses données. En dessous, l'accord d'un représentant légal serait nécessaire.</li>
-          <li><b>Ce que vous vous engagez à faire</b> — donner des informations exactes, garder votre mot de
-            passe pour vous, ne pas partager votre compte.</li>
-          <li><b>Ce que le service ne garantit pas</b> — et c'est le point le plus important de tous :</li>
+          <li><b>15 ans révolus.</b> C'est l'âge à partir duquel, en France, on peut consentir seul au
+            traitement de ses données personnelles (article 8 du RGPD et article 45 de la loi
+            Informatique et Libertés). En dessous, l'accord d'un représentant légal serait nécessaire, et
+            le service n'a aujourd'hui aucun moyen de le recueillir : l'inscription vous est donc fermée.
+            À l'inscription, vous déclarez avoir 15 ans — cette déclaration est enregistrée, elle n'est
+            pas vérifiée.</li>
+          <li><b>Un compte par personne.</b> Le nom d'utilisateur est unique et ne peut pas être repris.</li>
+          <li><b>Des informations exactes.</b> Votre adresse e-mail doit être la vôtre et fonctionner :
+            c'est le seul moyen de récupérer l'accès au compte.</li>
+          <li><b>Votre mot de passe vous appartient.</b> Ne le communiquez à personne, y compris à
+            quelqu'un se présentant comme l'éditeur : le service ne vous le demandera jamais, et
+            personne de son côté ne peut le lire.</li>
+          <li><b>Pas de partage de compte.</b> La progression enregistrée est celle d'une personne ; un
+            compte partagé n'entraîne personne correctement.</li>
         </ul>
 
-        <p class="legal-avert"><b>RadioTrainer est un outil d'entraînement, pas une référence
-          opérationnelle.</b> Il ne remplace ni votre instructeur, ni le manuel de phraséologie de la DSNA,
-          ni les documents officiels en vigueur. Aucune décision de vol ne doit être prise sur la foi de ce
-          site. Les fréquences, procédures et terrains qui y figurent peuvent être périmés ou erronés :
-          vérifiez toujours dans la documentation officielle.</p>
-
+        <h2 class="legal-h2">5. Usages interdits</h2>
         <ul class="legal-liste">
-          <li><b>Disponibilité</b> — le service peut être interrompu, modifié ou arrêté.</li>
-          <li><b>Compte et résiliation</b> — comment fermer son compte, et dans quels cas nous pourrions
-            suspendre un accès.</li>
-          <li><b>Propriété</b> — ce qui nous appartient, ce qui appartient à ses auteurs (les photographies
-            sont créditées en pied de page, le manuel de phraséologie est un document public de la DSNA).</li>
-          <li><b>Droit applicable</b> — droit français.</li>
+          <li>Tenter d'accéder aux données d'un autre utilisateur, ou à la console d'administration sans
+            en avoir le rôle.</li>
+          <li>Chercher à contourner l'authentification, les limites d'usage ou les politiques d'accès de
+            la base.</li>
+          <li>Extraire massivement les contenus ou les données par des moyens automatisés.</li>
+          <li>Perturber le service ou son hébergement, notamment par un volume anormal de requêtes.</li>
+          <li>Reproduire ou rediffuser les contenus au-delà de ce que permettent les licences citées aux
+            mentions légales.</li>
         </ul>
 
-        <p class="legal-note">Tant que ce texte n'est pas publié, la case cochée à l'inscription est
-          enregistrée avec la mention « brouillon-0 ». Lorsque la version définitive paraîtra, votre accord
-          vous sera redemandé explicitement.</p>
+        <h2 class="legal-h2">6. Disponibilité</h2>
+        <p class="legal-p">Le service est fourni en l'état, sans engagement de disponibilité. Il peut être
+          interrompu, modifié, restreint ou arrêté, à tout moment et sans préavis — notamment pour
+          maintenance, en cas de défaillance d'un hébergeur, ou si l'éditeur décide d'y mettre fin. Une
+          partie des fonctions dépend en outre de votre navigateur : le microphone et la voix de synthèse
+          ne sont pas fournis par ce site, et certains navigateurs en sont dépourvus.</p>
 
-        <p class="legal-retour"><button class="btn cta" type="button" data-page="signup">Retour à l'inscription</button></p>
+        <h2 class="legal-h2">7. Vos données personnelles</h2>
+        <p class="legal-p">Ce qui est collecté, pourquoi, pour combien de temps, et par qui c'est hébergé :
+          tout est détaillé dans la
+          <button class="auth-link" type="button" data-page="confidentialite">politique de
+          confidentialité</button>, qui fait partie de ce contrat.</p>
+
+        <h2 class="legal-h2">8. Propriété intellectuelle</h2>
+        <p class="legal-p">Le code et les textes du service sont protégés. Votre compte vous donne le droit
+          d'utiliser le service pour votre propre entraînement, et rien de plus : aucune cession de droits
+          ne vous est consentie. Les contenus tiers (phraséologie DSNA, données aéronautiques, cartes,
+          photographies) restent soumis à leurs licences propres, énumérées aux mentions légales.</p>
+
+        <h2 class="legal-h2">9. Responsabilité</h2>
+        <p class="legal-p">L'éditeur n'est pas responsable des conséquences d'une utilisation du service
+          contraire au § 3, ni de l'indisponibilité d'un hébergeur ou d'une fonction du navigateur, ni
+          d'une perte de données résultant de la fermeture de votre compte à votre demande. Il ne répond
+          pas non plus des contenus des sites tiers vers lesquels des liens sont faits.</p>
+        <p class="legal-p">En revanche — et parce qu'une clause qui prétendrait le contraire serait nulle
+          en droit français — rien ici n'exclut la responsabilité de l'éditeur en cas de faute lourde ou
+          dolosive, ni d'atteinte à l'intégrité physique d'une personne, ni ne prive un consommateur des
+          droits que la loi lui reconnaît.</p>
+
+        <h2 class="legal-h2">10. Fermeture du compte</h2>
+        <ul class="legal-liste">
+          <li><b>À votre initiative</b> — écrivez à l'adresse de contact. Le compte et les séances
+            associées sont supprimés. Avant de demander la fermeture, pensez à exporter vos données depuis
+            la page Paramètres : la suppression est définitive.</li>
+          <li><b>À l'initiative de l'éditeur</b> — en cas de manquement au § 5, l'accès peut être suspendu,
+            puis le compte fermé. Sauf urgence ou obligation légale, un avertissement est adressé d'abord.</li>
+          <li><b>Si le service s'arrête</b> — un préavis raisonnable sera donné aux comptes actifs, afin que
+            chacun puisse exporter ses données.</li>
+        </ul>
+
+        <h2 class="legal-h2">11. Modification de ce texte</h2>
+        <p class="legal-p">Ce texte peut évoluer. La version que vous avez acceptée est enregistrée avec
+          votre compte, avec sa date. Toute modification portant sur le fond — ce qui est collecté, ce qui
+          vous est interdit, la responsabilité — donne lieu à une nouvelle demande d'accord à votre
+          prochaine connexion. Les corrections de forme n'en donnent pas.</p>
+
+        <h2 class="legal-h2">12. Droit applicable</h2>
+        <p class="legal-p">Ce contrat est régi par le droit français. En cas de différend, une solution
+          amiable sera recherchée d'abord, par écrit à l'adresse de contact. À défaut, les tribunaux
+          français sont compétents ; si vous êtes consommateur, vous conservez le droit de saisir la
+          juridiction de votre domicile.</p>
+        <p class="legal-note">Le service étant gratuit, aucun médiateur de la consommation n'est
+          désigné à ce jour. Si une formule payante devait exister, cette désignation deviendrait
+          obligatoire (article L.612-1 du code de la consommation) et ce paragraphe devrait être repris.</p>
+
+        <p class="legal-retour">
+          <button class="btn cta" type="button" data-page="signup">Retour à l'inscription</button>
+          <button class="btn" type="button" data-page="confidentialite">Politique de confidentialité</button>
+        </p>
       </div>
     </section>
 
-    <!-- ==================== POLITIQUE DE CONFIDENTIALITÉ ==================== -->
+    <!-- ==================== POLITIQUE DE CONFIDENTIALITÉ ====================
+         Information de l'article 13 du RGPD. Le tableau du § 2 a été écrit en
+         relisant les colonnes réellement créées par sql/001-inscription.sql et
+         les tables lues par assets/*.js — pas d'après un modèle. Toute ligne
+         ajoutée à `profiles` devra y apparaître le jour même : une politique de
+         confidentialité qui retarde sur le schéma est fausse, pas incomplète. -->
     <section id="page-confidentialite" class="page">
       <div class="container legal-wrap">
         <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← RadioTrainer</button></p>
         <h1 class="legal-h1">Politique de confidentialité</h1>
-        <p class="legal-etat"><b>Texte en cours de rédaction.</b> En revanche, la liste ci-dessous est
-          exacte dès aujourd'hui : elle décrit ce que l'application enregistre réellement, telle qu'elle
-          fonctionne en ce moment.</p>
+        <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 12 septembre 2026.</p>
 
-        <h2 class="legal-h2">Ce qui est enregistré, et pourquoi</h2>
+        <p class="legal-etat">Ce document décrit ce que l'application fait <b>réellement</b>, vérifié dans
+          son code et dans son schéma de base. Seule l'identité du responsable du traitement manque, et
+          elle figurera aux <button class="auth-link" type="button" data-page="mentions">mentions
+          légales</button>.</p>
+
+        <h2 class="legal-h2">1. Qui est responsable</h2>
+        <p class="legal-p">Le responsable du traitement est l'éditeur du service
+          (<span class="legal-vide">à compléter — voir mentions légales</span>). Pour toute question ou
+          pour exercer vos droits, écrivez à l'adresse de contact qui y figure. Aucun délégué à la
+          protection des données n'est désigné : la taille du service ne l'impose pas.</p>
+
+        <h2 class="legal-h2">2. Ce qui est collecté, pourquoi, et pour combien de temps</h2>
+        <div class="legal-tabwrap">
+        <table class="legal-tab">
+          <thead><tr><th>Donnée</th><th>À quoi elle sert</th><th>Fondement</th><th>Conservation</th></tr></thead>
+          <tbody>
+            <tr><td><b>Adresse e-mail</b></td>
+                <td>Identifier le compte, s'y connecter, le récupérer.</td>
+                <td>Exécution du contrat</td><td rowspan="6">Tant que le compte existe, puis <b>30 jours</b>
+                le temps que les sauvegardes tournent.</td></tr>
+            <tr><td><b>Mot de passe</b></td>
+                <td>Vous authentifier. Il n'est <b>jamais</b> conservé en clair ni lisible par l'éditeur :
+                    seule une empreinte cryptographique est gardée, par l'hébergeur d'authentification.</td>
+                <td>Exécution du contrat</td></tr>
+            <tr><td><b>Nom d'utilisateur, prénom</b></td>
+                <td>Vous identifier dans l'application et sur vos récapitulatifs.</td>
+                <td>Exécution du contrat</td></tr>
+            <tr><td><b>Nom de famille</b></td>
+                <td>Facultatif. <b>Aujourd'hui inutilisé par l'application</b> — voir la note sous ce
+                    tableau.</td>
+                <td>Consentement</td></tr>
+            <tr><td><b>Indicatif radio</b> (immatriculation fictive)</td>
+                <td>Être appelé dans les exercices comme vous le seriez en vol.</td>
+                <td>Exécution du contrat</td></tr>
+            <tr><td><b>Profil de pilote</b> — niveau, objectifs, type d'avion, niveau à la radio,
+                    aérodrome d'attache, tranche d'heures de vol</td>
+                <td>Choisir les exercices adaptés. C'est le cœur du service : sans ces réponses,
+                    l'application ne sait pas quoi vous proposer. Les heures de vol sont enregistrées
+                    <b>par tranche</b> (moins de 10, 10 à 50…), jamais au chiffre près.</td>
+                <td>Exécution du contrat</td></tr>
+            <tr><td><b>« Où nous avez-vous connu »</b></td>
+                <td>Statistique, rien d'autre. Facultatif, et retirable à tout moment en choisissant
+                    « aucune réponse » dans les Paramètres.</td>
+                <td>Consentement</td>
+                <td>Jusqu'au retrait, ou à la fermeture du compte.</td></tr>
+            <tr><td><b>Séances d'entraînement</b> — date, durée, exercice, phase, ce qui était attendu,
+                    ce qui a été dit, les éléments manqués, le score</td>
+                <td>Afficher votre progression, repérer vos points faibles, orienter les exercices
+                    suivants.</td>
+                <td>Exécution du contrat</td>
+                <td>Tant que le compte existe, puis 30 jours.</td></tr>
+            <tr><td><b>Erreurs techniques</b> — message, contexte, page, navigateur</td>
+                <td>Corriger les pannes. C'est ce qui a permis, par exemple, de réparer une voix de
+                    synthèse muette sur Chrome.</td>
+                <td>Intérêt légitime</td>
+                <td><b>12 mois.</b></td></tr>
+            <tr><td><b>Preuve de votre accord</b> — version des conditions acceptée, date, déclaration
+                    des 15 ans</td>
+                <td>Pouvoir démontrer que l'accord a bien été recueilli, comme le RGPD l'exige.</td>
+                <td>Obligation légale</td>
+                <td><b>5 ans</b> après la fermeture du compte (prescription de droit commun).</td></tr>
+            <tr><td><b>Journaux techniques des hébergeurs</b> — dont votre adresse IP</td>
+                <td>Servir les pages, sécuriser l'accès, détecter les abus. L'éditeur n'y accède pas
+                    directement.</td>
+                <td>Intérêt légitime</td>
+                <td>Selon les politiques des hébergeurs (§ 4).</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="legal-note"><b>Sur le nom de famille.</b> Il est facultatif et l'application ne s'en sert
+          aujourd'hui pour rien. Collecter une donnée sans usage contrevient au principe de minimisation
+          (article 5.1.c du RGPD). Deux issues seulement : lui donner un usage réel, ou cesser de le
+          demander. En attendant l'une ou l'autre, ne le renseignez pas si vous n'y tenez pas — rien n'en
+          dépend.</p>
+
+        <h2 class="legal-h2">3. Ce qui n'est pas fait</h2>
         <ul class="legal-liste">
-          <li><b>Votre adresse e-mail</b> — elle identifie le compte et sert à le récupérer. Nécessaire.</li>
-          <li><b>Votre mot de passe</b> — jamais en clair et jamais lisible par nous. Il est confié à notre
-            prestataire d'authentification, qui n'en conserve qu'une empreinte chiffrée.</li>
-          <li><b>Votre nom d'utilisateur et votre prénom</b> — ils vous identifient dans l'application.</li>
-          <li><b>Votre nom de famille</b> — facultatif, et aujourd'hui inutilisé.</li>
-          <li><b>Vos réponses au questionnaire d'inscription</b> — profil, objectifs, type d'avion, niveau à
-            la radio, aérodrome : ils servent à choisir les exercices qu'on vous propose. Les heures de vol
-            sont enregistrées par tranche, jamais au chiffre près.</li>
-          <li><b>« Où nous avez-vous connu »</b> — facultatif, et de nature purement statistique. Vous
-            pouvez ne pas répondre sans conséquence.</li>
-          <li><b>Vos séances d'entraînement</b> — date, durée, exercices joués, réponses justes et fausses.
-            C'est ce qui permet d'afficher votre progression et de repérer vos points faibles.</li>
-          <li><b>Les erreurs techniques</b> — quand l'application plante, le message d'erreur est
-            enregistré pour être corrigé.</li>
+          <li><b>Aucune donnée n'est vendue, louée ni échangée.</b></li>
+          <li>Aucun traceur publicitaire, aucun bouton de réseau social, aucune mesure d'audience externe
+            — ni Google Analytics, ni équivalent.</li>
+          <li>Aucune géolocalisation. L'aérodrome que vous indiquez est une réponse que vous donnez, pas
+            une position relevée.</li>
+          <li>Aucun profilage automatisé produisant des effets juridiques. Les exercices proposés
+            dépendent de vos réponses et de vos résultats, et vous pouvez les modifier à tout moment.</li>
+          <li>Aucune décision n'est prise sur la base de vos données en dehors du service lui-même.</li>
         </ul>
 
-        <h2 class="legal-h2">Ce qui n'est PAS fait</h2>
+        <h2 class="legal-h2">4. Qui d'autre voit quoi</h2>
+        <div class="legal-tabwrap">
+        <table class="legal-tab">
+          <thead><tr><th>Tiers</th><th>Rôle</th><th>Ce qu'il voit</th></tr></thead>
+          <tbody>
+            <tr><td><b>Supabase, Inc.</b></td><td>Sous-traitant : authentification et base de données</td>
+                <td>Tout ce du § 2 qui est enregistré sur le compte, et l'empreinte du mot de passe.</td></tr>
+            <tr><td><b>GitHub, Inc.</b> (GitHub Pages)</td><td>Sous-traitant : hébergement des fichiers</td>
+                <td>Votre adresse IP et les fichiers que vous chargez. Aucune donnée de compte.</td></tr>
+            <tr><td><b>Fondation OpenStreetMap</b></td><td>Fond de carte, <b>seulement</b> si vous le
+                choisissez dans les Paramètres</td>
+                <td>Votre adresse IP et la zone que vous regardez. La carte OACI, elle, est servie depuis
+                    ce site : la consulter n'appelle personne.</td></tr>
+            <tr><td><b>Google LLC</b></td><td>Reconnaissance vocale du navigateur Chrome</td>
+                <td>Voir le § 5 — c'est le point le moins évident de cette page.</td></tr>
+            <tr><td><b>Prestataire d'envoi d'e-mails</b></td><td>Sous-traitant (à venir)</td>
+                <td>Votre adresse e-mail, pour vous transmettre les codes de vérification.</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="legal-note">Les adresses postales et les engagements de ces sociétés figurent dans leurs
+          propres documents juridiques, qui font foi.</p>
+
+        <h2 class="legal-h2">5. Le microphone et la voix — ce qu'il faut savoir</h2>
+        <p class="legal-avert"><b>Quand vous parlez dans un exercice, votre voix peut partir chez Google.</b>
+          La reconnaissance vocale n'est pas faite par ce site : elle est fournie par votre navigateur.
+          Sur Chrome et Edge, le son capté par le microphone est <b>envoyé aux serveurs de Google</b> pour
+          y être transcrit, puis le texte revient. Ce site ne maîtrise ni ce transfert, ni sa durée de
+          conservation. Il n'y a pas d'autre moyen d'obtenir la reconnaissance vocale dans un navigateur,
+          mais vous avez le droit de le savoir avant de presser le bouton — et vous pouvez faire tous les
+          exercices sans microphone.</p>
         <ul class="legal-liste">
-          <li>Aucune donnée n'est vendue ni louée.</li>
-          <li>Aucun traceur publicitaire, aucun réseau social embarqué, aucune mesure d'audience externe.</li>
-          <li>Aucune géolocalisation. L'aérodrome que vous indiquez est un choix que vous faites, pas une
-            position relevée.</li>
+          <li><b>L'enregistrement de réécoute reste chez vous.</b> Pendant l'épellation, le son est aussi
+            enregistré localement pour que vous puissiez vous réécouter. Ce fichier ne quitte jamais votre
+            appareil : il vit en mémoire, le temps de l'exercice, et disparaît en fermant la page. Rien
+            n'est envoyé, rien n'est conservé.</li>
+          <li><b>Ce qui est enregistré en base, c'est du texte.</b> La transcription de votre réponse et
+            les éléments manqués — jamais le son.</li>
+          <li><b>La voix du contrôleur</b> est également celle du navigateur. Une voix « locale »
+            (Thomas, Amélie…) ne sort pas de votre appareil ; une voix distante, comme les voix
+            « Google » de Chrome, implique l'envoi du texte à prononcer. Le bouton <i>Écouter un
+            exemple</i> des Paramètres vous permet de choisir une voix locale.</li>
         </ul>
 
-        <h2 class="legal-h2">Vos droits</h2>
-        <p class="legal-p">Vous pouvez consulter, corriger et supprimer vos réponses depuis la page
-          <b>Compte</b>, et y exporter l'intégralité de vos données dans un fichier. Vous pouvez aussi
-          demander la suppression de votre compte. Si une demande reste sans réponse, vous pouvez saisir la
-          CNIL (<span class="legal-mono">cnil.fr</span>).</p>
+        <h2 class="legal-h2">6. Transferts hors de l'Union européenne</h2>
+        <p class="legal-p">GitHub et Google sont des sociétés établies aux États-Unis. La région
+          d'hébergement de la base de données doit être confirmée
+          (<span class="legal-vide">à compléter — voir mentions légales § 2</span>) : si elle est hors
+          d'Europe, vos données de compte y sont transférées. Ces transferts s'appuient sur les
+          mécanismes prévus au chapitre V du RGPD — clauses contractuelles types et, le cas échéant,
+          décision d'adéquation. Le détail figure dans les documents contractuels de chaque prestataire.</p>
 
-        <h2 class="legal-h2">Ce que le texte définitif devra encore préciser</h2>
+        <h2 class="legal-h2">7. Cookies et stockage local</h2>
+        <p class="legal-p"><b>Ce site ne dépose aucun cookie publicitaire ni de mesure d'audience.</b>
+          Aucune bannière de consentement n'est donc affichée, et ce n'est pas un oubli : l'article 82 de
+          la loi Informatique et Libertés en dispense les traceurs strictement nécessaires au service que
+          vous demandez. Voici tout ce qui est déposé.</p>
+        <div class="legal-tabwrap">
+        <table class="legal-tab">
+          <thead><tr><th>Nom</th><th>Nature</th><th>À quoi ça sert</th></tr></thead>
+          <tbody>
+            <tr><td><span class="legal-mono">rt-settings</span></td><td>Stockage local</td>
+                <td>Vos réglages : thème, voix, débit, difficulté, objectif quotidien, fond de carte.</td></tr>
+            <tr><td><span class="legal-mono">rt-vols</span>, <span class="legal-mono">rt-vol-en-cours</span>,
+                    <span class="legal-mono">radiotrainer_history_v2</span>, <span class="legal-mono">rt-jours</span></td>
+                <td>Stockage local</td>
+                <td>Vos vols, la séance en cours, l'historique et vos jours de pratique sur cet appareil.</td></tr>
+            <tr><td><span class="legal-mono">rt-menu-replie</span></td><td>Stockage local</td>
+                <td>Se souvenir que vous aviez replié le menu.</td></tr>
+            <tr><td><span class="legal-mono">sb-…-auth-token</span></td><td>Stockage local</td>
+                <td>Votre jeton de session, pour ne pas vous redemander votre mot de passe à chaque page.</td></tr>
+            <tr><td><span class="legal-mono">__cf_bm</span></td><td>Cookie tiers, ~30 minutes</td>
+                <td>Déposé par Cloudflare au nom de l'hébergeur de la base, pour distinguer un humain d'un
+                    robot. Sécurité, pas publicité.</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="legal-note">Tout ce qui est en stockage local s'efface depuis les Paramètres
+          (« Données locales »), ou en vidant les données du site dans votre navigateur. Attention : cela
+          n'efface rien en base.</p>
+
+        <h2 class="legal-h2">8. Comment vos données sont protégées</h2>
         <ul class="legal-liste">
-          <li>L'identité et l'adresse du responsable du traitement.</li>
-          <li>La durée de conservation exacte de chaque catégorie de données.</li>
-          <li>Le nom et le pays de chaque sous-traitant (hébergement, authentification, envoi d'e-mails),
-            et le cadre juridique des transferts éventuels hors Union européenne.</li>
-          <li>L'adresse de contact pour exercer vos droits.</li>
+          <li><b>Chacun ne lit que ses propres lignes.</b> La base applique des politiques d'accès
+            (<i>Row Level Security</i>) qui filtrent chaque requête selon l'identité du demandeur. Ce
+            n'est pas l'interface qui décide, c'est le serveur — et cela a été vérifié en interrogeant la
+            base avec un compte ordinaire.</li>
+          <li><b>Aucune clé secrète dans le navigateur.</b> Seule la clé publique, prévue pour être
+            distribuée, figure dans les fichiers du site.</li>
+          <li><b>Le rôle d'administrateur est lu en base</b>, jamais déclaré par le navigateur.</li>
+          <li><b>Le mot de passe n'est jamais vu par l'application</b> : il part chiffré vers l'hébergeur
+            d'authentification, qui seul le vérifie. Personne, du côté de l'éditeur, ne peut le lire ni le
+            restituer.</li>
+          <li><b>Tout transite en HTTPS.</b></li>
         </ul>
 
-        <p class="legal-retour"><button class="btn cta" type="button" data-page="signup">Retour à l'inscription</button></p>
+        <h2 class="legal-h2">9. Vos droits</h2>
+        <p class="legal-p">Vous disposez des droits d'accès, de rectification, d'effacement, de
+          portabilité, de limitation et d'opposition, et du droit de retirer votre consentement à tout
+          moment pour ce qui en relève. Plusieurs s'exercent directement, sans rien demander à personne :</p>
+        <ul class="legal-liste">
+          <li><b>Consulter et corriger</b> — page <b>Paramètres</b> : identité, profil de pilote,
+            indicatif, adresse e-mail.</li>
+          <li><b>Récupérer vos données</b> — bouton <i>Exporter mes données</i> des Paramètres : un
+            fichier JSON contenant votre profil, vos séances et le détail de chaque échange. C'est votre
+            droit à la portabilité, exercé en un clic.</li>
+          <li><b>Retirer votre consentement</b> — pour « où nous avez-vous connu », choisissez « aucune
+            réponse ». Le retrait ne remet pas en cause ce qui a été fait avant.</li>
+          <li><b>Effacer votre compte</b> — écrivez à l'adresse de contact. Cette opération ne peut pas
+            être déclenchée depuis le navigateur : supprimer un compte exige une clé serveur, qui n'a rien
+            à faire dans une page web. Le compte et ses séances sont supprimés.</li>
+        </ul>
+        <p class="legal-p">Une demande reçoit une réponse dans le mois (article 12.3 du RGPD). Si elle
+          reste sans suite ou ne vous satisfait pas, vous pouvez saisir la Commission nationale de
+          l'informatique et des libertés — <span class="legal-mono">cnil.fr</span>, 3 place de Fontenoy,
+          TSA 80715, 75334 Paris Cedex 07.</p>
+
+        <h2 class="legal-h2">10. Les moins de 15 ans</h2>
+        <p class="legal-p">L'inscription est réservée aux personnes de 15 ans révolus, âge du consentement
+          autonome en France. Cette condition est déclarative : elle n'est pas vérifiée. Si vous constatez
+          qu'un compte a été créé par un enfant plus jeune, signalez-le à l'adresse de contact et il sera
+          supprimé.</p>
+
+        <h2 class="legal-h2">11. Modifications</h2>
+        <p class="legal-p">Cette politique suit l'application. Toute donnée nouvellement collectée doit y
+          figurer avant d'être collectée, et non après. La date en tête de page indique la dernière
+          modification ; un changement de fond donne lieu à une nouvelle demande d'accord.</p>
+
+        <p class="legal-retour">
+          <button class="btn cta" type="button" data-page="signup">Retour à l'inscription</button>
+          <button class="btn" type="button" data-page="cgu">Conditions d'utilisation</button>
+          <button class="btn" type="button" data-page="mentions">Mentions légales</button>
+        </p>
       </div>
     </section>
+
 
     <!-- ==================== ACCUEIL (tableau de bord) ==================== -->
     <section id="page-tableau" class="page">
@@ -4006,7 +4408,7 @@
          privée est exactement le genre de détail qui décrédibilise tout le reste
          — et ici elle contredisait la politique de confidentialité. -->
     Les exercices fonctionnent hors-ligne (hors micro et synthèse vocale du navigateur). Trois choses sortent cependant de votre machine : le <strong>fond de carte de la page Navigation</strong>, chargé depuis les serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données ; et les <strong>erreurs techniques</strong>, pour qu'on puisse les corriger. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
-    <br><button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
+    <br><button class="auth-link" type="button" data-page="mentions">Mentions légales</button> · <button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
     <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
 
@@ -7792,7 +8194,7 @@ if(!RECO_OK){
   /* « cgu » et « confidentialite » sont des pages de vitrine : accessibles sans
      compte, puisqu'il faut pouvoir les lire AVANT de s'inscrire. C'est une
      obligation, pas un choix de confort (RGPD art. 13). */
-  var PAGES=['accueil','login','signup','cgu','confidentialite','tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte','admin'];
+  var PAGES=['accueil','login','signup','cgu','confidentialite','mentions','tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte','admin'];
   var APP_PAGES=['tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte'];
   /* Les trois pages qui se jouent devant une photo. Cette liste est la seule
      source de vérité : le CSS a une règle body.on-<page> pour chacune, et rien

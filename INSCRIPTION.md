@@ -81,7 +81,16 @@ que demande l'étape 2, et cette étape devient infranchissable — c'est le
 on l'écrit dans le gabarit.
 
 Le lien est gardé en secours : quelqu'un qui clique au lieu de recopier ne doit
-pas rester bloqué.
+pas rester bloqué. Il est en bas du message, en petit ; le code est ce que l'œil
+rencontre d'abord.
+
+**Côté client, le même code n'a pas le même *type*.** Une adresse neuve
+déclenche une inscription : Supabase range le code dans `confirmation_token` et
+l'attend sous le type `signup`. Une adresse déjà connue reçoit un lien magique :
+le code va dans `recovery_token`, attendu sous `magiclink`. Le type `email` est
+le générique censé couvrir les deux — censé : cela dépend de la version de GoTrue
+et de l'état confirmé ou non du compte, et quand il ne couvre pas, le refus est
+**indiscernable d'un code faux**. `RTAuth.otpVerifier()` essaie donc les trois.
 
 ### 1.2bis — Si l'interface ne montre pas le champ : passer par l'API
 
@@ -98,6 +107,39 @@ accès complet à vos projets, bien au-delà de ce site : il se passe par
 l'environnement le temps d'une commande, **ne touche ni le disque ni le dépôt**,
 et se révoque juste après. Le script affiche ce qu'il va écrire et demande
 confirmation avant d'envoyer quoi que ce soit.
+
+#### Savoir ce qui est réellement posé — avant de chercher ailleurs
+
+```sh
+SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-reglages.sh --verifier
+```
+
+Lecture seule : rien n'est écrit. Le script relit le projet par l'API et dit, pour
+chacun des deux gabarits, s'il contient `{{ .Token }}`.
+
+C'est ce qui tranche « je ne reçois toujours pas de code ». Le tableau de bord
+montre ce que l'on **croit** avoir enregistré — un champ resté ouvert dans un
+autre onglet, un **Save** manqué, un gabarit collé dans le mauvais onglet ne s'y
+voient pas. L'API montre ce qui **partira**.
+
+```
+Ce que le projet enverra vraiment :
+  Confirm signup    79 caracteres, mais AUCUN {{ .Token }} : message sans code.
+  Magic Link        porte {{ .Token }} : le code partira. (1814 caracteres)
+```
+
+Ci-dessus, le piège exact des deux gabarits : celui qu'un compte neuf reçoit est
+le seul qui n'a pas été corrigé.
+
+Un gabarit **vide** n'est pas un gabarit neutre : Supabase retombe alors sur le
+sien, d'usine, qui ne porte que `{{ .ConfirmationURL }}`. « Vide » et « sans
+code » sont la même panne.
+
+La relecture signale aussi deux réglages qui suppriment l'e-mail au lieu de le
+vider — `mailer_autoconfirm` (« Confirm email » désactivé : le compte s'ouvre
+sans vérification, donc **aucun** message ne part) et la connexion par e-mail
+désactivée. Sans cette mention, on cherche un gabarit fautif alors qu'aucun
+message n'a même été envoyé.
 
 ### 1.2 bis — Déclarer les adresses de retour — **c'est ce qui rend le lien mort**
 

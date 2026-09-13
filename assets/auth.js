@@ -288,14 +288,46 @@
                type: ty ? decodeURIComponent(ty[1]) : 'magiclink' };
     },
 
+    /* ---------- Vérifier le code à six chiffres -----------------------------
+       Le même code à l'écran, mais PAS le même type côté serveur, et c'est ce
+       qui piégeait le compte neuf.
+
+       Une adresse qui n'a jamais servi déclenche une inscription : Supabase
+       range le code dans `confirmation_token` et l'attend sous le type
+       'signup'. Une adresse déjà connue reçoit un lien magique : le code va
+       dans `recovery_token`, attendu sous 'magiclink'. Le type 'email' est le
+       générique qui couvre normalement les deux — « normalement » : il dépend
+       de la version de GoTrue et de l'état confirmé ou non du compte, et quand
+       il ne couvre pas, le refus est indiscernable d'un code faux.
+
+       On essaie donc les trois, dans l'ordre du plus général au plus précis.
+       Aucun risque à insister : un code erroné le reste sous tous les types, et
+       GoTrue ne décompte pas les tentatives d'un code e-mail — seule une
+       limite par adresse IP existe, très au-dessus de trois appels.
+
+       L'erreur rendue en cas d'échec total est CELLE DU PREMIER essai : les
+       suivantes diraient la même chose, et la première est celle du type le
+       plus probable. */
     otpVerifier: function(email, code){
       var c = C();
       if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
-      return c.auth.verifyOtp({
-        email: String(email||'').trim(),
-        token: String(code||'').replace(/\s+/g, ''),   // « 123 456 » recopié depuis l'e-mail
-        type: 'email'
-      }).then(function(r){ if (r.error) throw r.error; return r.data; });
+      var mail  = String(email||'').trim();
+      var jeton = String(code||'').replace(/\s+/g, '');   // « 123 456 » recopié depuis l'e-mail
+      var TYPES = ['email', 'signup', 'magiclink'];
+      var premiere = null;
+      function essayer(i){
+        if (i >= TYPES.length) return Promise.reject(premiere || new Error('token has expired or is invalid'));
+        return c.auth.verifyOtp({ email: mail, token: jeton, type: TYPES[i] })
+          .then(function(r){
+            if (!r.error) return r.data;
+            if (!premiere) premiere = r.error;
+            return essayer(i + 1);
+          }, function(e){
+            if (!premiere) premiere = e;
+            return essayer(i + 1);
+          });
+      }
+      return essayer(0);
     },
 
     /* Pose le mot de passe d'un compte qui vient d'être vérifié par code. Le

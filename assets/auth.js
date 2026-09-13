@@ -27,6 +27,23 @@
      renouvelle le jeton avant expiration — sans lui, une séance d'une heure se
      terminerait par des écritures refusées. */
   var client = null, erreurClient = null;
+  /* ---------- ARRIVE-T-ON PAR UN LIEN D'E-MAIL ? --------------------------
+     À relever MAINTENANT, au chargement du script, et pas plus tard : dès que
+     supabase-js a lu les jetons du fragment il l'efface — c'est ce qu'il doit
+     faire, un jeton n'a rien à faire dans une barre d'adresse, dans l'historique
+     ou dans une capture d'écran. Mais après ce nettoyage, plus rien ne dit d'où
+     l'on vient.
+
+     Or la différence compte. Une session retrouvée en stockage local, c'est un
+     rechargement : on remet la personne sur la page qu'elle regardait. Une
+     session qui arrive par le FRAGMENT, c'est quelqu'un qui vient de cliquer le
+     lien de son e-mail : l'adresse ne désigne aucune page, et la déposer sur la
+     vitrine revient à ne rien faire de son geste. Il faut l'emmener quelque part.
+
+     On regarde aussi la chaîne de requête : le flux PKCE met son `code` là. */
+  var PAR_LIEN = /[#?&](access_token|token_hash|code|error_description|error_code)=/
+                   .test(String(location.hash || '') + String(location.search || ''));
+
   function C(){
     if (client || erreurClient) return client;
     try{
@@ -153,6 +170,11 @@
     message: messageFr,
     /* Après une écriture sur `profiles`, la copie en mémoire est périmée. */
     rechargerProfil: function(){ return chargerProfil().then(function(p){ annoncer(); return p; }); },
+
+    /* Vrai quand la page a été ouverte par le lien d'un e-mail. Le routeur s'en
+       sert pour ne pas déposer sur la vitrine quelqu'un qui vient de prouver
+       son identité. Relevé au chargement : voir PAR_LIEN plus haut. */
+    arriveParLien: function(){ return PAR_LIEN; },
 
     /* ---------- Inscription par code à 6 chiffres --------------------------
        Le parcours en plusieurs étapes demande l'adresse AVANT le mot de passe,

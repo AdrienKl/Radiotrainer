@@ -8558,6 +8558,16 @@ if(!RECO_OK){
     if(window.rtMajLienAdmin) window.rtMajLienAdmin();
     var r = pendingTarget || routeAffichee || 'accueil';
     if(r==='login' || r==='signup') r = pendingTarget || 'tableau';
+    /* ARRIVÉE PAR LE LIEN D'UN E-MAIL. L'adresse ne désigne alors aucune page :
+       elle ne portait que des jetons, que supabase-js a lus puis effacés. La
+       route retenue vaut donc « accueil » par défaut, et l'on déposait sur la
+       VITRINE quelqu'un qui venait de cliquer pour entrer — connecté, mais
+       devant la page de présentation, sans rien qui signale que ça a marché.
+       C'est exactement ce que décrit « ça me met juste sur mon site ».
+       Une inscription inachevée repart quand même vers son étape : routeUtile()
+       passe après et a le dernier mot. */
+    if(r==='accueil' && window.RTAuth && RTAuth.arriveParLien && RTAuth.arriveParLien())
+      r = 'tableau';
     r = routeUtile(r);
     pendingTarget=null;
     showPage(r, false);

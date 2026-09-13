@@ -94,6 +94,24 @@ est acceptée.
 > ter). Pour essayer le lien lui-même, il faut passer par le site publié — ou
 > `python3 -m http.server` puis déclarer `http://localhost:8000/**` ci-dessus.
 
+### 1.2 quater — Ce que le lien fait une fois qu'il revient
+
+Le lien ne montre **pas** de code dans une page, et il ne doit pas en montrer :
+il renvoie le navigateur sur le site avec les jetons dans le *fragment*
+d'adresse, `supabase-js` les ramasse, ouvre la session, puis efface le fragment
+— un jeton n'a rien à faire dans une barre d'adresse, dans un historique ou
+dans une capture d'écran.
+
+Reste la question : où atterrit-on ? Après ce nettoyage, l'adresse ne désigne
+plus aucune page, et la route retenue valait « accueil » — c'est-à-dire **la
+vitrine**. On déposait donc sur la page de présentation quelqu'un qui venait de
+cliquer pour entrer : connecté, mais devant la brochure, sans rien qui signale
+que ça avait marché. Corrigé le 13 septembre 2026 : une arrivée par lien est
+relevée **avant** le nettoyage (`RTAuth.arriveParLien()`) et mène au tableau de
+bord — ou à l'étape d'inscription où l'on s'était arrêté, qui passe avant.
+
+Couvert par `lien_retour.py`.
+
 ### 1.2 ter — Ce que le code fait pour vous en attendant
 
 Les deux réglages ci-dessus sont à faire. Mais tant qu'ils ne le sont pas, le

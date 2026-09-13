@@ -388,6 +388,116 @@
   .final__cta{display:flex; gap:13px; flex-wrap:wrap; justify-content:center; margin-top:30px}
   .final__note{margin:22px 0 0; font-size:12.5px; color:rgba(255,255,255,.60)}
 
+  /* ---------- L'OFFRE — la bande de progression ----------
+     Dans une tour, chaque appareil a sa BANDE : un carton imprimé qui porte son
+     indicatif, son type, sa route, et qui passe de main en main jusqu'à ce que
+     le vol soit terminé. C'est le seul objet physique du métier, et c'est à
+     cette tour-là que la page apprend à parler.
+
+     D'où la forme de ce bloc. Trois grilles de cartes tarifaires se ressemblent
+     toutes ; une bande ne ressemble à rien d'autre. Les quatre cases ne sont pas
+     un ornement : ce sont les quatre questions qu'on se pose avant de créer un
+     compte — combien de temps, jusqu'où, faut-il sortir sa carte, et après ?
+
+     L'ocre est la seule couleur chaude du site. Elle est ici et nulle part
+     ailleurs : la page est violette et froide, la bande doit arrêter l'œil. */
+  .offre{position:relative; overflow:hidden; padding:clamp(64px,8.5vw,112px) 0;
+    background:
+      radial-gradient(96% 62% at 50% 0%, rgba(91,75,206,.22), transparent 62%),
+      linear-gradient(178deg,#0c0f1c 0%,#0a0c17 100%)}
+  .offre > .container{position:relative; z-index:1}
+  .offre .sec-tag{color:#f0d6a6; background:rgba(200,137,47,.16); border-color:rgba(200,137,47,.45)}
+  .offre .sec-h{color:#fff; max-width:19ch}
+  .offre .sec-lede{color:rgba(228,233,247,.74); max-width:66ch}
+  .offre .sec-lede b{color:#fff}
+
+  .strip{--paper:#f7f2e6; --sink:#1b1f2d; --edge:#c8892f; --rule:#cec4ab;
+    position:relative; margin-top:clamp(32px,4.4vw,46px); border-radius:14px; overflow:hidden;
+    background:var(--paper); color:var(--sink);
+    /* La lumière vient d'en haut, comme sur une bande posée sous la lampe du
+       poste : liseré clair au ras du bord supérieur, ombre large et basse. */
+    box-shadow:0 28px 64px rgba(3,5,12,.62), inset 0 1px 0 rgba(255,255,255,.7)}
+  /* La tranche ocre : sur une vraie bande, la couleur du carton dit le sens du
+     mouvement. Ici elle dit simplement où commence la fiche. */
+  .strip::before{content:""; position:absolute; left:0; top:0; bottom:0; width:7px; background:var(--edge)}
+  .strip__head{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    padding:13px 20px 13px 27px; border-bottom:1px solid var(--rule); background:rgba(200,137,47,.07)}
+  .strip__id{font-family:var(--mono); font-size:11.5px; font-weight:800; letter-spacing:.16em;
+    text-transform:uppercase; color:#7a6440}
+  .strip__id small{font-size:inherit; font-weight:inherit}
+  /* Encre sombre sur l'ocre, et non l'inverse. Le papier sur l'ocre ne donnait
+     que 2,66:1 — largement sous le seuil AA de 4,5:1 pour un texte de 11,5 px.
+     L'ocre est gardé tel quel, c'est la couleur d'identité de la bande ; c'est
+     le texte qui change de camp, et la pastille y gagne l'air d'un tampon.
+     Mesuré : 5,53:1. */
+  .strip__kind{font-family:var(--mono); font-size:11.5px; font-weight:800; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--sink); background:var(--edge);
+    border-radius:var(--pill); padding:4px 12px}
+  .strip__fields{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(168px,100%),1fr));
+    margin:0; border-bottom:1px solid var(--rule)}
+  .strip__f{padding:16px 20px 17px 27px; border-left:1px solid var(--rule); min-width:0}
+  .strip__f:first-child{border-left:none}
+  /* #86745a ne donnait que 4,03:1 sur le papier, et il s'agit de capitales de
+     10,5 px : la taille où l'antialiasing éclaircit encore le noyau des glyphes.
+     #6b5a3a mesure 5,97:1, avec la marge que le reste du site s'impose déjà
+     (voir le commentaire de --ink-2-fort). */
+  .strip__f dt{font-family:var(--mono); font-size:10.5px; font-weight:800; letter-spacing:.13em;
+    text-transform:uppercase; color:#6b5a3a}
+  .strip__f dd{margin:7px 0 0; font-family:var(--mono); font-size:clamp(17px,1.9vw,21px);
+    font-weight:800; letter-spacing:-.01em; line-height:1.2; color:var(--sink)}
+  .strip__f dd small{display:block; margin-top:4px; font-family:var(--sans); font-size:12.5px;
+    font-weight:600; letter-spacing:0; color:#6f6047}
+  .strip__body{padding:20px 20px 4px 27px}
+  .strip__list{list-style:none; margin:0; padding:0; display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr)); gap:9px 22px}
+  .strip__list li{position:relative; padding-left:25px; font-size:14.5px; line-height:1.55; color:#3c3529}
+  .strip__list li b{color:var(--sink); font-weight:800}
+  .strip__list li::before{content:""; position:absolute; left:4px; top:.52em; width:9px; height:9px;
+    border-radius:2px; background:var(--edge)}
+  .strip__act{display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:22px 20px 8px 27px}
+  /* L'ombre violette d'origine est faite pour un fond sombre ; sur le papier
+     elle bavait en halo. Resserrée, et teintée de l'encre du carton. */
+  .strip .cta{box-shadow:0 6px 16px rgba(40,30,90,.22)}
+  .strip__side{font-size:13.5px; line-height:1.5; color:#6f6047; max-width:34ch}
+  .strip__foot{margin:0; padding:16px 20px 18px 27px; border-top:1px dashed var(--rule);
+    font-size:12.8px; line-height:1.62; color:#6f6047}
+  .strip__foot b{color:var(--sink); font-weight:700}
+  /* Les filets de la bande doivent suivre la grille, pas la contredire. En
+     laissant `auto-fit` choisir le nombre de colonnes, on ne sait plus laquelle
+     commence une ligne : le filet du haut se posait au milieu d'une rangée. On
+     fixe donc le nombre de colonnes par palier, et les filets s'en déduisent. */
+  @media (max-width:720px){
+    .strip__fields{grid-template-columns:1fr 1fr}
+    .strip__f{border-left:none}
+    .strip__f:nth-child(2n){border-left:1px solid var(--rule)}
+    .strip__f:nth-child(n+3){border-top:1px solid var(--rule)}
+  }
+  @media (max-width:430px){
+    .strip__fields{grid-template-columns:1fr}
+    .strip__f, .strip__f:nth-child(2n){border-left:none}
+    .strip__f:nth-child(n+2){border-top:1px solid var(--rule)}
+  }
+  /* En dessous de 520 px, l'en-tête passait à la ligne et la pastille « Essai »
+     tombait sous le titre, où elle ne désigne plus rien. On raccourcit plutôt
+     l'intitulé : « Bande de progression » est un rappel, pas une information. */
+  @media (max-width:520px){
+    .strip__id small{display:none}
+    .strip__head{flex-wrap:nowrap}
+  }
+
+  /* ---------- Les questions qu'on pose avant de créer un compte ----------
+     Volontairement sans cartes ni encadrés : après la bande, tout ce qui
+     brillerait ferait concurrence. Des filets, du texte, rien d'autre. */
+  .faq{padding:clamp(56px,7.5vw,96px) 0; background:var(--surface);
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border)}
+  .qa{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr));
+    gap:0 clamp(26px,4vw,54px); margin:clamp(28px,3.6vw,40px) 0 0}
+  .qa__i{padding:20px 0; border-top:1px solid var(--border)}
+  .qa__i dt{font-size:16.5px; font-weight:750; letter-spacing:-.012em; color:var(--ink)}
+  .qa__i dd{margin:8px 0 0; font-size:14.5px; line-height:1.64; color:var(--ink-2-fort)}
+  .qa__i dd b{color:var(--ink); font-weight:700}
+  .qa__i dd .auth-link{font-size:inherit}
+
   .reveal{opacity:0; transform:translateY(20px); transition:opacity .6s ease, transform .6s cubic-bezier(.22,.61,.36,1)}
   .reveal.in{opacity:1; transform:none}
 
@@ -2578,10 +2688,10 @@
             <h1 class="hero__title">Le jour où ça arrive, vous n'aurez pas le temps de réfléchir.</h1>
             <p class="hero__sub">RadioTrainer vous fait parler à la radio comme en vol. Des scénarios complets sur les vrais terrains français, un contrôleur qui vous répond à la voix, et des pannes qui tombent sans prévenir.</p>
             <div class="hero__cta">
-              <button class="btn cta" type="button" data-page="signup">Commencer l'entraînement</button>
+              <button class="btn cta" type="button" data-page="signup">Commencer l'essai gratuit</button>
               <button class="btn cta-ghost" type="button" data-page="login">Se connecter</button>
             </div>
-            <p class="hero__note">Micro requis — <b>Chrome ou Edge</b> sur ordinateur. Outil pédagogique&nbsp;: il ne remplace pas la formation avec un instructeur.</p>
+            <p class="hero__note">Gratuit pour l'instant, sans carte bancaire. Micro requis — <b>Chrome ou Edge</b> sur ordinateur. Outil pédagogique&nbsp;: il ne remplace pas la formation avec un instructeur.</p>
           </div>
         </div>
 
@@ -2589,9 +2699,9 @@
              AERODROMES, AIRCRAFT, SCENARIOS, et le tirage d'aléas du mode Réel. -->
         <div class="hero__strip">
           <span class="hero__num"><b>387</b><span>aérodromes français</span></span>
-          <span class="hero__num"><b>58</b><span>types d'appareils</span></span>
-          <span class="hero__num"><b>7</b><span>scénarios complets</span></span>
-          <span class="hero__num"><b>10</b><span>imprévus en vol</span></span>
+          <span class="hero__num"><b>176</b><span>types d'appareils</span></span>
+          <span class="hero__num"><b>13</b><span>scénarios complets</span></span>
+          <span class="hero__num"><b>43</b><span>imprévus en vol</span></span>
         </div>
 
         <button class="scroll-cue" id="scrollCue" type="button" aria-label="Voir la suite"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
@@ -2619,7 +2729,7 @@
             <article class="alea-card alea-card--rtn reveal"><span class="alea-card__call">Visuel / négatif</span><h3>Information de trafic</h3><p>Un appareil vous est annoncé. Deux réponses possibles, et elles ne se valent pas.</p></article>
           </div>
 
-          <p class="alea__foot">Chaque situation attend une formulation précise, pas une paraphrase. L'application relève ce que vous avez dit, élément par élément, et met la phrase attendue en face.</p>
+          <p class="alea__foot"><b>Quarante-trois imprévus</b> peuvent tomber, et vous n'en voyez que dix ci-dessus. Chaque situation attend une formulation précise, pas une paraphrase. L'application relève ce que vous avez dit, élément par élément, et met la phrase attendue en face.</p>
         </div>
       </section>
 
@@ -2656,7 +2766,7 @@
           <h2 class="sec-h">Vous parlez. On vous répond. On vous corrige.</h2>
 
           <div class="steps__grid">
-            <div class="step reveal"><span class="step__n">1</span><h3>Vous choisissez</h3><p>Un départ et une arrivée parmi 387 terrains français, un appareil, un niveau. Débutant, la consigne détaille ce qu'il faut dire. Réel, elle se tait.</p></div>
+            <div class="step reveal"><span class="step__n">1</span><h3>Vous choisissez</h3><p>Un départ et une arrivée parmi 387 terrains français, un appareil parmi 176, un niveau. Débutant, la consigne détaille ce qu'il faut dire. Réel, elle se tait — et un imprévu peut tomber.</p></div>
             <div class="step reveal"><span class="step__n">2</span><h3>Vous transmettez</h3><p>Bouton maintenu, comme un PTT. Le micro écoute, transcrit, et rattrape les confusions habituelles de la reconnaissance vocale.</p></div>
             <div class="step reveal"><span class="step__n">3</span><h3>On vous reprend</h3><p>Le contrôleur répond à la voix. Ce qui manquait dans votre message est listé aussitôt, avec la formulation qu'on attendait.</p></div>
           </div>
@@ -2696,13 +2806,92 @@
         </div>
       </section>
 
+      <!-- ---- L'offre ----
+           Le tarif, la durée d'essai et l'exigence d'une carte ne sont PAS
+           écrits ici : ils viennent de RT_OFFRE (un seul endroit, plus bas dans
+           le script de la vitrine). Tant que le prix n'est pas fixé, la page
+           n'en invente aucun — elle dit qu'il sera annoncé, ce qui est vrai.
+           Les valeurs de repli ci-dessous sont celles d'aujourd'hui. -->
+      <section class="offre">
+        <div class="container">
+          <span class="sec-tag">L'offre</span>
+          <h2 class="sec-h">Essayez d'abord. Vous paierez quand vous saurez pourquoi.</h2>
+          <p class="sec-lede">On ne vous demande pas de croire sur parole qu'un simulateur de phraséologie sert à quelque chose. Ouvrez un compte, faites un vol complet, déclenchez une panne moteur en montée initiale, et voyez ce que ça donne. <b>C'est au bout du premier MAYDAY qu'on sait.</b></p>
+
+          <div class="strip reveal">
+            <div class="strip__head">
+              <span class="strip__id">RadioTrainer<small> · Bande de progression</small></span>
+              <span class="strip__kind" data-offre="kind">Essai</span>
+            </div>
+            <dl class="strip__fields">
+              <div class="strip__f"><dt>Durée</dt><dd data-offre="duree">Sans limite<small>pendant la phase d'essai</small></dd></div>
+              <div class="strip__f"><dt>Accès</dt><dd>Tout<small>aucun exercice réservé</small></dd></div>
+              <div class="strip__f"><dt>Carte bancaire</dt><dd data-offre="carte">Non<small>rien à saisir aujourd'hui</small></dd></div>
+              <div class="strip__f"><dt>Ensuite</dt><dd data-offre="prix">Abonnement<small>tarif annoncé ici</small></dd></div>
+            </dl>
+            <div class="strip__body">
+              <ul class="strip__list">
+                <li><b>13 scénarios</b> — du parking au parking, plus les quiz de vocabulaire et de nombres</li>
+                <li><b>43 imprévus</b> tirés au sort, du SIGMET au MAYDAY</li>
+                <li><b>387 aérodromes</b> français, leurs vraies pistes et leurs vraies fréquences</li>
+                <li><b>176 appareils</b>, du DR400 à l'Elixir</li>
+                <li><b>Mode Réel</b> : le texte du contrôleur est masqué, vous n'avez que l'oreille</li>
+                <li><b>Chaque phrase</b> renvoie à sa page du manuel DSNA</li>
+              </ul>
+            </div>
+            <div class="strip__act">
+              <button class="btn cta" type="button" data-page="signup">Commencer l'essai gratuit</button>
+              <span class="strip__side">Deux minutes pour créer le compte, et vous êtes en fréquence.</span>
+            </div>
+            <p class="strip__foot" data-offre="foot"><b>Rien ne peut vous être prélevé sans que vous l'ayez choisi.</b> Aucune carte n'est enregistrée à l'inscription, et le passage à l'abonnement se fera par un acte de votre part — jamais par reconduction silencieuse d'un essai.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- Les objections, dites à voix haute ----
+           Ce qui empêche de créer un compte, ce n'est pas le manque d'arguments :
+           c'est une question sans réponse. Elles sont ici, avec la réponse vraie,
+           y compris quand elle ne nous arrange pas. -->
+      <section class="faq">
+        <div class="container">
+          <span class="sec-tag">Avant de vous lancer</span>
+          <h2 class="sec-h">Les questions qu'on nous pose.</h2>
+          <dl class="qa">
+            <div class="qa__i reveal">
+              <dt>Il me faut quoi&nbsp;?</dt>
+              <dd>Un ordinateur, un micro, et <b>Chrome ou Edge</b>. Rien à installer, rien à configurer. La reconnaissance vocale des autres navigateurs ne tient pas la distance&nbsp;: mieux vaut le dire avant que vous perdiez une soirée.</dd>
+            </div>
+            <div class="qa__i reveal">
+              <dt>Est-ce que ça remplace mon instructeur&nbsp;?</dt>
+              <dd><b>Non, et ce n'est pas le but.</b> Votre instructeur vous apprend à voler. Ici vous répétez la radio autant de fois qu'il le faut, ce qu'aucune heure de vol ne permet — en vol, on ne recommence pas un appel pour le plaisir.</dd>
+            </div>
+            <div class="qa__i reveal">
+              <dt>Je n'ose pas parler à la radio.</dt>
+              <dd>C'est exactement le problème que ça traite. Personne ne vous écoute, personne n'attend derrière vous, et vous pouvez rater le même message vingt fois. <b>La peur du micro ne se raisonne pas, elle s'use.</b></dd>
+            </div>
+            <div class="qa__i reveal">
+              <dt>D'où viennent les phrases&nbsp;?</dt>
+              <dd>Du <b>Manuel de phraséologie à l'usage de la circulation aérienne générale</b> de la DSNA, 10<sup>e</sup> édition. Chaque échange porte sa page dans le code, et rien n'est formulé sans elle.</dd>
+            </div>
+            <div class="qa__i reveal">
+              <dt>Et si le micro me comprend mal&nbsp;?</dt>
+              <dd>Les confusions habituelles de la reconnaissance vocale sont rattrapées&nbsp;: chiffres énoncés un par un, lettres de l'alphabet aéronautique, indicatifs épelés. Et le score se fait <b>élément par élément</b>, pas sur la phrase entière&nbsp;: un mot mal transcrit ne fait pas tomber tout le message.</dd>
+            </div>
+            <div class="qa__i reveal">
+              <dt>Mes données&nbsp;?</dt>
+              <dd>Votre voix n'est <b>jamais enregistrée ni envoyée</b> ailleurs que dans le moteur du navigateur. Ce qui est conservé, c'est le texte de vos exercices et votre score. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
       <!-- ---- L'appel final ---- -->
       <section class="final">
         <div class="final__in">
           <h2>La prochaine fois que ça arrive, ce ne sera pas la première.</h2>
           <p>Rien à installer, rien à configurer. Un micro, un navigateur, et vous êtes en fréquence.</p>
           <div class="final__cta">
-            <button class="btn cta" type="button" data-page="signup">Créer mon compte</button>
+            <button class="btn cta" type="button" data-page="signup">Commencer l'essai gratuit</button>
             <button class="btn cta-ghost" type="button" data-page="login">Se connecter</button>
           </div>
           <p class="final__note">Outil pédagogique — il ne remplace pas la formation avec un instructeur.</p>
@@ -3048,7 +3237,12 @@
         <h2 class="legal-h2">1. Objet</h2>
         <p class="legal-p">RadioTrainer est un service d'entraînement à la phraséologie radiotéléphonique
           française pour le vol à vue. Il s'adresse aux élèves pilotes, aux pilotes brevetés qui veulent
-          se remettre en état, et à quiconque s'intéresse aux communications air-sol. Il est gratuit.</p>
+          se remettre en état, et à quiconque s'intéresse aux communications air-sol.</p>
+        <p class="legal-p">Le service est <b>gratuit</b> à ce jour. Une formule payante est annoncée sur la
+          page d'accueil&nbsp;: tant qu'elle n'est pas ouverte, aucun paiement n'est possible, aucune carte
+          bancaire n'est demandée et aucun essai ne se transforme en abonnement de lui-même. Le jour où elle
+          existera, les présentes conditions seront complétées — tarif, durée, résiliation, droit de
+          rétractation et médiateur de la consommation — et votre accord vous sera redemandé.</p>
 
         <h2 class="legal-h2">2. Qui édite le service</h2>
         <p class="legal-p">L'éditeur, son adresse et son contact figurent aux
@@ -9193,6 +9387,51 @@ if(!RECO_OK){
       });
     });
   });
+
+  /* ===========================================================================
+     L'OFFRE — un seul endroit à modifier
+     ---------------------------------------------------------------------------
+     Le tarif est ici, et nulle part ailleurs. Écrit en dur dans le HTML, il
+     finirait recopié dans le hero, dans la bande, dans l'appel final, et l'un
+     des trois resterait périmé le jour où il change — c'est déjà ce qui est
+     arrivé aux nombres d'appareils et de scénarios.
+
+     TANT QUE `prix` VAUT null, LA PAGE N'ANNONCE AUCUN MONTANT. Elle dit que
+     l'abonnement vient et que le tarif sera annoncé, ce qui est exact : à ce
+     jour le service est entièrement gratuit, et les CGU le disent aussi. Poser
+     un prix de démonstration « en attendant » serait une affirmation
+     commerciale fausse sur un site public — pas un détail de maquette.
+
+     Pour ouvrir la formule payante, il n'y a que ces quatre lignes à remplir,
+     et le paiement à brancher. Les textes de la page suivent tout seuls. */
+  var RT_OFFRE = {
+    prix:       null,    // ex. '14,90' — montant affiché, sans le symbole
+    periode:    'mois',  // ce qui suit la barre : 'mois', 'an'…
+    essaiJours: null,    // ex. 14 — null = essai ouvert, sans échéance annoncée
+    carte:      false    // une carte bancaire est-elle demandée à l'inscription ?
+  };
+  (function(){
+    var poser = function(cle, html){
+      var e=document.querySelector('[data-offre="'+cle+'"]'); if(e) e.innerHTML=html;
+    };
+    var o = RT_OFFRE;
+    poser('kind', o.prix ? 'Essai puis abonnement' : 'Essai');
+    poser('duree', o.essaiJours
+      ? o.essaiJours + ' jours<small>à compter de l\'inscription</small>'
+      : "Sans limite<small>pendant la phase d'essai</small>");
+    poser('carte', o.carte
+      ? "Oui<small>demandée à l'inscription</small>"
+      : "Non<small>rien à saisir aujourd'hui</small>");
+    poser('prix', o.prix
+      ? o.prix + ' €<small>par ' + o.periode + ', résiliable à tout moment</small>'
+      : "Abonnement<small>tarif annoncé ici</small>");
+    /* Le bas de la bande promet qu'aucune carte n'est enregistrée. Le jour où
+       elle l'est, cette phrase deviendrait un mensonge : elle change avec le
+       réglage, elle ne se contente pas de l'accompagner. */
+    poser('foot', o.carte
+      ? "<b>Votre carte n'est débitée qu'à la fin de l'essai.</b> Vous êtes prévenu avant, et vous pouvez arrêter d'ici là sans rien payer."
+      : "<b>Rien ne peut vous être prélevé sans que vous l'ayez choisi.</b> Aucune carte n'est enregistrée à l'inscription, et le passage à l'abonnement se fera par un acte de votre part — jamais par reconduction silencieuse d'un essai.");
+  })();
 
   // Indicateur de scroll du hero : défilement fluide vers la 1re section de contenu.
   var cue=document.getElementById('scrollCue');

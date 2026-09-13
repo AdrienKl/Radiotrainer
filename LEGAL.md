@@ -53,6 +53,29 @@ Les autres sources sont claires : OurAirports (domaine public), espaces aériens
 SIA/DGAC via data.gouv.fr (Licence Ouverte 2.0), OpenStreetMap (ODbL), Leaflet
 (BSD-2), photographies créditées en pied de page.
 
+## 2 bis. Les photographies — deux questions distinctes de la licence
+
+Les photos viennent d'Unsplash, de Pixabay et de Pexels. Les trois licences
+autorisent l'usage commercial sans obligation d'attribution, et c'est réglé.
+Deux points ne le sont pas, parce qu'une licence de photo n'a jamais pu les
+régler :
+
+**Des personnes identifiables.** Le DR400 (F-GUXQ) est photographié avec deux
+occupants visibles à travers la verrière, et le Piper Cub avec son pilote. En
+droit français, le droit à l'image appartient à la personne, pas au
+photographe : la licence Pixabay ne vaut pas autorisation de ces personnes-là.
+À la taille où les vignettes s'affichent — 465 px de large, un visage y fait une
+quinzaine de pixels — le risque est très faible. Il n'est pas nul si quelqu'un
+ouvre le fichier de 760 px. Deux sorties possibles : garder ainsi, ou flouter.
+La question est posée, elle n'est pas tranchée.
+
+**Une marque commerciale.** La photo `a320-air-france.webp` montre un appareil
+en livrée Air France, avec le nom et le logo. Illustrer n'est pas s'autoriser
+d'une marque, mais sur un site d'entraînement à la phraséologie — surtout si une
+formule payante existe un jour — l'image peut se lire comme un lien qui
+n'existe pas. C'est une ligne à retirer d'`assets/avions.js` et une ligne
+d'`index.html` si vous préférez ne pas courir ce risque.
+
 ## 3. Ce que la politique de confidentialité dit, et qui n'allait pas de soi
 
 **Le microphone part chez Google.** La reconnaissance vocale n'est pas faite par

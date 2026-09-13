@@ -1167,6 +1167,10 @@
 
   /* Le code à six chiffres : espacé et en chasse fixe, pour qu'on puisse le
      relire caractère par caractère en le recopiant de l'e-mail. */
+  /* L'explication de secours sous le champ du code. Discrète, mais pas au point
+     d'être invisible : elle est la seule issue quand l'e-mail arrive sans code. */
+  .ins-aide{ margin:-4px 0 14px; font-size:12.5px; line-height:1.55; color:var(--ink-2) }
+
   .ins-code{ font-family:var(--mono) !important; font-size:21px !important;
     letter-spacing:.30em; text-align:center; }
   .ins-aide{ font-size:12px; color:var(--ink-2-fort); margin:6px 0 0; line-height:1.45; }
@@ -2839,10 +2843,20 @@
             <div class="auth-field">
               <label for="insCode">Code reçu</label>
               <!-- inputmode numeric plutôt que type=number : ce dernier affiche des
-                   flèches d'incrémentation et avale les zéros de tête. -->
+                   flèches d'incrémentation et avale les zéros de tête.
+                   Plus de maxlength : le champ accepte aussi le LIEN du message,
+                   qui fait deux cents caractères. Huit le tronquaient en silence. -->
               <input id="insCode" type="text" inputmode="numeric" autocomplete="one-time-code"
-                     maxlength="8" spellcheck="false" placeholder="123456" class="ins-code">
+                     spellcheck="false" placeholder="123456" class="ins-code">
             </div>
+            <!-- Un message sans code n'est pas une hypothèse d'école : c'est ce
+                 que Supabase envoie tant qu'on n'a pas ajouté {{ .Token }} au
+                 gabarit. Le dire ici évite de laisser quelqu'un devant un champ
+                 qu'il ne peut pas remplir. -->
+            <p class="ins-aide">Votre message ne contient pas de code, seulement un lien&nbsp;?
+              Copiez ce lien et collez-le dans le champ ci-dessus&nbsp;: il fait la même chose.
+              <span id="insAideFichier" hidden>Depuis un fichier ouvert en local, c'est même
+              la seule façon d'aboutir&nbsp;— un lien ne peut pas ramener ici.</span></p>
             <p class="auth-msg hidden" id="insMsg2" role="status" aria-live="polite"></p>
             <button class="btn cta auth-submit" id="insVerifier" type="button">Vérifier</button>
             <p class="auth-switch">

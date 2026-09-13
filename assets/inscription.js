@@ -218,11 +218,26 @@
      ÉTAPE 2 — le code
      ========================================================================== */
   function verifier(){
-    var code = ($('insCode').value || '').replace(/\s+/g, '');
-    if (code.length < 6) return msg(2, "Saisissez le code à six chiffres reçu par e-mail.");
+    var saisi = ($('insCode').value || '').trim();
+    /* LE LIEN VAUT LE CODE. Le gabarit d'e-mail de Supabase ne contient
+       d'origine que le lien : sans {{ .Token }} ajouté à la main, personne ne
+       reçoit de code et cette étape devient un mur. On accepte donc aussi le
+       lien collé — il porte le même jeton, et le vérifier ici évite d'avoir à
+       le SUIVRE, ce qui est justement ce qui échoue quand l'adresse de retour
+       du projet n'est pas réglée. */
+    var lien = window.RTAuth && RTAuth.jetonDuLien && RTAuth.jetonDuLien(saisi);
+    var suite;
+    if (lien) {
+      suite = RTAuth.otpVerifierLien(saisi);
+    } else {
+      var code = saisi.replace(/\s+/g, '');
+      if (code.length < 6)
+        return msg(2, "Saisissez le code à six chiffres reçu par e-mail — ou collez ici le lien du message.");
+      suite = RTAuth.otpVerifier(etat.email, code);
+    }
     msg(2, '');
     var libre = occuper($('insVerifier'), 'Vérification…');
-    RTAuth.otpVerifier(etat.email, code)
+    suite
       .then(function(){ return RTAuth.rechargerProfil(); })
       .then(apresVerification)
       .then(function(){ libre(); })
@@ -667,6 +682,13 @@
      -------------------------------------------------------------------------- */
   function brancher(){
     if (!$('insEnvoyer')) return;
+
+    /* Ouvert par double-clic, le site tourne en file:// : aucun lien d'e-mail
+       ne peut ramener ici, et le collage devient la seule issue. On le dit au
+       lieu de laisser essayer. */
+    var aide = $('insAideFichier');
+    if (aide && location.protocol !== 'http:' && location.protocol !== 'https:')
+      aide.hidden = false;
 
     $('insEnvoyer').addEventListener('click', envoyerCode);
     $('insVerifier').addEventListener('click', verifier);

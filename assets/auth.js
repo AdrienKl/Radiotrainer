@@ -170,14 +170,70 @@
        défaut que {{ .ConfirmationURL }}. Sans {{ .Token }} dedans, le message
        arrive SANS code et cette étape est infranchissable autrement qu'en
        cliquant le lien. Voir sql/001-inscription.sql et le README. */
+    /* L'adresse de retour n'est envoyée QUE depuis http(s).
+
+       Ouvert par double-clic, le site tourne en file:// et location.origin vaut
+       « file:// » : on demandait alors à Supabase de renvoyer le navigateur vers
+       file:///Users/…/index.html. Aucun service ne peut faire ça, et GoTrue ne
+       le tente même pas — il retombe silencieusement sur le « Site URL » du
+       projet. Si celui-ci est resté sur sa valeur d'usine, le lien du message
+       pointe vers http://localhost:3000 et ne mène nulle part. Mieux vaut ne
+       rien demander et laisser le projet décider. */
+    lienRetour: function(){
+      return (location.protocol === 'http:' || location.protocol === 'https:')
+             ? location.origin + location.pathname : null;
+    },
+
     otpEnvoyer: function(email, creer){
       var c = C();
       if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      var opts = { shouldCreateUser: creer !== false };
+      var retour = RTAuth.lienRetour();
+      if (retour) opts.emailRedirectTo = retour;
       return c.auth.signInWithOtp({
         email: String(email||'').trim(),
-        options:{ shouldCreateUser: creer !== false,
-                  emailRedirectTo: location.origin + location.pathname }
+        options: opts
       }).then(function(r){ if (r.error) throw r.error; return true; });
+    },
+
+    /* SECOURS : ouvrir la session à partir du LIEN du message, pas du code.
+
+       Deux situations le rendent nécessaire, et elles se produisent ensemble
+       chez un projet neuf. D'une part le gabarit « Magic Link » de Supabase ne
+       contient d'origine que {{ .ConfirmationURL }} : tant qu'on n'y a pas
+       ajouté {{ .Token }}, le message part SANS code et l'étape est
+       infranchissable. D'autre part le lien, lui, ne ramène au site que si son
+       adresse figure dans la liste blanche du projet — sinon il retombe sur le
+       « Site URL », qui vaut http://localhost:3000 à la sortie d'usine.
+       Résultat : ni code utilisable, ni lien qui aboutisse.
+
+       Le lien contient pourtant tout ce qu'il faut. Son paramètre `token` est
+       le jeton de vérification, et GoTrue l'accepte sous le nom `token_hash`
+       sans qu'on ait à SUIVRE le lien. Coller l'adresse suffit donc, et le
+       parcours se termine sans toucher au tableau de bord.
+
+       Un lien DÉJÀ CLIQUÉ ne marchera pas : le suivre consomme le jeton, même
+       si la page d'arrivée était morte. Il faut alors en redemander un. */
+    otpVerifierLien: function(lien){
+      var c = C();
+      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      var j = RTAuth.jetonDuLien(lien);
+      if (!j) return Promise.reject(new Error("Ce lien ne contient pas de jeton de vérification."));
+      return c.auth.verifyOtp({ token_hash: j.jeton, type: j.type })
+              .then(function(r){ if (r.error) throw r.error; return r.data; });
+    },
+
+    /* Reconnaît le lien de Supabase et en extrait le jeton. Rend null pour tout
+       le reste — c'est ce qui permet à l'appelant de distinguer « il a collé un
+       lien » de « il a tapé six chiffres ». */
+    jetonDuLien: function(lien){
+      var t = String(lien||'').trim();
+      if (t.indexOf('token') < 0) return null;
+      var m = /[?&#]token(?:_hash)?=([^&\s#]+)/.exec(t);
+      if (!m) return null;
+      var ty = /[?&#]type=([^&\s#]+)/.exec(t);
+      return { jeton: decodeURIComponent(m[1]),
+               type: ty ? decodeURIComponent(ty[1]) : 'magiclink' };
     },
 
     otpVerifier: function(email, code){

@@ -50,6 +50,47 @@ autrement qu'en cliquant le lien. Ajoutez le code dans le corps du message :
 Gardez le lien en secours : quelqu'un qui clique au lieu de recopier ne doit pas
 rester bloqué. Le parcours accepte les deux (`detectSessionInUrl` est actif).
 
+### 1.2 bis — Déclarer les adresses de retour — **c'est ce qui rend le lien mort**
+
+Supabase → **Authentication** → **URL Configuration**.
+
+Le lien du message ne pointe pas vers votre site. Il pointe vers Supabase, qui
+vérifie le jeton puis **renvoie le navigateur** vers une adresse. Laquelle ?
+Celle demandée par le code (`emailRedirectTo`), *à condition qu'elle figure dans
+la liste blanche du projet*. Sinon — et c'est silencieux — Supabase retombe sur
+le **Site URL**, qui vaut `http://localhost:3000` à la sortie d'usine.
+
+C'est très exactement « un lien qui ne mène à rien » : il mène à un serveur qui
+ne tourne pas sur votre machine.
+
+| Champ | Valeur |
+|---|---|
+| **Site URL** | `https://adrienkl.github.io/Radiotrainer/` |
+| **Redirect URLs** | `https://adrienkl.github.io/Radiotrainer/**` |
+
+Les deux astérisques sont un joker : ils couvrent `index.html`, les ancres, et
+ce que vous ajouterez demain. Sans eux, seule l'adresse écrite au caractère près
+est acceptée.
+
+> **Depuis un fichier ouvert en double-clic, le lien ne pourra jamais aboutir.**
+> La page tourne alors en `file://`, et aucun service au monde ne peut y renvoyer
+> un navigateur. Le code reste utilisable, et le collage du lien aussi (§ 1.2
+> ter). Pour essayer le lien lui-même, il faut passer par le site publié — ou
+> `python3 -m http.server` puis déclarer `http://localhost:8000/**` ci-dessus.
+
+### 1.2 ter — Ce que le code fait pour vous en attendant
+
+Les deux réglages ci-dessus sont à faire. Mais tant qu'ils ne le sont pas, le
+parcours n'est plus bloqué pour autant : **le champ du code accepte aussi le
+lien collé**. Le lien porte le même jeton que le code — il suffit de le lire, on
+n'est pas obligé de le *suivre*, et c'est le suivre qui échoue.
+
+Copier l'adresse du lien depuis le message, la coller dans « Code reçu »,
+valider : la session s'ouvre et l'inscription continue.
+
+Un lien **déjà cliqué** ne marchera pas : le suivre consomme le jeton, même si
+la page d'arrivée était morte. Il faut alors demander un nouveau message.
+
 ### 1.3 Brancher un vrai expéditeur — bloquant en pratique
 
 Le service d'envoi intégré de Supabase est plafonné à **deux messages par

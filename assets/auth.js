@@ -134,13 +134,43 @@
   /* ---------- Le profil ----------------------------------------------------
      Créé en base par le déclencheur on_auth_user_created. On le lit pour
      connaître le nom affiché, l'indicatif et le rôle. Le rôle sert UNIQUEMENT à
-     décider ce qu'on affiche ; il ne donne aucun droit par lui-même. */
+     décider ce qu'on affiche ; il ne donne aucun droit par lui-même.
+
+     LA LIGNE EST DÉSIGNÉE PAR SON IDENTIFIANT, jamais par `limit(1)`.
+     Ce n'en est pas un détail de style : la politique RLS « admin read all »
+     ouvre `profiles` en entier aux comptes qui portent le rôle. Pour un élève,
+     la base ne renvoie qu'une ligne — la sienne — et `limit(1)` tombait juste
+     par accident. Pour un administrateur, elle en renvoie des centaines, sans
+     ordre garanti : `limit(1)` rendait la ligne de quelqu'un d'autre, presque
+     toujours un élève. Le rôle lu valait alors 'user', l'entrée du menu
+     disparaissait et la garde du routeur refusait #admin — l'administrateur
+     était le SEUL compte à perdre la console, et la page Compte affichait par
+     surcroît le pseudo d'un inconnu. Plus le compte a de droits, plus il en
+     avait l'air démuni.
+
+     L'identifiant vient de la session, pas d'une supposition : au retour de
+     signInWithPassword, `RTAuth._u` n'est pas encore posé (c'est
+     onAuthStateChange qui le fait, un instant plus tard), et chargerProfil()
+     est appelé dans l'intervalle. On redemande donc la session quand elle
+     manque, plutôt que d'interroger `profiles` avec un id nul. */
   var profil = null;
+  function idSession(){
+    var c = C(); if (!c) return Promise.resolve(null);
+    var u = RTAuth._u;
+    if (u && u.id) return Promise.resolve(u.id);
+    return c.auth.getSession().then(function(r){
+      var s = r && r.data && r.data.session;
+      if (s && s.user){ RTAuth._u = s.user; return s.user.id; }
+      return null;
+    }).catch(function(){ return null; });
+  }
   function chargerProfil(){
     var c = C(); if (!c) return Promise.resolve(null);
-    return c.from('profiles').select('*').limit(1).maybeSingle()
-      .then(function(r){ profil = r.error ? null : (r.data||null); return profil; })
-      .catch(function(){ profil = null; return null; });
+    return idSession().then(function(id){
+      if (!id){ profil = null; return null; }
+      return c.from('profiles').select('*').eq('id', id).maybeSingle()
+        .then(function(r){ profil = r.error ? null : (r.data||null); return profil; });
+    }).catch(function(){ profil = null; return null; });
   }
 
   function annoncer(){

@@ -73,8 +73,11 @@ La question est posée, elle n'est pas tranchée.
 en livrée Air France, avec le nom et le logo. Illustrer n'est pas s'autoriser
 d'une marque, mais sur un site d'entraînement à la phraséologie — surtout si une
 formule payante existe un jour — l'image peut se lire comme un lien qui
-n'existe pas. C'est une ligne à retirer d'`assets/avions.js` et une ligne
-d'`index.html` si vous préférez ne pas courir ce risque.
+n'existe pas. C'est le point à surveiller en priorité depuis qu'elle ne défile
+plus parmi neuf autres : elle est désormais **l'image fixe du tableau de bord**,
+la première chose que voit un abonné à chaque connexion. Pour la retirer :
+la balise `.tb-avion` d'`index.html`, et la ligne correspondante
+d'`assets/avions.js` si vous la voulez hors de l'application aussi.
 
 ## 3. Ce que la politique de confidentialité dit, et qui n'allait pas de soi
 

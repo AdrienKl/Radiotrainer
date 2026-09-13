@@ -57,6 +57,23 @@ Sélectionnez tout (⌘A dans le champ), effacez, et collez le contenu de
 > **Source** / **HTML** au-dessus : le gabarit doit être collé en code, pas en
 > texte mis en forme.
 
+> **DEUX GABARITS, PAS UN.** C'est le piège, et il explique « je ne reçois
+> toujours aucun code » après avoir corrigé Magic Link.
+>
+> Une adresse **qui n'a jamais servi** déclenche une *inscription* : Supabase
+> envoie alors le gabarit **« Confirm signup »**, pas « Magic Link ». Une
+> adresse **déjà connue** reçoit « Magic Link ». Corriger un seul des deux
+> laisse donc sans code exactement le cas où l'on en a besoin — le compte neuf.
+>
+> **Le sujet du message vous dit lequel vous avez reçu :**
+>
+> | Sujet reçu | Gabarit utilisé |
+> |---|---|
+> | « Confirm Your Signup » | Confirm signup |
+> | « Your Magic Link » | Magic Link |
+>
+> Mettez le même contenu dans les deux. `supabase/poser-reglages.sh` le fait.
+
 **Ce qui compte, et pourquoi.** Le gabarit d'origine ne contient que
 `{{ .ConfirmationURL }}`. Le message part donc **sans le code à six chiffres**
 que demande l'étape 2, et cette étape devient infranchissable — c'est le

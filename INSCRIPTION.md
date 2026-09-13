@@ -66,6 +66,22 @@ on l'écrit dans le gabarit.
 Le lien est gardé en secours : quelqu'un qui clique au lieu de recopier ne doit
 pas rester bloqué.
 
+### 1.2bis — Si l'interface ne montre pas le champ : passer par l'API
+
+Le tableau de bord Supabase renomme et déplace ces réglages souvent ; l'API, non.
+`supabase/poser-reglages.sh` pose **les trois d'un coup** — le gabarit, le sujet,
+et les adresses de retour du § suivant.
+
+```sh
+SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-reglages.sh
+```
+
+Le jeton se crée sur <https://supabase.com/dashboard/account/tokens>. Il donne un
+accès complet à vos projets, bien au-delà de ce site : il se passe par
+l'environnement le temps d'une commande, **ne touche ni le disque ni le dépôt**,
+et se révoque juste après. Le script affiche ce qu'il va écrire et demande
+confirmation avant d'envoyer quoi que ce soit.
+
 ### 1.2 bis — Déclarer les adresses de retour — **c'est ce qui rend le lien mort**
 
 Supabase → **Authentication** → **URL Configuration**.

@@ -5580,8 +5580,287 @@ function aleaUrgence(kind){
   return [call, ack];
 }
 
-// Causes d'urgence tirées au sort (liste fermée — §3.11)
-const CAUSES = ["panne moteur", "fumée en cabine", "passager malade"];
+// Causes d'urgence tirées au sort. Elles ne remplissent que {CAUSE}, un texte
+// libre affiché dans l'énoncé et jamais noté : la note porte sur la STRUCTURE du
+// message (MAYDAY ×3, organisme, indicatif, intentions, position, altitude), pas
+// sur la reprise mot pour mot de la panne. Allonger la liste ne change donc rien
+// au barème et beaucoup à la lassitude.
+const CAUSES = ["panne moteur", "fumée en cabine", "passager malade",
+                "perte d'huile", "vibrations moteur importantes", "panne électrique totale",
+                "porte mal verrouillée", "train non verrouillé", "verrière ouverte en vol",
+                "réserve de carburant entamée", "pilote indisposé", "givrage carburateur",
+                "surchauffe moteur", "instruments de bord en panne", "odeur de brûlé en cabine",
+                "impact d'oiseau", "hélice en survitesse", "commande de profondeur dure"];
+
+/* ===========================================================================
+   BIBLIOTHÈQUE D'IMPRÉVUS — Scénarios
+   ---------------------------------------------------------------------------
+   Ce qui suit remplace la liste de neuf mots-clés qu'un enchaînement de `if`
+   traduisait en étapes. Le défaut n'était pas le nombre : c'est qu'ajouter un
+   imprévu demandait de toucher trois endroits — le vivier, la chaîne de `if`,
+   et la table des libellés affichés dans le journal. On en oubliait un.
+
+   Ici, une entrée se suffit à elle-même : son identifiant, l'endroit où elle a
+   un sens, son libellé, sa page du manuel, et de quoi bâtir ses étapes.
+
+   `ou` — où l'imprévu a un sens, et c'est une question de vraisemblance, pas de
+   confort. On ne fait pas remonter une piste à quelqu'un qui est en croisière,
+   ni signaler un SIGMET à quelqu'un qui roule au parking.
+     'partout' · sol comme vol, n'importe quel scénario
+     'vol'     · en l'air (décollage, intégration, tour de piste, navigation)
+     'piste'   · dans le circuit ou aux abords (sc.isCircuit ou sc.alea)
+     'sol'     · au roulage
+
+   LES PAGES SONT CELLES DU MANUEL DSNA, et rien n'est formulé sans elles — même
+   règle que pour les scénarios eux-mêmes. Plusieurs messages se retrouvent, avec
+   la même page, dans ALEAS_VOL (module Navigation) : les deux blocs <script> ne
+   partagent pas de portée, et la duplication est assumée comme celle de SIV_SCEN.
+   Elles doivent rester d'accord, et c'est le manuel qui les départage.
+   ======================================================================== */
+function accuseRecu(){
+  return [ {label:"Accusé de réception",variantes:["roger","recu","bien recu","copie","wilco"]},
+           {label:"Votre indicatif",ref:'callsign'} ];
+}
+/* Fabrique l'entrée la plus courante : le contrôleur dit quelque chose, le pilote
+   répond une fois. Les imprévus qui demandent davantage (les urgences, la remise
+   de gaz qui relance un tour complet) gardent leur propre fonction. */
+function unAlea(id, ou, label, src, atc, consigne, attendu, mots, stn){
+  return { id:id, ou:ou, label:label, src:src, etapes:function(){
+    return [{ stn:stn||'tour', station:"{ADRM} {STN}", atc:atc,
+              consigne:consigne, attendu:attendu, motsCles:mots||accuseRecu() }];
+  } };
+}
+var ALEA_BALISES=['CAN','BSN','PTV','LSE','DJL'], ALEA_ZONES=['R 45','R 138','R 162','R 205','R 46'];
+function unDe(t){ return t[Math.floor(Math.random()*t.length)]; }
+
+const ALEAS_SCEN = [
+  /* ---- Partout : au sol comme en vol ---------------------------------- */
+  { id:'trafic', ou:'partout', label:"information de trafic", src:'p. 211',
+    etapes:function(){ return [aleaTrafic()]; } },
+  unAlea('standby','partout',"standby",'p. 19-21',
+    "{CALL}, standby.",
+    "Accusez réception et attendez l'appel du contrôleur.",
+    "Standby, {CALL}.",
+    [ {label:"Standby",variantes:["standby","stand by","j attends","attends","roger"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('ignorez','partout',"message annulé",'p. 19-21',
+    "{CALL}, ignorez mon dernier message.",
+    "Accusez réception de l'annulation.",
+    "Roger, {CALL}."),
+  { id:'xpdr', ou:'partout', label:"code transpondeur", src:'p. 186',
+    etapes:function(){ var c=codeSSR();
+      return [{ stn:'tour', station:"{ADRM} {STN}",
+        atc:"{CALL}, transpondeur "+c+".",
+        consigne:"Collationnez le code assigné.",
+        attendu:"Transpondeur "+c+", {CALL}.",
+        motsCles:[ {label:"Transpondeur",variantes:["transpondeur","squawk","affiche"]},
+                   {label:"Code assigné",variantes:numVariants(c)},
+                   {label:"Votre indicatif",ref:'callsign'} ] }]; } },
+  unAlea('ident','partout',"transpondeur ident",'p. 186',
+    "{CALL}, transpondeur ident.",
+    "Collationnez.",
+    "Transpondeur ident, {CALL}.",
+    [ {label:"Transpondeur ident",variantes:["ident","transpondeur ident","affiche ident","squawk ident"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('veille','partout',"fréquence à veiller",'p. 182',
+    "{CALL}, veillez 121 décimale 5.",
+    "Collationnez la fréquence à veiller.",
+    "Je veille 121 décimale 5, {CALL}.",
+    [ {label:"Veille",variantes:["veille","je veille","veillez"]},
+      {label:"Fréquence",variantes:["121 5","121 decimale 5","cent vingt et un decimale cinq","121,5","121.5"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('rappel5','partout',"rappel demandé",'p. 182',
+    "{CALL}, rappelez dans cinq minutes.",
+    "Accusez réception de la demande de rappel.",
+    "Je rappelle dans cinq minutes, {CALL}.",
+    [ {label:"Je rappelle",variantes:["rappelle","je rappelle","rappel"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('delai','partout',"délai annoncé",'p. 127',
+    "{CALL}, prévoyez 10 minutes de délai, cause trafic.",
+    "Accusez réception du délai.",
+    "Roger, 10 minutes de délai, {CALL}.",
+    [ {label:"Accusé de réception",variantes:["roger","recu","bien recu","delai","dix minutes","10 minutes"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('pasdelai','partout',"pas de délai",'p. 127',
+    "{CALL}, pas de délai prévu.",
+    "Accusez réception.",
+    "Roger, {CALL}."),
+
+  /* ---- En vol ---------------------------------------------------------- */
+  { id:'cap', ou:'vol', label:"changement de cap", src:'p. 195',
+    etapes:function(){ return [aleaCap()]; } },
+  { id:'radio', ou:'vol', label:"panne radio", src:'p. 246-248',
+    etapes:function(){ return [aleaRadio()]; } },
+  { id:'moteur', ou:'vol', label:"panne moteur", src:'p. 238',
+    etapes:function(){ return aleaUrgence('moteur'); } },
+  { id:'fumee', ou:'vol', label:"fumée en cabine", src:'p. 238',
+    etapes:function(){ return aleaUrgence('fumee'); } },
+  { id:'malaise', ou:'vol', label:"malaise passager", src:'p. 238',
+    etapes:function(){ return aleaUrgence('malaise'); } },
+  unAlea('guidage','vol',"guidage radar",'p. 191',
+    "{CALL}, pour séparation, guidage radar, tournez à gauche cap 270.",
+    "Collationnez : le sens du virage, puis le cap.",
+    "À gauche cap 270, {CALL}.",
+    [ {label:"Sens du virage",variantes:["a gauche","gauche","par la gauche"]},
+      {label:"Cap",variantes:["cap","au cap"]},
+      {label:"Valeur de cap",variantes:["270","deux sept zero","deux cent soixante dix"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('reprisenav','vol',"reprise de navigation",'p. 191',
+    "{CALL}, guidage terminé, reprenez votre navigation propre.",
+    "Collationnez la reprise de navigation.",
+    "Je reprends ma navigation, {CALL}.",
+    [ {label:"Reprise",variantes:["reprends","reprise","navigation propre","navigation"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('maintiencap','vol',"maintien de cap",'p. 195',
+    "{CALL}, maintenez le cap actuel.",
+    "Collationnez.",
+    "Je maintiens le cap, {CALL}.",
+    [ {label:"Je maintiens",variantes:["maintiens","je maintiens","maintien","cap"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('monte','vol',"montée demandée",'p. 178',
+    "{CALL}, pour séparation, montez altitude 4500 pieds.",
+    "Collationnez la nouvelle altitude.",
+    "Je monte altitude 4500 pieds, {CALL}.",
+    [ {label:"Je monte",variantes:["monte","je monte","montons"]},
+      {label:"Altitude",variantes:["4500","quatre mille cinq cents","quarante cinq"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('descend','vol',"descente demandée",'p. 178',
+    "{CALL}, descendez altitude 2000 pieds, trafic en croisement.",
+    "Collationnez la nouvelle altitude.",
+    "Je descends altitude 2000 pieds, {CALL}.",
+    [ {label:"Je descends",variantes:["descends","je descends","descente"]},
+      {label:"Altitude",variantes:["2000","deux mille","vingt"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('sigmet','vol',"renseignement SIGMET",'p. 205',
+    "{CALL}, renseignement SIGMET, givrage modéré à fort entre niveau 90 et niveau 130 sur votre route.",
+    "Accusez réception du SIGMET.",
+    "Roger, {CALL}."),
+  unAlea('turbulence','vol',"turbulence signalée",'p. 205',
+    "{CALL}, un pilote signale de fortes turbulences sur votre route.",
+    "Accusez réception.",
+    "Roger, {CALL}."),
+  { id:'balise', ou:'vol', label:"aide à la navigation en panne", src:'p. 207',
+    etapes:function(){ var b=unDe(ALEA_BALISES);
+      return [{ stn:'tour', station:"{ADRM} {STN}",
+        atc:"{CALL}, V-O-R "+b+" en panne.",
+        consigne:"Accusez réception de l'indisponibilité.",
+        attendu:"Roger, {CALL}.", motsCles:accuseRecu() }]; } },
+  unAlea('aviaire','vol',"activité aviaire",'p. 208',
+    "{CALL}, activité aviaire signalée sur votre route.",
+    "Accusez réception.",
+    "Roger, {CALL}."),
+  { id:'zone', ou:'vol', label:"zone réglementée active", src:'p. 208',
+    etapes:function(){ var z=unDe(ALEA_ZONES);
+      return [{ stn:'tour', station:"{ADRM} {STN}",
+        atc:"{CALL}, "+z+" active.",
+        consigne:"Accusez réception : vous devrez la contourner.",
+        attendu:"Roger, {CALL}.",
+        motsCles:[ {label:"Accusé de réception",variantes:["roger","recu","bien recu","copie","evite","contourne"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] }]; } },
+  unAlea('meteo','vol',"météo en route",'p. 209',
+    "{CALL}, stratus signalés dans la région de {ADRM}.",
+    "Accusez réception de l'information météo.",
+    "Roger, {CALL}."),
+  unAlea('meteodefav','vol',"conditions défavorables signalées",'p. 209',
+    "{CALL}, un pilote signale des conditions météorologiques défavorables au voisinage de {ADRM}.",
+    "Accusez réception.",
+    "Roger, {CALL}."),
+  unAlea('suggestion','vol',"manœuvre suggérée",'p. 212',
+    "{CALL}, trafic non identifié, 1 heure, 8 nautiques. Je vous suggère de tourner à droite 20 degrés.",
+    "Collationnez la manœuvre suggérée.",
+    "Je tourne à droite 20 degrés, {CALL}.",
+    [ {label:"Virage",variantes:["tourne a droite","a droite","droite","20 degres","vingt degres"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('separation','vol',"séparation à assurer",'p. 213',
+    "{CALL}, trafic 2 heures, 12 nautiques, convergent, même niveau, assurez votre séparation.",
+    "Répondez : vous avez le visuel, ou vous ne l'avez pas.",
+    "Pas visuel sur le trafic, {CALL}.",
+    [ {label:"Réponse trafic",variantes:["pas visuel","pas en vue","negatif","trafic en vue","en vue","roger"]},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('degage','vol',"dégagé du trafic",'p. 213',
+    "{CALL}, dégagé du trafic.",
+    "Accusez réception.",
+    "Roger, {CALL}."),
+  unAlea('vfrspecial','vol',"VFR spécial à destination",'p. 174',
+    "{CALL}, conditions VFR spécial à destination, prévoyez 10 minutes de délai.",
+    "Accusez réception.",
+    "Roger, {CALL}."),
+
+  /* ---- Circuit et abords du terrain ----------------------------------- */
+  { id:'wind', ou:'piste', label:"le vent a tourné", src:'p. 148',
+    etapes:function(){ return [aleaWind()]; } },
+  { id:'hold', ou:'piste', label:"attente en vent arrière", src:'p. 150',
+    etapes:function(){ return [aleaHold()]; } },
+  { id:'goaround', ou:'piste', label:"remise de gaz", src:'p. 159',
+    etapes:function(){ return [aleaGoAround()]; } },
+  { id:'numero', ou:'piste', label:"numéro dans le circuit", src:'p. 150',
+    etapes:function(){ var n=randInt(2,4);
+      return [{ stn:'tour', station:"{ADRM} {STN}",
+        atc:"{CALL}, numéro "+n+", suivez le Cessna 172 en base.",
+        consigne:"Collationnez votre numéro et annoncez si vous voyez le trafic.",
+        attendu:"Numéro "+n+", trafic en vue, {CALL}.",
+        motsCles:[ {label:"Numéro",variantes:numVariants(String(n)).concat(['numero'])},
+                   {label:"Réponse trafic",variantes:["trafic en vue","en vue","negatif","pas en vue","je cherche"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] }]; } },
+  unAlea('rappelfinale','piste',"rappel en finale demandé",'p. 151',
+    "{CALL}, rappelez finale piste {PISTE}.",
+    "Collationnez : je rappelle finale, la piste, votre indicatif.",
+    "Je rappelle finale piste {PISTE}, {CALL}.",
+    [ {label:"Je rappelle finale",variantes:["rappelle finale","je rappelle finale","finale"]},
+      {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
+      {label:"Votre indicatif",ref:'callsign'} ]),
+  unAlea('ventarriere','piste',"vent arrière signalé en finale",'p. 235',
+    "{CALL}, vent secteur arrière signalé 10 nœuds en finale.",
+    "Accusez réception.",
+    "Roger, {CALL}."),
+  unAlea('inspection','piste',"piste non inspectée",'p. 208',
+    "{CALL}, information : inspection de piste non effectuée.",
+    "Accusez réception.",
+    "Roger, {CALL}."),
+  unAlea('eau','piste',"eau stagnante sur la piste",'p. 208',
+    "{CALL}, information : eau stagnante sur la piste.",
+    "Accusez réception.",
+    "Roger, {CALL}."),
+
+  /* ---- Au roulage ------------------------------------------------------
+     Le manuel réserve le mot « piste » au décollage, à l'atterrissage et à la
+     traversée (p. 46) : d'où « maintenez position » et « maintenez avant point
+     d'attente », qui ne le prononcent pas. */
+  unAlea('maintienpos','sol',"maintien de position",'p. 46',
+    "{CALL}, maintenez position.",
+    "Collationnez le maintien de position.",
+    "Je maintiens position, {CALL}.",
+    [ {label:"Je maintiens position",variantes:["maintiens position","je maintiens","maintien position","maintenons position"]},
+      {label:"Votre indicatif",ref:'callsign'} ], 'sol'),
+  unAlea('maintienavant','sol',"maintien avant point d'attente",'p. 46',
+    "{CALL}, maintenez avant point d'attente.",
+    "Collationnez.",
+    "Je maintiens avant point d'attente, {CALL}.",
+    [ {label:"Je maintiens",variantes:["maintiens","je maintiens","maintien","maintenons"]},
+      {label:"Avant point d'attente",variantes:["avant point d attente","point d attente","avant le point d attente"]},
+      {label:"Votre indicatif",ref:'callsign'} ], 'sol'),
+  unAlea('traversee','sol',"traversée de piste",'p. 46',
+    "{CALL}, traversez piste {PISTE}, rappelez piste traversée.",
+    "Collationnez la traversée, puis la piste.",
+    "Je traverse piste {PISTE}, {CALL}.",
+    [ {label:"Je traverse",variantes:["je traverse","traverse","traversons","traversee"]},
+      {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
+      {label:"Votre indicatif",ref:'callsign'} ], 'sol'),
+  unAlea('remontee','sol',"remontée de piste",'p. 44',
+    "{CALL}, remontez piste {PISTE}.",
+    "Collationnez la remontée de piste.",
+    "Je remonte piste {PISTE}, {CALL}.",
+    [ {label:"Je remonte",variantes:["je remonte","remonte","remontons","remontee"]},
+      {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
+      {label:"Votre indicatif",ref:'callsign'} ], 'sol'),
+  unAlea('roulagevia','sol',"itinéraire de roulage",'p. 44',
+    "{CALL}, roulez via A3.",
+    "Collationnez l'itinéraire.",
+    "Je roule via A3, {CALL}.",
+    [ {label:"Je roule",variantes:["je roule","roule","roulons","roulage"]},
+      {label:"Itinéraire",variantes:["via a3","a3","a trois","via"]},
+      {label:"Votre indicatif",ref:'callsign'} ], 'sol')
+];
 
 /* ---- Utilitaires partagés par le scénario « Navigation / croisière » ----
    Ils reposent sur RT_AIR, publié par le module Navigation, et sur NAV_AD_GEO. */
@@ -5935,6 +6214,257 @@ const SCENARIOS = [
                   {text:"Elle ne peut plus rien faire",correct:false} ] },
       { type:'quiz', question:"Faut-il afficher 7600 ET surveiller les signaux lumineux de la tour ?",
         options:[ {text:"Oui, les deux",correct:true}, {text:"Non, seulement le transpondeur",correct:false} ] }
+    ]
+  },
+
+  /* =========================================================================
+     SCÉNARIOS AJOUTÉS — les sept premiers couvraient le vol type ; ceux-ci
+     couvrent ce qui l'entoure et qu'on n'apprend nulle part ailleurs.
+
+     ON N'AJOUTE À LA FIN, JAMAIS AU MILIEU. L'historique d'un élève enregistre
+     l'INDICE du scénario joué (voir rtRelancerScenario) : insérer une entrée
+     avant les autres décalerait tout ce qui est déjà enregistré, et « relancer »
+     depuis l'accueil rouvrirait un autre exercice que celui affiché.
+     ====================================================================== */
+  {
+    id:"pointattente", titre:"Point d'attente et traversée de piste", station:"{ADRM} {STN}",
+    defaultTerrain:'dep', controllable:true,
+    // Manuel DSNA p. 44-46. Le mot « piste » est RÉSERVÉ au décollage, à
+    // l'atterrissage et à la traversée : d'où « maintenez position » tout court.
+    tours:[
+      { role:'pilote', stn:'sol',
+        situation:"Vous roulez vers la piste {PISTE}. Le cheminement vous fait traverser la piste.",
+        consigne:"Demandez la traversée : station, indicatif, position, demande de traversée.",
+        attendu:"{ADRM} {STN}, {CALL}, avant point d'attente, demande traversée piste {PISTE}.",
+        afis:{ consigne:"Auto-information : annoncez votre intention de traverser la piste.",
+               attendu:"{ADRM} {STN}, {CALL}, avant point d'attente, je traverse piste {PISTE}." },
+        motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
+                   {label:"Votre indicatif",ref:'callsign'},
+                   {label:"Traversée",variantes:["traversee","traverser","demande traversee","je traverse","traverse"]},
+                   {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'} ] },
+      { stn:'sol', station:"{ADRM} {STN}",                                          // Manuel DSNA p.46
+        atc:["{CALL}, maintenez position, trafic en courte finale.",
+             "{CALL}, maintenez avant point d'attente, trafic à l'atterrissage."],
+        consigne:"Collationnez le maintien. Attention : le mot « piste » ne s'emploie pas ici.",
+        attendu:"Je maintiens position, {CALL}.",
+        motsCles:[ {label:"Je maintiens",variantes:["je maintiens","maintiens","maintien","maintenons","je maintiens position","avant point d attente"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      { stn:'sol', station:"{ADRM} {STN}",                                          // Manuel DSNA p.46
+        atc:"{CALL}, traversez piste {PISTE}, rappelez piste traversée.",
+        consigne:"Collationnez la traversée, puis la piste.",
+        attendu:"Je traverse piste {PISTE}, {CALL}.",
+        motsCles:[ {label:"Je traverse",variantes:["je traverse","traverse","traversons","traversee"]},
+                   {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      { role:'pilote', stn:'sol',
+        situation:"Vous venez de dégager la piste de l'autre côté.",
+        consigne:"Rappelez piste traversée, puis votre indicatif.",
+        attendu:"Piste traversée, {CALL}.",
+        motsCles:[ {label:"Piste traversée",variantes:["piste traversee","traversee","j ai traverse","piste degagee","traverse"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] }
+    ]
+  },
+  {
+    id:"apresatt", titre:"Après atterrissage", station:"{ADRM} {STN}",
+    defaultTerrain:'arr', controllable:true,
+    // Manuel DSNA p. 160-161. Ce qui suit le toucher des roues : c'est là qu'on
+    // parle le plus mal, l'exercice étant réputé fini.
+    tours:[
+      { stn:'tour', station:"{ADRM} {STN}",                                         // Manuel DSNA p.160
+        atc:["{CALL}, rappelez piste dégagée.",
+             "{CALL}, dégagez première à gauche, rappelez piste dégagée."],
+        consigne:"Collationnez, puis votre indicatif.",
+        attendu:"Je rappelle piste dégagée, {CALL}.",
+        motsCles:[ {label:"Piste dégagée",variantes:["piste degagee","degagee","je degage","rappelle piste degagee","je rappelle piste degagee"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      { role:'pilote', stn:'tour',
+        situation:"Vous venez de dégager la piste par la première à gauche.",
+        consigne:"Annoncez la piste dégagée, puis votre indicatif.",
+        attendu:"Piste dégagée, {CALL}.",
+        motsCles:[ {label:"Piste dégagée",variantes:["piste degagee","degagee","degage","j ai degage"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      { stn:'sol', station:"{ADRM} {STN}",                                          // Manuel DSNA p.161
+        atc:["{CALL}, roulez parking aviation générale.",
+             "{CALL}, roulez parking aviation générale, rappelez arrivé au parking."],
+        consigne:"Collationnez l'instruction de roulage.",
+        attendu:"Je roule parking aviation générale, {CALL}.",
+        // AFIS : aucune clairance de roulage ; le pilote annonce ce qu'il fait.
+        afis:{ atc:["{CALL}, {ADRM} {STN}, pas de trafic connu au roulage."],
+               consigne:"Annoncez que vous roulez au parking, puis votre indicatif.",
+               attendu:"Je roule au parking, {CALL}.",
+               motsCles:[ {label:"Je roule",variantes:["je roule","roule","roulons","roulage"]},
+                          {label:"Parking",variantes:["parking","aire de stationnement","aviation generale","club"]},
+                          {label:"Votre indicatif",ref:'callsign'} ] },
+        motsCles:[ {label:"Je roule",variantes:["je roule","roule","roulons","roulage"]},
+                   {label:"Parking",variantes:["parking","aviation generale","aire de stationnement","club"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      { role:'pilote', stn:'sol',
+        situation:"Vous êtes arrivé au parking, moteur sur le point d'être coupé.",
+        consigne:"Annoncez votre arrivée au parking et que vous quittez la fréquence.",
+        attendu:"Arrivé au parking, je quitte la fréquence, {CALL}.",
+        motsCles:[ {label:"Arrivé au parking",variantes:["arrive au parking","au parking","parking","arrive"]},
+                   {label:"Quitte la fréquence",variantes:["je quitte la frequence","quitte la frequence","quitte","je quitte"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] }
+    ]
+  },
+  {
+    id:"transit", titre:"Transit VFR d'un espace contrôlé", station:"{ADRM} {STN}",
+    defaultTerrain:'dep', controllable:true,
+    // Manuel DSNA p. 178. Traverser la CTR de quelqu'un d'autre : la demande la
+    // plus fréquente d'un vol de navigation, et celle qu'on formule le plus mal.
+    tours:[
+      { role:'pilote', stn:'tour',
+        situation:"Vous approchez de l'espace contrôlé de {ADRM}, à {ALT} pieds. Vous souhaitez le traverser.",
+        consigne:"Demandez le transit : station, indicatif, demande de transit VFR, altitude, point d'entrée et de sortie.",
+        attendu:"{ADRM} {STN}, {CALL}, demande transit VFR, {ALT} pieds, du point Whisky au point November.",  // Manuel DSNA p.178
+        motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
+                   {label:"Votre indicatif",ref:'callsign'},
+                   {label:"Demande de transit",variantes:["demande transit","transit","je demande le transit","transit vfr","traversee"]},
+                   {label:"VFR",variantes:["vfr","v f r"]},
+                   {label:"Altitude",ref:'alt'} ] },
+      { stn:'tour', station:"{ADRM} {STN}",                                         // Manuel DSNA p.178
+        atc:"{CALL}, transitez via Whisky puis November, maintenez {ALT} pieds, rappelez avant Whisky.",
+        consigne:"Collationnez : l'itinéraire, l'altitude, le rappel demandé.",
+        attendu:"Je transite via Whisky puis November, je maintiens {ALT} pieds, je rappelle avant Whisky, {CALL}.",
+        motsCles:[ {label:"Je transite",variantes:["je transite","transite","transit","je traverse"]},
+                   {label:"Itinéraire",variantes:["whisky","november","via"]},
+                   {label:"Je maintiens",variantes:["je maintiens","maintiens","maintien"]},
+                   {label:"Altitude",ref:'alt'},
+                   {label:"Rappel",variantes:["je rappelle","rappelle","rappel"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      { role:'pilote', stn:'tour',
+        situation:"Vous arrivez au point Whisky.",
+        consigne:"Rappelez au point : station, indicatif, position, altitude.",
+        attendu:"{ADRM} {STN}, {CALL}, avant Whisky, {ALT} pieds.",
+        motsCles:[ {label:"Station appelée",ref:'station'}, {label:"Votre indicatif",ref:'callsign'},
+                   {label:"Position",variantes:["whisky","avant whisky","au point whisky","verticale whisky"]},
+                   {label:"Altitude",ref:'alt'} ] },
+      { stn:'tour', station:"{ADRM} {STN}",                                         // Manuel DSNA p.182
+        atc:"{CALL}, quittez ma fréquence, contactez l'information, au revoir.",
+        consigne:"Accusez réception et annoncez que vous quittez la fréquence.",
+        attendu:"Je quitte la fréquence, au revoir, {CALL}.",
+        motsCles:[ {label:"Quitte la fréquence",variantes:["je quitte la frequence","quitte la frequence","quitte","je quitte"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] }
+    ]
+  },
+  {
+    id:"remisegaz", titre:"Remise de gaz", station:"{ADRM} {STN}",
+    defaultTerrain:'arr', controllable:true, alea:true,
+    // Manuel DSNA p. 159. ⚠ L'instruction de remise de gaz NE MENTIONNE PAS le
+    // vent — le manuel l'écarte expressément, pour éviter toute confusion avec
+    // une autorisation d'atterrissage.
+    tours:[
+      { role:'pilote', stn:'tour',
+        situation:"Vous êtes en finale piste {PISTE}, stabilisé.",
+        consigne:"Annoncez la finale : station, indicatif, finale, piste.",
+        attendu:"{ADRM} {STN}, {CALL}, finale piste {PISTE}.",
+        motsCles:[ {label:"Station appelée",ref:'station'}, {label:"Votre indicatif",ref:'callsign'},
+                   {label:"Finale",variantes:["finale","en finale","courte finale","longue finale"]},
+                   {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'} ] },
+      { stn:'tour', station:"{ADRM} {STN}",                                         // Manuel DSNA p.159
+        atc:["{CALL}, remettez les gaz, rappelez vent arrière piste {PISTE}.",
+             "{CALL}, remettez les gaz, trafic sur la piste, rappelez vent arrière piste {PISTE}."],
+        consigne:"Collationnez : la remise de gaz, puis le rappel demandé.",
+        attendu:"Je remets les gaz et rappelle vent arrière piste {PISTE}, {CALL}.",
+        motsCles:[ {label:"Je remets les gaz",variantes:["je remets les gaz","remets les gaz","remise de gaz","remise des gaz","remettons les gaz","go around"]},
+                   {label:"Rappel vent arrière",variantes:["rappelle vent arriere","vent arriere","je rappelle vent arriere"]},
+                   {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      tourVentArriere(),
+      tourBase(),
+      tourFinale(),
+      tourAtterrissage(),
+      tourDegagement()
+    ]
+  },
+  {
+    id:"vocabulaire", titre:"Expressions conventionnelles", quiz:true,
+    defaultTerrain:'dep', noTerrain:true,
+    // Manuel DSNA p. 19-21. Le vocabulaire est IMPOSÉ : ces mots ont un sens
+    // unique, et un synonyme de la vie courante n'en est pas un ici.
+    tours:[
+      { type:'quiz', question:"Le contrôleur vous demande : « Êtes-vous prêt pour un départ immédiat ? » Que répondez-vous ?",
+        options:[ {text:"« Affirme »",correct:true},
+                  {text:"« Roger »",correct:false},
+                  {text:"« Oui »",correct:false},
+                  {text:"« Wilco »",correct:false} ] },
+      { type:'quiz', question:"Que signifie exactement « WILCO » ?",
+        options:[ {text:"J'ai compris ET je vais exécuter",correct:true},
+                  {text:"J'ai reçu votre message",correct:false},
+                  {text:"Attendez, je rappelle",correct:false},
+                  {text:"Je ne peux pas exécuter",correct:false} ] },
+      { type:'quiz', question:"« ROGER » peut-il servir à répondre à une question appelant un collationnement ?",
+        options:[ {text:"Non, jamais",correct:true},
+                  {text:"Oui, c'est équivalent",correct:false},
+                  {text:"Oui, si le contrôleur est occupé",correct:false} ] },
+      { type:'quiz', question:"Le contrôleur vous donne une instruction que vous ne pouvez pas suivre. Quel mot employez-vous ?",
+        options:[ {text:"« Impossible »",correct:true},
+                  {text:"« Négatif »",correct:false},
+                  {text:"« Standby »",correct:false},
+                  {text:"« Ignorez »",correct:false} ] },
+      { type:'quiz', question:"« VEILLEZ 121 décimale 5 » vous demande de :",
+        options:[ {text:"Écouter cette fréquence sans y appeler",correct:true},
+                  {text:"Appeler immédiatement sur cette fréquence",correct:false},
+                  {text:"Quitter votre fréquence actuelle",correct:false} ] },
+      { type:'quiz', question:"Le contrôleur dit « IGNOREZ mon dernier message ». Cela veut dire :",
+        options:[ {text:"Le message précédent est annulé",correct:true},
+                  {text:"Répétez le message précédent",correct:false},
+                  {text:"Attendez avant de répondre",correct:false} ] },
+      { type:'quiz', question:"Après « AUTORISÉ atterrissage piste 27 », que dites-vous ?",
+        options:[ {text:"« Piste 27, j'atterris »",correct:true},
+                  {text:"« Piste 27, autorisé atterrissage »",correct:false},
+                  {text:"« Roger, piste 27 »",correct:false},
+                  {text:"« Wilco »",correct:false} ] },
+      { type:'quiz', question:"Différence entre « APPROUVÉ » et « AUTORISÉ » ?",
+        options:[ {text:"« Approuvé » porte sur une demande, « autorisé » sur une clairance",correct:true},
+                  {text:"Aucune, les deux sont interchangeables",correct:false},
+                  {text:"« Autorisé » s'emploie au sol, « approuvé » en vol",correct:false} ] }
+    ]
+  },
+  {
+    id:"nombres", titre:"Nombres, sigles et indicatifs", quiz:true,
+    defaultTerrain:'dep', noTerrain:true,
+    // Manuel DSNA p. 11-18. Ce qui se dit chiffre par chiffre, ce qui se dit
+    // comme dans la vie courante, et la règle de l'indicatif abrégé.
+    tours:[
+      { type:'quiz', question:"Comment transmet-on la fréquence 120,775 ?",
+        options:[ {text:"« Cent vingt décimale sept cent soixante-quinze »",correct:true},
+                  {text:"« Cent vingt virgule sept sept cinq »",correct:false},
+                  {text:"« Cent vingt point sept sept cinq »",correct:false},
+                  {text:"« Un deux zéro sept sept cinq »",correct:false} ] },
+      { type:'quiz', question:"Un cap se transmet toujours avec :",
+        options:[ {text:"Trois chiffres — « cap zéro six zéro »",correct:true},
+                  {text:"Deux chiffres — « cap soixante »",correct:false},
+                  {text:"Le nombre de degrés, sans règle particulière",correct:false} ] },
+      { type:'quiz', question:"Comment énonce-t-on le sigle QNH ?",
+        options:[ {text:"« Q-N-H », lettre par lettre",correct:true},
+                  {text:"« Quénache »",correct:false},
+                  {text:"« Québec November Hotel »",correct:false} ] },
+      { type:'quiz', question:"Que signifie QFU ?",
+        options:[ {text:"La piste en service",correct:true},
+                  {text:"La pression au niveau de la mer",correct:false},
+                  {text:"La visibilité horizontale",correct:false} ] },
+      { type:'quiz', question:"Quand doit-on impérativement transmettre un nombre chiffre par chiffre ?",
+        options:[ {text:"Quand la réception est mauvaise",correct:true},
+                  {text:"Toujours, sans exception",correct:false},
+                  {text:"Seulement pour les altitudes",correct:false} ] },
+      { type:'quiz', question:"Votre indicatif est F-BGBX. À quel moment pouvez-vous l'abréger en F-BX ?",
+        options:[ {text:"Seulement après que le contrôleur l'a abrégé lui-même",correct:true},
+                  {text:"Dès le premier contact, pour gagner du temps",correct:false},
+                  {text:"Jamais : l'indicatif est toujours complet",correct:false},
+                  {text:"Quand la fréquence est peu chargée",correct:false} ] },
+      { type:'quiz', question:"La forme abrégée d'un indicatif français reprend :",
+        options:[ {text:"Le premier caractère et les deux derniers",correct:true},
+                  {text:"Les trois derniers caractères",correct:false},
+                  {text:"Les deux premiers et le dernier",correct:false} ] },
+      { type:'quiz', question:"Peut-on faire précéder son indicatif du type d'avion ?",
+        options:[ {text:"Oui — « Cessna F-ABCD »",correct:true},
+                  {text:"Non, jamais",correct:false},
+                  {text:"Seulement pour les avions de transport",correct:false} ] },
+      { type:'quiz', question:"Comment dit-on CAVOK à la radio ?",
+        options:[ {text:"« CAV-O-Kay »",correct:true},
+                  {text:"« C-A-V-O-K », lettre par lettre",correct:false},
+                  {text:"« Cavoque »",correct:false} ] }
     ]
   }
 ];
@@ -7017,7 +7547,13 @@ const SC_DESC={
   tourdepiste: "Un tour complet : vent arrière, base, finale, puis touch-and-go ou complet.",
   navigation:  "En croisière avec un organisme d'information : contact, position, transit.",
   urgence:     "Détresse et urgence : Mayday et Pan Pan, dans l'ordre imposé. Manuel p. 231.",
-  panneradio:  "Quiz de procédure : que faire, et dans quel ordre, en panne de radio. Manuel p. 246."
+  panneradio:  "Quiz de procédure : que faire, et dans quel ordre, en panne de radio. Manuel p. 246.",
+  pointattente:"Maintien de position et traversée de piste — le mot « piste » y est réservé. Manuel p. 44-46.",
+  apresatt:    "Ce qui suit le toucher des roues : dégagement, roulage parking. Manuel p. 160-161.",
+  transit:     "Traverser l'espace contrôlé d'un autre terrain : demande, itinéraire, rappel. Manuel p. 178.",
+  remisegaz:   "Finale interrompue : remise de gaz commandée, puis tour complet. Manuel p. 159.",
+  vocabulaire: "Quiz : Affirme, Wilco, Roger, Impossible — le vocabulaire imposé. Manuel p. 19-21.",
+  nombres:     "Quiz : fréquences, caps, sigles et indicatif abrégé. Manuel p. 11-18."
 };
 /* Terrain nécessaire pour lancer l'exercice — un scénario d'arrivée se joue sur le
    terrain d'arrivée, deux d'entre eux n'en demandent aucun. */
@@ -7047,6 +7583,7 @@ SCENARIOS.forEach((sc,i)=>{
 /* =========================================================================
    10) MOTEUR DE SCÉNARIO
    ========================================================================= */
+function scParId(id){ return SCENARIOS.filter(s => s.id===id)[0]; }
 function buildQueue(sc){
   let raw;
   if(sc.isCircuit){
@@ -7056,7 +7593,12 @@ function buildQueue(sc){
     //      base → finale → choix (touch-and-go boucle / atterrissage complet).
     // À VÉRIFIER avec le manuel DGAC / mon instructeur : en tour de piste la clairance de départ
     // diffère (on reste dans le circuit) ; la formulation §3.6 est reprise faute d'équivalent circuit.
-    raw = [ ...SCENARIOS[0].tours, ...SCENARIOS[1].tours.slice(0,4),
+    /* Par IDENTIFIANT, et non par position. Le tour de piste réemploie les
+       échanges du roulage et du décollage ; SCENARIOS[0] et SCENARIOS[1] les
+       désignaient tant que la liste commençait par eux — c'est-à-dire jusqu'au
+       jour où l'on insère un scénario avant. Le tour de piste se serait alors
+       construit sur les échanges d'un autre exercice, sans rien signaler. */
+    raw = [ ...scParId('roulage').tours, ...scParId('decollage').tours.slice(0,4),
             tourVentArriere(), tourNumeroATC(), tourBase(), tourFinale(), circuitChoiceStep() ];
   } else if(typeof sc.buildTours==='function'){
     // Scénario dont les échanges dépendent de l'espace aérien réel du terrain choisi.
@@ -7099,12 +7641,12 @@ function marquerPremierContact(steps){
   return steps;
 }
 
-/* C3 : avec 25% de proba, insère un aléa avant la dernière étape à répondre. */
-/* Aléas — UNIQUEMENT en mode Réel (auto). Insère, avec ~50% de proba, un imprévu avant la
-   dernière étape à répondre : urgences (panne moteur, fumée, malaise, panne radio), demande de
-   changement de cap, information de trafic ; et, sur les scénarios de circuit, les aléas de piste
-   (vent qui tourne, attente, remise de gaz). Le nombre d'échanges n'étant plus affiché, l'ajout
-   d'étapes ne perturbe pas l'affichage. */
+/* Insère, avec une chance sur deux, UN imprévu avant la dernière étape à
+   répondre. Mode Réel uniquement : c'est là sa raison d'être — en mode guidé on
+   apprend un déroulé, en mode Réel on apprend à en sortir.
+
+   Le vivier est ALEAS_SCEN, filtré sur ce qui a un sens ici et maintenant. Le
+   nombre d'échanges n'étant plus affiché, allonger la file ne dérange rien. */
 function maybeInsertAlea(sc){
   if(state.difficulty!=='reel') return;              // aléas = mode Réel seulement
   if(sc.emergency || sc.quiz) return;                // pas d'aléa sur Urgence / Panne radio (quiz)
@@ -7114,32 +7656,32 @@ function maybeInsertAlea(sc){
     if(s.motsCles || s.type==='choice' || s.type==='quiz') lastAns=i; }
   if(lastAns < 1) return;
 
-  const flight = ['decollage','integration','tourdepiste','navigation'].indexOf(sc.id)>=0;
-  let pool = ['trafic'];                                       // partout : info trafic
-  if(flight) pool = pool.concat(['cap','moteur','fumee','malaise','radio']);
-  if(sc.isCircuit || sc.alea) pool = pool.concat(['wind','hold','goaround']);
-  const kind = pick(pool);
+  const enVol   = ['decollage','integration','tourdepiste','navigation','transit'].indexOf(sc.id)>=0;
+  /* Le tour de piste PART du parking, mais l'imprévu s'insère avant la DERNIÈRE
+     étape à répondre — celle-là est en l'air. « Maintenez position » y tomberait
+     sur quelqu'un en vent arrière. Seuls les scénarios qui FINISSENT au sol
+     acceptent donc les imprévus de roulage. */
+  const auSol   = ['roulage','pointattente','apresatt'].indexOf(sc.id)>=0;
+  const enPiste = !!(sc.isCircuit || sc.alea);
+  const vivier = ALEAS_SCEN.filter(a => a.ou==='partout'
+                                     || (a.ou==='vol'   && enVol)
+                                     || (a.ou==='piste' && enPiste)
+                                     || (a.ou==='sol'   && auSol));
+  if(!vivier.length) return;
+  const a = pick(vivier);
 
-  if(kind==='goaround'){
-    // Remise de gaz → on abandonne l'atterrissage et on repart pour un tour complet.
+  /* La remise de gaz ne s'insère pas : elle REMPLACE la fin du scénario. On
+     abandonne l'atterrissage et on repart pour un tour complet, ce qui est
+     exactement ce qui se passe en vol. */
+  if(a.id==='goaround'){
     const lap=[tourVentArriere(),tourNumeroATC(),tourBase(),tourFinale(),circuitChoiceStep()].map(finalizeStep);
     state.queue = state.queue.slice(0,lastAns).concat([finalizeStep(aleaGoAround())], lap);
     logRow('sys','Aléa : remise de gaz — vous repartez pour un tour de piste.');
     return;
   }
-  // Construit l'aléa (une étape simple ou une paire déclaration+accusé pour les urgences).
-  let built;
-  if(kind==='wind') built=[aleaWind()];
-  else if(kind==='hold') built=[aleaHold()];
-  else if(kind==='cap') built=[aleaCap()];
-  else if(kind==='trafic') built=[aleaTrafic()];
-  else if(kind==='radio') built=[aleaRadio()];
-  else built=aleaUrgence(kind);                                // moteur / fumee / malaise → 2 étapes
-  const steps = built.map(finalizeStep);
+  const steps = a.etapes().map(finalizeStep);        // une étape, ou deux pour une urgence
   state.queue.splice(lastAns, 0, ...steps);
-  const labels={trafic:'information de trafic', cap:'changement de cap', radio:'panne radio',
-    moteur:'panne moteur', fumee:'fumée en cabine', malaise:'malaise passager', wind:'le vent a tourné', hold:'attente'};
-  logRow('sys','Aléa : '+(labels[kind]||'imprévu')+'.');
+  logRow('sys','Aléa : '+a.label+' ('+a.src+').');
 }
 
 
@@ -9442,36 +9984,109 @@ function oaciSonde(couche, surAbsenceTotale){
      pas à préparer une navigation. */
   var VITESSE={Robin:115, Cessna:110, Piper:110, Socata:120, Aquila:110, Grumman:120,
                Diamond:130, Cirrus:155, Tecnam:110, ULM:95, Classique:95,
-               Voltige:120, Planeur:60};
+               Voltige:120, Planeur:60,
+               /* Familles ajoutées. Mêmes ordres de grandeur usuels : la valeur
+                  sert à afficher une durée de vol plausible, pas à préparer une
+                  navigation — personne ne décolle sur ce chiffre. */
+               Mooney:160, Beechcraft:145, 'Nouvelle génération':125, Kit:150,
+               Brousse:95};
+  /* L'ordre des lignes EST celui du menu déroulé : ouvrirTout() pose un titre de
+     famille chaque fois que `fam` change, donc une famille éclatée en deux
+     endroits apparaîtrait deux fois. Les entrées d'une même famille doivent
+     rester contiguës — c'est la seule contrainte de cette table.
+
+     Le parc est celui des clubs français : monomoteurs à piston d'abord, du plus
+     répandu au plus rare, puis l'ULM, le classique, la voltige et le planeur. */
   var AIRCRAFT=[
    ["Robin DR400-108 Dauphin 2+2","DR400","Robin"],["Robin DR400-120 Petit Prince","DR400","Robin"],
    ["Robin DR400-140B Major","DR400","Robin"],["Robin DR400-160 Chevalier","DR400","Robin"],
    ["Robin DR400-180 Régent","DR400","Robin"],["Robin DR400-180R Remorqueur","DR400","Robin"],
-   ["Robin DR401","DR401","Robin"],["Robin DR300 Petit Prince","DR300","Robin"],
-   ["Robin HR200-120B","HR200","Robin"],["Robin R2160 Acrobin","R2160","Robin"],["Robin ATL Club","ATL","Robin"],
-   ["Cessna 150","CESSNA 150","Cessna"],["Cessna 152","CESSNA 152","Cessna"],
-   ["Cessna 172 Skyhawk","CESSNA 172","Cessna"],["Cessna 172RG Cutlass","CESSNA 172","Cessna"],
-   ["Cessna 177 Cardinal","CESSNA 177","Cessna"],["Cessna 182 Skylane","CESSNA 182","Cessna"],
+   ["Robin DR400-500 Président","DR400","Robin"],["Robin DR400 Ecoflyer","DR400","Robin"],
+   ["Robin DR401-155 CDI","DR401","Robin"],["Robin DR401","DR401","Robin"],
+   ["Robin DR300 Petit Prince","DR300","Robin"],["Robin DR253 Régent","DR253","Robin"],
+   ["Robin DR221 Dauphin","DR221","Robin"],["Robin DR315 Petit Prince","DR315","Robin"],
+   ["Robin HR100","HR100","Robin"],["Robin HR200-120B","HR200","Robin"],
+   ["Robin R3000-160","R3000","Robin"],["Robin R2160 Acrobin","R2160","Robin"],["Robin ATL Club","ATL","Robin"],
+   ["Cessna 140","CESSNA 140","Cessna"],["Cessna 150","CESSNA 150","Cessna"],["Cessna 152","CESSNA 152","Cessna"],
+   ["Cessna 170","CESSNA 170","Cessna"],["Cessna 172 Skyhawk","CESSNA 172","Cessna"],
+   ["Cessna 172RG Cutlass","CESSNA 172","Cessna"],["Cessna 175 Skylark","CESSNA 175","Cessna"],
+   ["Cessna 177 Cardinal","CESSNA 177","Cessna"],["Cessna 180 Skywagon","CESSNA 180","Cessna"],
+   ["Cessna 182 Skylane","CESSNA 182","Cessna"],["Cessna 185 Skywagon","CESSNA 185","Cessna"],
    ["Cessna 206 Stationair","CESSNA 206","Cessna"],["Cessna 210 Centurion","CESSNA 210","Cessna"],
+   ["Piper PA-11 Cub Special","PIPER PA11","Piper"],["Piper PA-18 Super Cub","PIPER PA18","Piper"],
+   ["Piper PA-20 Pacer","PIPER PA20","Piper"],["Piper PA-22 Tri-Pacer","PIPER PA22","Piper"],
+   ["Piper PA-24 Comanche","PIPER PA24","Piper"],
    ["Piper PA-28 140 Cherokee","PIPER PA28","Piper"],["Piper PA-28 161 Warrior","PIPER PA28","Piper"],
-   ["Piper PA-28 181 Archer","PIPER PA28","Piper"],["Piper PA-28R Arrow","PIPER PA28R","Piper"],
-   ["Piper PA-18 Super Cub","PIPER PA18","Piper"],["Piper PA-38 Tomahawk","PIPER PA38","Piper"],
+   ["Piper PA-28 181 Archer","PIPER PA28","Piper"],["Piper PA-28 236 Dakota","PIPER PA28","Piper"],
+   ["Piper PA-28R Arrow","PIPER PA28R","Piper"],["Piper PA-32 Cherokee Six","PIPER PA32","Piper"],
+   ["Piper PA-38 Tomahawk","PIPER PA38","Piper"],["Piper PA-46 Malibu","PIPER PA46","Piper"],
    ["Piper PA-34 Seneca","PIPER PA34","Piper"],
    ["Socata TB9 Tampico","TB9","Socata"],["Socata TB10 Tobago","TB10","Socata"],
-   ["Socata TB20 Trinidad","TB20","Socata"],["Socata MS880 Rallye","RALLYE","Socata"],
-   ["Aquila A210","AQUILA","Aquila"],["Grumman AA-5 Tiger","AA5","Grumman"],
+   ["Socata TB200 Tobago XL","TB200","Socata"],["Socata TB20 Trinidad","TB20","Socata"],
+   ["Socata TB21 Trinidad TC","TB21","Socata"],["Socata ST10 Diplomate","ST10","Socata"],
+   ["Socata MS880 Rallye","RALLYE","Socata"],["Socata MS893 Rallye Commodore","RALLYE","Socata"],
+   ["Socata MS894 Minerva","RALLYE","Socata"],["Socata Rallye 235 Gabier","RALLYE","Socata"],
+   ["Mooney M20J 201","MOONEY M20","Mooney"],["Mooney M20K 231","MOONEY M20","Mooney"],
+   ["Mooney M20R Ovation","MOONEY M20","Mooney"],
+   ["Beechcraft F33A Bonanza","BONANZA","Beechcraft"],["Beechcraft A36 Bonanza","BONANZA","Beechcraft"],
+   ["Beechcraft V35 Bonanza","BONANZA","Beechcraft"],["Beechcraft C23 Sundowner","SUNDOWNER","Beechcraft"],
+   ["Beechcraft C24R Sierra","SIERRA","Beechcraft"],["Beechcraft Musketeer","MUSKETEER","Beechcraft"],
+   ["Aquila A210","AQUILA","Aquila"],["Aquila A211","AQUILA","Aquila"],
+   ["Grumman AA-1 Yankee","AA1","Grumman"],["Grumman AA-1B Trainer","AA1","Grumman"],
+   ["Grumman AA-5 Traveler","AA5","Grumman"],["Grumman AA-5A Cheetah","AA5","Grumman"],
+   ["Grumman AA-5B Tiger","AA5","Grumman"],
    ["Diamond DA20 Katana","DA20","Diamond"],["Diamond DA40 Star","DA40","Diamond"],
-   ["Diamond DA42 Twin Star","DA42","Diamond"],["Cirrus SR20","CIRRUS SR20","Cirrus"],
-   ["Cirrus SR22","CIRRUS SR22","Cirrus"],["Tecnam P2002 Sierra","TECNAM P2002","Tecnam"],
-   ["Tecnam P2008","TECNAM P2008","Tecnam"],["Tecnam P2010","TECNAM P2010","Tecnam"],
+   ["Diamond DA40 NG","DA40","Diamond"],["Diamond DA50 RG","DA50","Diamond"],
+   ["Diamond DA42 Twin Star","DA42","Diamond"],
+   ["Cirrus SR20","CIRRUS SR20","Cirrus"],["Cirrus SR22","CIRRUS SR22","Cirrus"],
+   ["Cirrus SR22T","CIRRUS SR22","Cirrus"],
+   ["Tecnam P92 Echo","TECNAM P92","Tecnam"],["Tecnam P96 Golf","TECNAM P96","Tecnam"],
+   ["Tecnam P2002 Sierra","TECNAM P2002","Tecnam"],["Tecnam P2008","TECNAM P2008","Tecnam"],
+   ["Tecnam P2010","TECNAM P2010","Tecnam"],["Tecnam Astore","TECNAM ASTORE","Tecnam"],
+   ["Elixir Aircraft Elixir","ELIXIR","Nouvelle génération"],
+   ["BRM Aero Bristell B23","BRISTELL","Nouvelle génération"],
+   ["Blackshape Prime","BLACKSHAPE","Nouvelle génération"],
+   ["Blackshape Gabriel","BLACKSHAPE","Nouvelle génération"],
+   ["Sling 2","SLING","Nouvelle génération"],["Sling 4","SLING","Nouvelle génération"],
+   ["JMB VL-3","VL3","Nouvelle génération"],["Shark Aero Shark","SHARK","Nouvelle génération"],
+   ["Risen Superveloce","RISEN","Nouvelle génération"],
+   ["Van's RV-4","RV4","Kit"],["Van's RV-6","RV6","Kit"],["Van's RV-7","RV7","Kit"],
+   ["Van's RV-8","RV8","Kit"],["Van's RV-9","RV9","Kit"],["Van's RV-10","RV10","Kit"],
+   ["Van's RV-14","RV14","Kit"],["Dyn'Aéro MCR-01","MCR01","Kit"],["Dyn'Aéro MCR-4S","MCR4S","Kit"],
+   ["Dyn'Aéro Banbi","BANBI","Kit"],["Zenair CH601 Zodiac","CH601","Kit"],
+   ["Zenair CH750 Cruzer","CH750","Kit"],["Europa XS","EUROPA","Kit"],["Glasair III","GLASAIR","Kit"],
+   ["Aviat Husky A-1C","HUSKY","Brousse"],["Maule M-7","MAULE","Brousse"],
+   ["American Champion Scout","SCOUT","Brousse"],["CubCrafters Carbon Cub","CARBON CUB","Brousse"],
+   ["Zlin Savage Cub","SAVAGE","Brousse"],["Kitfox Series 7","KITFOX","Brousse"],
    ["ULM (générique)","ULM","ULM"],["Atec Zephyr","ATEC","ULM"],["Aerospool Dynamic WT9","DYNAMIC","ULM"],
    ["Evektor EuroStar SL","EUROSTAR","ULM"],["ICP Savannah","ICP SAVANNAH","ULM"],
    ["Best Off SkyRanger","SKYRANGER","ULM"],["Pipistrel Virus SW","PIPISTREL","ULM"],
-   ["Jodel D112","JODEL","Classique"],["Jodel DR1050 Ambassadeur","JODEL","Classique"],
-   ["Stampe SV4","STAMPE","Classique"],["Mudry CAP 10B","CAP10","Voltige"],["CAP 232","CAP232","Voltige"],
-   ["Extra 330","EXTRA 330","Voltige"],["Pitts Special S-2","PITTS","Voltige"],
-   ["Planeur (générique)","PLANEUR","Planeur"],["Schleicher ASK 21","ASK21","Planeur"],
-   ["Schempp-Hirth Duo Discus","DUO DISCUS","Planeur"],["Motoplaneur","MOTOPLANEUR","Planeur"]
+   ["Pipistrel Alpha Trainer","PIPISTREL","ULM"],["Aeroprakt A22 Foxbat","AEROPRAKT","ULM"],
+   ["Fly Synthesis Texan","TEXAN","ULM"],["Alpi Pioneer 300","PIONEER","ULM"],
+   ["Flight Design CTLS","CTLS","ULM"],["TL-Ultralight Sting","STING","ULM"],
+   ["Rans S-6 Coyote","RANS","ULM"],["G1 Aviation G1 SPYL","G1","ULM"],
+   ["Humbert Tétras","TETRAS","ULM"],["Aeropilot Legend 540","LEGEND","ULM"],
+   ["Jodel D112","JODEL","Classique"],["Jodel D18","JODEL","Classique"],
+   ["Jodel D140 Mousquetaire","JODEL","Classique"],["Jodel DR1050 Ambassadeur","JODEL","Classique"],
+   ["Piel CP301 Emeraude","EMERAUDE","Classique"],["Gardan GY-80 Horizon","GY80","Classique"],
+   ["Wassmer WA-41 Baladou","WASSMER","Classique"],["Nord 1101 Noralpha","NORD","Classique"],
+   ["Nord 1002 Pingouin","NORD","Classique"],["Morane-Saulnier MS733 Alcyon","MORANE","Classique"],
+   ["Boisavia Mercurey","MERCUREY","Classique"],["Stampe SV4","STAMPE","Classique"],
+   ["Bücker Jungmann","JUNGMANN","Classique"],["De Havilland Tiger Moth","TIGER MOTH","Classique"],
+   ["Mudry CAP 10B","CAP10","Voltige"],["Mudry CAP 20","CAP20","Voltige"],["Mudry CAP 21","CAP21","Voltige"],
+   ["CAP 231","CAP231","Voltige"],["CAP 232","CAP232","Voltige"],
+   ["Extra 300L","EXTRA 300","Voltige"],["Extra 330","EXTRA 330","Voltige"],
+   ["Pitts Special S-1","PITTS","Voltige"],["Pitts Special S-2","PITTS","Voltige"],
+   ["Christen Eagle II","EAGLE","Voltige"],["American Champion 8KCAB Decathlon","DECATHLON","Voltige"],
+   ["American Champion 7ECA Citabria","CITABRIA","Voltige"],["Zlin Z-142","ZLIN 142","Voltige"],
+   ["Zlin Z-50","ZLIN 50","Voltige"],["Sukhoi Su-26","SUKHOI","Voltige"],["Sukhoi Su-29","SUKHOI","Voltige"],
+   ["Yakovlev Yak-52","YAK 52","Voltige"],["Yakovlev Yak-18T","YAK 18","Voltige"],
+   ["Planeur (générique)","PLANEUR","Planeur"],["Schleicher ASK 13","ASK13","Planeur"],
+   ["Schleicher ASK 21","ASK21","Planeur"],["Schleicher ASW 20","ASW20","Planeur"],
+   ["Schempp-Hirth Duo Discus","DUO DISCUS","Planeur"],["Schempp-Hirth Discus","DISCUS","Planeur"],
+   ["Schempp-Hirth Janus","JANUS","Planeur"],["Centrair Pégase","PEGASE","Planeur"],
+   ["Rolladen-Schneider LS4","LS4","Planeur"],["Motoplaneur","MOTOPLANEUR","Planeur"],
+   ["Diamond HK36 Super Dimona","DIMONA","Planeur"],["Scheibe SF25 Falke","FALKE","Planeur"]
   ].map(function(a){ return {nom:a[0], abbr:a[1], fam:a[2], kt:VITESSE[a[2]]||100}; });
   // Aucun avion présélectionné : le champ reste vide tant que l'élève n'a pas choisi.
   var acChoice=null;

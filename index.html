@@ -424,6 +424,20 @@
   .ac-item:last-child{border-bottom:none}
   .ac-item .code{color:var(--violet); font-weight:700; font-family:var(--mono)}
   .ac-item.active, .ac-item:hover{background:var(--violet-soft)}
+  /* UNE LISTE DÉROULANTE N'EST JAMAIS DU VERRE.
+     Sur une scène, .scene redéfinit --surface en translucide — c'est voulu pour
+     les panneaux, qui reposent sur la photo. Mais celle-ci se déplie PAR-DESSUS
+     le formulaire : on lisait « Indicatif avion », « Difficulté » et « Voix ATC »
+     au travers des noms de terrains. Elle reprend donc un fond plein, et le
+     flou d'arrière-plan avec, pour rester dans le ton de la scène sans laisser
+     passer ce qu'il y a dessous. */
+  .scene .ac-list{ background:#fbfcfe; border-color:rgba(28,34,54,.22);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px) }
+  .scene .ac-item{ border-bottom-color:rgba(28,34,54,.10) }
+  .scene .ac-fam{ background:#eef0f6 }
+  :root[data-theme="dark"] .scene .ac-list{ background:#0d1120; border-color:rgba(255,255,255,.24) }
+  :root[data-theme="dark"] .scene .ac-item{ border-bottom-color:rgba(255,255,255,.10) }
+  :root[data-theme="dark"] .scene .ac-fam{ background:#151b2e }
   .ac-empty{padding:10px 13px; color:var(--ink-2); font-size:13.5px}
   /* Nature du terrain retenu (contrôlé / AFIS) : information, pas réglage. */
   .ad-kind{display:block; margin-top:7px; font-size:12.5px; font-weight:600; line-height:1.45;
@@ -2616,13 +2630,11 @@
             <div class="fleet__halo"></div>
             <img class="fleet__shot is-on" src="assets/avions/dr400-f-guxq.webp" alt="" width="760" height="402" decoding="async">
             <img class="fleet__shot" src="assets/avions/piper-cub-d-elyh.webp" alt="" width="760" height="183" loading="lazy" decoding="async">
-            <img class="fleet__shot" src="assets/avions/cody-f-OdHh60XP7EI.webp" alt="" width="760" height="201" loading="lazy" decoding="async">
             <img class="fleet__shot" src="assets/avions/tbm-fourni.webp" alt="" width="760" height="233" loading="lazy" decoding="async">
             <img class="fleet__shot" src="assets/avions/arnaud-girault-aA0069Fm7ng.webp" alt="" width="760" height="236" loading="lazy" decoding="async">
             <img class="fleet__shot" src="assets/avions/a320-air-france.webp" alt="" width="760" height="219" loading="lazy" decoding="async">
             <img class="fleet__shot" src="assets/avions/alito-mcbean-3vKz4uvvX7E.webp" alt="" width="760" height="267" loading="lazy" decoding="async">
             <img class="fleet__shot" src="assets/avions/alito-mcbean-Xq6nzuvUpBE.webp" alt="" width="760" height="189" loading="lazy" decoding="async">
-            <img class="fleet__shot" src="assets/avions/marcel-eberle-VwbBpXdvx9g.webp" alt="" width="760" height="228" loading="lazy" decoding="async">
           </div>
           <div class="fleet__txt">
             <span class="sec-tag">Avant de partir</span>
@@ -4959,6 +4971,69 @@ const AERODROMES = [
   { icao:"LFYS", nom:"Ste Léocadie", pistes:[{ids:["07","25"],caps:[70,250]}] }
 ];
 
+/* ---------------------------------------------------------------------------
+   LES GRANDS TERRAINS, EN TÊTE DES DEUX SÉLECTEURS
+   ---------------------------------------------------------------------------
+   387 aérodromes classés par code OACI, ça veut dire que la liste s'ouvre sur
+   « LF50 — privé de Soucelles ». Personne ne cherche celui-là en premier. Les
+   noms que tout le monde reconnaît sont donc remontés au-dessus, dans Scénarios
+   comme dans Navigation ; les 363 autres suivent, toujours par code OACI.
+
+   L'ordre suit l'ORDRE DE GRANDEUR du trafic passagers, pas un classement à
+   jour : les rangs se croisent d'une année sur l'autre et personne n'a besoin
+   qu'ils soient exacts pour retrouver Nice. Le Bourget ferme la liste par
+   notoriété et non par trafic — il n'accueille aucune ligne régulière.
+
+   Ce n'est PAS la liste des terrains où l'on apprend à voler : un élève part
+   d'un terrain d'aéro-club, pas de Roissy. Elle ne fait que rendre les noms
+   connus faciles à trouver ; tous les autres restent accessibles en tapant
+   trois lettres, et rien n'est retiré de la base.
+
+   Volontairement absente des champs « terrain d'attache » (inscription et
+   compte) : là, c'est SON terrain qu'on déclare, et ce n'est presque jamais
+   l'un de ceux-ci. */
+const AD_CONNUS = [
+  'LFPG','LFPO','LFMN','LFLL','LFML','LFBO','LFSB','LFBD','LFRS','LFOB',
+  'LFMT','LFQQ','LFST','LFKJ','LFKB','LFRB','LFBZ','LFTH','LFMP','LFRN',
+  'LFLC','LFBP','LFBT','LFPB'
+];
+const AD_RANG = {};
+AD_CONNUS.forEach(function(c, n){ AD_RANG[c] = n; });
+/* Comparateur de base, celui de la liste au repos : les connus d'abord dans
+   LEUR ordre, le reste derrière par code OACI. */
+function adComparer(a, b){
+  var ra = AD_RANG[a.icao], rb = AD_RANG[b.icao];
+  if(ra !== undefined && rb !== undefined) return ra - rb;
+  if(ra !== undefined) return -1;
+  if(rb !== undefined) return 1;
+  return a.icao < b.icao ? -1 : (a.icao > b.icao ? 1 : 0);
+}
+
+/* QUALITÉ DE LA CORRESPONDANCE — ce qui prime sur tout le reste dès qu'on tape.
+   La recherche cherche la saisie n'importe où dans le code ET dans le nom, et
+   ça donne des surprises : « LFOR » se trouve aussi dans « Be-LFOR-t Chaux ».
+   Chartres arrivait donc derrière Belfort alors qu'on avait tapé son code
+   exact. On classe maintenant par ce qu'on a manifestement voulu dire :
+     0  le code, exactement ;
+     1  un code qui commence par la saisie ;
+     2  un nom qui commence par la saisie ;
+     3  le reste, où la saisie se trouve au milieu de quelque chose.
+   À qualité égale seulement, les grands terrains passent devant. */
+function adQualite(a, nq){
+  var ic = normalize(a.icao), nm = normalize(a.nom);
+  if(ic === nq) return 0;
+  if(ic.indexOf(nq) === 0) return 1;
+  if(nm.indexOf(nq) === 0) return 2;
+  return 3;
+}
+function adTriPour(nq){
+  if(!nq) return adComparer;
+  return function(a, b){
+    var qa = adQualite(a, nq), qb = adQualite(b, nq);
+    return qa !== qb ? qa - qb : adComparer(a, b);
+  };
+}
+
 /* Étape 4 — tri « du plus gros au plus petit » : ordre d'importance (trafic passagers approximatif)
    des principaux aéroports français. Les terrains hors de cette liste reçoivent un rang 0 et restent
    classés ensuite par ordre alphabétique OACI — ordre stable pour la longue traîne des petits terrains,
@@ -6816,21 +6891,44 @@ const el={
 /* --- Autocomplete aérodrome --- */
 function setupAutocomplete(input, list, onPick, filterFn){
   let active=-1, items=[];
+  function ligne(a){
+    const div=document.createElement('div');
+    div.className='ac-item'; div.setAttribute('role','option');
+    div.innerHTML='<span class="code">'+a.icao+'</span> — '+escapeHtml(a.nom);
+    div.addEventListener('mousedown', ev=>{ ev.preventDefault(); pick(a); });
+    return div;
+  }
+  function entete(t){
+    const d=document.createElement('div'); d.className='ac-fam'; d.textContent=t; return d;
+  }
+  function ouvrir(){ active=-1; list.classList.add('open'); input.setAttribute('aria-expanded','true'); }
+  /* Champ vide : on déroule les grands terrains au lieu de ne rien montrer.
+     C'était la seule façon d'arriver ici sans savoir quoi taper. */
+  function proposer(){
+    const dispo = AD_CONNUS.map(c=>AERODROMES.find(a=>a.icao===c))
+                           .filter(a=> a && (!filterFn || filterFn(a)));
+    if(!dispo.length){ list.classList.remove('open'); input.setAttribute('aria-expanded','false'); return; }
+    items = dispo;
+    list.innerHTML='';
+    list.appendChild(entete('Les plus connus'));
+    dispo.forEach(a=> list.appendChild(ligne(a)));
+    const p=document.createElement('div'); p.className='ac-empty';
+    p.textContent='Tapez un nom ou un code pour chercher parmi les '+AERODROMES.length+' terrains.';
+    list.appendChild(p);
+    ouvrir();
+  }
   function render(q){
     const nq=normalize(q);
+    if(!nq){ proposer(); return; }
+    /* Le tri passe AVANT la coupe à 40 : trier après, c'est laisser un grand
+       terrain hors de la fenêtre quand la saisie ramène beaucoup de monde. */
     items = AERODROMES.filter(a=> (!filterFn || filterFn(a)) &&
-                (normalize(a.icao).includes(nq) || normalize(a.nom).includes(nq))).slice(0,40);
+                (normalize(a.icao).includes(nq) || normalize(a.nom).includes(nq)))
+                .sort(adTriPour(nq)).slice(0,40);
     list.innerHTML='';
-    if(!nq){ list.classList.remove('open'); input.setAttribute('aria-expanded','false'); return; }
     if(!items.length){ list.innerHTML='<div class="ac-empty">Aucun aérodrome trouvé</div>'; }
-    items.forEach((a,i)=>{
-      const div=document.createElement('div');
-      div.className='ac-item'; div.setAttribute('role','option');
-      div.innerHTML='<span class="code">'+a.icao+'</span> — '+escapeHtml(a.nom);
-      div.addEventListener('mousedown', ev=>{ ev.preventDefault(); pick(a); });
-      list.appendChild(div);
-    });
-    active=-1; list.classList.add('open'); input.setAttribute('aria-expanded','true');
+    items.forEach(a=> list.appendChild(ligne(a)));
+    ouvrir();
   }
   function pick(a){
     input.value = a.icao+' — '+a.nom;
@@ -6838,7 +6936,8 @@ function setupAutocomplete(input, list, onPick, filterFn){
     onPick(a);
   }
   input.addEventListener('input', ()=>{ onPick(null); render(input.value); });
-  input.addEventListener('focus', ()=>{ if(input.value) render(input.value); });
+  input.addEventListener('focus', ()=> render(input.value));
+  input.addEventListener('click', ()=>{ if(!list.classList.contains('open')) render(input.value); });
   input.addEventListener('blur', ()=> setTimeout(()=>list.classList.remove('open'), 120));
   input.addEventListener('keydown', e=>{
     const opts=[...list.querySelectorAll('.ac-item')];
@@ -9300,8 +9399,12 @@ function oaciSonde(couche, surAbsenceTotale){
   }).filter(function(a){ return typeof a.lat==='number'; });
   var BY={}; ADS.forEach(function(a){ BY[a.icao]=a; });
 
+  /* Une liste native se déroule dans l'ordre du document : c'est donc l'ordre
+     d'insertion, et rien d'autre, qui décide de ce qu'on voit en premier. Les
+     grands terrains passent devant (voir AD_CONNUS), les autres suivent par
+     code OACI. Filtrer à la frappe reste le travail du navigateur. */
   var dd=document.getElementById('navAdList');
-  ADS.slice().sort(function(x,y){return x.icao<y.icao?-1:1;}).forEach(function(a){
+  ADS.slice().sort(adComparer).forEach(function(a){
     var o=document.createElement('option'); o.value=a.icao; o.label=a.icao+' — '+a.nom;
     o.textContent=a.nom; dd.appendChild(o);
   });

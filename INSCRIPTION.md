@@ -38,23 +38,33 @@ accepté — c'est justement ce qui permettra de leur demander leur accord).
 
 ### 1.2 Ajouter le code au gabarit d'e-mail — obligatoire
 
-Supabase → **Authentication** → **Emails** → gabarit **Magic Link**.
+**Où :** colonne de gauche → **Authentication** → **Emails** → onglet
+**Magic Link** → champ **Message body**.
 
-Par défaut, ce gabarit ne contient que `{{ .ConfirmationURL }}` : le message
-part **sans le code à six chiffres**, et l'étape 2 devient infranchissable
-autrement qu'en cliquant le lien. Ajoutez le code dans le corps du message :
+Ce n'est pas une ligne à insérer quelque part : c'est **tout le contenu du champ
+à remplacer**. Vous devez y trouver, au départ, quelque chose comme :
 
 ```html
-<h2>Votre code RadioTrainer</h2>
-<p>Saisissez ce code dans la page d'inscription :</p>
-<p style="font-size:28px;font-weight:bold;letter-spacing:6px">{{ .Token }}</p>
-<p>Il est valable une heure. Si vous n'avez pas demandé ce code, ignorez ce message.</p>
-<p style="color:#666;font-size:13px">Vous pouvez aussi
-   <a href="{{ .ConfirmationURL }}">cliquer ici</a>.</p>
+<h2>Magic Link</h2>
+<p>Follow this link to login:</p>
+<p><a href="{{ .ConfirmationURL }}">Log In</a></p>
 ```
 
-Gardez le lien en secours : quelqu'un qui clique au lieu de recopier ne doit pas
-rester bloqué. Le parcours accepte les deux (`detectSessionInUrl` est actif).
+Sélectionnez tout (⌘A dans le champ), effacez, et collez le contenu de
+**`supabase/gabarit-magic-link.html`**. Puis **Save**.
+
+> Si le champ affiche un rendu au lieu du HTML, cherchez l'onglet ou le bouton
+> **Source** / **HTML** au-dessus : le gabarit doit être collé en code, pas en
+> texte mis en forme.
+
+**Ce qui compte, et pourquoi.** Le gabarit d'origine ne contient que
+`{{ .ConfirmationURL }}`. Le message part donc **sans le code à six chiffres**
+que demande l'étape 2, et cette étape devient infranchissable — c'est le
+« message presque vide ». `{{ .Token }}` **est** le code ; il n'apparaît que si
+on l'écrit dans le gabarit.
+
+Le lien est gardé en secours : quelqu'un qui clique au lieu de recopier ne doit
+pas rester bloqué.
 
 ### 1.2 bis — Déclarer les adresses de retour — **c'est ce qui rend le lien mort**
 

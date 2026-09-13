@@ -1,0 +1,33 @@
+<!-- RadioTrainer — corps de l'e-mail « Magic Link ». À coller TEL QUEL dans
+     Supabase → Authentication → Emails → onglet Magic Link, champ « Message
+     body », en remplacement de tout ce qui s'y trouve. Le pourquoi est dans
+     INSCRIPTION.md § 1.2. Styles en ligne : les clients de messagerie ignorent
+     les feuilles de style. -->
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 4px;color:#242838">
+
+  <h2 style="margin:0 0 6px;font-size:20px;font-weight:700;color:#161b2a">Votre code RadioTrainer</h2>
+
+  <p style="margin:0 0 18px;font-size:15px;line-height:1.55;color:#3a4356">
+    Saisissez ce code dans la page d'inscription&nbsp;:
+  </p>
+
+  <p style="margin:0 0 18px;font-size:28px;font-weight:bold;letter-spacing:6px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#161b2a">{{ .Token }}</p>
+
+  <p style="margin:0 0 22px;font-size:13.5px;line-height:1.55;color:#3a4356">
+    Il est valable une heure. Si vous n'avez pas demandé ce code, ignorez ce message&nbsp;:
+    personne ne peut s'en servir sans accéder à votre boîte.
+  </p>
+
+  <hr style="border:none;border-top:1px solid #e3e6ee;margin:0 0 18px">
+
+  <p style="margin:0;font-size:12.5px;line-height:1.6;color:#6b7280">
+    Vous préférez cliquer&nbsp;? <a href="{{ .ConfirmationURL }}" style="color:#5b4bce">Ouvrir la page directement</a>.<br>
+    Si ce lien ne s'ouvre pas, copiez son adresse et collez-la dans le champ
+    «&nbsp;Code reçu&nbsp;»&nbsp;: elle fait la même chose.
+  </p>
+
+  <p style="margin:18px 0 0;font-size:11.5px;line-height:1.6;color:#8a90a0">
+    RadioTrainer — entraînement à la phraséologie radio VFR.
+    Outil pédagogique&nbsp;: il ne remplace pas la formation avec un instructeur.
+  </p>
+</div>

@@ -14,6 +14,12 @@ pas réglés, et **le premier est bloquant** : sans lui, l'étape 2 échoue avec
 
 ### 1.1 Exécuter la migration — obligatoire
 
+> **Fait le 13 septembre 2026.** Vérifié depuis l'extérieur : les quinze colonnes
+> répondent, `pseudo_libre()` rend `true`, et `inscription_jalon()` refuse
+> correctement avec « aucune session » quand on l'appelle sans être connecté.
+> Le garde en base repousse toujours l'auto-promotion en `admin` — c'est le
+> point qu'il fallait revérifier, la migration remplaçant `profiles_garde()`.
+
 Supabase → **SQL Editor** → coller `sql/001-inscription.sql` en entier → **Run**.
 
 Le fichier est idempotent : le relancer ne casse rien. Il finit par un `select`

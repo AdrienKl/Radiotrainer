@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235b4bce'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M25 7 14 18'/%3E%3Cpath d='M25 7l-7 18-4-8-8-4 19-6z'/%3E%3C/g%3E%3C/svg%3E">
 
 <meta name="description" content="RadioTrainer — simulateur de phraséologie radio VFR en français. Entraînez-vous au micro sur des scénarios réels, de la mise en route à l'atterrissage, avec un contrôleur qui vous répond et un retour immédiat sur votre phraséologie.">
-<meta name="theme-color" content="#4f46e5">
+<meta name="theme-color" content="#5b4bce">
 <meta property="og:type" content="website">
 <meta property="og:title" content="RadioTrainer — Simulateur de phraséologie radio VFR">
 <meta property="og:description" content="Entraînez-vous à la radio VFR en français : reconnaissance vocale au micro, contrôleur qui répond, aérodromes et espaces aériens réels, score et progression. Outil pédagogique — ne remplace pas la formation avec un instructeur.">
@@ -34,34 +34,8 @@
 <link rel="stylesheet" href="assets/leaflet.css">
 <style>
   :root{
-    /* ===================== PALETTE — essai cyan / indigo =====================
-       L'identite violette d'origine est conservee dans git : etiquette
-       `couleurs-violet-avant-test`, branche `sauvegarde-couleurs-violet`.
-       Les NOMS des jetons ne changent pas : --violet designe le remplissage
-       plein qui porte du texte blanc, --violet-dark la couleur de TEXTE
-       d'accent. Les renommer aurait touche 154 regles sans rien gagner.
-
-         --violet      #4f46e5  fond plein, blanc dessus ......... 6,29:1
-         --violet-dark #4338ca  texte d'accent, et survol du fond . 7,90:1
-         --indigo      #6366f1  bordures discretes UNIQUEMENT : avec du blanc
-                                il donne 4,47:1, sous le seuil AA de 4,5.
-         --cyan        #22d3ee  appels a l'action et chiffres cles. Il ne
-                                porte JAMAIS de blanc (1,81:1) : l'encre posee
-                                dessus est --cyan-ink, soit 10,36:1.
-         --cyan-fort   #06b6d4  survol des boutons cyan.
-         --lien        couleur des liens. Le cyan pur est illisible sur du
-                       blanc, d'ou un cyan assombri en theme clair (#0e7490,
-                       5,36:1) et le cyan pur en theme sombre (12,68:1).
-         --anneau      anneau de focus : indigo sur clair, cyan sur sombre,
-                       pour rester visible des deux cotes.
-       ======================================================================= */
-    --violet:#4f46e5; --violet-dark:#4338ca; --violet-soft:rgba(79,70,229,.10); --violet-tint:#eef2ff;
-    --indigo:#6366f1; --cyan:#22d3ee; --cyan-fort:#06b6d4; --cyan-ink:#0b1220;
-    --lien:#0e7490; --anneau:#4f46e5;
-    /* Le degrade du hero et de l'appel final : nuit -> indigo -> cyan profond.
-       Le bas portait un corail (#ef8a6d, 2,1:1 sous le texte blanc) ; #0891b2
-       donne 3,6:1, donc le pire pixel de ce bloc s'ameliore. */
-    --grad-top:#141338; --grad-mid:#3730a3; --grad-bot:#0891b2;
+    --violet:#5b4bce; --violet-dark:#4a3bb8; --violet-soft:rgba(91,75,206,.10); --violet-tint:#efecfb;
+    --grad-top:#3d2b83; --grad-mid:#6b3f97; --grad-bot:#ef8a6d;
     --ink:#242838; --ink-2:#6b7280;
     /* ENCRE SECONDAIRE RENFORCÉE. --ink-2 (#6b7280) donne 4,83:1 sur le blanc en
        théorie, mais 4,07:1 MESURÉ sur les pixels d'un texte de 13,5 px : à ces
@@ -101,9 +75,9 @@
   html,body{margin:0}
   body{background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.55; min-height:100vh; -webkit-font-smoothing:antialiased}
   h1,h2,h3{line-height:1.12; margin:0; letter-spacing:-.02em}
-  a{color:var(--lien); text-decoration:none}
+  a{color:var(--violet); text-decoration:none}
   ::selection{background:var(--violet-soft)}
-  :focus-visible{outline:2px solid var(--anneau); outline-offset:2px}
+  :focus-visible{outline:2px solid var(--violet); outline-offset:2px}
 
   /* ---------- Header ---------- */
   .topnav{position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; gap:16px;
@@ -120,8 +94,8 @@
   .navlink.current::after{content:""; position:absolute; left:14px; right:14px; bottom:4px; height:2.5px; border-radius:2px; background:var(--violet); animation:navU .3s ease}
   @keyframes navU{from{transform:scaleX(.2); opacity:0} to{transform:scaleX(1); opacity:1}}
   .nav-cta{margin-left:8px; padding:9px 18px; border-radius:var(--pill); border:none; cursor:pointer; font-family:inherit;
-    font-size:14px; font-weight:700; color:var(--cyan-ink); background:var(--cyan); transition:background .18s, transform .12s, box-shadow .18s; box-shadow:var(--shadow-sm)}
-  .nav-cta:hover{background:var(--cyan-fort); transform:translateY(-1px); box-shadow:var(--shadow-md)}
+    font-size:14px; font-weight:700; color:#fff; background:var(--violet); transition:background .18s, transform .12s, box-shadow .18s; box-shadow:var(--shadow-sm)}
+  .nav-cta:hover{background:var(--violet-dark); transform:translateY(-1px); box-shadow:var(--shadow-md)}
 
   /* ---------- Disclaimer ---------- */
   .disclaimer{background:var(--surface-2); border-bottom:1px solid var(--border); color:var(--ink-2); font-size:12.5px; text-align:center; padding:7px 14px}
@@ -163,9 +137,9 @@
     background:
       linear-gradient(103deg, rgba(5,7,14,.94) 0%, rgba(5,7,14,.87) 22%, rgba(5,7,14,.58) 44%,
                               rgba(5,7,14,.14) 68%, rgba(5,7,14,.36) 100%),
-      linear-gradient(180deg, rgba(6,14,32,.46) 0%, rgba(6,14,32,.04) 26%,
+      linear-gradient(180deg, rgba(12,9,36,.46) 0%, rgba(12,9,36,.04) 26%,
                               rgba(5,7,14,.12) 54%, rgba(5,7,14,.90) 100%),
-      radial-gradient(64% 54% at 74% 24%, rgba(79,70,229,.32), transparent 72%)}
+      radial-gradient(64% 54% at 74% 24%, rgba(91,75,206,.32), transparent 72%)}
   .hero__grain{position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:.18;
     mix-blend-mode:overlay; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='170' height='170' filter='url(%23g)' opacity='.55'/%3E%3C/svg%3E"); background-size:170px 170px}
 
@@ -173,7 +147,7 @@
     padding:clamp(112px,15vh,180px) clamp(20px,5vw,44px) 0}
   .hero__content{max-width:min(640px,100%); color:#fff}
   .hero__eyebrow{display:inline-block; font-size:12px; font-weight:800; letter-spacing:.15em; text-transform:uppercase;
-    color:#cffafe; background:rgba(34,211,238,.14); border:1px solid rgba(103,232,249,.42);
+    color:#e9e5ff; background:rgba(148,132,255,.16); border:1px solid rgba(169,156,255,.42);
     padding:6px 14px; border-radius:var(--pill); margin-bottom:22px;
     opacity:0; animation:fadeUp .7s .1s ease forwards}
   /* Le titre est une phrase entière, pas une accroche de trois mots : il est
@@ -197,7 +171,7 @@
     opacity:0; animation:fadeUp .9s .9s ease forwards}
   .hero__num{display:flex; flex-direction:column; gap:3px}
   .hero__num b{font-family:var(--mono); font-size:clamp(23px,3.1vw,33px); font-weight:800; line-height:1;
-    letter-spacing:-.02em; color:var(--cyan); text-shadow:0 2px 22px rgba(0,0,0,.55)}
+    letter-spacing:-.02em; color:#fff; text-shadow:0 2px 22px rgba(0,0,0,.55)}
   .hero__num span{font-size:11.5px; font-weight:700; letter-spacing:.10em; text-transform:uppercase;
     color:rgba(255,255,255,.58)}
   .hero__cut{position:absolute; left:0; right:0; bottom:-1px; width:100%; height:clamp(56px,9vw,104px); display:block; z-index:1}
@@ -218,7 +192,7 @@
     .hero__scrim{background:
       linear-gradient(180deg, rgba(5,7,14,.88) 0%, rgba(5,7,14,.58) 30%,
                               rgba(5,7,14,.74) 62%, rgba(5,7,14,.95) 100%),
-      radial-gradient(94% 38% at 68% 10%, rgba(79,70,229,.30), transparent 72%)}
+      radial-gradient(94% 38% at 68% 10%, rgba(91,75,206,.30), transparent 72%)}
     .hero__eyebrow{font-size:11px; letter-spacing:.11em}
     .hero__inner{padding-top:clamp(64px,10vh,108px)}
     .hero__strip{gap:18px 26px}
@@ -235,19 +209,19 @@
   .btn:active{transform:translateY(0)}
   .btn:disabled{opacity:.45; cursor:not-allowed; transform:none; box-shadow:none}
   .btn.small{padding:9px 15px; font-size:13.5px; min-height:40px}
-  .cta{background:var(--cyan); color:var(--cyan-ink); border:none; padding:14px 26px; font-size:15.5px; font-weight:700; box-shadow:0 10px 26px rgba(34,211,238,.34)}
-  .cta:hover{background:var(--cyan-fort); box-shadow:0 14px 32px rgba(6,182,212,.44); transform:translateY(-2px)}
+  .cta{background:var(--violet); color:#fff; border:none; padding:14px 26px; font-size:15.5px; font-weight:700; box-shadow:0 10px 26px rgba(91,75,206,.4)}
+  .cta:hover{background:var(--violet-dark); box-shadow:0 14px 32px rgba(74,59,184,.48); transform:translateY(-2px)}
   .cta-ghost{background:rgba(255,255,255,.12); color:#fff; border:1.5px solid rgba(255,255,255,.6); backdrop-filter:blur(6px); padding:14px 26px; font-size:15.5px; font-weight:700}
   .cta-ghost:hover{background:rgba(255,255,255,.22); border-color:#fff}
-  .btn.primary{background:var(--cyan); color:var(--cyan-ink); border:none}
-  .btn.primary:hover{background:var(--cyan-fort)}
+  .btn.primary{background:var(--violet); color:#fff; border:none}
+  .btn.primary:hover{background:var(--violet-dark)}
 
   /* PTT = action principale (menthe) */
-  .ptt{background:var(--cyan); color:var(--cyan-ink); border:none; font-weight:700; min-width:210px; box-shadow:0 6px 18px rgba(34,211,238,.30)}
-  .ptt:hover{background:var(--cyan-fort); box-shadow:0 10px 24px rgba(6,182,212,.38)}
+  .ptt{background:var(--violet); color:#fff; border:none; font-weight:700; min-width:210px; box-shadow:0 6px 18px rgba(91,75,206,.34)}
+  .ptt:hover{background:var(--violet-dark); box-shadow:0 10px 24px rgba(74,59,184,.42)}
   .ptt.listening{background:#e05a4d; color:#fff; animation:pulse 1s ease-in-out infinite}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,90,77,.5)} 50%{box-shadow:0 0 0 12px rgba(224,90,77,0)}}
-  .valider{background:var(--violet-soft); border-color:#c7d2fe; color:var(--violet-dark)}
+  .valider{background:var(--violet-soft); border-color:#cfc8f2; color:var(--violet-dark)}
   .valider:hover{border-color:var(--violet)}
 
   /* =========================================================================
@@ -263,7 +237,7 @@
   .sec + .sec{padding-top:0}
   .sec > .container, .alea > .container, .fleet > .container{padding-top:0; padding-bottom:0}
   .sec-tag{display:inline-block; font-size:11.5px; font-weight:800; letter-spacing:.15em; text-transform:uppercase;
-    color:var(--violet-dark); background:var(--violet-soft); border:1px solid rgba(79,70,229,.28);
+    color:var(--violet-dark); background:var(--violet-soft); border:1px solid rgba(91,75,206,.28);
     border-radius:var(--pill); padding:5px 13px; margin-bottom:18px}
   .sec-h{font-size:clamp(27px,3.8vw,45px); font-weight:800; letter-spacing:-.032em; max-width:20ch; margin:0}
   .sec-lede{margin:18px 0 0; max-width:64ch; font-size:clamp(15.5px,1.45vw,17.5px); line-height:1.64; color:var(--ink-2)}
@@ -275,14 +249,14 @@
   .alea{position:relative; overflow:hidden; color:#eef1fa;
     padding:clamp(66px,9vw,120px) 0;
     background:
-      radial-gradient(118% 76% at 10% 0%, rgba(79,70,229,.34), transparent 60%),
+      radial-gradient(118% 76% at 10% 0%, rgba(91,75,206,.34), transparent 60%),
       radial-gradient(88% 68% at 94% 104%, rgba(217,83,79,.22), transparent 64%),
-      linear-gradient(168deg,#101426 0%,#0a0c17 50%,#0b1526 100%)}
+      linear-gradient(168deg,#101426 0%,#0a0c17 50%,#0f0b1e 100%)}
   .alea::before{content:""; position:absolute; inset:0; pointer-events:none;
     opacity:.15; mix-blend-mode:overlay;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='170' height='170' filter='url(%23g)' opacity='.55'/%3E%3C/svg%3E"); background-size:170px 170px}
   .alea > .container{position:relative; z-index:1}
-  .alea .sec-tag{color:#cffafe; background:rgba(34,211,238,.15); border-color:rgba(34,211,238,.40)}
+  .alea .sec-tag{color:#d6cfff; background:rgba(148,132,255,.15); border-color:rgba(148,132,255,.40)}
   .alea .sec-h{color:#fff; max-width:17ch}
   .alea .sec-lede{color:rgba(228,233,247,.74); max-width:70ch}
   .alea .sec-lede b{color:#fff}
@@ -310,7 +284,7 @@
   .alea-card--rtn{--ac:#7fd7ff; --ac-soft:rgba(127,215,255,.13); --ac-line:rgba(127,215,255,.36)}
   .alea__foot{margin:clamp(28px,3.6vw,40px) 0 0; max-width:74ch; font-size:14.5px; line-height:1.68;
     color:rgba(228,233,247,.64);
-    border-left:2px solid rgba(103,232,249,.42); padding-left:18px}
+    border-left:2px solid rgba(169,156,255,.42); padding-left:18px}
   .alea__foot b{color:#fff; font-weight:700}
 
   /* ---------- Le bloc « préparer le vol » ----------
@@ -358,8 +332,8 @@
     background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm)}
   .step__n{position:absolute; top:-15px; left:20px; width:34px; height:34px; border-radius:11px;
     display:grid; place-items:center; font-family:var(--mono); font-weight:800; font-size:14.5px; color:#fff;
-    background:linear-gradient(135deg,#6366f1,#4338ca);
-    box-shadow:0 9px 20px rgba(79,70,229,.38), inset 0 1px 0 rgba(255,255,255,.28)}
+    background:linear-gradient(135deg,#7a68ff,var(--violet-dark));
+    box-shadow:0 9px 20px rgba(91,75,206,.38), inset 0 1px 0 rgba(255,255,255,.28)}
   .step h3{font-size:17px; margin:0 0 7px}
   .step p{margin:0; font-size:14px; line-height:1.6; color:var(--ink-2)}
 
@@ -394,11 +368,11 @@
     background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm);
     transition:transform .2s cubic-bezier(.22,.61,.36,1), box-shadow .2s, border-color .2s}
   .feature::after{content:""; position:absolute; left:0; right:0; top:0; height:3px; opacity:0;
-    background:linear-gradient(90deg,var(--violet),rgba(79,70,229,0)); transition:opacity .2s}
+    background:linear-gradient(90deg,var(--violet),rgba(91,75,206,0)); transition:opacity .2s}
   .feature:hover{transform:translateY(-4px); box-shadow:var(--shadow-md)}
   .feature:hover::after{opacity:1}
   .feature .fic{width:46px; height:46px; border-radius:13px; display:grid; place-items:center; font-size:23px;
-    background:var(--violet-soft); border:1px solid rgba(79,70,229,.18); margin-bottom:14px}
+    background:var(--violet-soft); border:1px solid rgba(91,75,206,.18); margin-bottom:14px}
   .feature h3{font-size:16.5px; margin-bottom:6px}
   .feature p{color:var(--ink-2); font-size:14px; margin:0; line-height:1.6}
 
@@ -429,7 +403,7 @@
      ailleurs : la page est violette et froide, la bande doit arrêter l'œil. */
   .offre{position:relative; overflow:hidden; padding:clamp(64px,8.5vw,112px) 0;
     background:
-      radial-gradient(96% 62% at 50% 0%, rgba(79,70,229,.22), transparent 62%),
+      radial-gradient(96% 62% at 50% 0%, rgba(91,75,206,.22), transparent 62%),
       linear-gradient(178deg,#0c0f1c 0%,#0a0c17 100%)}
   .offre > .container{position:relative; z-index:1}
   .offre .sec-tag{color:#f0d6a6; background:rgba(200,137,47,.16); border-color:rgba(200,137,47,.45)}
@@ -483,7 +457,7 @@
   .strip__act{display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:22px 20px 8px 27px}
   /* L'ombre violette d'origine est faite pour un fond sombre ; sur le papier
      elle bavait en halo. Resserrée, et teintée de l'encre du carton. */
-  .strip .cta{box-shadow:0 6px 16px rgba(16,44,80,.22)}
+  .strip .cta{box-shadow:0 6px 16px rgba(40,30,90,.22)}
   .strip__side{font-size:13.5px; line-height:1.5; color:#6f6047; max-width:34ch}
   .strip__foot{margin:0; padding:16px 20px 18px 27px; border-top:1px dashed var(--rule);
     font-size:12.8px; line-height:1.62; color:#6f6047}
@@ -622,7 +596,7 @@
   .fb-item.ok{color:var(--ok)}
   .fb-item.ko{color:var(--warn)}
 
-  .hint{margin-top:15px; background:var(--violet-soft); border:1px solid #c7d2fe; border-radius:12px; padding:13px 16px; font-family:var(--mono); font-size:14px; color:var(--violet-dark)}
+  .hint{margin-top:15px; background:var(--violet-soft); border:1px solid #d6cff5; border-radius:12px; padding:13px 16px; font-family:var(--mono); font-size:14px; color:var(--violet-dark)}
   .hint.hidden{display:none}
   .hint .label{color:var(--violet); font-size:11px; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px; font-weight:700}
 
@@ -661,7 +635,7 @@
   .noreco{background:#fdecea; border:1px solid #f3c6c1; border-radius:var(--radius); padding:14px 17px; margin:14px 0; color:#9c352c; font-size:13.5px}
   .noreco.hidden{display:none}
   .noreco b{color:var(--bad)}
-  .exam-hero{background:linear-gradient(135deg,#e6f4fb,#f7fbff); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow-sm); margin-bottom:18px}
+  .exam-hero{background:linear-gradient(135deg,#efeafb,#f7fbff); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow-sm); margin-bottom:18px}
   .exam-hero h2{font-size:22px; margin-bottom:8px}
   .exam-hero p{color:var(--ink-2); max-width:58ch; margin:0 0 20px}
 
@@ -767,7 +741,7 @@
                               rgba(250,251,255,var(--scene-bas,.30))  100%); }
   :root[data-theme="dark"] .scene-fond::after{
     background:
-      radial-gradient(120% 62% at 52% 2%, rgba(20,40,110,.28), transparent 64%),
+      radial-gradient(120% 62% at 52% 2%, rgba(38,26,104,.28), transparent 64%),
       radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(4,6,14,var(--scene-vignette,.52)) 100%),
       linear-gradient(180deg, rgba(5,8,18,var(--scene-haut,.30))  0%,
                               rgba(5,8,18,var(--scene-haut,.30))  22%,
@@ -897,7 +871,7 @@
        et éclaircir sur verre sombre — d'où une variable et non un rgba écrit
        en dur, qui ne pourrait être juste que d'un côté. --- */
     --sc-pose:rgba(28,34,54,.055); --sc-pose-2:rgba(28,34,54,.09); --sc-pose-3:rgba(28,34,54,.14);
-    --sc-pastille:rgba(79,70,229,.11); --sc-pastille-bord:rgba(79,70,229,.34);
+    --sc-pastille:rgba(91,75,206,.11); --sc-pastille-bord:rgba(91,75,206,.34);
     --sc-ombre:rgba(20,26,44,.16);
     --sc-credit:rgba(20,26,44,.52);
   }
@@ -911,9 +885,9 @@
     --surface:rgba(11,15,28,.62);
     --surface-2:rgba(6,9,18,.54);
     --border:rgba(255,255,255,.22);
-    --violet-dark:#67e8f9;       /* sert de couleur de TEXTE : éclaircie */
-    --violet-soft:rgba(103,232,249,.18);
-    --violet-tint:rgba(103,232,249,.13);
+    --violet-dark:#a99cff;       /* sert de couleur de TEXTE : éclaircie */
+    --violet-soft:rgba(169,156,255,.18);
+    --violet-tint:rgba(169,156,255,.13);
     --ok:#5fe0a4; --warn:#ffc470; --bad:#ff8a86;
     --shadow-sm:0 1px 2px rgba(0,0,0,.34);
     --shadow-md:0 10px 30px rgba(0,0,0,.42);
@@ -929,13 +903,13 @@
     /* La pastille violette : sa teinte doit assombrir le verre, pas l'éclaircir,
        sinon l'accent qu'elle porte perd le contraste qu'elle est censée lui
        donner. Mesuré : 3,2:1 avec l'ancienne teinte claire, 5,6:1 avec celle-ci. */
-    --sc-pastille:rgba(12,28,52,.42); --sc-pastille-bord:rgba(103,232,249,.44);
+    --sc-pastille:rgba(24,20,52,.42); --sc-pastille-bord:rgba(169,156,255,.44);
     --sc-ombre:rgba(4,6,16,.42);
     --sc-credit:rgba(255,255,255,.42);
   }
   /* La seule reprise à la main : la bordure de .hint, écrite en dur en violet
      clair, qui ne se voyait pas sur le verre sombre. */
-  :root[data-theme="dark"] .scene .hint{ border-color:rgba(103,232,249,.34); }
+  :root[data-theme="dark"] .scene .hint{ border-color:rgba(169,156,255,.34); }
 
   /* Les champs de saisie : le verre seul ne suffit pas, on a besoin de voir où
      l'on tape. Un cran plus contrasté que les panneaux, dans les deux sens. */
@@ -1059,16 +1033,13 @@
     border:1px solid var(--sc-line-2); box-shadow:0 4px 14px rgba(4,6,16,.30)}
   .spell-scene .btn:hover{background:var(--sc-pose-3); border-color:var(--sc-line-2)}
   .spell-scene .btn:disabled{opacity:.46}
-  .spell-scene .ptt{min-width:250px; border:none; color:var(--cyan-ink);
-    background:linear-gradient(135deg,#22d3ee,#0891b2);
-    box-shadow:0 10px 30px rgba(34,211,238,.40), inset 0 1px 0 rgba(255,255,255,.28)}
-  .spell-scene .ptt:hover{background:linear-gradient(135deg,#67e8f9,#06b6d4);
-    box-shadow:0 14px 38px rgba(34,211,238,.50)}
-  /* L'etat « j'ecoute » repasse au blanc : il est rouge, et l'encre sombre du
-     cyan y tomberait a 1,6:1. Sans cette ligne elle serait heritee, la regle
-     ci-dessus etant plus tardive que .ptt.listening a specificite egale. */
+  .spell-scene .ptt{min-width:250px; border:none; color:#fff;
+    background:linear-gradient(135deg,#6d5af0,#4e3fbb);
+    box-shadow:0 10px 30px rgba(96,78,230,.52), inset 0 1px 0 rgba(255,255,255,.28)}
+  .spell-scene .ptt:hover{background:linear-gradient(135deg,#7d6bff,#5e4dd2);
+    box-shadow:0 14px 38px rgba(96,78,230,.62)}
   .spell-scene .ptt.listening{background:linear-gradient(135deg,#ff6f6a,#d94a45);
-    color:#fff; box-shadow:0 10px 30px rgba(217,74,69,.52)}
+    box-shadow:0 10px 30px rgba(217,74,69,.52)}
   .spell-scene .switch-line{background:var(--sc-pose); border:1px solid var(--sc-line);
     color:var(--sc-ink-2)}
   .spell-scene .switch-line input{accent-color:var(--sc-accent)}
@@ -1103,7 +1074,7 @@
   .spell-verdict.bad{background:rgba(255,138,134,.14); color:var(--sc-bad); border-color:rgba(255,138,134,.55)}
 
   .spell-status{padding:10px 14px; border-radius:12px; font-size:13.5px; font-weight:600;
-    background:rgba(103,232,249,.14); color:var(--sc-accent); border:1px solid rgba(103,232,249,.42)}
+    background:rgba(169,156,255,.14); color:var(--sc-accent); border:1px solid rgba(169,156,255,.42)}
   .spell-status.err{background:rgba(255,138,134,.14); color:var(--sc-bad); border-color:rgba(255,138,134,.5)}
 
   /* ---- Chronomètre ---- */
@@ -1111,7 +1082,7 @@
     font-size:15px; color:var(--sc-ink-2); background:var(--sc-pose);
     border:1px solid var(--sc-line-2); border-radius:var(--pill); padding:8px 14px;
     min-width:74px; justify-content:center; font-variant-numeric:tabular-nums}
-  .spell-timer.running{color:var(--sc-ink); border-color:rgba(103,232,249,.6); background:rgba(103,232,249,.16)}
+  .spell-timer.running{color:var(--sc-ink); border-color:rgba(169,156,255,.6); background:rgba(169,156,255,.16)}
   .spell-timer::before{content:""; width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.5}
   .spell-timer.running::before{opacity:1; animation:spellPulse 1s ease-in-out infinite}
   @keyframes spellPulse{0%,100%{opacity:1}50%{opacity:.25}}
@@ -1336,7 +1307,7 @@
     border-radius:11px; padding:11px 13px; cursor:pointer;
     transition:border-color .15s ease, background .15s ease; }
   .ins-choix button:hover{ border-color:var(--violet-dark); }
-  .ins-choix button:focus-visible{ outline:2px solid var(--anneau); outline-offset:2px; }
+  .ins-choix button:focus-visible{ outline:2px solid var(--violet); outline-offset:2px; }
   .ins-choix button[aria-pressed="true"]{ background:var(--violet-soft);
     border-color:var(--violet-dark); color:var(--violet-dark); }
   /* Le choix « Autre » ouvre un champ libre, juste sous lui. */
@@ -1495,10 +1466,10 @@
        · une arête lumineuse sur le bord droit, qui détache le rail de la page.
      --------------------------------------------------------------------- */
   .sidebar{
-    --sb-ink:#eaedf7; --sb-ink-2:#8f97b0; --sb-accent:#67e8f9;
+    --sb-ink:#eaedf7; --sb-ink-2:#8f97b0; --sb-accent:#a99cff;
     color:var(--sb-ink);
     background:
-      radial-gradient(118% 40% at 0% 0%, rgba(79,70,229,.32), transparent 62%),
+      radial-gradient(118% 40% at 0% 0%, rgba(91,75,206,.32), transparent 62%),
       linear-gradient(180deg,#151830 0%,#0e1020 46%,#0a0b14 100%);
     border-right:0;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 16px 0 44px rgba(4,6,14,.26); }
@@ -1520,15 +1491,15 @@
     border-color:rgba(255,255,255,.09);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.11), 0 5px 14px rgba(3,5,12,.38); }
   .sidelink.current{ color:#fff;
-    background:linear-gradient(180deg, rgba(99,102,241,.36), rgba(79,70,229,.22));
-    border-color:rgba(103,232,249,.46);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 9px 24px rgba(67,56,202,.44); }
+    background:linear-gradient(180deg, rgba(142,126,255,.36), rgba(91,75,206,.22));
+    border-color:rgba(162,148,255,.46);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 9px 24px rgba(66,52,176,.44); }
   /* Le témoin de page courante est monté SUR l'arête gauche du rail, pas dans
      la pastille : on lit la position d'un coup d'œil, même menu replié.
      Son décalage suit le padding de la barre — d'où la reprise en mode rail. */
   .sidelink.current::before{ content:""; position:absolute; left:-14px; top:50%; transform:translateY(-50%);
     width:3px; height:21px; border-radius:0 3px 3px 0; background:var(--sb-accent);
-    box-shadow:0 0 12px rgba(103,232,249,.85); }
+    box-shadow:0 0 12px rgba(169,156,255,.85); }
   body.side-collapsed .sidelink.current::before{ left:-12px; }
 
   .side-logout{ color:var(--sb-ink-2); border-color:rgba(255,255,255,.10);
@@ -1545,7 +1516,7 @@
   .hamburger{ background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:7px;
     cursor:pointer; color:var(--ink); display:inline-flex; }
   .hamburger .ic-svg{ width:20px; height:20px; }
-  .side-overlay{ position:fixed; inset:0; background:rgba(10,20,38,.42); z-index:115; }
+  .side-overlay{ position:fixed; inset:0; background:rgba(20,16,40,.42); z-index:115; }
 
   @media (max-width:860px){
     /* Tiroir : le repli en rail n'a pas de sens ici, on l'annule entièrement. */
@@ -1597,7 +1568,7 @@
   .nav-legend{ display:flex; flex-wrap:wrap; gap:14px; padding:10px 4px 2px; font-size:12px; color:var(--ink-2); }
   .nav-legend span{ display:inline-flex; align-items:center; gap:6px; }
   .nav-legend .lg{ width:14px; height:9px; border-radius:2px; display:inline-block; }
-  .lg-ctr{ background:rgba(79,70,229,.25); border:1.5px solid #4f46e5; }
+  .lg-ctr{ background:rgba(91,75,206,.25); border:1.5px solid #5b4bce; }
   .lg-tma{ background:rgba(56,132,196,.16); border:1.5px solid #3884c4; }
   .lg-rpd{ background:rgba(199,74,74,.14); border:1.5px dashed #c74a4a; }
   .lg-rte{ background:none; border-top:2.5px dashed #d9534f; height:0; }
@@ -1704,7 +1675,7 @@
   /* Zone de clic large et transparente ; la pastille visible est centrée dedans. */
   .nav-adhit{ display:flex; align-items:center; justify-content:center; background:none; border:none;
     cursor:pointer; }
-  .nav-adhit:hover .nav-admark{ transform:scale(1.55); box-shadow:0 0 0 4px rgba(79,70,229,.22),0 1px 4px rgba(0,0,0,.4); }
+  .nav-adhit:hover .nav-admark{ transform:scale(1.55); box-shadow:0 0 0 4px rgba(91,75,206,.22),0 1px 4px rgba(0,0,0,.4); }
   .nav-admark{ display:block; background:var(--violet); border:2px solid #fff; border-radius:50%;
     box-shadow:0 1px 4px rgba(0,0,0,.4); transition:transform .12s, box-shadow .12s; }
   .nav-admark.sel-dep{ background:#2e9e5b; }
@@ -1804,16 +1775,16 @@
     padding:15px 17px; font-size:16px; line-height:1.6; color:var(--ink); margin-bottom:16px; }
 
   .vf-ptt{ width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
-    background:var(--cyan); color:var(--cyan-ink); border:none; border-radius:14px; padding:17px;
+    background:var(--violet); color:#fff; border:none; border-radius:14px; padding:17px;
     font-family:var(--sans); font-size:15px; font-weight:700; user-select:none;
     -webkit-user-select:none; -webkit-touch-callout:none; touch-action:none; transition:.12s; }
   /* .ic-svg n'impose aucune taille par défaut (elle vient de règles scopées comme
      `.btn .ic-svg`). .vf-ptt n'étant pas un .btn, l'icône remplissait tout le bouton. */
   .vf-ptt .ic-svg{ width:22px; height:22px; flex:none; }
   .vf-ptt span{ white-space:nowrap; }
-  .vf-ptt:hover{ background:var(--cyan-fort); }
+  .vf-ptt:hover{ background:var(--violet-dark); }
   .vf-ptt:active{ transform:scale(.985); }
-  .vf-ptt.listening{ background:#c0392b; color:#fff; box-shadow:0 0 0 4px rgba(192,57,43,.18); }
+  .vf-ptt.listening{ background:#c0392b; box-shadow:0 0 0 4px rgba(192,57,43,.18); }
   .vf-ptt.listening .ic-svg{ animation:vfPulse 1s ease-in-out infinite; }
   @keyframes vfPulse{ 0%,100%{opacity:1} 50%{opacity:.45} }
   .vf-ptt[disabled]{ opacity:.5; cursor:not-allowed; }
@@ -2044,7 +2015,7 @@
 
   /* ================= Modale de confirmation ================= */
   .modal{ position:fixed; inset:0; z-index:400; display:flex; align-items:center; justify-content:center;
-    padding:20px; background:rgba(10,20,38,.52); animation:mdlIn .16s ease; }
+    padding:20px; background:rgba(20,16,40,.52); animation:mdlIn .16s ease; }
   .modal[hidden]{ display:none; }
   @keyframes mdlIn{ from{opacity:0} to{opacity:1} }
   .modal-card{ width:100%; max-width:430px; background:var(--surface); border:1px solid var(--border);
@@ -2071,14 +2042,10 @@
      de TEXTE : en sombre la première reste soutenue, la seconde devient très claire. */
 
         :root[data-theme="dark"]{
-      /* --violet sert de FOND de bouton (texte blanc dessus) et doit satisfaire
-         DEUX seuils a la fois : 4,5:1 avec le blanc qu'il porte, et 3:1 avec le
-         fond sur lequel il se decoupe. #4f46e5 du theme clair echoue au second
-         (2,64:1 sur --surface) ; #6366f1 echoue au premier (4,47:1). #5952ea se
-         tient entre les deux : 5,50:1 avec le blanc, 3,02:1 sur --surface.
-         --violet-dark, elle, sert de couleur de TEXTE : c'est le cyan clair. */
-      --violet:#5952ea; --violet-dark:#67e8f9; --violet-soft:rgba(99,102,241,.20); --violet-tint:#131a33;
-      --lien:#67e8f9; --anneau:#22d3ee;
+      /* --violet sert de FOND de bouton (texte blanc dessus) : trop clair, le blanc
+         ne passait plus le seuil AA. #6b5ae0 donne 5,04:1 avec le blanc et 3,64:1
+         sur le fond sombre. --violet-dark, elle, sert de couleur de TEXTE : très claire. */
+      --violet:#6b5ae0; --violet-dark:#b3a6ff; --violet-soft:rgba(139,124,240,.18); --violet-tint:#241f3d;
       --ink:#e7e9f2; --ink-2:#9aa2b8;
       /* En sombre, --ink-2 est clair sur fond foncé et passe largement le seuil :
          le jeton renforcé n'a rien à corriger, il reprend --ink-2. Il doit
@@ -2092,9 +2059,9 @@
       --shadow-lg:0 24px 60px rgba(0,0,0,.55);
     }
     /* --violet comme couleur de TEXTE : onze règles le font, et c'est une erreur
-       que le commentaire ci-dessus annonce sans l'avoir corrigée. #5952ea est
+       que le commentaire ci-dessus annonce sans l'avoir corrigée. #6b5ae0 est
        un fond de bouton ; posé en texte sur le fond sombre il tombe à 2,5:1.
-       C'est --violet-dark (#67e8f9) qui est la couleur de texte du thème, et
+       C'est --violet-dark (#b3a6ff) qui est la couleur de texte du thème, et
        elle donne 7:1. Le défaut ne vient pas des décors photo — il se voyait
        déjà sur le thème sombre nu — mais c'est en mesurant les scènes qu'il
        est apparu. */
@@ -10583,7 +10550,7 @@ function oaciSonde(couche, surAbsenceTotale){
      carte OACI officielle, cf. avertissement) : le CTR ressort en trait plein soutenu,
      les TMA/CTA en trait fin, les zones réglementées en hachuré rouge. */
   function styleFor(t){
-    if(t==='CTR') return {color:'#4338ca',weight:1.8,opacity:.95,fillColor:'#4f46e5',fillOpacity:.10};
+    if(t==='CTR') return {color:'#3a2fa8',weight:1.8,opacity:.95,fillColor:'#5b4bce',fillOpacity:.10};
     if(t==='TMA'||t==='CTA') return {color:'#2f6fa8',weight:1.1,opacity:.75,dashArray:'6 3',
                                      fillColor:'#3884c4',fillOpacity:.045};
     return {color:'#b03a3a',weight:1.1,opacity:.8,dashArray:'3 3',fillColor:'#c74a4a',fillOpacity:.06};

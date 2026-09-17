@@ -37,8 +37,19 @@
     return s;
   }
 
+  /* UN SEUL client pour tout le site. Ce module en créait un SECOND, avec la
+     même storageKey que celui d'assets/auth.js : deux GoTrueClient sur la même
+     session, qui rafraîchissent le même jeton en parallèle. Chrome le signalait
+     à chaque chargement (« Multiple GoTrueClient instances detected […] may
+     produce undefined behavior »), et l'avertissement disait vrai — deux
+     rafraîchissements concurrents peuvent se voler le jeton et déconnecter
+     quelqu'un au milieu d'un vol.
+     On prend donc celui de RTAuth, qui porte déjà la session ; le repli ne sert
+     que si ce module était chargé sans auth.js, ce qui n'arrive pas dans
+     index.html mais garde le fichier utilisable seul. */
   function client(){
     try{
+      if (window.RTAuth && RTAuth.client){ var c = RTAuth.client(); if (c) return c; }
       if (!window.RT_SUPABASE || !window.supabase) return null;
       if (!window.__rtSync_c) window.__rtSync_c = window.supabase.createClient(
         RT_SUPABASE.url, RT_SUPABASE.anonKey,
@@ -110,10 +121,44 @@
     return false;
   }
 
-  function tenter(paquet){
+  /* ┌─ UNE SÉANCE VAUT MIEUX QUE SON ÉTIQUETTE ───────────────────────────┐
+     │ `sessions.exercise_key` pointe vers le catalogue `exercises`. Si la   │
+     │ clé n'y est pas, PostgreSQL refuse la ligne ENTIÈRE (23503) : le      │
+     │ score, la durée et tous les échanges partent à la poubelle pour un    │
+     │ libellé manquant. C'est exactement ce qui s'est produit ici pendant   │
+     │ des mois — le catalogue ne contenait que sept des treize scénarios,   │
+     │ et six d'entre eux n'ont jamais rien enregistré, sans que rien ne le  │
+     │ montre à l'écran.                                                     │
+     │ sql/002-progression.sql pose les treize clés. Ceci est la ceinture :  │
+     │ face à une clé étrangère refusée, on réessaie UNE fois sans la clé.   │
+     │ On perd le rattachement au catalogue, on garde la séance — et le      │
+     │ journal dit laquelle, pour qu'on sache quoi ajouter au catalogue.     │
+     └──────────────────────────────────────────────────────────────────────┘ */
+  function sansClefExercice(paquet, e){
+    if (!e || e.code !== '23503') return null;
+    if (!paquet.session || !paquet.session.exercise_key) return null;
+    var clef = paquet.session.exercise_key;
+    var bis = { session: Object.assign({}, paquet.session), steps: paquet.steps };
+    bis.session.exercise_key = null;
+    try{ console.warn('[RadioTrainer] exercice « ' + clef + ' » absent du catalogue : '
+                    + 'séance enregistrée sans son rattachement. '
+                    + 'Jouer sql/002-progression.sql.'); }catch(x){}
+    try{ if (window.RTAdmin && RTAdmin.logError)
+           RTAdmin.logError({ level:'warn', kind:'network',
+             message:'Exercice absent du catalogue : ' + clef,
+             detail:'Séance enregistrée sans exercise_key. Jouer sql/002-progression.sql.',
+             key:'catalogue-incomplet' }); }catch(x){}
+    return bis;
+  }
+
+  function tenter(paquet, secondEssai){
     return pousser(paquet).then(
       function(){ defiler(paquet.session.id); return true; },
       function(e){
+        if (!secondEssai){
+          var bis = sansClefExercice(paquet, e);
+          if (bis) return tenter(bis, true);
+        }
         var fatal = definitif(e);
         dernierEchec = { quand:new Date().toISOString(), id:paquet.session.id,
                          message:(e && e.message) || String(e),
@@ -211,9 +256,15 @@
   /* Une session qui s'ouvre : on solde les abandons de la fois précédente,
      puis on renvoie ce qui attendait. L'ordre compte — solder d'abord évite de
      requalifier « abandonnée » une séance qu'on vient tout juste de renvoyer. */
+  /* La promesse est CONSERVÉE sur RTSync (`reprise`). assets/donnees.js doit
+     attendre la fin de ce travail avant de relire la base : sans cela il
+     relirait AVANT que les séances en attente n'y soient arrivées, et elles
+     n'apparaîtraient à l'écran qu'à la connexion suivante. Les deux écouteurs
+     de 'rt:auth' partent dans l'ordre des <script>, donc `reprise` est déjà
+     posée quand l'autre module la lit. */
   window.addEventListener('rt:auth', function(ev){
     if (!ev.detail || !ev.detail.connecte) return;
-    RTSync.solderLesAbandons().then(function(){ return RTSync.viderLaFile(); })
+    RTSync.reprise = RTSync.solderLesAbandons().then(function(){ return RTSync.viderLaFile(); })
       .then(function(n){ if (n) try{ console.info('[RadioTrainer] '+n+' séance(s) en attente envoyée(s).'); }catch(e){} });
   });
 })();

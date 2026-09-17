@@ -432,35 +432,54 @@ Le `select` de contrôle n'est pas une politesse : sans la condition
 « 1 row affected » et le déclencheur le défait dans la foulée. Le rôle est la
 seule preuve.
 
-### 4.7 Migrer les données locales existantes
+### 4.7 Migrer les données locales existantes — **fait**
 
-Le stockage local se transpose directement :
+Depuis `sql/002-progression.sql` et `assets/donnees.js`, la base est la **source
+de vérité** de l'application elle-même, et plus seulement de la console. Le
+stockage local n'est plus qu'un **cache** : il peint l'écran tout de suite, il
+tient hors-ligne, et il est écrasé par la base à chaque connexion.
 
-| localStorage | destination |
-|---|---|
-| `rt-settings` | `profiles.settings` |
-| `radiotrainer_history_v2[]` | `sessions` (`kind='scenario'`) |
-| `rt-vols[]` | `sessions` (`kind='flight'`) |
-| `rt-vols[].lignes[]` | `session_steps` |
-| `rt-jours`, `rt-quota` | rien — dérivés (`v_daily_activity`) |
-| `rt-vol-en-cours` | `sessions` avec `status='in_progress'` |
+| localStorage | destination | sens |
+|---|---|---|
+| `rt-settings` | `profiles.settings` | les deux — le plus récent gagne (`_maj`) |
+| `radiotrainer_history_v2[]` | `sessions` (`kind='scenario'`) | les deux |
+| `rt-vols[]` | `sessions` (`kind='flight'`) | les deux |
+| `rt-vols[].lignes[]` | `session_steps` | les deux |
+| `rt-jours` | dérivé de `v_daily_practice` | descente seule |
+| `rt-quota` | dérivé d'un `count` sur `sessions` | descente seule |
+| `rt-vol-en-cours` | `profiles.etat_vol` | les deux |
+| `rt-cache-proprio` | — | local pur : à qui appartient le cache |
 
-`assets/admin/data/source-local.js` fait déjà cette normalisation : sa fonction
-`sessionsVols()` est, à peu de chose près, le script de migration.
+Trois points valent d'être retenus :
+
+- **La migration est rejouable.** Une séance locale n'a pas d'identifiant : on en
+  fabrique un, déduit de son contenu et de l'`user_id`. Même séance, même
+  identifiant, donc l'upsert récrit la même ligne — et deux personnes ayant la
+  même séance obtiennent deux identifiants différents.
+- **Le cache est estampillé.** Sans cela, deux personnes qui se succèdent sur le
+  même ordinateur voient l'historique l'une de l'autre le temps que la base
+  réponde. Ce n'est pas une fuite en base — RLS tient — mais c'est une fuite à
+  l'écran, et elle suffit.
+- **`v_daily_practice` n'est pas `v_daily_activity`.** La première ne compte que
+  les séances terminées et nourrit la série de jours montrée à l'élève ; la
+  seconde compte aussi les abandons et sert à la console. Ouvrir l'application
+  trois jours de suite sans rien finir ne débloque pas « Régularité ».
 
 ## 5. Ce qui reste à faire côté application (hors console)
 
-Ces manques sont visibles en creux dans la source « Cet appareil », où les
-indicateurs concernés affichent « — ». Ils ne sont pas des bugs de la console :
-ce sont des mesures que l'application ne prend pas encore.
+Les quatre manques listés ici — durée des séances, abandons, trace fine des
+scénarios, résultats de l'épellation — ont été comblés par `assets/sync.js`.
+Il ne reste que ceci :
 
-- **Durée des séances** — horodater le début, pas seulement la fin.
-- **Abandons** — écrire la séance dès son démarrage (`status='in_progress'`),
-  puis la faire passer à `completed` ou `abandoned`. Sans cela, aucun entonnoir
-  d'abandon n'est calculable, ni localement ni en base.
-- **Trace fine des scénarios** — les vols conservent leurs échanges
-  (`rt-vols[].lignes[]`), les scénarios non. La même structure suffirait.
-- **Résultats de l'épellation** — rien n'est enregistré aujourd'hui.
+- **Le catalogue `exercises` doit suivre le code.** `sessions.exercise_key`
+  porte une clé étrangère : une clé absente du catalogue fait refuser la séance
+  ENTIÈRE, code 23503, et `sync.js` classe à juste titre une erreur PostgreSQL
+  comme non rejouable. C'est arrivé : le catalogue d'origine ne contenait que
+  sept des treize scénarios, et six d'entre eux n'ont jamais rien enregistré
+  sans que rien ne le montre à l'écran. `sql/002-progression.sql` § 1 pose les
+  treize, et `sync.js` réessaie désormais une fois sans la clé plutôt que de
+  perdre la séance — mais **ajouter un scénario au code oblige toujours à
+  l'ajouter au catalogue**, faute de quoi il montera sans rattachement.
 
 ## 6. Sécurité — la liste courte
 

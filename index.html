@@ -7148,6 +7148,18 @@ const SCENARIOS = [
   }
 ];
 
+/* La correspondance clé ↔ titre ↔ rang, exposée aux modules externes.
+   assets/donnees.js en a besoin pour retraduire une séance lue en base : la
+   base range sous `exercise_key`, l'écran affiche un titre et rejoue un
+   scénario par son rang. Recopier la liste là-bas en ferait une seconde source
+   à tenir à jour, et le jour où un scénario s'ajoute, l'historique afficherait
+   sa clé brute sans que personne comprenne pourquoi. */
+window.RT_SCENARIOS_MAP = (function(){
+  var m = {};
+  SCENARIOS.forEach(function(sc, i){ if (sc && sc.id) m[sc.id] = { idx:i, titre:sc.titre }; });
+  return m;
+})();
+
 /* =========================================================================
    5) SYNTHÈSE VOCALE
    ========================================================================= */
@@ -8775,10 +8787,23 @@ function chooseBranch(step, opt){
 }
 
 /* --- Préférences utilisateur (partagées par tous les modules) ---
-   Une seule clé localStorage, lue aussi par le script de thème du <head>. */
+   Une seule clé localStorage, lue aussi par le script de thème du <head>.
+
+   LE STOCKAGE LOCAL RESTE, ET IL LE FAUT : ces réglages sont lus de façon
+   SYNCHRONE depuis des dizaines d'endroits, jusque dans le <head> par le script
+   qui pose le thème avant le premier pixel. Une lecture réseau n'a pas sa place
+   là. Ils ne sont plus pour autant cantonnés à un navigateur : chaque
+   enregistrement prévient assets/donnees.js, qui les fait monter dans
+   `profiles.settings` et les redescend à la connexion suivante, où qu'elle ait
+   lieu. Le local est le cache ; la base tranche. */
 const RT_SET_KEY='rt-settings';
 function rtSettings(){ try{ return JSON.parse(localStorage.getItem(RT_SET_KEY)||'{}'); }catch(e){ return {}; } }
-function rtSaveSettings(s){ try{ localStorage.setItem(RT_SET_KEY, JSON.stringify(s)); }catch(e){} }
+function rtSaveSettings(s){
+  try{ localStorage.setItem(RT_SET_KEY, JSON.stringify(s)); }catch(e){}
+  /* Horodate et programme la montée. L'appel est temporisé côté module : faire
+     glisser un curseur ne doit pas produire vingt écritures en base. */
+  try{ if (window.RTDonnees) RTDonnees.reglagesModifies(); }catch(e){}
+}
 
 /* ================= RADIO COM (Scénarios) =================
    Même principe qu'en Navigation : on n'émet que sur la fréquence ACTIVE. Elle
@@ -9604,6 +9629,13 @@ function badgesVol(){
 }
 /* Badges exposés au tableau de bord (autre bloc <script>, portée séparée). */
 window.rtBadges=function(){ try{ return computeBadges(loadHistory()); }catch(e){ return []; } };
+/* La progression vient d'arriver de la base (connexion, ou effacement) : on
+   repeint l'historique des scénarios et les badges. Ni l'un ni l'autre ne sait
+   d'où vient ce qu'il lit — c'est tout l'intérêt : le cache a changé, ils se
+   contentent de le relire. */
+window.addEventListener('rt:donnees', function(){
+  try{ renderHistory(); }catch(e){}
+});
 /* Relance d'un scénario depuis l'accueil. */
 window.rtRelancerScenario=function(idx, icao){
   if(typeof idx!=='number' || idx<0 || idx>=SCENARIOS.length) return false;
@@ -13653,8 +13685,15 @@ function oaciSonde(couche, surAbsenceTotale){
         date:new Date().toISOString()
       }));
     }catch(e){}
+    /* Et en base, pour que le vol se reprenne depuis un autre navigateur. La
+       montée est temporisée côté module : cette fonction est appelée à chaque
+       échange, on ne va pas écrire en base à chaque phrase prononcée. */
+    try{ if (window.RTDonnees) RTDonnees.volModifie(); }catch(e){}
   }
-  function oublierVol(){ try{ localStorage.removeItem(VOL_KEY); }catch(e){} }
+  function oublierVol(){
+    try{ localStorage.removeItem(VOL_KEY); }catch(e){}
+    try{ if (window.RTDonnees) RTDonnees.volModifie(); }catch(e){}
+  }
   function volSauvegarde(){
     try{ var v=JSON.parse(localStorage.getItem(VOL_KEY)||'null');
          return (v && v.dep && typeof v.i==='number') ? v : null; }catch(e){ return null; }
@@ -13691,6 +13730,14 @@ function oaciSonde(couche, surAbsenceTotale){
      revoir ses erreurs après coup. */
   var VOLS_KEY='rt-vols';
   function chargerVols(){ try{ return JSON.parse(localStorage.getItem(VOLS_KEY)||'[]'); }catch(e){ return []; } }
+  /* Même chose ici : quand assets/donnees.js a rempli le cache depuis la base,
+     l'historique des vols et la proposition de reprise se repeignent. Sans ça,
+     quelqu'un qui vient de se connecter sur un nouveau navigateur voit une
+     Navigation vide jusqu'au prochain rechargement de page. */
+  window.addEventListener('rt:donnees', function(){
+    try{ majHistorique(); }catch(e){}
+    try{ majReprise(); }catch(e){}
+  });
   function enregistrerVol(entree){
     var v=chargerVols(); v.unshift(entree);
     try{ localStorage.setItem(VOLS_KEY, JSON.stringify(v.slice(0,40))); }catch(e){}
@@ -14536,6 +14583,11 @@ function oaciSonde(couche, surAbsenceTotale){
     var l=document.querySelector('.sidelink[data-page="progression"]'); if(l) l.click();
   });
   window.addEventListener('rt:page',function(e){ if(e.detail.page==='tableau') rendre(); });
+  /* La progression arrive de la base après la connexion, donc APRÈS que le
+     tableau de bord s'est peint une première fois. Sans ce second passage, on
+     atterrit sur un tableau à zéro et il faut recharger la page pour voir ses
+     chiffres — exactement ce qu'on vient de corriger ailleurs. */
+  window.addEventListener('rt:donnees', function(){ try{ rendre(); }catch(e){} });
 })();
 </script>
 
@@ -14763,20 +14815,48 @@ function oaciSonde(couche, surAbsenceTotale){
     if(n) p.push(n+' session'+(n>1?'s':'')+' de scénarios');
     $s('setDataInfo').textContent = p.join(' et ')+' sur cet appareil.';
   }
+  /* ┌─ CE BOUTON A CHANGÉ DE PORTÉE, ET IL FALLAIT QU'IL CHANGE ──────────┐
+     │ Il ne vidait que le navigateur. Depuis que la progression vit en base, │
+     │ effacer le seul cache n'efface plus rien : tout revient à la connexion │
+     │ suivante. Un bouton « Tout effacer » qui ne supprime rien est pire     │
+     │ qu'absent — on croit avoir effacé. Il passe donc par la base, et le    │
+     │ cache n'est vidé qu'APRÈS confirmation que la base a bien répondu.     │
+     │ Si elle ne répond pas, on ne touche à rien et on le dit.               │
+     └───────────────────────────────────────────────────────────────────────┘ */
   $s('setClearHist').addEventListener('click',function(){
     if(!histCount() && !volCount()){ showToast('Aucune donnée à effacer.'); return; }
-    rtConfirm('Vos vols, vos sessions de scénarios, vos badges, votre série de jours et '+
-              'le quota du jour seront définitivement effacés de cet appareil.',
+    var enLigne = !!(window.RTAuth && RTAuth.utilisateur && RTAuth.utilisateur());
+    rtConfirm(enLigne
+        ? 'Vos vols, vos sessions de scénarios, vos badges, votre série de jours et le quota '+
+          'du jour seront définitivement effacés de VOTRE COMPTE — donc sur tous vos '+
+          'navigateurs, pas seulement celui-ci. C\'est irréversible.'
+        : 'Vos vols, vos sessions de scénarios, vos badges, votre série de jours et le quota '+
+          'du jour seront effacés de cet appareil. Vous n\'êtes pas connecté : ce qui est '+
+          'enregistré dans votre compte, lui, ne sera pas touché.',
       {title:'Tout effacer ?',ok:'Effacer'}).then(function(ok){
         if(!ok) return;
-        /* On efface TOUT ce qui alimente l'accueil : n'en oublier une partie laissait
-           des statistiques orphelines et empêchait de revenir à un état vierge. */
+        function apres(){
+          try{ renderHistory(); renderBadges(); }catch(e){}
+          refreshData();
+        }
+        if(window.RTDonnees && enLigne){
+          RTDonnees.effacerTout().then(function(){
+            apres(); showToast('Données effacées de votre compte.');
+          }, function(){
+            /* La base a refusé : on ne vide SURTOUT pas le cache. Le faire
+               laisserait croire à un effacement, et tout reviendrait à la
+               connexion suivante — le pire des deux mondes. */
+            showToast('Effacement impossible : la base n\'a pas répondu. Rien n\'a été supprimé.');
+          });
+          return;
+        }
+        /* Hors ligne, ou sans compte : on ne peut vider que le cache, et le
+           message de confirmation vient de le dire. */
         ['rt-vols','rt-jours','rt-quota','rt-vol-en-cours'].forEach(function(k){
           try{ localStorage.removeItem(k); }catch(e){}
         });
         try{ localStorage.removeItem(LS_KEY); }catch(e){}
-        try{ renderHistory(); renderBadges(); }catch(e){}
-        refreshData(); showToast('Données effacées.');
+        apres(); showToast('Données effacées de cet appareil.');
       });
   });
   $s('setReset').addEventListener('click',function(){
@@ -14817,6 +14897,24 @@ function oaciSonde(couche, surAbsenceTotale){
   }
   paint();
 
+  /* Les réglages du compte arrivent de la base après la connexion. On relit
+     alors le cache — que assets/donnees.js vient de remplacer — et on repeint,
+     contrôles métier compris : sans ce dernier point, le thème changerait mais
+     la voix, le débit et l'indicatif resteraient ceux de l'appareil.
+     `S` est rechargé plutôt que muté : l'objet en mémoire est celui d'avant la
+     connexion, et le garder ferait réécrire les anciens réglages au premier
+     clic. */
+  window.addEventListener('rt:donnees', function(){
+    try{
+      S = rtSettings();
+      paint(); applyTheme(); applyAnim(); syncVoices();
+      if(S.rate)  drive(document.getElementById('voiceRate'),S.rate);
+      if(S.diff)  drive(document.getElementById('difficultySelect'),S.diff);
+      if(S.call)  drive(document.getElementById('call'),S.call);
+      drive(srcNoise, S.noise!==false);
+    }catch(e){}
+  });
+
   // Réappliquer aux contrôles métier au démarrage (les voix arrivent en asynchrone).
   window.addEventListener('rt:page',function(e){ if(e.detail.page==='parametres'){ syncVoices(); refreshData(); } });
   setTimeout(function(){
@@ -14847,6 +14945,10 @@ function oaciSonde(couche, surAbsenceTotale){
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/auth.js"></script>
 <script src="assets/sync.js"></script>
+<!-- La progression : montée des données locales, relecture depuis la base,
+     réglages et vol en cours. APRÈS sync.js, dont il attend la fin de reprise
+     (RTSync.reprise) avant de relire la base. -->
+<script src="assets/donnees.js"></script>
 <script src="assets/compte.js"></script>
 <script src="assets/inscription.js"></script>
 <script src="assets/admin/data/error-log.js"></script>

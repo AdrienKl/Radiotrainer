@@ -83,8 +83,29 @@
   :focus-visible{outline:2px solid var(--violet); outline-offset:2px}
 
   /* ---------- Header ---------- */
+  /* La bande du haut est NOIRE, et le violet du site n'y passe qu'en reflets :
+     deux halos très dilués posés là où il se passe quelque chose — la marque à
+     gauche, les boutons à droite — et un filet violet pour toute bordure basse.
+     Rien de saturé : ici le violet éclaire, il ne remplit pas. La bande garde
+     sa couleur dans les deux thèmes ; c'est le seul bloc du site qui ne suit
+     pas --surface, et c'est voulu — elle sert de cadre à la page. */
   .topnav{position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; gap:16px;
-    padding:0 clamp(16px,4vw,44px); height:64px; background:var(--surface); border-bottom:1px solid var(--border)}
+    padding:0 clamp(16px,4vw,44px); height:64px; border-bottom:1px solid rgba(91,75,206,.36);
+    background:
+      radial-gradient(130% 210% at 6% 0%, rgba(107,63,151,.34) 0%, rgba(107,63,151,0) 56%),
+      radial-gradient(95% 190% at 97% 108%, rgba(91,75,206,.34) 0%, rgba(91,75,206,0) 60%),
+      linear-gradient(180deg,#16171f 0%, #0b0c11 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 6px 24px rgba(10,11,16,.26)}
+  /* Sur le noir, l'encre du site ne tient plus : la marque et les liens passent
+     au blanc, et le survol devient un voile clair au lieu de --surface-2. */
+  .topnav .brand{color:#fff}
+  .topnav .brand .logo{box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 4px 14px rgba(91,75,206,.45)}
+  .topnav .navlink{color:rgba(255,255,255,.76)}
+  .topnav .navlink:hover{color:#fff; background:rgba(255,255,255,.10)}
+  .topnav .navlink.current{color:#b7abff}
+  .topnav .navlink.current::after{background:#b7abff}
+  .topnav .nav-cta{background:var(--violet); box-shadow:0 4px 16px rgba(91,75,206,.45)}
+  .topnav .nav-cta:hover{background:#6b5ce0}
   .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px; color:var(--ink)}
   .brand .logo{width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
     background:linear-gradient(135deg,var(--violet),var(--violet-dark)); color:#fff; font-size:17px}
@@ -101,7 +122,12 @@
   .nav-cta:hover{background:var(--violet-dark); transform:translateY(-1px); box-shadow:var(--shadow-md)}
 
   /* ---------- Disclaimer ---------- */
-  .disclaimer{background:var(--surface-2); border-bottom:1px solid var(--border); color:var(--ink-2); font-size:12.5px; text-align:center; padding:7px 14px}
+  /* Il n'est plus en tête de page mais dans le pied : plus de bordure basse à
+     coller sous la barre du haut, un cadre discret à la place, et une mesure
+     bornée pour qu'il ne se confonde pas avec les lignes de crédits. */
+  .disclaimer{max-width:760px; margin:0 auto 18px; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:12px;
+    color:var(--ink-2-fort); font-size:12.5px; line-height:1.55; text-align:center; padding:10px 16px}
   .disclaimer strong{color:var(--ink)}
 
   /* ---------- Pages / router ---------- */
@@ -154,7 +180,7 @@
      carte — et l'ombre portée est ce qui le dit. Le bas est coupé net par le
      cadre, comme une découpe collée. */
   .hero__tour{position:absolute; right:clamp(0px,2vw,56px); bottom:0; z-index:2;
-    width:auto; height:min(66%,520px);
+    width:auto; height:min(88%,690px);
     filter:drop-shadow(0 22px 26px rgba(36,40,56,.30));
     animation:heroPose 1.1s .15s cubic-bezier(.16,.62,.28,1) both}
   :root[data-theme="dark"] .hero__tour{filter:drop-shadow(0 22px 26px rgba(0,0,0,.55)) brightness(.84)}
@@ -172,7 +198,7 @@
   /* Entre 761 et 1000 px les deux colonnes se serrent : la tour rétrécit
      AVANT que le texte ne passe dessous. */
   @media (min-width:761px) and (max-width:1000px){
-    .hero__tour{height:min(54%,380px)}
+    .hero__tour{height:min(74%,500px)}
     .hero__content{max-width:min(460px,46vw)}
   }
   .hero__eyebrow{display:inline-block; font-size:12px; font-weight:800; letter-spacing:.15em; text-transform:uppercase;
@@ -210,14 +236,21 @@
   /* La bande de chiffres ferme le hero : quatre nombres vrais, comptés dans le
      code (AERODROMES, AIRCRAFT, SCENARIOS, et le tirage d'aléas du mode Réel).
      Elle est bornée en largeur pour ne pas courir sous la tour. */
-  .hero__strip{position:relative; z-index:3; display:flex; flex-wrap:wrap; gap:clamp(20px,4.5vw,58px);
-    margin-top:clamp(30px,5vh,56px); max-width:min(780px,56vw);
+  /* Quatre colonnes, et quatre seulement : en flex-wrap, le quatrième nombre
+     retombait seul sur une deuxième ligne dès que la mesure se resserrait — une
+     bande de chiffres qui se casse en 3 + 1 se lit comme un oubli. La grille
+     impose la ligne unique ; c'est l'écart qui cède, pas le rang. */
+  .hero__strip{position:relative; z-index:3; display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(10px,1.7vw,26px);
+    margin-top:clamp(30px,5vh,56px); max-width:min(860px,60vw);
     padding:0 clamp(20px,5vw,44px) clamp(46px,7vw,84px);
     opacity:0; animation:fadeUp .9s .9s ease forwards}
   .hero__num{display:flex; flex-direction:column; gap:3px}
   .hero__num b{font-family:var(--mono); font-size:clamp(23px,3.1vw,33px); font-weight:800; line-height:1;
     letter-spacing:-.02em; color:var(--violet-dark)}
-  .hero__num span{font-size:11.5px; font-weight:700; letter-spacing:.10em; text-transform:uppercase;
+  /* Interlettrage resserré par rapport au reste du site : à .10em, « AÉRODROMES
+     FRANÇAIS » passait à la ligne et cassait l'alignement des quatre libellés. */
+  .hero__num span{font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
     color:var(--ink-2-fort)}
   /* L'indicateur de défilement quitte le centre : la bande de chiffres l'occupe.
      Il passe lui aussi du verre blanc au papier — sur une carte claire, un rond
@@ -241,7 +274,7 @@
     .hero__inner{padding-top:clamp(8px,2vh,18px)}
     .hero__claim{font-size:13.5px}
     .hero__eyebrow{font-size:11px; letter-spacing:.11em}
-    .hero__strip{gap:18px 26px; max-width:none}
+    .hero__strip{grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 26px; max-width:none}
     .hero__num b{font-size:22px}
     .hero .scroll-cue{display:none}
   }
@@ -427,6 +460,18 @@
     background:linear-gradient(138deg, var(--grad-top) 0%, var(--grad-mid) 54%, var(--grad-bot) 128%)}
   .final::before{content:""; position:absolute; inset:0; pointer-events:none; opacity:.16;
     mix-blend-mode:overlay; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='170' height='170' filter='url(%23g)' opacity='.55'/%3E%3C/svg%3E"); background-size:170px 170px}
+  /* L'A320 d'Air France ferme la page. Le panneau est déjà un ciel — dégradé
+     nuit → violet → lever de soleil — et l'appareil est photographié en montée :
+     il sort du cadre par le coin bas-droit, comme s'il venait de décoller de la
+     page. Il est DÉCORATIF, et c'est important : la liste des appareils de
+     l'application ne contient que des machines légères de VFR, pas d'A320. Rien
+     dans le texte n'en dépend, d'où aria-hidden et l'absence de légende.
+     Il vit sous .final__in (z-index 0 contre 1) et s'efface sous 900 px, où il
+     n'y a plus de marge à droite du texte. */
+  .final__avion{position:absolute; z-index:0; right:-2%; bottom:-7%;
+    width:clamp(260px,33vw,480px); height:auto; opacity:.94; pointer-events:none;
+    filter:drop-shadow(0 26px 40px rgba(10,6,28,.50))}
+  @media (max-width:900px){ .final__avion{display:none} }
   .final__in{position:relative; z-index:1; max-width:640px; margin:0 auto}
   .final h2{font-size:clamp(26px,3.5vw,40px); font-weight:800; letter-spacing:-.03em; color:#fff}
   .final p{margin:16px 0 0; font-size:clamp(15px,1.5vw,17px); line-height:1.62; color:rgba(255,255,255,.84)}
@@ -2683,10 +2728,6 @@
     </div>
   </nav>
 
-  <div class="disclaimer">
-    <strong>Outil pédagogique</strong> — données fictives — ne remplace pas la formation avec un instructeur — ne pas utiliser pour la préparation d'un vol réel.
-  </div>
-
   <!-- ==================== BARRE LATÉRALE (visible uniquement une fois « connecté ») ==================== -->
   <aside class="sidebar" id="sidebar" aria-label="Navigation">
     <!-- Tête de la barre : le bouton 3 barres replie le menu en simple rail
@@ -2781,7 +2822,7 @@
       <section class="sec">
         <div class="container">
           <span class="sec-tag">Ce qu'on peut faire</span>
-          <h2 class="sec-h">Cinq façons de s'entraîner, pas une.</h2>
+          <h2 class="sec-h">5 façons différentes de s'entraîner.</h2>
           <p class="sec-lede">La radio ne se travaille pas d'un seul bloc. Un vol complet entretient l'enchaînement&nbsp;; un quiz de trente secondes répare le mot qui vous manquait. <b>Les deux comptent dans la même progression.</b></p>
 
           <ul class="facons">
@@ -2795,29 +2836,29 @@
             <li class="facon reveal">
               <span class="facon__q">387 terrains</span>
               <div>
-                <h3>Votre navigation, celle que vous voleriez</h3>
-                <p>Départ, arrivée, dégagement, altitude, passagers à bord, type d'appareil. La carte OACI et les espaces aériens sont sous vos yeux pendant la préparation&nbsp;; ensuite vous volez ce que vous venez d'écrire.</p>
+                <h3>Vous choisissez votre trajet parmi des milliers de possibilités</h3>
+                <p>Départ, arrivée, dégagement, altitude, nombre de passagers, type d'appareil&nbsp;: vous remplissez votre préparation comme avant un vrai vol, la carte OACI et les espaces aériens sous les yeux. Ensuite vous volez exactement le trajet que vous venez de choisir.</p>
               </div>
             </li>
             <li class="facon reveal">
               <span class="facon__q">Alphabet OACI</span>
               <div>
-                <h3>L'épellation, au chronomètre</h3>
-                <p>Une immatriculation, un code de terrain, à épeler à voix haute. C'est ce qui revient le plus souvent sur la fréquence, et c'est aussi ce qui se perd le plus vite quand on ne vole pas.</p>
+                <h3>Apprendre parfaitement l'alphabet aéronautique (alpha, bravo…)</h3>
+                <p>L'application affiche une immatriculation, F-BYFO, ou un code de terrain, LFOR. Vous l'épelez au micro, lettre par lettre&nbsp;: «&nbsp;Foxtrot Bravo Yankee Foxtrot Oscar&nbsp;». Chaque lettre se colore selon qu'elle est juste ou fausse, et le chronomètre tourne pendant ce temps.</p>
               </div>
             </li>
             <li class="facon reveal">
               <span class="facon__q">Quiz · p. 19-21</span>
               <div>
-                <h3>Le vocabulaire imposé</h3>
-                <p>Affirme, Négatif, Wilco, Roger, Impossible. Cinq mots qui ne sont pas interchangeables, et qu'aucune formule polie ne remplace sur la fréquence.</p>
+                <h3>Un quiz sur les mots qu'emploie le contrôleur</h3>
+                <p>Huit questions à choix multiple&nbsp;: que répondre à «&nbsp;Êtes-vous prêt pour un départ immédiat&nbsp;?&nbsp;», ce que veut dire WILCO, la différence entre APPROUVÉ et AUTORISÉ. Vous cochez une réponse&nbsp;: la bonne passe au vert, la vôtre au rouge si vous vous êtes trompé, et le point compte dans le récapitulatif de fin.</p>
               </div>
             </li>
             <li class="facon reveal">
               <span class="facon__q">Quiz · p. 11-18</span>
               <div>
-                <h3>Les nombres, qui ne se disent pas comme ailleurs</h3>
-                <p>Fréquences, caps, sigles, indicatif abrégé. Une fréquence ne se lit pas comme un numéro de téléphone, et un indicatif ne s'abrège pas n'importe quand.</p>
+                <h3>Un quiz sur les nombres, les sigles et les indicatifs</h3>
+                <p>Neuf questions à choix multiple&nbsp;: comment on annonce la fréquence 120,775, pourquoi un cap se donne toujours en trois chiffres, comment se prononce le sigle QNH, ce que veut dire QFU, et à quel moment on a le droit d'abréger F-BGBX en F-BX.</p>
               </div>
             </li>
           </ul>
@@ -2834,7 +2875,7 @@
           </div>
           <div class="fleet__txt">
             <span class="sec-tag">Avant de partir</span>
-            <h2 class="sec-h">Vous préparez le vol, puis vous le faites.</h2>
+            <h2 class="sec-h">Vous préparez le vol, puis vous le faites de A à Z.</h2>
             <p class="sec-lede">Départ, arrivée, dégagement, altitude, passagers à bord, type d'appareil. La carte OACI et les espaces aériens sont sous vos yeux pendant que vous choisissez, et la piste en service se déduit du vent du jour.</p>
             <p class="sec-lede">Ensuite le vol se déroule d'un bout à l'autre : mise en route, roulage, décollage, croisière, intégration, atterrissage, parking. Sans coupure.</p>
           </div>
@@ -2943,7 +2984,7 @@
       <section class="offre">
         <div class="container">
           <span class="sec-tag">L'offre</span>
-          <h2 class="sec-h">Essayez d'abord. Vous paierez quand vous saurez pourquoi.</h2>
+          <h2 class="sec-h">Essayez d'abord, vous payerez après avoir testé.</h2>
           <p class="sec-lede">On ne vous demande pas de croire sur parole qu'un simulateur de phraséologie sert à quelque chose. Ouvrez un compte, faites un vol complet, déclenchez une panne moteur en montée initiale, et voyez ce que ça donne. <b>C'est au bout du premier MAYDAY qu'on sait.</b></p>
 
           <div class="strip reveal">
@@ -3015,6 +3056,10 @@
 
       <!-- ---- L'appel final ---- -->
       <section class="final">
+        <!-- width/height portés sur la balise : la place est réservée avant que
+             l'image arrive, sinon le panneau sursaute au chargement. -->
+        <img class="final__avion" src="assets/avions/a320-air-france.webp" alt=""
+             width="760" height="219" decoding="async" loading="lazy" aria-hidden="true">
         <div class="final__in">
           <h2>La prochaine fois que ça arrive, ce ne sera pas la première.</h2>
           <p>Rien à installer, rien à configurer. Un micro, un navigateur, et vous êtes en fréquence.</p>
@@ -4836,6 +4881,15 @@
   </main>
 
   <footer>
+    <!-- L'avertissement était une bande grise en TÊTE de page, au-dessus du
+         titre : la première chose lue était une mise en garde. Il n'a pas
+         disparu — il ferme la page, avec les mentions légales, là où on va
+         chercher ce genre de ligne. Il reste par ailleurs dit deux fois dans le
+         corps de la page (note du hero, note de l'appel final), donc rien
+         n'est perdu pour qui ne descend pas jusqu'ici. -->
+    <p class="disclaimer">
+      <strong>Outil pédagogique</strong> — données fictives — ne remplace pas la formation avec un instructeur — ne pas utiliser pour la préparation d'un vol réel.
+    </p>
     <!-- Cette phrase disait « le reste du site n'envoie aucune donnée sur
          Internet ». C'était vrai du site d'origine, dont la connexion était une
          simple variable en mémoire ; ça a cessé de l'être le jour où les comptes
@@ -4844,7 +4898,7 @@
          — et ici elle contredisait la politique de confidentialité. -->
     Les exercices fonctionnent hors-ligne (hors micro et synthèse vocale du navigateur). Trois choses sortent cependant de votre machine : le <strong>fond de carte de la page Navigation</strong>, chargé depuis les serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données ; et les <strong>erreurs techniques</strong>, pour qu'on puisse les corriger. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
     <br><button class="auth-link" type="button" data-page="mentions">Mentions légales</button> · <button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
-    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
+    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82 ; Airbus A320 d'Air France (F-GKXE) — découpe fournie. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
 
   <div class="toast" id="toast"></div>

@@ -47,11 +47,12 @@ test ne parle en numéros de ligne.
 
 | Fichier | Ce qu'il empêche |
 |---|---|
-| `symboles.test.mjs` | Un symbole partagé disparaît, est déclaré deux fois, ou est lu avant d'exister sans `typeof` |
+| `symboles.test.mjs` | Un symbole partagé disparaît, est déclaré deux fois, ou est lu avant d'exister sans `typeof` ni inscription |
 | `chargement.test.mjs` | L'ordre des scripts ou de la cascade CSS change ; un fichier référencé manque |
 | `stockage.test.mjs` | Une clé de stockage est renommée sans migration — c'est-à-dire des données effacées sans message |
 | `routeur.test.mjs` | Une route perd sa page ; une page légale devient inaccessible sans compte |
 | `phraseologie.test.mjs` | Un scénario disparaît, perd des échanges, ou perd ses renvois au manuel ; le catalogue diverge de la table `exercises` |
+| `css.test.mjs` | Une image du CSS ne mène nulle part ; les feuilles changent d'ordre ; du CSS revient dans la page |
 | `syntaxe.test.mjs` | Un bloc ne se lit plus (et meurt en silence pendant que les autres continuent) |
 | `secrets.test.mjs` | Une clé secrète, un jeton ou un mot de passe entre dans un fichier servi |
 
@@ -135,6 +136,21 @@ enregistrerait la disparition d'un symbole comme un fait nouveau.
 **Un test rouge ne se répare donc pas en relançant ce script.** Il se lit, on
 comprend ce qui manque, et *si le changement est voulu*, on regèle — en lisant
 le diff.
+
+### `lectures_differees`
+
+Une entrée de cet inventaire dit : « ce fichier lit un symbole déclaré plus
+loin, je le sais, et c'est sans danger parce que la lecture n'a lieu que dans le
+corps d'une fonction ».
+
+Le cas réel : `assets/donnees/phraseologie-scenarios.js` n'est pas que des
+données. Le scénario « navigation » y porte un `buildTours()` qui construit ses
+échanges sur l'espace aérien réel au-dessus du terrain choisi, et appelle donc
+le moteur (`state`, `codeSSR()`, `numVariants()`…). Ces appels ont lieu au
+lancement du scénario, pas au chargement de la page.
+
+Ce qui reste interdit — et c'est le seul vrai danger — est une lecture
+**nouvelle**, ni gardée par `typeof`, ni inscrite.
 
 ---
 

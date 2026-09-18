@@ -118,7 +118,7 @@ En cas de doute sur le côté de la frontière où tombe un changement : il tomb
 
 ## 6. Architecture
 
-L'application actuelle est notamment basée sur un gros `index.html` contenant beaucoup de HTML, CSS et JavaScript.
+L'application est encore largement portée par un gros `index.html`. Sa réduction a commencé le 18/09/2026 (voir § 6.2 pour l'état exact et ce qui reste).
 
 La migration vers une architecture plus propre doit se faire progressivement lorsque cela est pertinent.
 
@@ -146,6 +146,34 @@ Aucune technologie n'est interdite par principe.
 **Mais** : ne choisis pas une technologie parce qu'elle est moderne, choisis-la si elle apporte un avantage réel au projet. Et **une migration technologique majeure doit être expliquée et validée avant d'être engagée** (§ 4).
 
 Note : les bibliothèques sont aujourd'hui vendorées (`assets/vendor/`, `assets/leaflet.js`) précisément à cause de `file://`. Ce vendoring n'a plus de raison d'être obligatoire, mais il n'est pas urgent de le défaire — il ne coûte rien et évite une dépendance réseau.
+
+---
+
+### 6.2 Où en est le découpage — état au 18/09/2026
+
+`index.html` est passé de **15 016 à 11 099 lignes**. Ce qui en est sorti :
+
+| Sorti | Vers | Lignes |
+|---|---|---|
+| Tout le CSS du site | `assets/css/01-socle.css` … `14-carte.css` | 2 676 |
+| Les 387 aérodromes | `assets/donnees/aerodromes.js` | 424 |
+| Les 13 scénarios **et les fabriques de tours** | `assets/donnees/phraseologie-scenarios.js` | 669 |
+| Ce que la reconnaissance entend de travers | `assets/donnees/reconnaissance.js` | 176 |
+| Les icônes SVG | `assets/donnees/icones.js` | 16 |
+
+Rien n'a été réécrit : les lignes ont été **déplacées**, et vérifié comme telles (concaténation identique octet pour octet pour le CSS, même multi-ensemble de lignes pour le JavaScript).
+
+**Les deux règles d'ordre, qui ne se devinent pas :**
+
+1. **Le CSS.** Les quatorze `<link>` sont numérotés parce que c'est la cascade. `09-theme-sombre.css` ne vaut que placé après ce qu'il surcharge. Intervertir deux lignes ne produit aucune erreur — seulement un site méconnaissable.
+2. **Les données.** Leurs `<script src>` sont **avant** le bloc du moteur, parce qu'elles déclarent des `const` au niveau racine. Les descendre sous le moteur casse tout, sans la moindre erreur au chargement : `SCENARIOS is not defined` tombe au premier clic.
+
+**Le piège déjà tombé, deux fois, en une soirée :**
+
+- les `url("assets/images/…")` du CSS partaient de la racine tant qu'ils étaient dans la page ; dans `assets/css/`, il leur faut `../images/…`. Dix-sept images de fond en 404, **sans aucune erreur de console** ;
+- `SCENARIOS` **appelle** `tourVentArriere()` et consorts au moment où son tableau se construit. Ces fabriques ont donc dû partir avec lui. Les tests de contrat n'ont rien vu — tous les symboles étaient là, dans le bon ordre — et ce sont les tests de navigateur qui l'ont dit en trois secondes.
+
+**Prochaine étape proposée, non engagée :** les blocs périphériques d'`index.html` (carte, tableau de bord, paramètres, tuiles, routeur, épellation), puis la Navigation, et **le moteur en dernier** — découpé selon ses treize sections déjà numérotées. Le moteur est le noyau de fait : une soixantaine de symboles en partent vers tous les autres blocs.
 
 ---
 
@@ -554,6 +582,9 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 18/09/2026 | Une branche par étape dès la première phase de restructuration, fusion seulement si les tests passent | § 13.1 |
 | 18/09/2026 | Le bloc légal complet sera revu avant la mise en ligne ; correction au fil de l'eau de ce qui est faux | § 15 |
 | 18/09/2026 | Explications courtes, droit au but | § 12.1 |
+| 18/09/2026 | Base de tests versionnée dans `tests/` : contrat (Node) + parcours (Playwright). Les tests ne parlent jamais au Supabase de production | § 11.1 |
+| 18/09/2026 | Le CSS quitte `index.html` : 14 fichiers numérotés, l'ordre est la cascade | § 6.2 |
+| 18/09/2026 | Les données statiques quittent le moteur : aérodromes, phraséologie, reconnaissance, icônes. Chargées AVANT le moteur | § 6.2 |
 
 ### En attente de validation
 

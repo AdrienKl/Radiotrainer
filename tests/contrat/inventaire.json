@@ -3,6 +3,10 @@
   "gele_le": "2026-09-18",
   "ordre_scripts": [
     "index.html#1",
+    "assets/donnees/aerodromes.js",
+    "assets/donnees/phraseologie-scenarios.js",
+    "assets/donnees/reconnaissance.js",
+    "assets/donnees/icones.js",
     "index.html#2",
     "index.html#3",
     "index.html#4",
@@ -58,9 +62,16 @@
   "symboles_partages": [
     {
       "nom": "AD_CONNUS",
-      "declare": "index.html#2",
+      "declare": "assets/donnees/aerodromes.js",
       "lu_par": [
-        "index.html#6"
+        "index.html#2"
+      ]
+    },
+    {
+      "nom": "AD_RANG",
+      "declare": "assets/donnees/aerodromes.js",
+      "lu_par": [
+        "index.html#2"
       ]
     },
     {
@@ -72,10 +83,10 @@
     },
     {
       "nom": "AERODROMES",
-      "declare": "index.html#2",
+      "declare": "assets/donnees/aerodromes.js",
       "lu_par": [
+        "index.html#2",
         "index.html#4",
-        "assets/aerodromes-geo.js",
         "index.html#6",
         "index.html#7",
         "assets/compte.js",
@@ -87,17 +98,17 @@
       ]
     },
     {
-      "nom": "armSilence",
-      "declare": "index.html#2",
-      "lu_par": [
-        "index.html#9"
-      ]
-    },
-    {
       "nom": "atisVars",
       "declare": "index.html#2",
       "lu_par": [
         "index.html#6"
+      ]
+    },
+    {
+      "nom": "BIGRAMS",
+      "declare": "assets/donnees/reconnaissance.js",
+      "lu_par": [
+        "index.html#2"
       ]
     },
     {
@@ -116,25 +127,18 @@
       ]
     },
     {
-      "nom": "buildQueue",
-      "declare": "index.html#2",
+      "nom": "circuitChoiceStep",
+      "declare": "assets/donnees/phraseologie-scenarios.js",
       "lu_par": [
-        "assets/admin/data/source-mock.js",
-        "assets/admin/pages/exercises.js"
+        "index.html#2"
       ]
     },
     {
       "nom": "codeSSR",
       "declare": "index.html#2",
       "lu_par": [
+        "assets/donnees/phraseologie-scenarios.js",
         "index.html#6"
-      ]
-    },
-    {
-      "nom": "correctToken",
-      "declare": "index.html#2",
-      "lu_par": [
-        "index.html#4"
       ]
     },
     {
@@ -142,23 +146,6 @@
       "declare": "index.html#2",
       "lu_par": [
         "index.html#6"
-      ]
-    },
-    {
-      "nom": "entre",
-      "declare": "index.html#2",
-      "lu_par": [
-        "index.html#3",
-        "index.html#4",
-        "index.html#6",
-        "index.html#7",
-        "assets/auth.js",
-        "assets/sync.js",
-        "assets/donnees.js",
-        "assets/compte.js",
-        "assets/inscription.js",
-        "assets/admin/data/source-supabase.js",
-        "assets/admin/pages/analytics.js"
       ]
     },
     {
@@ -183,6 +170,13 @@
       ]
     },
     {
+      "nom": "freqMots",
+      "declare": "index.html#2",
+      "lu_par": [
+        "assets/donnees/phraseologie-scenarios.js"
+      ]
+    },
+    {
       "nom": "fuzzyCorrect",
       "declare": "index.html#2",
       "lu_par": [
@@ -191,16 +185,10 @@
     },
     {
       "nom": "ICONS",
-      "declare": "index.html#2",
+      "declare": "assets/donnees/icones.js",
       "lu_par": [
+        "index.html#2",
         "index.html#4",
-        "index.html#6"
-      ]
-    },
-    {
-      "nom": "launchScenario",
-      "declare": "index.html#2",
-      "lu_par": [
         "index.html#6"
       ]
     },
@@ -208,11 +196,7 @@
       "nom": "lev",
       "declare": "index.html#2",
       "lu_par": [
-        "index.html#3",
-        "index.html#4",
-        "assets/admin/data/source-mock.js",
-        "assets/admin/data/source-supabase.js",
-        "assets/admin/pages/flights.js"
+        "index.html#4"
       ]
     },
     {
@@ -238,8 +222,9 @@
     },
     {
       "nom": "MISHEARD",
-      "declare": "index.html#2",
+      "declare": "assets/donnees/reconnaissance.js",
       "lu_par": [
+        "index.html#2",
         "index.html#4"
       ]
     },
@@ -254,6 +239,7 @@
       "nom": "NAV_AD_GEO",
       "declare": "assets/aerodromes-geo.js",
       "lu_par": [
+        "assets/donnees/phraseologie-scenarios.js",
         "index.html#2",
         "index.html#6",
         "index.html#7"
@@ -286,7 +272,6 @@
       "nom": "normalize",
       "declare": "index.html#2",
       "lu_par": [
-        "index.html#4",
         "index.html#6",
         "assets/inscription.js",
         "assets/admin/data/contract.js",
@@ -297,6 +282,7 @@
       "nom": "numVariants",
       "declare": "index.html#2",
       "lu_par": [
+        "assets/donnees/phraseologie-scenarios.js",
         "index.html#6"
       ]
     },
@@ -314,6 +300,13 @@
       "lu_par": [
         "index.html#6",
         "index.html#7"
+      ]
+    },
+    {
+      "nom": "orgVars",
+      "declare": "index.html#2",
+      "lu_par": [
+        "assets/donnees/phraseologie-scenarios.js"
       ]
     },
     {
@@ -413,8 +406,7 @@
       "declare": "index.html#2",
       "lu_par": [
         "index.html#6",
-        "index.html#9",
-        "assets/donnees.js"
+        "index.html#9"
       ]
     },
     {
@@ -441,10 +433,9 @@
     },
     {
       "nom": "SCENARIOS",
-      "declare": "index.html#2",
+      "declare": "assets/donnees/phraseologie-scenarios.js",
       "lu_par": [
-        "assets/donnees.js",
-        "assets/admin/data/contract.js",
+        "index.html#2",
         "assets/admin/data/source-mock.js",
         "assets/admin/data/source-local.js",
         "assets/admin/data/source-supabase.js",
@@ -453,21 +444,7 @@
       ]
     },
     {
-      "nom": "scMajEcouteAtis",
-      "declare": "index.html#2",
-      "lu_par": [
-        "assets/admin/data/source-mock.js"
-      ]
-    },
-    {
       "nom": "setRecoSink",
-      "declare": "index.html#2",
-      "lu_par": [
-        "index.html#6"
-      ]
-    },
-    {
-      "nom": "setupAutocomplete",
       "declare": "index.html#2",
       "lu_par": [
         "index.html#6"
@@ -484,14 +461,14 @@
       ]
     },
     {
-      "nom": "speakATC",
+      "nom": "sivProche",
       "declare": "index.html#2",
       "lu_par": [
-        "index.html#6"
+        "assets/donnees/phraseologie-scenarios.js"
       ]
     },
     {
-      "nom": "spokenDigits",
+      "nom": "speakATC",
       "declare": "index.html#2",
       "lu_par": [
         "index.html#6"
@@ -501,8 +478,7 @@
       "nom": "startListening",
       "declare": "index.html#2",
       "lu_par": [
-        "index.html#6",
-        "assets/admin/data/source-mock.js"
+        "index.html#6"
       ]
     },
     {
@@ -516,12 +492,9 @@
       "nom": "state",
       "declare": "index.html#2",
       "lu_par": [
-        "index.html#3",
+        "assets/donnees/phraseologie-scenarios.js",
         "index.html#4",
         "index.html#6",
-        "index.html#9",
-        "assets/compte.js",
-        "assets/inscription.js",
         "assets/admin/admin.js",
         "assets/admin/pages/dashboard.js",
         "assets/admin/pages/analytics.js"
@@ -542,12 +515,39 @@
       ]
     },
     {
+      "nom": "tourBase",
+      "declare": "assets/donnees/phraseologie-scenarios.js",
+      "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
+      "nom": "tourFinale",
+      "declare": "assets/donnees/phraseologie-scenarios.js",
+      "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
+      "nom": "tourNumeroATC",
+      "declare": "assets/donnees/phraseologie-scenarios.js",
+      "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
+      "nom": "tourVentArriere",
+      "declare": "assets/donnees/phraseologie-scenarios.js",
+      "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
       "nom": "Voix",
       "declare": "index.html#2",
       "lu_par": [
         "index.html#6",
-        "index.html#9",
-        "assets/admin/pages/test.js"
+        "index.html#9"
       ]
     },
     {
@@ -557,6 +557,14 @@
         "index.html#6"
       ]
     }
+  ],
+  "lectures_differees": [
+    "codeSSR@assets/donnees/phraseologie-scenarios.js",
+    "freqMots@assets/donnees/phraseologie-scenarios.js",
+    "numVariants@assets/donnees/phraseologie-scenarios.js",
+    "orgVars@assets/donnees/phraseologie-scenarios.js",
+    "sivProche@assets/donnees/phraseologie-scenarios.js",
+    "state@assets/donnees/phraseologie-scenarios.js"
   ],
   "cles_stockage": [
     "radiotrainer_history_v2",

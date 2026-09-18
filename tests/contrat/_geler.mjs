@@ -41,6 +41,30 @@ for (const [nom, iDecl] of [...declarePar].sort((a, b) => a[0].localeCompare(b[0
   if (lecteurs.length) partages.push({ nom, declare: nos[iDecl].origine, lu_par: lecteurs });
 }
 
+/* ---- Les lectures différées, connues et acceptées ------------------------
+   Un fichier peut lire un symbole declaré plus loin, à une condition : que la
+   lecture ne se produise pas au chargement. C'est le cas d'un appel écrit dans
+   le corps d'une fonction, qui n'est évalué que le jour où la fonction est
+   appelée.
+
+   Le cas réel du projet : `assets/donnees/phraseologie-scenarios.js` n'est pas
+   que des données. Le scénario « navigation » y porte un `buildTours()` qui
+   construit ses échanges sur l'espace aérien réel au-dessus du terrain choisi,
+   et qui appelle donc le moteur (`state`, `codeSSR()`, `numVariants()`). Ces
+   appels ont lieu au lancement du scénario, pas au chargement de la page.
+
+   On les inscrit ici plutôt que d'assouplir la règle : ce qui est inscrit se
+   relit dans un diff, ce qui est assoupli ne se relit plus jamais. */
+const lecturesDifferees = [];
+for (const [nom, iDecl] of declarePar) {
+  nos.forEach((s, i) => {
+    if (i >= iDecl || !utilise(s.code, nom)) return;
+    if (new RegExp(`typeof\\s+${nom}\\b`).test(s.code)) return;   // déjà gardé
+    lecturesDifferees.push(`${nom}@${s.origine}`);
+  });
+}
+lecturesDifferees.sort();
+
 /* ---- Le routeur --------------------------------------------------------- */
 const html = lire('index.html');
 const lstPages = /var\s+PAGES\s*=\s*\[([^\]]+)\]/.exec(html);
@@ -66,6 +90,7 @@ const inv = {
   ordre_scripts: scripts().map(s => s.origine),
   ordre_styles: styles().map(s => s.origine),
   symboles_partages: partages,
+  lectures_differees: lecturesDifferees,
   cles_stockage: [...new Set(
     ((lire('index.html') + nos.map(s => s.code).join('\n'))
       .match(/['"](rt-[a-z-]+|radiotrainer_history_v2)['"]/g) || [])

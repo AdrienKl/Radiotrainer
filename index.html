@@ -9653,6 +9653,42 @@ window.rtRelancerScenario=function(idx, icao){
   launchScenario(idx);
   return true;
 };
+/* =========================================================================
+   Prise de test des scénarios, sur le modèle exact de RT_TEST (Navigation) et
+   de RT_TEST_EPEL (Épellation).
+   -------------------------------------------------------------------------
+   Elle n'ajoute AUCUNE logique et ne crée AUCUN second chemin d'évaluation :
+   `dire()` écrit dans le champ de transcription — celui que la reconnaissance
+   vocale remplit déjà, et que l'on peut remplir au clavier quand il n'y a pas
+   de micro (« Permettre de taper directement », plus bas) — puis clique le
+   bouton « Valider ma réponse ». C'est le geste de l'élève, pas un raccourci.
+
+   POURQUOI IL EN FALLAIT UNE
+   Un test automatique ne parle pas dans un micro, et surtout il ne connaît pas
+   la bonne réponse : le collationnement attendu est un gabarit (« {ADRM} {STN},
+   {CALL}, … ») dont les valeurs ne sont tirées qu'au lancement du scénario.
+   `attendu()` rend la phrase résolue, exactement telle que le moteur la
+   comparera. Sans cela, on ne pouvait vérifier qu'une réponse FAUSSE — ce qui
+   ne prouve rien sur la notation d'une réponse juste.
+   ========================================================================= */
+window.RT_TEST_SCN = {
+  /* Le collationnement attendu à cette étape, placeholders résolus. */
+  attendu:  function(){ var s=currentStep(); return s ? fillDisplay(s.attendu||'') : ''; },
+  /* Déposer une réponse et la valider, par le chemin de l'élève. */
+  dire:     function(txt){
+              el.transText.value = String(txt||'');
+              el.validerBtn.disabled = !el.transText.value.trim();
+              el.validerBtn.click();
+            },
+  suivant:  function(){ if(!el.nextBtn.disabled) el.nextBtn.click(); },
+  etape:    function(){ return state.stepIndex; },
+  total:    function(){ return state.queue.length; },
+  enCours:  function(){ return scenarioEnCours(); },
+  /* Le tour courant est-il un tour où l'élève doit parler ? Les tours du
+     contrôleur s'enchaînent avec « Suivant », sans rien à dire. */
+  aRepondre:function(){ var s=currentStep(); return !!(s && s.attendu); }
+};
+
 function renderBadges(){
   const badges=computeBadges(loadHistory());
   el.badgeGrid.innerHTML='';

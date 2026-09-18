@@ -1,0 +1,674 @@
+{
+  "_lisezmoi": "Genere par tests/contrat/_geler.mjs. Ne pas modifier a la main : regenerer et lire le diff.",
+  "gele_le": "2026-09-18",
+  "ordre_scripts": [
+    "index.html#1",
+    "index.html#2",
+    "index.html#3",
+    "index.html#4",
+    "assets/leaflet.js",
+    "index.html#5",
+    "assets/aerodromes-geo.js",
+    "assets/airspace.js",
+    "assets/avions.js",
+    "index.html#6",
+    "index.html#7",
+    "index.html#8",
+    "index.html#9",
+    "assets/supabase-config.js",
+    "assets/vendor/supabase.js",
+    "assets/auth.js",
+    "assets/sync.js",
+    "assets/donnees.js",
+    "assets/compte.js",
+    "assets/inscription.js",
+    "assets/admin/data/error-log.js",
+    "assets/admin/data/contract.js",
+    "assets/admin/ui/kit.js",
+    "assets/admin/data/source-mock.js",
+    "assets/admin/data/source-local.js",
+    "assets/admin/data/source-supabase.js",
+    "assets/admin/admin.js",
+    "assets/admin/pages/dashboard.js",
+    "assets/admin/pages/users.js",
+    "assets/admin/pages/flights.js",
+    "assets/admin/pages/analytics.js",
+    "assets/admin/pages/exercises.js",
+    "assets/admin/pages/errors.js",
+    "assets/admin/pages/test.js"
+  ],
+  "ordre_styles": [
+    "assets/leaflet.css",
+    "index.html#1",
+    "assets/admin/admin.css"
+  ],
+  "symboles_partages": [
+    {
+      "nom": "AD_CONNUS",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "adComparer",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "AERODROMES",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4",
+        "assets/aerodromes-geo.js",
+        "index.html#6",
+        "index.html#7",
+        "assets/compte.js",
+        "assets/inscription.js",
+        "assets/admin/data/source-mock.js",
+        "assets/admin/data/source-local.js",
+        "assets/admin/data/source-supabase.js",
+        "assets/admin/pages/test.js"
+      ]
+    },
+    {
+      "nom": "armSilence",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#9"
+      ]
+    },
+    {
+      "nom": "atisVars",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "bindPushToTalk",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4",
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "buildAtis",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "buildQueue",
+      "declare": "index.html#2",
+      "lu_par": [
+        "assets/admin/data/source-mock.js",
+        "assets/admin/pages/exercises.js"
+      ]
+    },
+    {
+      "nom": "codeSSR",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "correctToken",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4"
+      ]
+    },
+    {
+      "nom": "drawMeteo",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "entre",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#3",
+        "index.html#4",
+        "index.html#6",
+        "index.html#7",
+        "assets/auth.js",
+        "assets/sync.js",
+        "assets/donnees.js",
+        "assets/compte.js",
+        "assets/inscription.js",
+        "assets/admin/data/source-supabase.js",
+        "assets/admin/pages/analytics.js"
+      ]
+    },
+    {
+      "nom": "evaluate",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4"
+      ]
+    },
+    {
+      "nom": "fillDisplay",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "fillSpeech",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "fuzzyCorrect",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "ICONS",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4",
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "launchScenario",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "lev",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#3",
+        "index.html#4",
+        "assets/admin/data/source-mock.js",
+        "assets/admin/data/source-supabase.js",
+        "assets/admin/pages/flights.js"
+      ]
+    },
+    {
+      "nom": "lissageTranscription",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "LS_KEY",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#9"
+      ]
+    },
+    {
+      "nom": "mcFound",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "MISHEARD",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4"
+      ]
+    },
+    {
+      "nom": "NATO",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4"
+      ]
+    },
+    {
+      "nom": "NAV_AD_GEO",
+      "declare": "assets/aerodromes-geo.js",
+      "lu_par": [
+        "index.html#2",
+        "index.html#6",
+        "index.html#7"
+      ]
+    },
+    {
+      "nom": "NAV_AIRSPACE",
+      "declare": "assets/airspace.js",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "NAV_AIRSPACE_DATE",
+      "declare": "assets/airspace.js",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "NAV_AVIONS",
+      "declare": "assets/avions.js",
+      "lu_par": [
+        "index.html#2",
+        "index.html#6",
+        "assets/admin/data/source-mock.js"
+      ]
+    },
+    {
+      "nom": "normalize",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4",
+        "index.html#6",
+        "assets/inscription.js",
+        "assets/admin/data/contract.js",
+        "assets/admin/data/source-mock.js"
+      ]
+    },
+    {
+      "nom": "numVariants",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "oaciSonde",
+      "declare": "index.html#5",
+      "lu_par": [
+        "index.html#6",
+        "index.html#7"
+      ]
+    },
+    {
+      "nom": "OaciTiles",
+      "declare": "index.html#5",
+      "lu_par": [
+        "index.html#6",
+        "index.html#7"
+      ]
+    },
+    {
+      "nom": "pick",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4",
+        "index.html#6",
+        "assets/admin/data/source-mock.js"
+      ]
+    },
+    {
+      "nom": "pttUI",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#4"
+      ]
+    },
+    {
+      "nom": "RECO_OK",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "renderBadges",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#9"
+      ]
+    },
+    {
+      "nom": "renderHistory",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#9"
+      ]
+    },
+    {
+      "nom": "renderStep",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "rendreFeedback",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "RT_SCENARIOS_MAP",
+      "declare": "index.html#2",
+      "lu_par": [
+        "assets/donnees.js"
+      ]
+    },
+    {
+      "nom": "RT_SUPABASE",
+      "declare": "assets/supabase-config.js",
+      "lu_par": [
+        "assets/auth.js",
+        "assets/sync.js",
+        "assets/admin/data/source-supabase.js"
+      ]
+    },
+    {
+      "nom": "rtBadges",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#8"
+      ]
+    },
+    {
+      "nom": "rtConfirm",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6",
+        "index.html#9",
+        "assets/admin/pages/errors.js",
+        "assets/admin/pages/test.js"
+      ]
+    },
+    {
+      "nom": "rtRelancerScenario",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#8",
+        "assets/admin/pages/test.js"
+      ]
+    },
+    {
+      "nom": "rtSaveSettings",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6",
+        "index.html#9",
+        "assets/donnees.js"
+      ]
+    },
+    {
+      "nom": "rtSettings",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6",
+        "index.html#9"
+      ]
+    },
+    {
+      "nom": "runwayInService",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "sansAccent",
+      "declare": "index.html#2",
+      "lu_par": [
+        "assets/inscription.js"
+      ]
+    },
+    {
+      "nom": "SCENARIOS",
+      "declare": "index.html#2",
+      "lu_par": [
+        "assets/donnees.js",
+        "assets/admin/data/contract.js",
+        "assets/admin/data/source-mock.js",
+        "assets/admin/data/source-local.js",
+        "assets/admin/data/source-supabase.js",
+        "assets/admin/pages/exercises.js",
+        "assets/admin/pages/test.js"
+      ]
+    },
+    {
+      "nom": "scMajEcouteAtis",
+      "declare": "index.html#2",
+      "lu_par": [
+        "assets/admin/data/source-mock.js"
+      ]
+    },
+    {
+      "nom": "setRecoSink",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "setupAutocomplete",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "showToast",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6",
+        "index.html#9",
+        "assets/admin/pages/errors.js",
+        "assets/admin/pages/test.js"
+      ]
+    },
+    {
+      "nom": "speakATC",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "spokenDigits",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "startListening",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6",
+        "assets/admin/data/source-mock.js"
+      ]
+    },
+    {
+      "nom": "startRadioNoise",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "state",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#3",
+        "index.html#4",
+        "index.html#6",
+        "index.html#9",
+        "assets/compte.js",
+        "assets/inscription.js",
+        "assets/admin/admin.js",
+        "assets/admin/pages/dashboard.js",
+        "assets/admin/pages/analytics.js"
+      ]
+    },
+    {
+      "nom": "stopListening",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "stopRadioNoise",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    },
+    {
+      "nom": "Voix",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6",
+        "index.html#9",
+        "assets/admin/pages/test.js"
+      ]
+    },
+    {
+      "nom": "VOIX_ARRETS",
+      "declare": "index.html#2",
+      "lu_par": [
+        "index.html#6"
+      ]
+    }
+  ],
+  "cles_stockage": [
+    "radiotrainer_history_v2",
+    "rt-admin-dev",
+    "rt-admin-errors",
+    "rt-admin-periode",
+    "rt-admin-rail",
+    "rt-auth",
+    "rt-cache-proprio",
+    "rt-jours",
+    "rt-menu-replie",
+    "rt-push-attente",
+    "rt-quota",
+    "rt-settings",
+    "rt-sync-file",
+    "rt-vol-en-cours",
+    "rt-vols"
+  ],
+  "pages": [
+    "accueil",
+    "login",
+    "signup",
+    "cgu",
+    "confidentialite",
+    "mentions",
+    "tableau",
+    "exercices",
+    "navigation",
+    "carte",
+    "epellation",
+    "cours",
+    "progression",
+    "parametres",
+    "compte",
+    "admin"
+  ],
+  "pages_application": [
+    "tableau",
+    "exercices",
+    "navigation",
+    "carte",
+    "epellation",
+    "cours",
+    "progression",
+    "parametres",
+    "compte"
+  ],
+  "scenarios": [
+    {
+      "id": "roulage",
+      "titre": "Mise en route + roulage",
+      "attendus": 6,
+      "refs_manuel": 8
+    },
+    {
+      "id": "decollage",
+      "titre": "Décollage",
+      "attendus": 5,
+      "refs_manuel": 7
+    },
+    {
+      "id": "integration",
+      "titre": "Intégration + atterrissage",
+      "attendus": 4,
+      "refs_manuel": 2
+    },
+    {
+      "id": "tourdepiste",
+      "titre": "Tour de piste",
+      "attendus": 0,
+      "refs_manuel": 0
+    },
+    {
+      "id": "navigation",
+      "titre": "Navigation / croisière",
+      "attendus": 11,
+      "refs_manuel": 2
+    },
+    {
+      "id": "urgence",
+      "titre": "Urgence (Mayday / Pan Pan)",
+      "attendus": 4,
+      "refs_manuel": 4
+    },
+    {
+      "id": "panneradio",
+      "titre": "Panne radio (procédure)",
+      "attendus": 0,
+      "refs_manuel": 1
+    },
+    {
+      "id": "pointattente",
+      "titre": "Point d'attente et traversée de piste",
+      "attendus": 5,
+      "refs_manuel": 3
+    },
+    {
+      "id": "apresatt",
+      "titre": "Après atterrissage",
+      "attendus": 5,
+      "refs_manuel": 3
+    },
+    {
+      "id": "transit",
+      "titre": "Transit VFR d'un espace contrôlé",
+      "attendus": 4,
+      "refs_manuel": 4
+    },
+    {
+      "id": "remisegaz",
+      "titre": "Remise de gaz",
+      "attendus": 2,
+      "refs_manuel": 2
+    },
+    {
+      "id": "vocabulaire",
+      "titre": "Expressions conventionnelles",
+      "attendus": 0,
+      "refs_manuel": 1
+    },
+    {
+      "id": "nombres",
+      "titre": "Nombres, sigles et indicatifs",
+      "attendus": 0,
+      "refs_manuel": 1
+    }
+  ]
+}

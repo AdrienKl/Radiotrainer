@@ -183,11 +183,28 @@ Si un type de donnée **ne peut pas** être fusionné proprement (deux valeurs d
 
 ### 7.2 Les clés de stockage local — risque de perte silencieuse
 
-Dix clés `localStorage` portent aujourd'hui le préfixe `rt-` (`rt-settings`, `rt-vols`, `rt-vol-en-cours`, `rt-jours`, `rt-quota`, `rt-sync-file`, `rt-auth`, `rt-admin-dev`, `rt-admin-rail`) plus `radiotrainer_history_v2`.
+**Quinze clés** de stockage local, relevées le 18/09/2026 par `tests/contrat/_geler.mjs` — cette section en annonçait dix, il y en avait cinq de plus :
 
-**Renommer une de ces clés sans migration efface des données utilisateur sans aucun message d'erreur.** En particulier : `rt-auth` est le `storageKey` de Supabase — le renommer déconnecte tout le monde ; `rt-sync-file` contient les séances en attente d'envoi, perdues définitivement.
+| Clé | Ce qu'elle contient |
+|---|---|
+| `rt-auth` | **la session Supabase** (`storageKey`) |
+| `rt-sync-file` | **les séances qui n'ont pas encore pu partir en base** |
+| `rt-settings` | les réglages |
+| `rt-vols` | l'historique des vols (cache) |
+| `rt-vol-en-cours` | la reprise d'un vol interrompu |
+| `radiotrainer_history_v2` | l'historique des scénarios (cache) |
+| `rt-jours` | les jours de pratique, pour la série |
+| `rt-quota` | le compteur de vols du jour |
+| `rt-cache-proprio` | à qui appartient le cache — sans elle, l'historique d'un utilisateur s'affiche chez le suivant |
+| `rt-menu-replie` | barre latérale repliée ou non |
+| `rt-push-attente` | notification en attente |
+| `rt-admin-dev`, `rt-admin-rail`, `rt-admin-errors`, `rt-admin-periode` | console d'administration |
+
+**Renommer une de ces clés sans migration efface des données utilisateur sans aucun message d'erreur.** Les deux premières lignes du tableau sont les plus coûteuses : renommer `rt-auth` déconnecte tout le monde d'un coup ; renommer `rt-sync-file` perd définitivement des séances qui ne sont encore nulle part ailleurs.
 
 Règle : **aucune clé ne se renomme sans une migration à un coup** (copie ancienne → nouvelle, l'ancienne conservée deux versions), et sans un test qui remplit l'ancien jeu et vérifie qu'il est relu.
+
+`tests/contrat/stockage.test.mjs` surveille désormais la disparition d'une clé **et** l'apparition d'une clé non inventoriée — une clé de plus étant une donnée de plus qui ne suit pas le compte d'un appareil à l'autre.
 
 ---
 
@@ -294,7 +311,7 @@ L'objectif est de pouvoir faire évoluer AVIERO rapidement sans introduire progr
 
 ### 11.1 Les tests sont un prérequis, pas une amélioration future
 
-**Décision du 18/09/2026.** État réel : **le projet n'a aujourd'hui aucun test automatisé.** Les huit suites décrites dans `INSCRIPTION.md § 7` vivaient dans `scratchpad/`, qui n'est pas versionné — elles ne sont plus sur le disque.
+**Décision du 18/09/2026.** État à cette date : le projet n'avait **aucun test automatisé**. Les huit suites décrites dans `INSCRIPTION.md § 7` vivaient dans `scratchpad/`, qui n'est pas versionné — elles étaient perdues.
 
 Donc :
 
@@ -302,7 +319,11 @@ Donc :
 - la migration se fait **étape par étape, avec une vérification après chaque étape importante** ;
 - une étape dont les tests ne passent pas n'est pas fusionnée (§ 13).
 
-Couverture minimale attendue avant de découper : parcours d'inscription, page Compte, routeur et navigation entre pages, un scénario complet de bout en bout, un vol complet de bout en bout, présence des symboles globaux partagés entre blocs de script.
+**Fait (phase 0, 18/09/2026).** `tests/` existe et est versionné : 65 vérifications de contrat (Node seul, < 1 s) et 47 de parcours (Playwright + Chromium, deux largeurs d'écran). Tout se lance par `sh tests/lancer_tout.sh`. Le détail, les deux décisions structurantes et la liste de ce qui n'est **pas** couvert sont dans `tests/README.md` — à lire avant de toucher aux tests.
+
+Ce qu'ils surveillent en priorité, parce que c'est ce que le découpage casse en silence : les **62 symboles** déclarés dans un bloc de script et lus par un autre. Ils ne passent pas par `window` ; les perdre, les dupliquer ou les charger trop tard ne produit aucune erreur au chargement.
+
+Reste à couvrir : le parcours d'inscription et les RLS, qui demandent un **projet Supabase de test** — les tests coupent volontairement toute requête vers le projet de production.
 
 ---
 
@@ -431,9 +452,17 @@ Pour que l'inscription et la connexion fonctionnent en local, `http://localhost:
 
 ### 17.2 Tester
 
-Les suites automatisées **n'existent pas encore** (§ 11.1). Elles iront dans `tests/`, et se lanceront par `tests/lancer_tout.sh`.
+```sh
+npm install && npx playwright install chromium   # une seule fois
+sh tests/lancer_tout.sh                          # tout
+sh tests/lancer_tout.sh contrat                  # la lecture du code seule, < 1 s
+```
 
-En attendant, le contrôle manuel minimal après toute modification non triviale :
+Lancer les tests de contrat **après chaque déplacement de code** : ils coûtent une seconde et disent la plupart des dégâts d'un découpage raté. Les tests de parcours avant chaque commit.
+
+Un test rouge se **lit** avant d'être réparé : chacun décrit une panne réelle, et `tests/contrat/inventaire.json` ne se regèle qu'en connaissance de cause (`node tests/contrat/_geler.mjs`, puis lire le diff).
+
+Le contrôle manuel reste nécessaire pour ce que les tests ne voient pas (§ 11.1 et `tests/README.md`) :
 
 1. **Console du navigateur vide** — aucune erreur au chargement, aucune pendant la navigation.
 2. **Un scénario complet** — page Scénarios, micro, jusqu'au récapitulatif et au score.

@@ -4,8 +4,19 @@
 -- Prérequis : le schéma d'assets/admin/README.md § 4.2 et sql/001-inscription.sql.
 -- -----------------------------------------------------------------------------
 -- Le fichier est idempotent : « if not exists », « create or replace »,
--- « on conflict do update », « drop policy if exists ». Le relancer ne casse
--- rien et ne duplique rien.
+-- « on conflict do update », « drop policy if exists », et une recherche des
+-- index par DÉFINITION plutôt que par nom. Le relancer ne casse rien, ne
+-- duplique rien et n'efface aucune donnée.
+--
+-- ┌─ SI VOUS L'AVEZ DÉJÀ LANCÉ ET QUE RIEN N'A BOUGÉ ───────────────────────┐
+-- │ C'est normal, et c'était ma faute : la première version posait une       │
+-- │ contrainte CHECK avec pg_column_size(), fonction STABLE que PostgreSQL   │
+-- │ refuse dans une CHECK. L'éditeur SQL enveloppant tout dans une seule     │
+-- │ transaction, cette ligne annulait l'intégralité du script — y compris    │
+-- │ les treize exercices insérés avant elle. Corrigé au § 2, et la contrainte│
+-- │ est maintenant isolée pour ne plus jamais pouvoir entraîner le reste     │
+-- │ dans sa chute. Relancez le fichier tel quel.                             │
+-- └─────────────────────────────────────────────────────────────────────────┘
 --
 -- ┌─ CE QUE CETTE MIGRATION CHANGE ─────────────────────────────────────────┐
 -- │ 1. Elle RÉPARE une perte de données silencieuse : six scénarios sur     │
@@ -111,9 +122,32 @@ comment on column public.profiles.etat_vol is
 -- client modifié d'y pousser des mégaoctets — la colonne est écrite à chaque
 -- échange, elle est le meilleur endroit pour faire enfler une base sans qu'on
 -- le voie. 40 ko laissent très largement la place à un vol complet.
-alter table public.profiles drop constraint if exists profils_etat_vol_borne;
-alter table public.profiles add  constraint profils_etat_vol_borne
-  check (etat_vol is null or pg_column_size(etat_vol) <= 40960);
+--
+-- ┌─ CETTE CONTRAINTE A DÉJÀ FAIT ÉCHOUER TOUTE LA MIGRATION ───────────────┐
+-- │ Première version : `pg_column_size(etat_vol) <= 40960`. PostgreSQL       │
+-- │ refuse une CHECK qui appelle une fonction non IMMUTABLE, et              │
+-- │ pg_column_size est déclarée STABLE :                                     │
+-- │   ERROR: functions in check constraint must be marked IMMUTABLE          │
+-- │ L'éditeur SQL de Supabase enveloppe le script dans UNE transaction : la  │
+-- │ ligne a tout annulé, y compris les treize exercices insérés juste avant. │
+-- │ On mesure donc la longueur du TEXTE du jsonb — `length(x::text)` ne fait │
+-- │ appel qu'à des fonctions immuables (jsonb_out, textin, textlen).         │
+-- │                                                                          │
+-- │ Et surtout : ce bloc est désormais ISOLÉ dans un DO … EXCEPTION. Cette   │
+-- │ borne est une ceinture de sécurité, pas l'objet de la migration ; elle   │
+-- │ ne doit JAMAIS pouvoir empêcher les treize exercices, la colonne, la vue │
+-- │ et les politiques d'arriver. Si elle échoue, elle le DIT et le reste     │
+-- │ passe — c'est exactement l'inverse de ce qui s'est produit.              │
+-- └─────────────────────────────────────────────────────────────────────────┘
+do $borne$
+begin
+  alter table public.profiles drop constraint if exists profils_etat_vol_borne;
+  alter table public.profiles add  constraint profils_etat_vol_borne
+    check (etat_vol is null or length(etat_vol::text) <= 40960);
+  raise notice 'Borne de taille posée sur profiles.etat_vol (40 ko de texte JSON).';
+exception when others then
+  raise notice 'Borne de taille NON posée sur profiles.etat_vol (%) — le reste de la migration est appliqué.', sqlerrm;
+end $borne$;
 
 
 -- =============================================================================
@@ -252,19 +286,59 @@ create policy "échange : lecture admin"   on public.session_steps for select us
 -- confirme, parce que sans lui cette requête devient un balayage complet de la
 -- table dès que la base grossit.
 -- =============================================================================
-create index if not exists sessions_user_started_idx
-  on public.sessions (user_id, started_at desc);
-create index if not exists session_steps_session_idx
-  on public.session_steps (session_id, idx);
+-- `create index if not exists` ne regarde que le NOM. Or ces deux index
+-- existent déjà sous le nom que PostgreSQL leur a donné tout seul
+-- (`sessions_user_id_started_at_idx`, et l'index unique né de la contrainte
+-- `unique (session_id, idx)`). Les recréer sous un autre nom aurait posé un
+-- SECOND index sur les mêmes colonnes : pas une erreur, mais un doublon qui
+-- ralentit chaque écriture et occupe de la place pour rien. On cherche donc
+-- par DÉFINITION, pas par nom.
+do $idx$
+begin
+  if not exists (
+    select 1 from pg_index i
+      join pg_class t     on t.oid = i.indrelid
+      join pg_namespace n on n.oid = t.relnamespace
+     where n.nspname = 'public' and t.relname = 'sessions'
+       and pg_get_indexdef(i.indexrelid) like '%(user_id, started_at DESC)%')
+  then
+    execute 'create index sessions_user_started_idx on public.sessions (user_id, started_at desc)';
+    raise notice 'Index créé sur sessions (user_id, started_at desc).';
+  else
+    raise notice 'Index déjà présent sur sessions (user_id, started_at desc) — rien à faire.';
+  end if;
+
+  if not exists (
+    select 1 from pg_index i
+      join pg_class t     on t.oid = i.indrelid
+      join pg_namespace n on n.oid = t.relnamespace
+     where n.nspname = 'public' and t.relname = 'session_steps'
+       and pg_get_indexdef(i.indexrelid) like '%(session_id, idx)%')
+  then
+    execute 'create index session_steps_session_idx on public.session_steps (session_id, idx)';
+    raise notice 'Index créé sur session_steps (session_id, idx).';
+  else
+    raise notice 'Index déjà présent sur session_steps (session_id, idx) — rien à faire.';
+  end if;
+end $idx$;
 
 
 -- =============================================================================
 -- 6. VÉRIFICATION
 -- -----------------------------------------------------------------------------
--- Attendu :
---   · treize lignes dans `exercises` ;
---   · `etat_vol` présente sur `profiles` ;
---   · les quatre vues en security_invoker.
+-- Deux tableaux sortent à la fin du script. Le premier récapitule, le second
+-- détaille les politiques — c'est lui qui prouve que personne ne peut lire les
+-- données d'un autre.
+--
+-- ATTENDU, tableau 1 :
+--   exercices ................. 13
+--   colonne etat_vol .......... présente
+--   vues security_invoker ..... 4        ← si ce n'est pas 4, une vue s'exécute
+--                                          avec les droits de son propriétaire
+--                                          et contourne RLS : à reprendre.
+--   RLS profiles/sessions/session_steps . activée
+--   politiques sessions ....... 5  (select soi, insert, update, delete, select admin)
+--   politiques session_steps .. 5
 -- =============================================================================
 select 'exercices' as quoi, count(*)::text as valeur from public.exercises
 union all
@@ -277,4 +351,25 @@ select 'vues security_invoker', count(*)::text from pg_class c
   join pg_namespace n on n.oid = c.relnamespace
  where n.nspname='public' and c.relkind='v'
    and c.relname in ('v_daily_activity','v_daily_practice','v_missed_items','v_user_progress')
-   and c.reloptions::text like '%security_invoker=true%';
+   and c.reloptions::text like '%security_invoker=true%'
+union all
+select 'RLS ' || relname, case when relrowsecurity then 'activée' else 'INACTIVE' end
+  from pg_class c join pg_namespace n on n.oid = c.relnamespace
+ where n.nspname='public' and relname in ('profiles','sessions','session_steps')
+union all
+select 'politiques ' || tablename, count(*)::text
+  from pg_policies where schemaname='public'
+   and tablename in ('profiles','sessions','session_steps')
+ group by tablename;
+
+-- Le détail, table par table. Chaque ligne dit QUI peut faire QUOI :
+-- `qualification` est le filtre de lecture (USING), `verification` celui
+-- d'écriture (WITH CHECK). Une politique d'UPDATE sans `verification` est
+-- précisément le trou que cette migration rebouche sur `sessions` : elle
+-- laissait réattribuer sa propre séance à un autre user_id.
+select tablename as "table", policyname as politique, cmd as commande,
+       qual as qualification, with_check as verification
+  from pg_policies
+ where schemaname = 'public'
+   and tablename in ('profiles','sessions','session_steps','exercises')
+ order by tablename, cmd, policyname;

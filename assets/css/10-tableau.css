@@ -1,0 +1,110 @@
+/* =============================================================================
+   AVIERO — Le tableau de bord
+   -----------------------------------------------------------------------------
+   L'accueil de l'application. Il vient APRÈS le thème sombre dans le fichier d'origine —
+   ses propres règles sombres sont donc chez lui, et cet ordre est conservé tel quel.
+
+   Ce fichier est le n° 10 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ================= Accueil (tableau de bord) ================= */
+  /* ---- L'en-tête du tableau de bord ----
+     Deux colonnes : le bonjour, et un appareil qui n'est là que pour le regard.
+     La colonne de droite est bornée en pourcentage ET en pixels : sur un très
+     grand écran un A320 de 600 px de large écraserait le titre, sur un écran
+     moyen une colonne au pourcentage seul le réduirait à une vignette. */
+  .tb-entete{display:grid; align-items:center; gap:clamp(16px,3vw,40px);
+    grid-template-columns:minmax(0,1fr) minmax(0,clamp(220px,30%,400px)); margin-bottom:24px}
+  .tb-entete .section-title, .tb-entete .section-sub{margin-bottom:0}
+  .tb-entete .section-sub{margin-top:8px}
+  .tb-avion{display:block; justify-self:end; width:100%; height:auto;
+    filter:drop-shadow(0 18px 24px rgba(8,10,20,.38))}
+  /* Sous 820 px la photo passerait sous le texte et repousserait les chiffres
+     d'un écran vers le bas : on préfère la retirer. Elle n'apprend rien. */
+  @media (max-width:820px){
+    .tb-entete{grid-template-columns:1fr}
+    .tb-avion{display:none}
+  }
+
+  .tb-stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));
+    gap:12px; margin-bottom:18px; }
+  .tb-stat{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 18px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:3px; }
+  .tb-stat b{ font-family:var(--mono); font-size:26px; font-weight:700; color:var(--ink); line-height:1.05; }
+  .tb-stat b i{ font-style:normal; font-size:15px; color:var(--ink-2); font-weight:400; }
+  .tb-stat span{ font-size:12px; color:var(--ink-2); }
+  .tb-stat .tb-ic{ color:var(--violet); margin-bottom:4px; }
+  .tb-stat .tb-ic .ic-svg{ width:18px; height:18px; }
+
+  .tb-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));
+    gap:16px; margin-bottom:16px; }
+  .tb-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px 20px; box-shadow:var(--shadow-sm); }
+  .tb-card.tb-wide{ margin-bottom:16px; }
+  .tb-card h3{ font-family:var(--sans); font-size:15px; font-weight:800; color:var(--ink); margin:0 0 12px; }
+  .tb-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+  .tb-head h3{ margin:0; }
+  .tb-note{ font-size:12.5px; color:var(--ink-2); margin:10px 0 0; line-height:1.5; }
+
+  /* Quota : jauge simple, lisible d'un coup d'œil. */
+  .tb-quota{ display:flex; align-items:center; gap:12px; }
+  .tb-jauge{ flex:1; height:10px; background:var(--surface-2); border-radius:5px; overflow:hidden;
+    border:1px solid var(--border); }
+  .tb-jauge i{ display:block; height:100%; background:var(--violet); border-radius:5px; }
+  .tb-jauge i.plein{ background:var(--warn); }
+  .tb-qn{ font-family:var(--mono); font-size:15px; font-weight:700; color:var(--ink); flex:none; }
+  .tb-qn small{ font-size:12px; color:var(--ink-2); font-weight:400; }
+
+  .tb-vide{ font-size:13px; color:var(--ink-2); }
+  .tb-ligne{ display:flex; align-items:center; gap:12px; padding:10px 0;
+    border-bottom:1px solid var(--surface-2); }
+  .tb-ligne:last-child{ border-bottom:none; padding-bottom:0; }
+  .tb-l1{ font-family:var(--mono); font-size:13px; font-weight:700; color:var(--ink); flex:none; }
+  .tb-l2{ font-size:12.5px; color:var(--ink-2); flex:1; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tb-l3{ font-family:var(--mono); font-size:12.5px; font-weight:700; flex:none;
+    border-radius:var(--pill); padding:3px 10px; }
+  .tb-l3.bon{ background:rgba(46,158,91,.14); color:#1f6e40; }
+  .tb-l3.moy{ background:rgba(224,145,42,.16); color:#8a5a1d; }
+  .tb-l3.bas{ background:rgba(199,74,74,.14); color:#96332f; }
+  :root[data-theme="dark"] .tb-l3.bon{ background:rgba(69,193,135,.16); color:#8fe3b8; }
+  :root[data-theme="dark"] .tb-l3.moy{ background:rgba(232,169,74,.16); color:#f0c99b; }
+  :root[data-theme="dark"] .tb-l3.bas{ background:rgba(224,100,95,.16); color:#f3b4b0; }
+  .tb-repr{ display:flex; flex-direction:column; gap:10px; }
+  .tb-repr .btn{ width:100%; }
+
+  /* Points faibles : barre proportionnelle au nombre d'oublis. */
+  .tb-faible{ display:flex; align-items:center; gap:10px; padding:7px 0; }
+  .tb-fl{ font-size:13px; color:var(--ink); flex:none; width:44%;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tb-fb{ flex:1; height:8px; background:var(--surface-2); border-radius:4px; overflow:hidden;
+    border:1px solid var(--border); }
+  .tb-fb i{ display:block; height:100%; background:var(--bad); opacity:.7; }
+  .tb-fn{ font-family:var(--mono); font-size:12px; color:var(--ink-2); flex:none; width:34px; text-align:right; }
+
+  /* Courbe : SVG inline, sans bibliothèque. */
+  .tb-courbe svg{ display:block; width:100%; height:96px; }
+  .tb-courbe .axe{ stroke:var(--border); stroke-width:1; }
+  .tb-courbe .ligne{ fill:none; stroke:var(--violet); stroke-width:2.2;
+    stroke-linejoin:round; stroke-linecap:round; }
+  .tb-courbe .aire{ fill:var(--violet); opacity:.10; }
+  .tb-courbe .pt{ fill:var(--violet); }
+  .tb-courbe-lg{ display:flex; justify-content:space-between; font-size:11px;
+    color:var(--ink-2); margin-top:6px; }
+
+  /* Objectifs */
+  .tb-badges{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr)); gap:10px; }
+  .tb-badge{ display:flex; align-items:center; gap:10px; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:11px; padding:10px 12px; }
+  .tb-badge .ic{ display:inline-flex; color:var(--ink-2); flex:none; }
+  .tb-badge .ic .ic-svg{ width:18px; height:18px; }
+  .tb-badge.ok{ background:var(--violet-soft); border-color:var(--violet); }
+  .tb-badge.ok .ic{ color:var(--violet); }
+  .tb-badge b{ font-size:13px; font-weight:700; color:var(--ink); display:block; }
+  .tb-badge span{ font-size:11.5px; color:var(--ink-2); }
+

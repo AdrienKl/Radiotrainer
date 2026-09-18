@@ -1,0 +1,200 @@
+/* =============================================================================
+   AVIERO — Les exercices
+   -----------------------------------------------------------------------------
+   Le formulaire de configuration, la liste des scénarios, le panneau de session, le
+   récapitulatif, les badges, le journal radio, et les icônes SVG monochromes qui
+   servent partout ailleurs.
+
+   Ce fichier est le n° 3 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ---------- Config / forms ---------- */
+  .config{display:grid; grid-template-columns:1fr 1fr; gap:16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow-sm); margin-bottom:20px}
+  .field{display:flex; flex-direction:column; gap:6px; position:relative}
+  .field label{font-size:12px; font-weight:600; color:var(--ink-2)}
+  .field input, .field select{background:var(--surface); border:1px solid var(--border); border-radius:12px; color:var(--ink); font-family:var(--sans); font-size:15px; padding:12px 13px; width:100%; transition:border-color .15s, box-shadow .15s}
+  .field input:focus, .field select:focus{outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft)}
+  .field input::placeholder{color:#a6afbf}
+  /* Ligne de réglages : grille fixe + gabarit de carte unique pour TOUS les contrôles */
+  .row2{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+  @media(max-width:720px){ .row2{grid-template-columns:repeat(2,1fr)} }
+  @media(max-width:460px){ .row2{grid-template-columns:1fr} }
+  .field-box{display:flex; flex-direction:column; gap:6px; justify-content:flex-start; min-height:76px}
+  .field-box label{font-size:12px; font-weight:600; color:var(--ink-2)}
+  .field-box .segmented-ui{width:100%; justify-content:flex-start}
+  .field-box .seg-opt{flex:1; text-align:center; white-space:nowrap}
+  .switch-line{display:inline-flex; align-items:center; gap:9px; align-self:flex-start; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:var(--pill); padding:9px 16px; min-height:42px; cursor:pointer; font-size:13.5px; color:var(--ink)}
+  .switch-line input{width:18px; height:18px; accent-color:var(--violet)}
+
+  /* Segmented pill control (couche visuelle sur les <select>) */
+  .segmented-ui{display:inline-flex; flex-wrap:wrap; gap:4px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--pill); padding:4px}
+  .seg-opt{cursor:pointer; border:none; background:none; font-family:inherit; font-size:13.5px; font-weight:600; color:var(--ink-2);
+    padding:8px 15px; border-radius:var(--pill); transition:background .18s, color .18s, box-shadow .18s}
+  .seg-opt:hover{color:var(--ink)}
+  .seg-opt.active{background:var(--violet); color:#fff; box-shadow:var(--shadow-sm)}
+
+  /* Autocomplete */
+  .ac-list{position:absolute; top:100%; left:0; right:0; z-index:40; background:var(--surface); border:1px solid var(--border); border-top:none; border-radius:0 0 12px 12px; max-height:240px; overflow:auto; display:none; box-shadow:var(--shadow-md)}
+  .ac-list.open{display:block}
+  .ac-item{padding:10px 13px; cursor:pointer; font-size:14px; border-bottom:1px solid var(--surface-2)}
+  .ac-item:last-child{border-bottom:none}
+  .ac-item .code{color:var(--violet); font-weight:700; font-family:var(--mono)}
+  .ac-item.active, .ac-item:hover{background:var(--violet-soft)}
+  /* UNE LISTE DÉROULANTE N'EST JAMAIS DU VERRE.
+     Sur une scène, .scene redéfinit --surface en translucide — c'est voulu pour
+     les panneaux, qui reposent sur la photo. Mais celle-ci se déplie PAR-DESSUS
+     le formulaire : on lisait « Indicatif avion », « Difficulté » et « Voix ATC »
+     au travers des noms de terrains. Elle reprend donc un fond plein, et le
+     flou d'arrière-plan avec, pour rester dans le ton de la scène sans laisser
+     passer ce qu'il y a dessous. */
+  .scene .ac-list{ background:#fbfcfe; border-color:rgba(28,34,54,.22);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px) }
+  .scene .ac-item{ border-bottom-color:rgba(28,34,54,.10) }
+  .scene .ac-fam{ background:#eef0f6 }
+  :root[data-theme="dark"] .scene .ac-list{ background:#0d1120; border-color:rgba(255,255,255,.24) }
+  :root[data-theme="dark"] .scene .ac-item{ border-bottom-color:rgba(255,255,255,.10) }
+  :root[data-theme="dark"] .scene .ac-fam{ background:#151b2e }
+  .ac-empty{padding:10px 13px; color:var(--ink-2); font-size:13.5px}
+  /* Nature du terrain retenu (contrôlé / AFIS) : information, pas réglage. */
+  .ad-kind{display:block; margin-top:7px; font-size:12.5px; font-weight:600; line-height:1.45;
+           padding:7px 11px; border-radius:10px; border:1px solid var(--violet);
+           background:var(--violet-soft); color:var(--violet-dark)}
+  .ad-kind.afis{border-color:var(--border); background:var(--surface-2); color:var(--ink-2)}
+
+  .exam-bar{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:6px 0 18px}
+  .exam-note{color:var(--ink-2); font-size:13px}
+
+  /* ---------- Scenarios ---------- */
+  .scenarios{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(185px,100%),1fr)); gap:14px; margin:6px 0 20px}
+  .sc-btn{text-align:left; cursor:pointer; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--ink); padding:17px; font-size:14.5px; font-weight:600; box-shadow:var(--shadow-sm); transition:transform .16s, box-shadow .18s, border-color .18s}
+  .sc-btn .num{display:block; font-family:var(--mono); color:var(--violet); font-size:11.5px; font-weight:700; margin-bottom:7px}
+  .sc-btn:hover{transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:#d3d6e2}
+  /* Carte de scénario : titre, une ligne de contenu, puis les conditions de jeu.
+     Elle porte maintenant assez d'information pour choisir sans deviner. */
+  .sc-btn{ display:flex; flex-direction:column; gap:6px; }
+  .sc-btn .sc-t{ font-size:15px; font-weight:800; color:var(--ink); line-height:1.3; }
+  .sc-btn .sc-d{ font-size:12.5px; font-weight:400; color:var(--ink-2); line-height:1.5; }
+  .sc-btn .sc-tags{ display:flex; flex-wrap:wrap; gap:5px; margin-top:3px; }
+  .sc-btn .sc-tags i{ font-style:normal; font-family:var(--mono); font-size:9.5px;
+    letter-spacing:.05em; text-transform:uppercase; font-weight:700; color:var(--ink-2);
+    background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--pill); padding:2px 7px; }
+  .sc-btn .sc-tags i.urg{ color:#96332f; background:rgba(199,74,74,.10); border-color:rgba(199,74,74,.32); }
+  .scenarios{ grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr)); }
+  .sc-btn[aria-current="true"]{border-color:var(--violet); box-shadow:0 0 0 2px var(--violet-soft), var(--shadow-md)}
+
+  /* ---------- Panel ---------- */
+  .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow-md); margin:18px 0}
+  .panel.hidden{display:none}
+  .terrain-toggle{display:flex; gap:6px; flex-wrap:wrap}
+  .tt-btn{cursor:pointer; background:var(--surface); border:1px solid var(--border); border-radius:var(--pill); color:var(--ink); padding:6px 13px; font-size:12px; font-family:var(--mono); font-weight:600}
+  .tt-btn[aria-pressed="true"]{border-color:var(--violet); color:#fff; background:var(--violet)}
+  .tt-btn:disabled{opacity:.4; cursor:not-allowed}
+
+  .controls{display:flex; gap:11px; flex-wrap:wrap; align-items:center; margin-top:15px}
+
+  .trans-actions{display:flex; gap:11px; margin-top:10px; flex-wrap:wrap}
+
+  .feedback{margin-top:16px; display:flex; flex-direction:column; gap:8px}
+  /* Indicatif rappelé dans l'en-tête du panneau d'échange. */
+  .fb-item{display:flex; gap:9px; align-items:center; font-size:14.5px}
+  .fb-item .mk{width:20px; text-align:center}
+  .fb-item.ok{color:var(--ok)}
+  .fb-item.ko{color:var(--warn)}
+
+  .hint{margin-top:15px; background:var(--violet-soft); border:1px solid #d6cff5; border-radius:12px; padding:13px 16px; font-family:var(--mono); font-size:14px; color:var(--violet-dark)}
+  .hint.hidden{display:none}
+  .hint .label{color:var(--violet); font-size:11px; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px; font-weight:700}
+
+  .choice{margin-top:10px}
+  .choice.hidden{display:none}
+  .choice .q{font-size:16px; font-weight:700; margin-bottom:14px; color:var(--ink)}
+  .choice .opts{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .choice .opt{cursor:pointer; text-align:left; background:var(--surface); border:1px solid var(--border); border-radius:14px; color:var(--ink); padding:16px; font-size:14.5px; box-shadow:var(--shadow-sm); transition:border-color .15s, background .15s, transform .12s}
+  .choice .opt:hover{background:var(--violet-soft); border-color:var(--violet); transform:translateY(-1px)}
+  .choice .opt b{display:block; color:var(--violet); margin-bottom:4px}
+  .choice .opt.good{border-color:var(--ok); background:#e9f7ef; color:var(--ok)}
+  .choice .opt.bad{border-color:var(--bad); background:#fdecea; color:var(--bad)}
+  .choice .opt:disabled{cursor:default}
+
+  /* ---------- Recap / history / badges ----------
+     Le debriefing et l'historique des Scenarios reprennent desormais les blocs du
+     vol (.nav-recap, .nav-hist) : les regles propres a l'ancien panneau ont ete
+     retirees avec lui. */
+
+
+  .badges{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow-sm); margin:16px 0}
+  .badges h3{color:var(--ink); font-size:15.5px; margin-bottom:12px}
+  .badge-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(205px,100%),1fr)); gap:12px}
+  .badge{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--border); border-radius:14px; padding:13px 15px; background:var(--surface-2); transition:transform .16s, box-shadow .18s}
+  .badge:hover{transform:translateY(-2px); box-shadow:var(--shadow-sm)}
+  .badge .ic{font-size:22px; line-height:1}
+  .badge .t{font-size:13.5px; font-weight:600; color:var(--ink)}
+  .badge .d{font-size:12px; color:var(--ink-2)}
+  .badge.locked{opacity:.5}
+  .badge.earned{border-color:var(--violet); background:var(--violet-tint)}
+  .badge.earned .t{color:var(--violet-dark)}
+
+  /* ---------- Log (clair) ---------- */
+
+  /* ---------- Misc ---------- */
+  .noreco{background:#fdecea; border:1px solid #f3c6c1; border-radius:var(--radius); padding:14px 17px; margin:14px 0; color:#9c352c; font-size:13.5px}
+  .noreco.hidden{display:none}
+  .noreco b{color:var(--bad)}
+  .exam-hero{background:linear-gradient(135deg,#efeafb,#f7fbff); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow-sm); margin-bottom:18px}
+  .exam-hero h2{font-size:22px; margin-bottom:8px}
+  .exam-hero p{color:var(--ink-2); max-width:58ch; margin:0 0 20px}
+
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--ink); color:#fff; padding:12px 20px; border-radius:var(--pill); font-size:13.5px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:200; box-shadow:var(--shadow-lg)}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+  footer{color:var(--ink-2); font-size:12.5px; text-align:center; padding:30px 16px 44px; border-top:1px solid var(--border); margin-top:20px}
+
+  @media(max-width:680px){
+    .config{grid-template-columns:1fr}
+    .choice .opts{grid-template-columns:1fr}
+    .ptt{min-width:100%}
+    .navlinks .navlink{padding:8px 10px; font-size:13.5px}
+    /* Le nom du site reste affiché : un logo seul, sans texte, passe pour un bug.
+       Il tient largement à 390 px une fois le CTA d'en-tête retiré. */
+    .app-topbar .brand span{display:inline}
+    /* « S'inscrire » disparaît de l'en-tête sur mobile, mais reste accessible :
+       le hero propose les deux boutons en pleine largeur. */
+    .nav-cta{display:none}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .reveal{opacity:1; transform:none; transition:none}
+    *{animation-duration:.001s!important}
+  }
+
+  /* ============ Icônes SVG monochromes (remplacent les anciens emojis) ============ */
+  .ic-svg{flex:none; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px}
+  .btn .ic-svg{width:17px; height:17px}
+  .brand .logo .ic-svg{width:18px; height:18px; stroke:#fff}
+  .feature .fic .ic-svg{width:25px; height:25px; stroke:var(--violet)}
+  .badge .ic .ic-svg{width:22px; height:22px; stroke:var(--violet)}
+  .badge.locked .ic .ic-svg{stroke:var(--ink-2)}
+  .fb-item .mk{display:inline-flex; align-items:center; justify-content:center}
+  .fb-item .mk .ic-svg{width:16px; height:16px}
+  .fb-item.ok .mk .ic-svg{stroke:var(--violet)}
+  .fb-item.ko .mk .ic-svg{stroke:#c98a00}
+  .ptt .rec-dot{width:10px; height:10px; border-radius:50%; background:#fff; flex:none}
+
+  /* ============ Indicateur de scroll (bas du hero) ============ */
+  .scroll-cue{position:absolute; left:50%; bottom:calc(clamp(56px,9vw,104px) + 12px); transform:translateX(-50%);
+    z-index:3; width:42px; height:42px; display:grid; place-items:center; cursor:pointer; color:#fff;
+    background:rgba(255,255,255,.14); border:1.5px solid rgba(255,255,255,.55); border-radius:50%;
+    -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); transition:background .18s, border-color .18s;
+    animation:cueBounce 1.9s ease-in-out infinite}
+  .scroll-cue .ic-svg{width:20px; height:20px; stroke:#fff; stroke-width:2}
+  .scroll-cue:hover{background:rgba(255,255,255,.28); border-color:#fff}
+  @keyframes cueBounce{0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)}}
+  @media (prefers-reduced-motion:reduce){ .scroll-cue{animation:none} }
+

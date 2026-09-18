@@ -39,7 +39,20 @@
   ],
   "ordre_styles": [
     "assets/leaflet.css",
-    "index.html#1",
+    "assets/css/01-socle.css",
+    "assets/css/02-vitrine.css",
+    "assets/css/03-exercices.css",
+    "assets/css/04-epellation.css",
+    "assets/css/05-cours.css",
+    "assets/css/06-coquille.css",
+    "assets/css/07-navigation.css",
+    "assets/css/08-parametres.css",
+    "assets/css/09-theme-sombre.css",
+    "assets/css/10-tableau.css",
+    "assets/css/11-avionique.css",
+    "assets/css/12-historique.css",
+    "assets/css/13-mobile.css",
+    "assets/css/14-carte.css",
     "assets/admin/admin.css"
   ],
   "symboles_partages": [

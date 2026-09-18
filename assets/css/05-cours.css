@@ -1,0 +1,64 @@
+/* =============================================================================
+   AVIERO — Les cours
+   -----------------------------------------------------------------------------
+   Le catalogue, l'alphabet et les chiffres, et le manuel PDF intégré à la page.
+
+   Ce fichier est le n° 5 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ============ Catalogue de cours ============ */
+  /* 320px mini : à 260px, l'icône de 44px laissait une colonne de texte trop étroite
+     et la description se brisait sur 4 lignes. */
+  .course-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr)); gap:14px}
+  .course-card{display:flex; gap:14px; align-items:flex-start; text-align:left; cursor:pointer;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px;
+    box-shadow:var(--shadow-sm); transition:transform .16s, box-shadow .18s, border-color .18s; font-family:inherit}
+  .course-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:var(--violet)}
+  .course-card .cic{width:44px; height:44px; border-radius:13px; flex:none; display:grid; place-items:center;
+    background:var(--violet-soft); color:var(--violet)}
+  .course-card .cic .ic-svg{width:24px; height:24px}
+  .course-card .ctxt{display:flex; flex-direction:column; gap:4px}
+  .course-card .ctitle{font-weight:700; font-size:16px; color:var(--ink)}
+  .course-card .cdesc{font-size:13.5px; color:var(--ink-2); line-height:1.45}
+  #courseBack{margin-bottom:4px}
+
+  /* ============ Cours : alphabet + chiffres ============ */
+  .cours-h{font-size:18px; margin:28px 0 12px; color:var(--ink)}
+
+  /* ---- Manuel PDF intégré au cours ---- */
+  .pdf-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+  .pdf-bar .btn{text-decoration:none}
+  .pdf-hint{font-size:12.5px; color:var(--ink-2)}
+  /* Le visionneur occupe la hauteur utile de la fenêtre : un PDF de 281 pages
+     dans un cadre de 400 px ne se lit pas. */
+  .pdf-frame{position:relative; height:calc(100vh - 300px); min-height:460px;
+    border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+    background:var(--surface-2); box-shadow:var(--shadow-sm)}
+  .pdf-frame iframe{position:relative; z-index:1; width:100%; height:100%; border:0; display:block; background:var(--surface)}
+  /* Repli visible seulement si l'iframe ne peint rien par-dessus (iOS, lecteurs absents). */
+  .pdf-fallback{position:absolute; inset:0; z-index:0; margin:0; display:grid; place-items:center;
+    text-align:center; padding:24px; color:var(--ink-2); font-size:14.5px}
+  .pdf-src{margin-top:14px; font-size:12.5px; line-height:1.6; color:var(--ink-2);
+    background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px 15px}
+  .pdf-src b{color:var(--ink)}
+  @media (max-width:700px){ .pdf-frame{height:calc(100vh - 240px)} }
+  .cours-note{color:var(--ink-2); font-size:13.5px; margin:-4px 0 14px}
+  .alpha-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr)); gap:10px}
+  .alpha-card{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:11px 14px; box-shadow:var(--shadow-sm)}
+  .alpha-card .ltr{font-family:var(--mono); font-weight:800; font-size:22px; color:var(--violet); width:26px; text-align:center; flex:none}
+  .alpha-card .wrd{font-weight:600; font-size:15.5px; color:var(--ink)}
+  .digit-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(190px,100%),1fr)); gap:10px}
+  .digit-card{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:11px 14px; box-shadow:var(--shadow-sm)}
+  .digit-card .num{font-family:var(--mono); font-weight:800; font-size:22px; color:var(--violet); width:26px; text-align:center; flex:none}
+  .digit-card .say{display:flex; flex-direction:column; gap:1px}
+  .digit-card .fr{font-weight:600; font-size:15.5px; color:var(--ink)}
+  .digit-card .en{font-size:12.5px; color:var(--ink-2)}
+
+

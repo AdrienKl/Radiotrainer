@@ -1,0 +1,443 @@
+/* =============================================================================
+   AVIERO — L'épellation radio
+   -----------------------------------------------------------------------------
+   La toile de fond commune aux trois scènes, le casting, la palette, le verre des deux
+   colonnes, la comparaison attendu / entendu, le verdict et le chronomètre.
+
+   Ce fichier est le n° 4 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ============ Épellation radio ============
+     L'exercice se joue dans une SCÈNE : une photo d'aéroport de nuit, et par-dessus
+     des panneaux de verre dépoli. Le décor n'est pas décoratif au sens creux — il
+     donne à l'écran le contexte d'un poste de pilotage la nuit, moment où l'on
+     épelle le plus (relève de fréquence, indicatif à répéter).
+
+     RÈGLE ABSOLUE À L'INTÉRIEUR DE .spell-scene : ne jamais utiliser --ink,
+     --surface, --border ni aucune variable qui bascule avec le thème. La scène est
+     sombre dans les DEUX thèmes et définit ses propres couleurs (--sc-*). C'est ce
+     qui garantit qu'un passage clair↔sombre ne peut pas y rendre un texte
+     illisible : il n'y a qu'un seul jeu de couleurs à vérifier, pas deux. */
+  /* ---- LA TOILE DE FOND, mécanique commune aux trois scènes ----
+     Plaquée au CADRE de la fenêtre, elle couvre toute la zone de contenu et
+     s'arrête net au bord de la barre latérale : son bord gauche est
+     var(--side-w), la même variable que la marge de <main>. Replier le menu
+     élargit donc le décor du même mouvement, sans une ligne de JavaScript.
+     Fixée aussi au sens propre : elle ne défile pas — on garde la sensation
+     d'une baie vitrée devant laquelle on travaille.
+
+     UNE SEULE couche, partagée par les trois pages. La photo n'est pas écrite
+     dans la règle : elle arrive par --scene-img, que chaque couple (page,
+     thème) redéfinit dans « le casting » plus bas. Ajouter une page décorée,
+     c'est écrire deux lignes — pas recopier le bloc. */
+  .scene-fond{ display:none; position:fixed; top:0; right:0; bottom:0; left:var(--side-w);
+    z-index:0; pointer-events:none; transition:left .22s ease; }
+  body.scene-on .scene-fond{ display:block; }
+  /* PENDANT LE VOL, pas de décor. La photo et son voile servent aux écrans de
+     lecture ; sur l'exercice ils se glissent derrière la carte, la pile avionique
+     et le panneau de parole, et brouillent tout ce qu'il faut lire vite.
+     La CONFIGURATION du vol, elle, garde sa scène : la règle est volontairement
+     conditionnée à .on-navigation, qui tombe dès qu'on change de page — sans quoi
+     un vol laissé en cours effacerait le décor de toutes les autres pages. */
+  body.scene-on.in-flight.on-navigation .scene-fond{ display:none; }
+  body.in-flight #page-navigation .scene-credit{ display:none; }
+  /* Le décor est une couche positionnée : sans cela le contenu de <main>, non
+     positionné, passerait DESSOUS. */
+  body.scene-on main{ position:relative; z-index:1; }
+  .scene-fond::before{ content:""; position:absolute; inset:0;
+    background-image:var(--scene-img); background-size:cover; background-repeat:no-repeat;
+    background-position:var(--scene-pos,center 58%); }
+  /* Le voile. C'est LUI qui garantit la lisibilité : il doit ramener la photo
+     dans une plage de luminance où la palette de texte de la scène tient.
+
+     Il a donc DEUX SENS, un par thème, et c'est tout le sujet :
+       — thème sombre : un voile NOIR, parce que le texte y est blanc ;
+       — thème clair  : un voile BLANC, parce que le texte y est foncé.
+     Un voile noir en thème clair assombrirait la photo jusqu'à lui donner
+     l'allure du thème sombre — c'était l'erreur de la première version.
+
+     Trois molettes dans les deux cas — vignette, haut, bas — que le casting
+     règle photo par photo. Elles voyagent avec leur image, mais PAS d'un thème
+     à l'autre : la même valeur ne veut pas dire la même chose selon le sens du
+     voile. Les valeurs claires sont plus basses, parce qu'un voile blanc qui
+     monte efface la photo bien plus vite qu'un voile noir. */
+  .scene-fond::after{ content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(120% 62% at 52% 2%, rgba(255,255,255,.34), transparent 64%),
+      radial-gradient(112% 92% at 50% 46%, transparent 44%, rgba(250,251,255,var(--scene-vignette,.30)) 100%),
+      linear-gradient(180deg, rgba(250,251,255,var(--scene-haut,.52))  0%,
+                              rgba(250,251,255,var(--scene-haut,.52))  20%,
+                              rgba(250,251,255,var(--scene-bas,.30))  100%); }
+  :root[data-theme="dark"] .scene-fond::after{
+    background:
+      radial-gradient(120% 62% at 52% 2%, rgba(38,26,104,.28), transparent 64%),
+      radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(4,6,14,var(--scene-vignette,.52)) 100%),
+      linear-gradient(180deg, rgba(5,8,18,var(--scene-haut,.30))  0%,
+                              rgba(5,8,18,var(--scene-haut,.30))  22%,
+                              rgba(5,8,18,var(--scene-bas,.64))  100%); }
+  /* Tiroir mobile : plus de barre latérale à contourner, le décor part du bord. */
+  @media (max-width:860px){ .scene-fond{ left:0; } }
+
+  /* ---- LE CASTING ----
+     Quelle photo, sur quelle page, dans quel thème.
+
+     La règle : thème CLAIR → les photos de jour (montagne, nuages, terminal) ;
+     thème SOMBRE → les photos des heures basses (crépuscule, couchant, nuit).
+     La scène, elle, reste un verre sombre dans les DEUX thèmes (voir la règle
+     absolue plus bas) : ce que le thème change ici, c'est l'HEURE qu'il fait
+     derrière la vitre. Basculer clair↔sombre, c'est passer du plein jour à la
+     tombée du soir — chaque thème a son atmosphère au lieu d'être deux nuances
+     du même gris.
+
+     Conséquence technique, et c'est tout l'intérêt de séparer le voile de la
+     photo : les images de jour montent jusqu'à 0,46 de luminance moyenne contre
+     0,10 pour la nuit. Le voile est donc nettement plus épais sous les claires.
+     Les valeurs ci-dessous ne sont pas décoratives : elles sont ce qui maintient
+     le texte blanc au-dessus du seuil AA dans les six cas. Elles voyagent avec
+     leur photo — déplacer une image d'un thème à l'autre, c'est déplacer ses
+     trois molettes avec elle. */
+  /* Le tableau de bord — la page d'arrivée une fois connecté. C'est la seule
+     scène qui ne montre pas un appareil en vol : on y regarde ses chiffres, pas
+     le paysage. D'où deux photos où l'on est POSÉ quelque part — au hall
+     d'embarquement le jour, dans le poste la nuit — et un voile plus épais
+     qu'ailleurs : ce qui est écrit dessus est fait pour être lu longuement,
+     pas parcouru. */
+  body.on-tableau   { --scene-img:url("../images/tableau-hall-jour.webp");
+                      --scene-pos:center 46%; --scene-haut:.68; --scene-bas:.40; --scene-vignette:.34; }
+  body.on-exercices { --scene-img:url("../images/avion-nuages.webp");
+                      --scene-pos:center 48%; --scene-haut:.62; --scene-bas:.30; --scene-vignette:.30; }
+  body.on-navigation{ --scene-img:url("../images/jet-montagne.webp");
+                      --scene-pos:center 52%; --scene-haut:.58; --scene-bas:.26; --scene-vignette:.28; }
+  body.on-epellation{ --scene-img:url("../images/terminal-jour.webp");
+                      --scene-pos:center 54%; --scene-haut:.62; --scene-bas:.32; --scene-vignette:.30; }
+  /* Le cockpit de nuit est déjà presque noir : 0,044 de luminance moyenne,
+     quatre fois moins que le crépuscule. Un voile épais l'effacerait tout à
+     fait — on le tient donc bas en haut de l'image, et c'est le bas, là où les
+     écrans de bord brillent, qui demande de la couverture. */
+  :root[data-theme="dark"] body.on-tableau   { --scene-img:url("../images/tableau-cockpit-nuit.webp");
+                      --scene-pos:center 52%; --scene-haut:.26; --scene-bas:.72; --scene-vignette:.50; }
+  :root[data-theme="dark"] body.on-exercices { --scene-img:url("../images/aeroport-crepuscule.webp");
+                      --scene-pos:center 64%; --scene-haut:.44; --scene-bas:.70; --scene-vignette:.54; }
+  /* Le couchant du Cessna laisse une braise au bord gauche, juste sous le titre :
+     mesurée à 0,227 de luminance, elle ramenait le blanc à 3,7:1. D'où un haut
+     nettement plus épais que ce que la photo laisserait croire — .44 — qui la
+     ramène à 4,6:1 sans toucher au soleil lui-même, qui vit plus bas dans l'image. */
+  :root[data-theme="dark"] body.on-navigation{ --scene-img:url("../images/cessna-couchant.webp");
+                      --scene-pos:center 56%; --scene-haut:.44; --scene-bas:.68; --scene-vignette:.52; }
+  :root[data-theme="dark"] body.on-epellation{ --scene-img:url("../images/aeroport-nuit.webp");
+                      --scene-pos:center 58%; --scene-haut:.24; --scene-bas:.60; --scene-vignette:.48; }
+  /* Écran étroit : la version légère de chaque photo (1100 px au lieu de 2000). */
+  @media (max-width:820px){
+    body.on-tableau   { --scene-img:url("../images/tableau-hall-jour-800.webp"); }
+    body.on-exercices { --scene-img:url("../images/avion-nuages-800.webp"); }
+    body.on-navigation{ --scene-img:url("../images/jet-montagne-800.webp"); }
+    body.on-epellation{ --scene-img:url("../images/terminal-jour-800.webp"); }
+    :root[data-theme="dark"] body.on-tableau   { --scene-img:url("../images/tableau-cockpit-nuit-800.webp"); }
+    :root[data-theme="dark"] body.on-exercices { --scene-img:url("../images/aeroport-crepuscule-800.webp"); }
+    :root[data-theme="dark"] body.on-navigation{ --scene-img:url("../images/cessna-couchant-800.webp"); }
+    :root[data-theme="dark"] body.on-epellation{ --scene-img:url("../images/aeroport-nuit-800.webp");
+                      --scene-pos:center 62%; }
+  }
+
+  /* Le crédit photo suit le casting : chaque scène porte les deux mentions et
+     n'en montre qu'une. Les photographes sont cités parce qu'ils doivent
+     l'être, pas parce que la place manquait pour le cacher. */
+  .scene-credit{ margin:22px 0 0; text-align:right; font-size:11px;
+    letter-spacing:.04em; color:var(--sc-credit); }
+  .credit-sombre{ display:none; }
+  :root[data-theme="dark"] .credit-clair{ display:none; }
+  :root[data-theme="dark"] .credit-sombre{ display:inline; }
+
+  /* ---- LA PALETTE DE SCÈNE ----
+     Ce qu'on pose sur la photo, c'est du verre dépoli. Il a la couleur du
+     thème, pas celle de la photo : verre CLAIR et texte foncé en thème clair,
+     verre SOMBRE et texte blanc cassé en thème sombre. Poser du verre sombre
+     sur les deux revenait à n'avoir qu'un seul thème, le sombre, avec deux
+     photos — c'était le défaut de la première version.
+
+     La façon de l'obtenir tient en une idée : plutôt que de réhabiller un par
+     un les quarante composants qui vivent sur ces pages, .scene REDÉFINIT
+     LOCALEMENT les variables de thème. Un champ qui dit background:var(--surface)
+     n'a rien à apprendre : à l'intérieur de .scene, --surface vaut du verre.
+     Les variables CSS héritent, donc la conversion est gratuite et, surtout,
+     elle reste vraie pour tout composant ajouté demain.
+
+     Conséquence directe et heureuse : en thème clair la scène garde les
+     couleurs du thème clair. Les blocs qui écrivent les leurs en dur — les
+     avertissements ambrés, l'encart de situation — y sont déjà justes et n'ont
+     RIEN à reprendre. Il n'y a qu'en thème sombre qu'ils doivent être corrigés,
+     et le thème sombre le faisait déjà pour eux : la liste des reprises à la
+     main est donc tombée à deux lignes. */
+  .scene{
+    position:relative;
+    /* --- Thème clair : du verre blanc, le texte du thème. --- */
+    --bg:transparent;
+    /* Une photo est un fond BRUYANT : elle a des zones claires et des zones
+       sombres à quelques pixels d'écart, là où le fond plat du thème n'en a
+       aucune. Le texte du thème clair (#242838 / #6b7280) y perd pied — mesuré
+       à 2,8:1 pour le sous-titre. D'où une encre franchement plus dense ici. */
+    --ink:#161b2a;
+    --ink-2:#3a4356;
+    /* Le verre doit rester du verre — on veut voir la photo à travers — mais
+       assez couvrant pour que ce qui est écrit dessus ne dépende plus de ce qui
+       passe derrière. C'est le contrat de l'opacité : ni vitre, ni mur. */
+    --surface:rgba(255,255,255,.86);
+    --surface-2:rgba(255,255,255,.74);
+    --border:rgba(28,34,54,.20);
+    --shadow-sm:0 1px 2px rgba(20,26,44,.10);
+    --shadow-md:0 10px 30px rgba(20,26,44,.16);
+    --shadow-lg:0 24px 60px rgba(20,26,44,.22);
+    color:var(--ink);
+    color-scheme:light;
+    /* Les mêmes valeurs sous les noms --sc-*, pour l'Épellation qui les emploie
+       déjà partout. Une seule définition, deux vocabulaires. */
+    --sc-ink:var(--ink); --sc-ink-2:var(--ink-2); --sc-accent:var(--violet-dark);
+    --sc-glass:rgba(255,255,255,.78); --sc-glass-2:rgba(255,255,255,.66);
+    --sc-line:rgba(28,34,54,.15); --sc-line-2:rgba(28,34,54,.26);
+    --sc-ok:var(--ok); --sc-bad:var(--bad); --sc-warn:var(--warn);
+    /* --- La « pose » : la teinte qu'on dépose SUR le verre pour détacher un
+       bouton, une pastille, un interrupteur. Elle doit foncer sur verre clair
+       et éclaircir sur verre sombre — d'où une variable et non un rgba écrit
+       en dur, qui ne pourrait être juste que d'un côté. --- */
+    --sc-pose:rgba(28,34,54,.055); --sc-pose-2:rgba(28,34,54,.09); --sc-pose-3:rgba(28,34,54,.14);
+    --sc-pastille:rgba(91,75,206,.11); --sc-pastille-bord:rgba(91,75,206,.34);
+    --sc-ombre:rgba(20,26,44,.16);
+    --sc-credit:rgba(20,26,44,.52);
+  }
+  :root[data-theme="dark"] .scene{
+    /* --- Thème sombre : du verre sombre, et un texte qu'il faut redéfinir
+       parce que celui du thème sombre (#e7e9f2 sur #1b1e29) n'a pas été
+       éprouvé sur une photo. --sc-ink-2 vaut 4,7:1 sur le pire pixel de fond
+       des trois scènes sombres, donc AA partout. --- */
+    --ink:#f4f6fd;
+    --ink-2:#d0d6e6;
+    --surface:rgba(11,15,28,.62);
+    --surface-2:rgba(6,9,18,.54);
+    --border:rgba(255,255,255,.22);
+    --violet-dark:#a99cff;       /* sert de couleur de TEXTE : éclaircie */
+    --violet-soft:rgba(169,156,255,.18);
+    --violet-tint:rgba(169,156,255,.13);
+    --ok:#5fe0a4; --warn:#ffc470; --bad:#ff8a86;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.34);
+    --shadow-md:0 10px 30px rgba(0,0,0,.42);
+    --shadow-lg:0 24px 60px rgba(0,0,0,.52);
+    /* Les contrôles natifs — cases à cocher, listes déroulantes, ascenseurs —
+       sont peints par le système, pas par notre CSS. Cette seule déclaration
+       leur fait adopter leur variante sombre : sans elle, une case non cochée
+       reste un carré blanc en plein milieu du verre. */
+    color-scheme:dark;
+    --sc-glass:rgba(11,15,28,.52); --sc-glass-2:rgba(6,9,18,.46);
+    --sc-line:rgba(255,255,255,.15); --sc-line-2:rgba(255,255,255,.26);
+    --sc-pose:rgba(255,255,255,.08); --sc-pose-2:rgba(255,255,255,.13); --sc-pose-3:rgba(255,255,255,.20);
+    /* La pastille violette : sa teinte doit assombrir le verre, pas l'éclaircir,
+       sinon l'accent qu'elle porte perd le contraste qu'elle est censée lui
+       donner. Mesuré : 3,2:1 avec l'ancienne teinte claire, 5,6:1 avec celle-ci. */
+    --sc-pastille:rgba(24,20,52,.42); --sc-pastille-bord:rgba(169,156,255,.44);
+    --sc-ombre:rgba(4,6,16,.42);
+    --sc-credit:rgba(255,255,255,.42);
+  }
+  /* La seule reprise à la main : la bordure de .hint, écrite en dur en violet
+     clair, qui ne se voyait pas sur le verre sombre. */
+  :root[data-theme="dark"] .scene .hint{ border-color:rgba(169,156,255,.34); }
+
+  /* Les champs de saisie : le verre seul ne suffit pas, on a besoin de voir où
+     l'on tape. Un cran plus contrasté que les panneaux, dans les deux sens. */
+  /* .radio-saisie est exclue partout : c'est le champ de fréquence DANS la
+     radio, un bloc de matériel noir qui reste noir dans les deux thèmes. Lui
+     appliquer le verre de la scène rendait son texte gris sur fond noir. */
+  .scene input[type="text"]:not(.radio-saisie), .scene input[type="number"],
+  .scene input[type="email"], .scene input[type="password"], .scene select, .scene textarea{
+    background:rgba(255,255,255,.88); color:var(--ink); border-color:var(--sc-line-2);
+    caret-color:var(--violet); }
+  .scene input:not(.radio-saisie)::placeholder,
+  .scene textarea::placeholder{ color:rgba(36,40,56,.52); }
+  :root[data-theme="dark"] .scene input[type="text"]:not(.radio-saisie),
+  :root[data-theme="dark"] .scene input[type="number"],
+  :root[data-theme="dark"] .scene input[type="email"], :root[data-theme="dark"] .scene input[type="password"],
+  :root[data-theme="dark"] .scene select, :root[data-theme="dark"] .scene textarea{
+    background:rgba(6,9,18,.52); caret-color:var(--violet-dark); }
+  :root[data-theme="dark"] .scene input:not(.radio-saisie)::placeholder,
+  :root[data-theme="dark"] .scene textarea::placeholder{ color:rgba(196,204,224,.62); }
+  /* Un menu déroulant natif est peint par le système. */
+  :root[data-theme="dark"] .scene select option{ background:#161a27; color:#f4f6fd; }
+
+  /* La page couvre la fenêtre même quand son contenu est court — sans quoi le
+     décor s'arrêterait au milieu de rien — et prend toute la largeur : garder une
+     colonne de 1000 px centrée laisserait deux bandes de photo inutilisées. */
+  #page-epellation{ min-height:100vh; }
+  #page-epellation > .container{ position:relative; max-width:1160px;
+    padding-top:clamp(26px,4vw,48px); padding-bottom:clamp(26px,4vw,48px); }
+
+  /* La palette (--sc-*) n'est plus ici : elle vient de .scene, commune aux trois
+     décors. .spell-scene ne garde que ce qui est propre à l'Épellation. */
+  /* Titre posé sur le décor. Bridé en largeur : la vigie de la photo tombe à
+     droite, on lui laisse la place plutôt que de la couvrir de texte. */
+  .spell-hero{max-width:min(660px,68%); margin:0 0 clamp(22px,3vw,32px)}
+  @media (max-width:820px){ .spell-hero{max-width:100%} }
+  .spell-hero .sh-tag{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--sc-accent);
+    background:var(--sc-pastille); border:1px solid var(--sc-pastille-bord);
+    border-radius:var(--pill); padding:4px 12px}
+  /* Le titre est posé À MÊME la photo, sans panneau dessous : c'est le seul
+     endroit de la scène où le halo porté fait le travail d'un fond. Il prend
+     donc la couleur du texte du thème, et son halo le sens du thème — sombre
+     sous un texte clair, clair sous un texte foncé. */
+  .spell-hero h2{margin:12px 0 8px; font-size:clamp(28px,4.4vw,40px); font-weight:800;
+    letter-spacing:-.02em; color:var(--sc-ink); text-shadow:0 2px 24px rgba(255,255,255,.75)}
+  .spell-hero p{margin:0; font-size:15px; line-height:1.55; color:var(--sc-ink-2);
+    text-shadow:0 1px 14px rgba(255,255,255,.75)}
+  :root[data-theme="dark"] .spell-hero h2{ color:#fff; text-shadow:0 2px 24px rgba(0,0,0,.55) }
+  :root[data-theme="dark"] .spell-hero p{ color:rgba(238,242,255,.82);
+    text-shadow:0 1px 14px rgba(0,0,0,.55) }
+
+  /* Le bandeau d'alerte passe lui aussi en version nuit : sa teinte claire
+     d'origine faisait une tache laiteuse sur la photo. */
+  .noreco-nuit{ background:rgba(217,83,79,.10); border-color:rgba(217,83,79,.42);
+    color:#8f2f2b; }
+  .noreco-nuit b{ color:#7a2622; }
+  :root[data-theme="dark"] .noreco-nuit{ background:rgba(255,138,134,.13);
+    border-color:rgba(255,138,134,.45); color:#ffd3d1; }
+  :root[data-theme="dark"] .noreco-nuit b{ color:#ff8a86; }
+
+  .spell-credit{display:block; margin-top:14px; text-align:right; font-size:11px;
+    letter-spacing:.04em; color:var(--sc-credit)}
+
+  .spell-layout{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px; align-items:start}
+  @media (max-width:980px){ .spell-layout{grid-template-columns:1fr} }
+
+  /* ---- Le verre : le matériau commun des deux colonnes ---- */
+  /* Pas de backdrop-filter ici, et ce n'est pas un oubli. `.page.active` anime
+     l'opacité de 0 à 1 (keyframes pageIn) ; tant qu'elle ne vaut pas exactement 1,
+     la page forme une « backdrop root » et le backdrop-filter de ses enfants n'a
+     plus rien à échantillonner — le décor, lui, vit HORS de la page. Le verre
+     restait donc net une demi-seconde, puis le flou tombait d'un coup à la fin de
+     l'animation. Plutôt que de subir ce clignotement, on garde en permanence l'état
+     qui laisse le mieux voir la photo : une teinte, sans flou. C'est alors la teinte
+     seule qui porte la lisibilité, montée de 30 à 40 % — mesuré sur la photo réelle,
+     14:1 en moyenne et 5,4:1 sous le lampadaire le plus vif, soit le niveau que
+     tenait déjà le verre flouté (5,9:1). Reflouter ici ramènerait le clignotement. */
+  .spell-scene .panel{
+    margin:0; color:var(--sc-ink);
+    background:var(--sc-glass);
+    border:1px solid var(--sc-line);
+    border-radius:20px;
+    box-shadow:0 18px 44px var(--sc-ombre), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .spell-main{padding:0; overflow:hidden}
+  .spell-side{display:flex; flex-direction:column; gap:18px}
+  .spell-side .panel{padding:18px}
+
+  /* ---- Bandeau du code ---- */
+  .spell-head{position:relative; text-align:center; padding:28px 22px 26px;
+    background:linear-gradient(180deg, var(--sc-pose-2), transparent 78%);
+    border-bottom:1px solid var(--sc-line)}
+  .spell-kind{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--sc-accent);
+    background:var(--sc-pastille); border:1px solid var(--sc-pastille-bord);
+    border-radius:var(--pill); padding:5px 14px}
+  /* Le code en pastilles : chacune se colore d'après le mot épelé. Éteintes elles
+     évoquent les feux de piste au repos, allumées elles se teintent. */
+  .spell-code{display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:9px;
+    margin:16px 0 10px}
+  .sp-char{display:grid; place-items:center; min-width:clamp(38px,7vw,58px); height:clamp(48px,9vw,70px);
+    padding:0 6px; border-radius:15px;
+    background:var(--sc-pose); border:1.5px solid var(--sc-line-2); color:var(--sc-ink);
+    font-family:var(--mono); font-size:clamp(24px,5vw,38px); font-weight:800; letter-spacing:.02em;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 6px 18px var(--sc-ombre);
+    transition:border-color .25s, background .25s, color .25s, box-shadow .25s}
+  .sp-char.sep{min-width:0; border:none; background:none; box-shadow:none;
+    color:var(--sc-ink-2); font-weight:600}
+  .sp-char.ok{border-color:var(--sc-ok); background:rgba(95,224,164,.14); color:var(--sc-ok);
+    box-shadow:0 0 22px rgba(95,224,164,.26), inset 0 1px 0 rgba(255,255,255,.16)}
+  .sp-char.ko{border-color:var(--sc-bad); background:rgba(255,138,134,.14); color:var(--sc-bad);
+    box-shadow:0 0 22px rgba(255,138,134,.24), inset 0 1px 0 rgba(255,255,255,.16)}
+  .spell-sub{color:var(--sc-ink-2); font-size:13.5px; margin:0}
+
+  .spell-body{padding:20px 22px 22px; display:flex; flex-direction:column; gap:14px}
+  .spell-mic{display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap}
+  .spell-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+
+  /* ---- Boutons : redéfinis pour fond sombre, sans toucher au .btn global ---- */
+  .spell-scene .btn{background:var(--sc-pose-2); color:var(--sc-ink);
+    border:1px solid var(--sc-line-2); box-shadow:0 4px 14px rgba(4,6,16,.30)}
+  .spell-scene .btn:hover{background:var(--sc-pose-3); border-color:var(--sc-line-2)}
+  .spell-scene .btn:disabled{opacity:.46}
+  .spell-scene .ptt{min-width:250px; border:none; color:#fff;
+    background:linear-gradient(135deg,#6d5af0,#4e3fbb);
+    box-shadow:0 10px 30px rgba(96,78,230,.52), inset 0 1px 0 rgba(255,255,255,.28)}
+  .spell-scene .ptt:hover{background:linear-gradient(135deg,#7d6bff,#5e4dd2);
+    box-shadow:0 14px 38px rgba(96,78,230,.62)}
+  .spell-scene .ptt.listening{background:linear-gradient(135deg,#ff6f6a,#d94a45);
+    box-shadow:0 10px 30px rgba(217,74,69,.52)}
+  .spell-scene .switch-line{background:var(--sc-pose); border:1px solid var(--sc-line);
+    color:var(--sc-ink-2)}
+  .spell-scene .switch-line input{accent-color:var(--sc-accent)}
+
+  /* ---- Comparaison attendu / entendu ---- */
+  .spell-compare{display:grid; gap:10px}
+  .spell-line{display:grid; grid-template-columns:78px minmax(0,1fr); gap:12px; align-items:start}
+  .spell-line .lbl{font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--sc-ink-2); padding-top:9px}
+  .spell-words{display:flex; flex-wrap:wrap; gap:6px; min-height:40px; align-items:center;
+    background:var(--sc-glass-2); border:1px solid var(--sc-line); border-radius:13px; padding:7px 9px}
+  .spell-words .w{display:inline-block; padding:5px 11px; border-radius:var(--pill);
+    font-size:14px; font-weight:600;
+    background:var(--sc-pose); border:1px solid var(--sc-line-2); color:var(--sc-ink)}
+  .spell-words .w.ok{border-color:rgba(95,224,164,.65); color:var(--sc-ok); background:rgba(95,224,164,.13)}
+  .spell-words .w.ko{border-color:rgba(255,138,134,.65); color:var(--sc-bad); background:rgba(255,138,134,.13)}
+  .spell-words .w.miss{border-style:dashed; border-color:var(--sc-line); color:var(--sc-ink-2); background:none}
+  .spell-words .w.extra{border-color:rgba(255,196,112,.65); color:var(--sc-warn); background:rgba(255,196,112,.12)}
+  .spell-words .none{color:var(--sc-ink-2); font-size:14px; padding:0 4px}
+  /* La réponse attendue reste floutée tant qu'on n'a pas répondu. */
+  .spell-expected.blurred{filter:blur(7px); user-select:none}
+  .spell-expected.blurred.hoverable{cursor:pointer}
+  .spell-expected.blurred.hoverable:hover{filter:none}
+
+  /* ---- Verdict ---- */
+  .spell-verdict{display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px;
+    border-radius:13px; padding:14px 17px;
+    border:1px solid var(--sc-line); background:var(--sc-pose); color:var(--sc-ink-2)}
+  .spell-verdict .ic-svg{width:22px; height:22px; flex:none}
+  .spell-verdict small{display:block; font-weight:600; font-size:13px; opacity:.88; margin-top:2px}
+  .spell-verdict.good{background:rgba(95,224,164,.14); color:var(--sc-ok); border-color:rgba(95,224,164,.55)}
+  .spell-verdict.bad{background:rgba(255,138,134,.14); color:var(--sc-bad); border-color:rgba(255,138,134,.55)}
+
+  .spell-status{padding:10px 14px; border-radius:12px; font-size:13.5px; font-weight:600;
+    background:rgba(169,156,255,.14); color:var(--sc-accent); border:1px solid rgba(169,156,255,.42)}
+  .spell-status.err{background:rgba(255,138,134,.14); color:var(--sc-bad); border-color:rgba(255,138,134,.5)}
+
+  /* ---- Chronomètre ---- */
+  .spell-timer{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-weight:700;
+    font-size:15px; color:var(--sc-ink-2); background:var(--sc-pose);
+    border:1px solid var(--sc-line-2); border-radius:var(--pill); padding:8px 14px;
+    min-width:74px; justify-content:center; font-variant-numeric:tabular-nums}
+  .spell-timer.running{color:var(--sc-ink); border-color:rgba(169,156,255,.6); background:rgba(169,156,255,.16)}
+  .spell-timer::before{content:""; width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.5}
+  .spell-timer.running::before{opacity:1; animation:spellPulse 1s ease-in-out infinite}
+  @keyframes spellPulse{0%,100%{opacity:1}50%{opacity:.25}}
+  @media (prefers-reduced-motion: reduce){ .spell-timer.running::before{animation:none} }
+
+  /* ---- Colonne de droite ---- */
+  .spell-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .spell-stat{background:var(--sc-glass-2); border:1px solid var(--sc-line); border-radius:13px; padding:11px 12px}
+  .spell-stat b{display:block; font-family:var(--mono); font-size:22px; font-weight:800;
+    color:var(--sc-accent); line-height:1.2}
+  .spell-stat span{font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--sc-ink-2)}
+  .spell-tips{margin:0; padding-left:18px; color:var(--sc-ink-2); font-size:13.5px; line-height:1.6}
+  .spell-tips li+li{margin-top:6px}
+  .spell-tips b{color:var(--sc-ink)}
+  .spell-scene .fiche-h{color:var(--sc-ink-2)}
+  .fiche-h{font-size:13px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
+           color:var(--ink-2); margin:0 0 12px}
+
+  /* Écran étroit : la photo est cadrée plus serré et la version légère suffit. */
+  @media (max-width:560px){
+    .spell-line{grid-template-columns:1fr; gap:5px}
+    .spell-line .lbl{padding-top:0}
+  }

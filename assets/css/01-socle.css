@@ -1,0 +1,116 @@
+/* =============================================================================
+   AVIERO — Le socle
+   -----------------------------------------------------------------------------
+   Variables de thème, remise à zéro, en-tête, avertissement, mécanique des pages du routeur.
+   Tout le reste en dépend : ce fichier charge en premier, et rien ne doit passer devant lui.
+
+   Ce fichier est le n° 1 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  :root{
+    --violet:#5b4bce; --violet-dark:#4a3bb8; --violet-soft:rgba(91,75,206,.10); --violet-tint:#efecfb;
+    --grad-top:#3d2b83; --grad-mid:#6b3f97; --grad-bot:#ef8a6d;
+    --ink:#242838; --ink-2:#6b7280;
+    /* ENCRE SECONDAIRE RENFORCÉE. --ink-2 (#6b7280) donne 4,83:1 sur le blanc en
+       théorie, mais 4,07:1 MESURÉ sur les pixels d'un texte de 13,5 px : à ces
+       tailles l'antialiasing n'atteint jamais la couleur pleine, et le noyau des
+       glyphes reste plus clair que la valeur déclarée. Le seuil AA est 4,5:1.
+       Ce jeton sert donc partout où du texte secondaire descend sous ~15 px.
+       La valeur est choisie avec de la marge (8,5:1 en théorie, 7:1 mesuré sur
+       la plupart des lignes) : un jeton calé au ras du seuil rebascule en échec
+       au premier changement de fond ou de graisse.
+       --ink-2 n'est PAS modifié : il est employé dans tout le site, et le
+       rebasculer demanderait un audit de chaque page — pas une retouche au
+       passage. Les endroits qui restent à reprendre sont listés dans
+       INSCRIPTION.md § 8. */
+    --ink-2-fort:#464d5a;
+    --bg:#f7f8fb; --surface:#ffffff; --surface-2:#f1f3f8; --border:#b9bec9;
+    --ok:#2fa36b; --warn:#e0912a; --bad:#d9534f;
+    --shadow-sm:0 1px 2px rgba(36,40,56,.06), 0 1px 3px rgba(36,40,56,.05);
+    --shadow-md:0 8px 26px rgba(36,40,56,.10);
+    --shadow-lg:0 24px 60px rgba(36,40,56,.18);
+    --pill:999px; --radius:16px;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  /* L'attribut `hidden` du HTML ne vaut que par une regle de la feuille du
+     NAVIGATEUR (`[hidden]{display:none}`), que n'importe quelle regle de ce
+     fichier posant un `display` sur le meme element emporte. Le piege s'est
+     deja referme deux fois ici (`.nav-navlog`, `.modal`, corriges au cas par
+     cas plus bas) et une troisieme sur `.sidelink{display:flex}` : l'entree
+     « Administration » du menu portait bien `hidden`, et restait affichee pour
+     tout le monde. Corriger un selecteur de plus aurait laisse le suivant
+     passer. La regle ci-dessous vaut pour tous, presents et a venir ; le
+     `!important` est ici a sa place, puisque rien ne doit pouvoir rendre
+     visible ce que le HTML declare cache. */
+  [hidden]{ display:none !important; }
+  html{scroll-behavior:smooth}
+  html,body{margin:0}
+  body{background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.55; min-height:100vh; -webkit-font-smoothing:antialiased}
+  h1,h2,h3{line-height:1.12; margin:0; letter-spacing:-.02em}
+  a{color:var(--violet); text-decoration:none}
+  ::selection{background:var(--violet-soft)}
+  :focus-visible{outline:2px solid var(--violet); outline-offset:2px}
+
+  /* ---------- Header ---------- */
+  /* La bande du haut est NOIRE, et le violet du site n'y passe qu'en reflets :
+     deux halos très dilués posés là où il se passe quelque chose — la marque à
+     gauche, les boutons à droite — et un filet violet pour toute bordure basse.
+     Rien de saturé : ici le violet éclaire, il ne remplit pas. La bande garde
+     sa couleur dans les deux thèmes ; c'est le seul bloc du site qui ne suit
+     pas --surface, et c'est voulu — elle sert de cadre à la page. */
+  .topnav{position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:0 clamp(16px,4vw,44px); height:64px; border-bottom:1px solid rgba(91,75,206,.36);
+    background:
+      radial-gradient(130% 210% at 6% 0%, rgba(107,63,151,.34) 0%, rgba(107,63,151,0) 56%),
+      radial-gradient(95% 190% at 97% 108%, rgba(91,75,206,.34) 0%, rgba(91,75,206,0) 60%),
+      linear-gradient(180deg,#16171f 0%, #0b0c11 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 6px 24px rgba(10,11,16,.26)}
+  /* Sur le noir, l'encre du site ne tient plus : la marque et les liens passent
+     au blanc, et le survol devient un voile clair au lieu de --surface-2. */
+  .topnav .brand{color:#fff}
+  .topnav .brand .logo{box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 4px 14px rgba(91,75,206,.45)}
+  .topnav .navlink{color:rgba(255,255,255,.76)}
+  .topnav .navlink:hover{color:#fff; background:rgba(255,255,255,.10)}
+  .topnav .navlink.current{color:#b7abff}
+  .topnav .navlink.current::after{background:#b7abff}
+  .topnav .nav-cta{background:var(--violet); box-shadow:0 4px 16px rgba(91,75,206,.45)}
+  .topnav .nav-cta:hover{background:#6b5ce0}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px; color:var(--ink)}
+  .brand .logo{width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
+    background:linear-gradient(135deg,var(--violet),var(--violet-dark)); color:#fff; font-size:17px}
+  .nav-right{display:flex; align-items:center; gap:6px}
+  .navlinks{display:flex; gap:2px}
+  .navlink{position:relative; padding:9px 14px; border-radius:var(--pill); cursor:pointer; color:var(--ink-2);
+    font-size:14.5px; font-weight:600; background:none; border:none; font-family:inherit; transition:color .18s, background .18s}
+  .navlink:hover{color:var(--ink); background:var(--surface-2)}
+  .navlink.current{color:var(--violet)}
+  .navlink.current::after{content:""; position:absolute; left:14px; right:14px; bottom:4px; height:2.5px; border-radius:2px; background:var(--violet); animation:navU .3s ease}
+  @keyframes navU{from{transform:scaleX(.2); opacity:0} to{transform:scaleX(1); opacity:1}}
+  .nav-cta{margin-left:8px; padding:9px 18px; border-radius:var(--pill); border:none; cursor:pointer; font-family:inherit;
+    font-size:14px; font-weight:700; color:#fff; background:var(--violet); transition:background .18s, transform .12s, box-shadow .18s; box-shadow:var(--shadow-sm)}
+  .nav-cta:hover{background:var(--violet-dark); transform:translateY(-1px); box-shadow:var(--shadow-md)}
+
+  /* ---------- Disclaimer ---------- */
+  /* Il n'est plus en tête de page mais dans le pied : plus de bordure basse à
+     coller sous la barre du haut, un cadre discret à la place, et une mesure
+     bornée pour qu'il ne se confonde pas avec les lignes de crédits. */
+  .disclaimer{max-width:760px; margin:0 auto 18px; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:12px;
+    color:var(--ink-2-fort); font-size:12.5px; line-height:1.55; text-align:center; padding:10px 16px}
+  .disclaimer strong{color:var(--ink)}
+
+  /* ---------- Pages / router ---------- */
+  .page{display:none}
+  .page.active{display:block; animation:pageIn .5s cubic-bezier(.22,.61,.36,1)}
+  @keyframes pageIn{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+  .container{max-width:1000px; margin:0 auto; padding:clamp(22px,4vw,44px) clamp(16px,4vw,30px)}
+  .section-title{font-size:clamp(22px,3vw,30px); font-weight:800; margin-bottom:8px}
+  .section-sub{color:var(--ink-2); margin-bottom:24px; font-size:15.5px}
+

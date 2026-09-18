@@ -17,3 +17,9 @@ photo avion/
 # Cartes OACI sources deplacees dans ce dossier : elles servent a fabriquer les
 # tuiles de assets/oaci/, elles ne sont pas publiees.
 carte oaci/
+
+# Outillage de test (Playwright). Le code des tests est versionné (tests/),
+# pas le navigateur qu'il pilote ni les traces qu'il produit.
+node_modules/
+test-results/
+playwright-report/

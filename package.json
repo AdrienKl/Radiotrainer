@@ -1,0 +1,15 @@
+{
+  "name": "aviero",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AVIERO — plateforme de formation aeronautique. Site statique : ce fichier ne sert qu'a lancer les tests, l'application n'a aucune dependance.",
+  "scripts": {
+    "test": "sh tests/lancer_tout.sh",
+    "test:contrat": "node --test tests/contrat/",
+    "test:parcours": "playwright test",
+    "serveur": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0"
+  }
+}

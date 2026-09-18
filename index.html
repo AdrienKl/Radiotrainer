@@ -4515,7 +4515,16 @@
     <section id="page-progression" class="page">
       <div class="container">
         <h2 class="section-title">Votre progression</h2>
-        <p class="section-sub">Historique et badges enregistrés sur cet appareil (rien n'est envoyé sur Internet).</p>
+        <!-- Le sous-titre disait « enregistrés sur cet appareil (rien n'est envoyé sur
+             Internet) ». C'était vrai avant assets/sync.js : les séances partent
+             désormais aussi en base, et le pied de page du site le dit déjà. Deux
+             phrases du même site ne peuvent pas se contredire sur ce point-là — c'est
+             une promesse de confidentialité, pas une tournure. Elle dit donc ce qui se
+             passe : cette page LIT le stockage local (d'où « de cet appareil »), et la
+             base garde sa propre copie, qui suit le compte. Même correction que celle
+             déjà portée au sous-titre des Paramètres, pour la même raison. -->
+        <p class="section-sub">Historique et badges de cet appareil. Vos séances sont également
+          enregistrées sur votre compte et vous suivent d'un appareil à l'autre.</p>
         <!-- Historique repris de la Navigation : un en-tête repliable qui donne
              d'emblée le dernier résultat et le nombre de sessions, des lignes
              cliquables, et le détail d'une session sous forme de tuiles. Le tableau

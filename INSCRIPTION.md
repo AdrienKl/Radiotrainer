@@ -412,40 +412,66 @@ Nulle part dans le navigateur.
 
 ## 7. Les tests
 
-`scratchpad/ins1.py` — tout ce qui se teste sans écrire en base : verrous de
-l'étape 1, peinture du questionnaire depuis sa définition, question
-conditionnelle des heures de vol, questions obligatoires contre question
-facultative, champ libre d'« Autre », forme du nom d'utilisateur, résolution de
-l'aérodrome par code **ou** par nom, pages légales, secours par code.
+> **Mise à jour du 18/09/2026.** Cette section décrivait huit suites Python
+> (`scratchpad/ins1.py`, `cpt1.py`, `cpt2.py`, `ins_deja.py`, `ins_secours.py`,
+> `ins_contraste.py`, `lancer_tout.sh`). Elles vivaient dans `scratchpad/`, qui
+> **n'est pas versionné** : elles ne sont plus sur le disque, et rien dans
+> l'historique Git ne permet de les retrouver. Elles sont perdues.
+>
+> C'est précisément pour que cela ne se reproduise pas que la nouvelle suite est
+> **dans le dépôt**, sous `tests/`.
 
-`scratchpad/cpt2.py` — la page Compte : le repli sur l'ancien visage avant la
-migration, et après elle les six questions, l'option « aucune réponse » présente
-sur la seule question facultative et absente des autres, et l'identité des
-listes avec celles de l'inscription.
+### Ce qui existe aujourd'hui
 
-`scratchpad/ins_deja.py` — le bandeau « déjà connecté » : « S'inscrire » ne
-navigue plus, l'envoi du code est refusé tant qu'une session est ouverte, et la
-déconnexion depuis le bandeau ramène bien sur l'inscription.
+```sh
+npm install && npx playwright install chromium   # une seule fois
+sh tests/lancer_tout.sh
+```
 
-`scratchpad/ins_secours.py` — le secours par code répond la même chose que
-l'adresse ait un compte ou non.
+Deux étages, détaillés dans `tests/README.md` :
 
-`scratchpad/ins_contraste.py` — 90 relevés de contraste sur les pixels réels,
-dans les deux thèmes.
+- **`tests/contrat/`** — lecture du code, aucune dépendance, moins d'une
+  seconde. Surveille les symboles partagés entre blocs, l'ordre de chargement,
+  les clés de stockage, les routes, le catalogue de phraséologie et sa parité
+  avec la table `exercises`, et l'absence de secret dans les fichiers servis.
+- **`tests/parcours/`** — le site dans un vrai navigateur (Playwright). Couvre
+  le démarrage sans erreur de console, les seize routes, un scénario joué
+  jusqu'au récapitulatif, un vol complet, l'épellation, et ce qui doit survivre
+  à un rechargement.
 
-`scratchpad/lancer_tout.sh` — enchaîne les huit suites.
+### Ce que la nouvelle suite ne couvre pas
 
-Les deux suites du parcours détectent elles-mêmes si la migration est passée et
-le disent.
-`cpt2.py` a deux moitiés : **relancez-la après la migration**, c'est la seconde
-qui vérifie le questionnaire. De même, `cpt1.py` § 4 confirme que
-`profiles_garde()` repousse une tentative de promotion — la migration
-**remplace** cette fonction, donc c'est le contrôle à refaire en premier.
+Les tests de parcours **coupent toute requête vers Supabase**. Le projet visé
+par `assets/supabase-config.js` est le projet réel : une suite de tests n'a pas
+à y écrire. En conséquence, **le parcours d'inscription lui-même n'est pas
+retesté automatiquement** — ni les verrous de l'étape 1, ni le questionnaire, ni
+le secours par code, ni les jalons de consentement.
 
-**Ce qui n'est pas testé automatiquement, et ne peut pas l'être** : l'aller-
-retour réel de l'e-mail. Personne ici ne peut lire votre boîte. Après les trois
-réglages du § 1, faites **une** inscription complète à la main, de bout en bout,
-avec une adresse à vous. C'est la seule vérification qui manque.
+C'est une perte réelle par rapport aux anciennes suites, et elle est assumée
+pour l'instant : la priorité était de protéger le découpage du monolithe. La
+manière propre de la combler est un **compte de test dédié** sur un projet
+Supabase séparé — pas sur le projet de production.
+
+En attendant, ces sept points se vérifient **à la main**, et doivent l'être
+avant toute mise en ligne :
+
+1. les verrous de l'étape 1 (adresse, mot de passe, CGU, âge) ;
+2. le questionnaire : questions obligatoires contre la seule question
+   facultative, champ libre d'« Autre », question conditionnelle des heures de
+   vol ;
+3. la résolution de l'aérodrome par code **ou** par nom ;
+4. le bandeau « déjà connecté » ;
+5. le secours par code, qui doit répondre la même chose que l'adresse ait un
+   compte ou non ;
+6. que `profiles_garde()` repousse bien une tentative de promotion ;
+7. **l'aller-retour réel de l'e-mail** — personne ici ne peut lire votre boîte.
+   Après les trois réglages du § 1, faites **une** inscription complète de bout
+   en bout, avec une adresse à vous. C'est, comme avant, la vérification que
+   rien ne remplacera.
+
+Le contrôle de contraste (90 relevés sur les pixels réels, dans les deux
+thèmes) reste lui aussi à refaire — voir le § 8, qui décrit ce qu'il avait
+trouvé et qui n'a pas été corrigé.
 
 ---
 

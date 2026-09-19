@@ -207,7 +207,22 @@
     --sc-pose:rgba(28,34,54,.055); --sc-pose-2:rgba(28,34,54,.09); --sc-pose-3:rgba(28,34,54,.14);
     --sc-pastille:rgba(91,75,206,.11); --sc-pastille-bord:rgba(91,75,206,.34);
     --sc-ombre:rgba(20,26,44,.16);
-    --sc-credit:rgba(20,26,44,.52);
+    /* .52 le 18/09, .70 le 20/09/2026 — 3,48:1 mesuré, seuil AA 4,5:1.
+       Ce texte porte l'ATTRIBUTION DES PHOTOS. Attention à ne pas surjouer
+       l'argument : LEGAL.md § 2 bis est clair, les licences Unsplash, Pixabay
+       et Pexels n'OBLIGENT pas à citer l'auteur. Le projet le fait quand même,
+       par choix — c'est ce que dit le commentaire de `.scene-credit` juste
+       au-dessus. Mais un crédit qu'on ne peut pas lire n'est pas un crédit :
+       le rendre illisible revient à ne pas le donner, tout en occupant la
+       place. Et sous le seuil AA, c'est de toute façon un défaut.
+       La cause : ce jeton a été réglé pour de l'encre sur du VERRE BLANC
+       posé sur une photo. `.scene-credit` et `.spell-credit`, eux, tombent
+       SOUS la scène, sur le fond plat de la page (--bg, #f7f8fb) — plus
+       clair que le verre, donc moins de contraste, à 11 px.
+       .70 rend 6,20:1 en théorie. La marge est volontaire : à 11 px
+       l'antialiasing n'atteint jamais la couleur pleine (voir 01-socle.css),
+       et un jeton calé au ras du seuil rebascule au premier changement. */
+    --sc-credit:rgba(20,26,44,.70);
   }
   :root[data-theme="dark"] .scene{
     /* --- Thème sombre : du verre sombre, et un texte qu'il faut redéfinir
@@ -239,7 +254,9 @@
        donner. Mesuré : 3,2:1 avec l'ancienne teinte claire, 5,6:1 avec celle-ci. */
     --sc-pastille:rgba(24,20,52,.42); --sc-pastille-bord:rgba(169,156,255,.44);
     --sc-ombre:rgba(4,6,16,.42);
-    --sc-credit:rgba(255,255,255,.42);
+    /* .42 le 18/09, .58 le 20/09/2026 — 4,11:1 mesuré sur rgb(18,20,28),
+       seuil AA 4,5:1. Même raison qu'en clair, même marge : .58 rend 6,70:1. */
+    --sc-credit:rgba(255,255,255,.58);
   }
   /* La seule reprise à la main : la bordure de .hint, écrite en dur en violet
      clair, qui ne se voyait pas sur le verre sombre. */

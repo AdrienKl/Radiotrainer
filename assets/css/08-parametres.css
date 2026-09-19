@@ -51,9 +51,14 @@
   /* Segmenté à 2 ou 3 options, réutilisé par plusieurs réglages. */
   .seg3{ display:inline-flex; gap:3px; background:var(--surface-2); border:1px solid var(--border);
     border-radius:var(--pill); padding:3px; flex:none; }
+  /* Le fond transparent laisse voir --surface-2, sur quoi --ink-2 ne donnait
+     que 4,35:1 — sous le seuil AA, sur les trois segments « Système / Clair /
+     Sombre » et « Débutant / Réel ». --ink-2-fort y rend 7,66:1. L'option
+     active, elle, est blanche sur violet et tenait déjà.
+     Relevé le 20/09/2026 par tests/parcours/contraste.spec.js. */
   .seg3-opt{ cursor:pointer; border:none; background:transparent; border-radius:var(--pill);
     padding:7px 13px; font-family:var(--sans); font-size:12.5px; font-weight:600;
-    color:var(--ink-2); transition:.15s; white-space:nowrap; }
+    color:var(--ink-2-fort); transition:.15s; white-space:nowrap; }
   .seg3-opt:hover{ color:var(--ink); }
   .seg3-opt.active{ background:var(--violet); color:#fff; }
 

@@ -191,10 +191,48 @@ export function sansCommentairesNiChaines(code) {
     }
     if (c === '/' && d === '/') { comm = 'ligne'; i += 2; continue; }
     if (c === '/' && d === '*') { comm = 'bloc'; i += 2; continue; }
+    /* ---- Les expressions régulières littérales -------------------------
+       Oubliées du premier jet, et ça se payait cher : escapeHtml contient
+       /[&<>"']/g. Le guillemet à l'intérieur de la classe ouvrait une fausse
+       chaîne, qui avalait tout le code jusqu'au guillemet suivant — dont la
+       déclaration de showToast, trois lignes plus bas. L'analyse de
+       dépendances ne voyait donc pas showToast, et personne ne s'en plaignait :
+       un symbole qu'on ne voit pas est un symbole qu'on croit absent, pas une
+       erreur.
+
+       Le « / » est ambigu en JavaScript : division ou début d'expression. On
+       tranche sur le dernier caractère significatif, ce qui suffit largement
+       pour du code qui ne cherche pas à piéger un analyseur. */
+    if (c === '/' && debutDExpression(out)) {
+      i++;
+      let classe = false;
+      while (i < code.length) {
+        const k = code[i];
+        if (k === '\\') { i += 2; continue; }
+        if (k === '[') classe = true;
+        else if (k === ']') classe = false;
+        else if (k === '/' && !classe) { i++; break; }
+        else if (k === '\n') break;            // pas une expression, en fait
+        i++;
+      }
+      while (i < code.length && /[a-z]/.test(code[i])) i++;   // les drapeaux
+      continue;
+    }
     if (c === '"' || c === "'" || c === '`') { chaine = c; i++; continue; }
     out += c; i++;
   }
   return out;
+}
+
+/* Un « / » qui suit l'un de ces caractères ne peut pas être une division : il
+   n'y a rien à diviser. C'est donc une expression régulière. */
+function debutDExpression(dejaEcrit) {
+  const m = /([^\s])\s*$/.exec(dejaEcrit);
+  if (!m) return true;                                  // début de fichier
+  const c = m[1];
+  if ('(,=:[!&|?+-*%~^{};<>'.includes(c)) return true;
+  /* `return /…/`, `typeof /…/` : un mot-clé, pas une valeur. */
+  return /\b(return|typeof|instanceof|in|of|new|delete|void|case|do|else|yield|await)\s*$/.test(dejaEcrit);
 }
 
 const _nu = new Map();

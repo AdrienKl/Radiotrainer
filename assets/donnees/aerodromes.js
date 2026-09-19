@@ -27,7 +27,18 @@
 
    Extrait d'index.html le 18/09/2026. Les lignes ont été DÉPLACÉES, pas
    réécrites : aucune donnée n'a changé.
+
+   Le « use strict » ci-dessous n'est pas un ajout de comportement, c'est une
+   réparation. Ce code vivait dans le bloc du moteur, sous SON « use strict ».
+   Extrait en phase 1 sans la directive, il est passé en mode permissif : `this`
+   change de valeur dans les appels simples, et une affectation à une variable
+   non déclarée crée un global au lieu de lever une erreur. Le remettre, c'est
+   retrouver le comportement d'avant l'extraction.
+
+   L'écart n'a produit aucun symptôme — mais un mode permissif ne produit jamais
+   de symptôme : c'est sa définition. Il avale l'erreur.
    ========================================================================== */
+"use strict";
 /* =========================================================================
    2) DONNÉES AÉRODROMES (OurAirports, filtré FR — statique, intégré en dur)
    Pistes parallèles (L/C/R) fusionnées sur l'orientation de base.

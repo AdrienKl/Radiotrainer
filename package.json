@@ -10,6 +10,7 @@
     "serveur": "python3 -m http.server 8000"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.47.0"
   }
 }

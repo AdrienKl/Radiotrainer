@@ -101,6 +101,11 @@ celles des autres — et la bannière le lui dit.
 
 Six tables. Le raisonnement (et ce qui a été écarté) est dans `ADMIN.md` § 10.
 
+> **Ce schéma vit désormais dans `sql/000-socle.sql`**, avec les politiques
+> d'`app_errors` et d'`admin_audit_log` que ce README était seul à porter.
+> Ce qui suit reste ici parce que c'est là qu'on l'explique — mais **ce n'est
+> plus ce qu'on exécute**. Voir l'encadré à la fin de la section.
+
 ```sql
 -- =====================================================================
 -- 1. PROFILS  (miroir public de auth.users — ne PAS créer de table `users`)
@@ -241,8 +246,24 @@ alter table public.sessions
   foreign key (exercise_key) references public.exercises(key) on delete set null;
 ```
 
-> À exécuter dans l'ordre : le script ci-dessus se colle tel quel dans l'éditeur
-> SQL de Supabase, de haut en bas.
+> **NE PAS COLLER CE SCRIPT DANS L'ÉDITEUR SQL.** C'est ainsi que
+> `sql/002-progression.sql` n'est parti qu'à moitié le 19/09/2026 : 390 lignes,
+> 24 ko, le collage s'arrête en route, l'éditeur affiche « Success », et la
+> seconde moitié n'a jamais existé. Rien ne le signale — on l'a découvert des
+> semaines plus tard, en interrogeant la base.
+>
+> Monter un projet neuf se fait par l'API, fichier par fichier, dans l'ordre :
+>
+> ```sh
+> SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-sql.sh sql/000-socle.sql
+> SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-sql.sh sql/001-inscription.sql
+> SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-sql.sh sql/002-progression.sql
+> SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-sql.sh sql/003-is-admin-et-exercices.sql
+> ```
+>
+> Puis `sh tests/lancer_tout.sh base` pour vérifier ce qui est réellement arrivé.
+> Que cet enchaînement fonctionne sur une base vide est vérifié hors ligne, à
+> chaque exécution des tests, par `tests/verifier-migrations.mjs`.
 
 ### 4.3 Les vues (à ne pas transformer en tables)
 

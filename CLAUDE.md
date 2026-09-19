@@ -582,11 +582,12 @@ L'objectif final est de construire AVIERO comme un produit réel, professionnel 
 
 ### 21.1 Ce qui est fait et poussé
 
-La **phase 2 est close** (§ 6.2), et une base de tests existe : **148 vérifications automatiques** (91 de contrat, 57 de parcours), plus deux outils lancés à la demande. `main` et `origin/main` étaient synchronisés au dernier point.
+La **phase 2 est close** (§ 6.2), et une base de tests existe : **159 vérifications automatiques** (91 de contrat, 11 de migration, 57 de parcours), plus deux outils lancés à la demande.
 
 ```sh
-sh tests/lancer_tout.sh            # les 148, hors réseau
+sh tests/lancer_tout.sh            # les 159, hors réseau
 sh tests/lancer_tout.sh contrat    # la lecture du code seule, < 1 s
+sh tests/lancer_tout.sh migrations # le SQL sur un PostgreSQL jetable, hors ligne
 sh tests/lancer_tout.sh base       # le catalogue et les politiques, CONTRE LE PROJET RÉEL
 node tests/comparer-rendu.mjs      # le rendu avant/après un découpage (voir son en-tête)
 ```
@@ -617,9 +618,11 @@ Cette voie envoie le fichier d'un bloc par l'API : pas de presse-papier, pas de 
 
 **Reste ensuite un rattrapage :** les séances des six scénarios enregistrées AVANT le 19/09/2026 ont `exercise_key = null` en base — `assets/sync.js` réessaie sans la clé quand la clé étrangère est refusée, ce qui sauve la séance mais la détache. Elles s'affichent « Scénario » et ne sont pas relançables. Les nouvelles s'attachent correctement. Visible depuis la console d'administration seulement (RLS).
 
-### 21.3 Travail écrit mais NON COMMITÉ
+### 21.3 Travail commité mais NON FUSIONNÉ
 
-Sur la branche **`sql-003-et-verif-catalogue`** :
+Deux branches attendent, `main` et `origin/main` sont restées au 19/09/2026 sur `2703b57`.
+
+**`sql-003-et-verif-catalogue`** — 2 commits, tests verts.
 
 | Fichier | Quoi |
 |---|---|
@@ -627,15 +630,33 @@ Sur la branche **`sql-003-et-verif-catalogue`** :
 | `tests/verifier-catalogue.mjs` | **nouveau** — compare le catalogue de la base à celui de l'application, et sonde les politiques |
 | `tests/lancer_tout.sh` | modifié — ajout de l'étape `base` |
 
-Ces fichiers attendent la validation du développeur. **Ne pas commiter sans son accord.**
+**`sql-000-socle`** — part de la précédente. Ce que le § 21.4 annonçait sous le nom `sql/004`.
+
+| Fichier | Quoi |
+|---|---|
+| `sql/000-socle.sql` | **nouveau** — les six tables, `is_admin()`, `handle_new_user()` et son déclencheur, la clé étrangère du catalogue, cinq index, la RLS des six tables et les politiques d'`app_errors` et `admin_audit_log` |
+| `tests/verifier-migrations.mjs` | **nouveau** — rejoue `sql/*.sql` sur un PostgreSQL jetable en mémoire, deux fois, puis contrôle le schéma obtenu |
+| `tests/lancer_tout.sh` | modifié — étape `migrations`, **dans « tout »** (hors ligne) |
+| `package.json` | modifié — `@electric-sql/pglite` en dépendance de **test** ; l'application reste sans aucune dépendance |
+| `tests/README.md`, `assets/admin/README.md` | mis à jour |
+
+**Pourquoi `000` et pas `004`.** Un numéro de migration est un ordre d'exécution. `sql/001` fait `alter table public.profiles`, `sql/002` insère dans `public.exercises` : les deux supposent ces tables. Un fichier numéroté 004 qu'il faut jouer en premier est un piège.
+
+**Ce que le banc d'essai a trouvé en tournant la première fois** — et qui n'était pas qu'un défaut du nouveau fichier : `public.is_admin()` n'était définie qu'en `sql/003`, alors que `sql/000` **et** `sql/002` l'appellent (002 quatre fois, dans son § 4). Sur une base vide, les migrations s'arrêtaient là. L'en-tête de `sql/003` **annonçait** la panne sans que son numéro permette de l'éviter. Elle vit désormais dans le socle ; `sql/003` garde son `create or replace`, sans effet, comme trace de la fois où le manque a été trouvé.
+
+**Ces deux branches attendent la validation du développeur.** La fusion de la première a été tentée et refusée par le garde-fou d'écriture sur `main`.
 
 ### 21.4 Le fossé entre les migrations et la base réelle
 
 La base de production a été **bâtie à la main depuis `assets/admin/README.md`** : les tables, `is_admin()`, `profiles_garde()`, trois vues, toutes les politiques. Les migrations `sql/001` et `sql/002` ne décrivent qu'une partie de tout ça.
 
-Conséquence concrète : **rejouer les migrations sur un projet neuf ne reproduit pas la production.** `is_admin()` manquerait aux quatre politiques de `sql/002` qui l'appellent, et `exercises` se retrouverait sans RLS. C'est ce que `sql/003` commence à combler. Un `sql/004` reste à écrire pour le reste : `app_errors`, `admin_audit_log`, et les tables elles-mêmes.
+Conséquence concrète, tant que c'était vrai : **rejouer les migrations sur un projet neuf ne reproduisait pas la production.**
 
-C'est le **préalable à un projet Supabase de test** — lequel est lui-même le préalable à tester l'inscription, les RLS et la fusion entre appareils, qu'aucun test ne couvre aujourd'hui (les tests coupent Supabase exprès, voir `tests/README.md`).
+**Comblé sur la branche `sql-000-socle` (§ 21.3), et vérifié plutôt qu'affirmé.** `tests/verifier-migrations.mjs` rejoue `sql/*.sql` sur un PostgreSQL vierge et jetable à chaque exécution de la suite. Les quatre fichiers passent, deux fois de suite, et le schéma obtenu porte les six tables sous RLS, les quatre vues en `security_invoker`, les cinq fonctions, le déclencheur d'inscription et les treize exercices.
+
+Ce qui reste hors de portée de ce banc d'essai, parce que PGlite est un PostgreSQL et non un Supabase : le comportement réel des politiques face à un **vrai jeton**, avec **deux comptes**. Ça demande toujours un **projet Supabase de test** — lequel reste le préalable à tester l'inscription, les RLS entre comptes et la fusion entre appareils (les tests coupent Supabase exprès, voir `tests/README.md`).
+
+La bonne nouvelle : monter ce projet de test n'est plus un chantier. C'est quatre commandes, dans l'ordre des numéros, et une vérification.
 
 ### 21.5 Décisions en attente du développeur
 
@@ -650,7 +671,7 @@ C'est fusionnable clé par clé. **Question posée, pas encore tranchée :** un 
 ### 21.6 Ce que les tests ne couvrent toujours pas
 
 - **le micro réel** — la chaîne entière est couverte par une fausse `SpeechRecognition` (`tests/parcours/micro.spec.js`), mais pas l'audio. Un scénario et un vol au micro, à la main, après toute étape qui touche à la voix ou à la reconnaissance ;
-- **l'inscription, l'auth, les RLS avec deux comptes** — il faut le projet de test ;
+- **l'inscription, l'auth, les RLS avec deux comptes** — il faut le projet de test. Depuis le 19/09/2026, `tests/verifier-migrations.mjs` vérifie hors ligne que les politiques sont bien POSÉES et que le déclencheur crée un profil ; ce qu'un compte connecté voit des données d'un autre reste non couvert ;
 - **la fusion entre deux appareils** — jamais vérifiée, ni par un test ni à la main ;
 - **le contraste des deux thèmes** — les 90 relevés de l'ancienne suite `ins_contraste.py` restent à refaire.
 
@@ -679,10 +700,14 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 19/09/2026 | Étape 2.3 : le moteur vers `assets/scenarios/moteur.js`. `index.html` redevient un document — phase 2 close | § 6.2 |
 | 19/09/2026 | Le mode strict rendu aux fichiers de `assets/donnees/`, perdu lors de l'extraction de la phase 1 | § 21 |
 | 19/09/2026 | Les tests ne parlent jamais au Supabase de production ; l'étape `base` du lanceur est la seule exception, et en lecture | `tests/README.md` |
+| 19/09/2026 | Le socle du schéma devient `sql/000-socle.sql` et non `sql/004` : un numéro de migration est un ordre d'exécution, pas une étiquette | § 21.3 |
+| 19/09/2026 | `is_admin()` remonte dans le socle : `sql/002` l'appelait quatre fois et `sql/003`, qui la définissait, passe après | § 21.3 |
+| 19/09/2026 | Les migrations sont rejouées à chaque exécution des tests sur un PostgreSQL jetable en mémoire — hors ligne, donc dans « tout » | `tests/README.md` |
 
 ### En attente de validation
 
 - **Convention de nommage** (§ 16.2) — proposée, pas appliquée. Aucun renommage de masse avant accord.
 - **Fusion des réglages clé par clé** (§ 21.5) — la règle « le plus récent gagne » existe, mais sur l'objet entier. Une question reste posée au développeur avant d'écrire quoi que ce soit.
-- **`sql/003` et `tests/verifier-catalogue.mjs`** (§ 21.3) — écrits, non commités, sur la branche `sql-003-et-verif-catalogue`.
-- **`sql/004`** — reste à écrire : `app_errors`, `admin_audit_log` et les tables, qui ne vivent que dans `assets/admin/README.md`.
+- **`sql/003` et `tests/verifier-catalogue.mjs`** (§ 21.3) — commités sur `sql-003-et-verif-catalogue`, non fusionnés. Fusion tentée, refusée par le garde-fou d'écriture sur `main`.
+- **`sql/000-socle.sql` et `tests/verifier-migrations.mjs`** (§ 21.3) — commités sur `sql-000-socle`, non fusionnés. Remplacent le `sql/004` annoncé : un socle se joue en PREMIER, son numéro doit le dire.
+- **`@electric-sql/pglite` en dépendance de test** — l'application reste un site statique sans aucune dépendance ; seule la suite de tests en gagne une. À confirmer.

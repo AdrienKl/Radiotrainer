@@ -2,11 +2,13 @@
 # =============================================================================
 # AVIERO — LANCE TOUTE LA VÉRIFICATION
 # -----------------------------------------------------------------------------
-#   sh tests/lancer_tout.sh          tout, HORS la base
-#   sh tests/lancer_tout.sh contrat  seulement la lecture du code (< 1 s)
-#   sh tests/lancer_tout.sh parcours seulement le navigateur
-#   sh tests/lancer_tout.sh base     le catalogue et les politiques, CONTRE LE
-#                                    PROJET SUPABASE REEL (lecture seule)
+#   sh tests/lancer_tout.sh            tout, HORS la base
+#   sh tests/lancer_tout.sh contrat    seulement la lecture du code (< 1 s)
+#   sh tests/lancer_tout.sh migrations seulement le SQL, sur un PostgreSQL
+#                                      jetable en memoire (hors ligne)
+#   sh tests/lancer_tout.sh parcours   seulement le navigateur
+#   sh tests/lancer_tout.sh base       le catalogue et les politiques, CONTRE LE
+#                                      PROJET SUPABASE REEL (lecture seule)
 #
 # Les tests de contrat passent en premier, et volontairement : ils sont
 # instantanés et disent la plupart des dégâts d'un découpage raté. Inutile
@@ -22,6 +24,16 @@ if [ "$QUOI" = "tout" ] || [ "$QUOI" = "contrat" ]; then
   echo ""
   echo "═══ CONTRAT — ce que le code doit encore contenir ═══"
   node --test "tests/contrat/*.test.mjs" || CODE=1
+fi
+
+# Les migrations, elles, SONT dans « tout » : PGlite est un PostgreSQL en
+# memoire, rien ne sort de la machine. C'est le seul endroit ou l'on voit ce que
+# les migrations valent sur une base VIDE — sur la production, tout est deja la,
+# y compris ce qu'aucune migration ne cree.
+if [ "$QUOI" = "tout" ] || [ "$QUOI" = "migrations" ]; then
+  echo ""
+  echo "═══ MIGRATIONS — un projet neuf monte-t-il a partir des seuls sql/ ? ═══"
+  node tests/verifier-migrations.mjs || CODE=1
 fi
 
 # La verification de la base n'est PAS dans « tout », et c'est voulu : elle a

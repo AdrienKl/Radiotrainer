@@ -13,6 +13,17 @@ Les tests de contrat seuls, quand on itère vite (moins d'une seconde) :
 sh tests/lancer_tout.sh contrat
 ```
 
+Les autres étapes, séparément :
+
+```sh
+sh tests/lancer_tout.sh migrations   # le SQL sur un PostgreSQL jetable, hors ligne
+sh tests/lancer_tout.sh parcours     # le navigateur seul
+sh tests/lancer_tout.sh base         # CONTRE LE PROJET SUPABASE REEL, en lecture
+```
+
+`base` est la **seule** étape qui sort de la machine, et elle n'est pas dans
+« tout » — voir « Les tests ne parlent jamais à Supabase » plus bas.
+
 ---
 
 ## Pourquoi ils existent
@@ -33,7 +44,7 @@ Ces tests sont là pour que ce clic soit le nôtre, et pas celui d'un élève.
 
 ---
 
-## Deux étages
+## Trois étages
 
 ### `tests/contrat/` — la lecture du code
 
@@ -72,6 +83,37 @@ que la console reste vide.
 | `stockage.spec.js` | Réglages, série de jours, quota, relecture de l'historique, file de synchronisation préservée |
 
 Le projet `telephone` rejoue `demarrage` et `routeur` en largeur mobile (Pixel 7).
+
+### `tests/verifier-migrations.mjs` — le SQL sur une base vide
+
+Rejoue `sql/*.sql` dans l'ordre sur un PostgreSQL **jetable, en mémoire**
+(PGlite, WASM — aucune installation, aucun service, rien ne sort de la machine),
+puis recommence pour prouver que les migrations sont idempotentes.
+
+Il existe à cause d'un angle mort que les deux autres étages ne peuvent pas
+voir : **la base de production a été bâtie à la main**, pas par les migrations.
+Un objet qu'aucune migration ne crée y est quand même présent — donc invisible.
+Il ne manque que sur une base **vide**, c'est-à-dire le jour où l'on monte le
+projet de test.
+
+À sa première exécution, le 19/09/2026, il a trouvé que `public.is_admin()`
+n'était définie qu'en `sql/003` alors que `sql/000` **et** `sql/002` l'appellent
+— 002 quatre fois. Un projet neuf s'arrêtait là. L'en-tête de `sql/003`
+annonçait la panne sans que son numéro permette de l'éviter.
+
+Ce qu'il vérifie ensuite sur le schéma obtenu : les six tables et leur RLS, les
+quatre vues et leur `security_invoker`, les cinq fonctions et le `search_path`
+figé de celles qui sont `security definer`, le déclencheur d'inscription, le
+`on delete set null` du catalogue, l'absence de toute politique DELETE/UPDATE
+sur le journal d'audit — et, en agissant : qu'une insertion dans `auth.users`
+crée bien un profil.
+
+**Ce qu'il ne prouve pas.** PGlite est un vrai PostgreSQL, ce n'est pas
+Supabase : le schéma `auth`, les rôles et `auth.uid()` y sont des doublures
+minimales. Il dit que le SQL passe et que le schéma se construit. Il ne dit rien
+du comportement réel des politiques face à un vrai jeton — ça, c'est
+`tests/verifier-catalogue.mjs`, contre le projet réel, et les deux ne se
+remplacent pas.
 
 ---
 
@@ -160,8 +202,12 @@ Ce qui reste interdit — et c'est le seul vrai danger — est une lecture
 
 1. **L'aller-retour réel d'un e-mail** — personne ici ne peut lire votre boîte.
    Une inscription complète, de bout en bout, avec une vraie adresse.
-2. **Les politiques RLS** — elles se vérifient en base, pas dans un navigateur.
-   Un `if` côté client ne prouve rien : la page appartient à l'utilisateur.
+2. **Les politiques RLS face à un vrai jeton** — `verifier-migrations.mjs` dit
+   qu'elles sont POSÉES, et `verifier-catalogue.mjs` qu'une écriture anonyme est
+   refusée sur le projet réel. Aucun des deux ne dit ce que voit un compte
+   connecté qui tenterait de lire les données d'un autre : il faut deux comptes,
+   donc le projet de test. Un `if` côté client ne prouve rien — la page
+   appartient à l'utilisateur.
 3. **La fusion entre deux appareils** — deux navigateurs, un même compte, une
    séance de chaque côté, puis vérifier qu'aucune n'a disparu et qu'aucune n'est
    en double (les UUID de `assets/sync.js` sont là pour ça).

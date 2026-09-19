@@ -272,6 +272,7 @@
       "nom": "normalize",
       "declare": "index.html#2",
       "lu_par": [
+        "assets/modules/epellation-cours.js",
         "assets/modules/navigation.js",
         "assets/inscription.js",
         "assets/admin/data/contract.js",

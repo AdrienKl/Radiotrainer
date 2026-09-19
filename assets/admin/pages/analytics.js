@@ -1,5 +1,5 @@
 /* =============================================================================
-   RadioTrainer — Admin · /admin/analytics
+   AVIERO — Admin · /admin/analytics
    -----------------------------------------------------------------------------
    La page est organisée autour des QUESTIONS, pas autour des colonnes de la
    base. Chaque bloc porte en sous-titre la question à laquelle il répond :

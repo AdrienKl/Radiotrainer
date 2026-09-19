@@ -1,5 +1,5 @@
 /* =============================================================================
-   RadioTrainer — Admin · /admin/exercises
+   AVIERO — Admin · /admin/exercises
    -----------------------------------------------------------------------------
    Le catalogue vient du CODE (const SCENARIOS, index.html) : c'est là qu'il doit
    rester, parce qu'un scénario n'est pas du contenu mais de la logique — des

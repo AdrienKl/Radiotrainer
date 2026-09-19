@@ -327,7 +327,10 @@ Les améliorations UI/UX pertinentes peuvent toutefois être proposées lorsqu'e
 
 **Décision du 18/09/2026.** AVIERO est le nouveau nom de RadioTrainer, pas un nouveau produit.
 
-- **Maintenant** : le nom AVIERO, et le logo AVIERO là où c'est nécessaire.
+- **Fait le 20/09/2026** : le nom. Les 51 occurrences visibles de « RadioTrainer » sont devenues AVIERO — titre, méta, les cinq marques de l'interface, l'accroche, les trois pages légales, la console d'administration, le gabarit d'e-mail, les noms des fichiers d'export.
+- **Volontairement NON renommé** : `radiotrainer_history_v2` (clé de stockage — § 7.2 : la renommer sans migration efface l'historique sans message d'erreur), `supabase/poser-reglages.sh` (§ 9.1), les migrations `sql/` déjà appliquées (§ 14), le dépôt GitHub (§ 13.1), et la prose des documents qui *racontent* le passé, où « RadioTrainer » reste exact.
+- **`CGU_VERSION` n'a pas bougé**, et c'est raisonné dans `LEGAL.md § 1`.
+- **Le logo reste l'icône actuelle** : § 10 interdit une refonte graphique spontanée, et il n'existe pas d'autre marque dessinée. Seul le mot a changé.
 - **Conservé tel quel** : la charte actuelle — violet `#5b4bce`, bandeau noir, jetons de couleur, typographie, mise en page.
 - **Plus tard, étape dédiée** : l'identité visuelle complète.
 
@@ -704,6 +707,7 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 19/09/2026 | `is_admin()` remonte dans le socle : `sql/002` l'appelait quatre fois et `sql/003`, qui la définissait, passe après | § 21.3 |
 | 19/09/2026 | Les migrations sont rejouées à chaque exécution des tests sur un PostgreSQL jetable en mémoire — hors ligne, donc dans « tout » | `tests/README.md` |
 | 20/09/2026 | Le contraste des deux thèmes est audité à chaque commit, sur les quatorze pages. Cinq défauts trouvés, cinq corrigés — la bascule globale de `--ink-2` n'est plus nécessaire pour être conforme, et reste au développeur | `INSCRIPTION.md § 8 bis` |
+| 20/09/2026 | Le renommage visuel en AVIERO est appliqué : 51 occurrences visibles. Les clés de stockage, la configuration de production, les migrations appliquées et le dépôt ne bougent pas. `CGU_VERSION` non plus | § 10.1 |
 
 ### En attente de validation
 

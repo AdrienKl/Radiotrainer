@@ -1,5 +1,5 @@
 /* =============================================================================
-   RadioTrainer — Admin · KIT D'INTERFACE
+   AVIERO — Admin · KIT D'INTERFACE
    -----------------------------------------------------------------------------
    Les primitives partagées par les huit pages : tuiles de statistique, tableau
    (recherche, filtres, tri, pagination), graphiques SVG, états vides / en

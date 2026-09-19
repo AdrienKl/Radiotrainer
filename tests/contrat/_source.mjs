@@ -241,9 +241,19 @@ function nu(code) {
   return _nu.get(code);
 }
 
-/* Le symbole est-il VRAIMENT employé par ce code ? */
+/* Le symbole est-il VRAIMENT employé par ce code ?
+
+   Un accès de PROPRIÉTÉ ne compte pas. `texte.normalize('NFD')` appelle la
+   méthode des chaînes, pas la fonction globale `normalize` du projet ; `RT.state`
+   n'est pas le `state` du moteur. Sans cette exclusion, l'analyse voyait une
+   dépendance du fichier alphabet vers le fichier texte — et l'aurait inscrite
+   dans l'inventaire comme un fait. Une dépendance imaginaire coûte autant qu'une
+   dépendance manquée : on réorganise pour la satisfaire, et elle n'existe pas.
+
+   Un symbole global n'est jamais précédé d'un point : l'exclusion est sûre. */
 export function utilise(code, nom) {
-  return new RegExp(`\\b${nom.replace(/\$/g, '\\$')}\\b`).test(nu(code));
+  const n = nom.replace(/\$/g, '\\$');
+  return new RegExp(`(^|[^.\\w$])${n}\\b`).test(nu(code));
 }
 
 /* Le code JavaScript servi au navigateur, fichiers vendorés exclus : ceux-là ne

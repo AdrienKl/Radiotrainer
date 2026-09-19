@@ -2,9 +2,11 @@
 # =============================================================================
 # AVIERO — LANCE TOUTE LA VÉRIFICATION
 # -----------------------------------------------------------------------------
-#   sh tests/lancer_tout.sh          tout
+#   sh tests/lancer_tout.sh          tout, HORS la base
 #   sh tests/lancer_tout.sh contrat  seulement la lecture du code (< 1 s)
 #   sh tests/lancer_tout.sh parcours seulement le navigateur
+#   sh tests/lancer_tout.sh base     le catalogue et les politiques, CONTRE LE
+#                                    PROJET SUPABASE REEL (lecture seule)
 #
 # Les tests de contrat passent en premier, et volontairement : ils sont
 # instantanés et disent la plupart des dégâts d'un découpage raté. Inutile
@@ -20,6 +22,15 @@ if [ "$QUOI" = "tout" ] || [ "$QUOI" = "contrat" ]; then
   echo ""
   echo "═══ CONTRAT — ce que le code doit encore contenir ═══"
   node --test "tests/contrat/*.test.mjs" || CODE=1
+fi
+
+# La verification de la base n'est PAS dans « tout », et c'est voulu : elle a
+# besoin du reseau et interroge le projet de production. Les autres tests, eux,
+# coupent Supabase expres — ils doivent rester reproductibles hors ligne.
+if [ "$QUOI" = "base" ]; then
+  echo ""
+  echo "═══ BASE — le catalogue et les politiques du projet reel ═══"
+  node tests/verifier-catalogue.mjs || CODE=1
 fi
 
 if [ "$QUOI" = "tout" ] || [ "$QUOI" = "parcours" ]; then

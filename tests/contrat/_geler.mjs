@@ -65,10 +65,19 @@ for (const [nom, iDecl] of declarePar) {
 }
 lecturesDifferees.sort();
 
-/* ---- Le routeur --------------------------------------------------------- */
-const html = lire('index.html');
-const lstPages = /var\s+PAGES\s*=\s*\[([^\]]+)\]/.exec(html);
-const lstApp = /var\s+APP_PAGES\s*=\s*\[([^\]]+)\]/.exec(html);
+const codeTout = toutLeCode();
+
+/* ---- Le routeur ---------------------------------------------------------
+   On cherche les listes dans TOUT le JavaScript servi, pas dans index.html.
+   Le routeur y vivait jusqu'à l'étape 2.1, puis il est parti dans
+   assets/modules/routeur.js — et ce générateur, qui lisait index.html, a
+   silencieusement gelé « pages: [] ». Le contrat du routeur devenait vide sans
+   qu'aucun test n'échoue : ils comparaient bien une liste vide à une liste
+   vide. C'est le diff de l'inventaire qui l'a attrapé, pas les tests.
+   La leçon vaut pour tout ce fichier : interroger le code servi, jamais un
+   emplacement supposé. */
+const lstPages = /var\s+PAGES\s*=\s*\[([^\]]+)\]/.exec(codeTout);
+const lstApp = /var\s+APP_PAGES\s*=\s*\[([^\]]+)\]/.exec(codeTout);
 const liste = m => m[1].split(',').map(s => s.trim().replace(/^'|'$/g, '')).filter(Boolean);
 
 /* ---- Les scénarios ------------------------------------------------------
@@ -76,7 +85,6 @@ const liste = m => m[1].split(',').map(s => s.trim().replace(/^'|'$/g, '')).filt
    le nombre de renvois au manuel. Ce sont les deux chiffres qui disent qu'un
    scénario n'a pas été appauvri en cours de route : perdre un échange, ou
    perdre la page du manuel qui le justifie, ne se voit pas autrement. */
-const codeTout = toutLeCode();
 const scenarios = (elementsDuTableau(codeTout, 'SCENARIOS') || []).map(p => ({
   id: (/id\s*:\s*"([a-z]+)"/.exec(p) || [])[1],
   titre: (/titre\s*:\s*"([^"]+)"/.exec(p) || [])[1],

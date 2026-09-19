@@ -175,7 +175,28 @@ Rien n'a été réécrit : les lignes ont été **déplacées**, et vérifié co
 - les `url("assets/images/…")` du CSS partaient de la racine tant qu'ils étaient dans la page ; dans `assets/css/`, il leur faut `../images/…`. Dix-sept images de fond en 404, **sans aucune erreur de console** ;
 - `SCENARIOS` **appelle** `tourVentArriere()` et consorts au moment où son tableau se construit. Ces fabriques ont donc dû partir avec lui. Les tests de contrat n'ont rien vu — tous les symboles étaient là, dans le bon ordre — et ce sont les tests de navigateur qui l'ont dit en trois secondes.
 
-**Prochaine étape proposée, non engagée :** les blocs périphériques d'`index.html` (carte, tableau de bord, paramètres, tuiles, routeur, épellation), puis la Navigation, et **le moteur en dernier** — découpé selon ses treize sections déjà numérotées. Le moteur est le noyau de fait : une soixantaine de symboles en partent vers tous les autres blocs.
+**Étape 2.1, faite le 19/09/2026.** Les sept blocs autonomes sont sortis : `index.html` passe de 11 100 à **5 881 lignes**. Il ne reste dans la page que le HTML, le script anti-flash du thème, et le moteur de scénarios.
+
+| Sorti | Vers | Lignes |
+|---|---|---|
+| Routeur SPA | `assets/modules/routeur.js` | 333 |
+| Épellation + cours | `assets/modules/epellation-cours.js` | 635 |
+| Tuiles OACI | `assets/modules/tuiles-oaci.js` | 34 |
+| Navigation / vol | `assets/modules/navigation.js` | 3 524 |
+| Page Carte | `assets/modules/carte.js` | 118 |
+| Tableau de bord | `assets/modules/tableau-de-bord.js` | 235 |
+| Paramètres | `assets/modules/parametres.js` | 333 |
+
+Ces sept-là étaient déjà des IIFE : ils ne déclaraient rien dans la portée globale. Les sortir n'a déplacé aucun symbole, seulement des lignes — c'est ce qui en faisait l'étape la moins risquée, et pourquoi elle venait en premier.
+
+**Ce que l'étape a appris, et qui n'était pas prévu :** deux de mes propres vérifications lisaient le routeur **dans `index.html`**. Le test est tombé — tant mieux. Le générateur d'inventaire, lui, n'est pas tombé : il a gelé `pages: []` en silence, et les tests sont restés verts parce qu'ils comparaient une liste vide à une liste vide. **Seule la relecture du diff de l'inventaire l'a vu.** C'est la raison d'être de la règle « on ne regèle jamais sans lire le diff ».
+
+**Prochaines étapes proposées, non engagées :**
+
+- **2.2** — le noyau de services vers `assets/noyau/` : phonétique, normalisation, voix, micro, bruit radio, plus `rtSettings` / `rtConfirm` / `showToast`, dispersés au milieu du moteur. ~1 228 lignes. Couplage mesuré : le noyau n'emprunterait que **6 symboles** au reste du moteur, contre 41 dans l'autre sens — la frontière est quasi à sens unique. **C'est la seule étape qui touche au chemin du micro, et le micro n'a aucun test automatique** : vérification manuelle obligatoire.
+- **2.3** — le reste du moteur vers `assets/scenarios/moteur.js`, ~2 294 lignes. `index.html` tomberait à ~2 380 lignes, c'est-à-dire du HTML.
+
+**Ce qu'il ne faudra pas faire en le faisant :** envelopper le moteur dans une IIFE. 158 de ses fonctions sont sur `window` par effet de bord, et c'est par là que la console d'administration appelle `window.rtConfirm` et `window.showToast`. Les enfermer casserait l'admin, Paramètres et la Navigation d'un coup, sans aucune erreur au chargement.
 
 ---
 
@@ -587,6 +608,7 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 18/09/2026 | Base de tests versionnée dans `tests/` : contrat (Node) + parcours (Playwright). Les tests ne parlent jamais au Supabase de production | § 11.1 |
 | 18/09/2026 | Le CSS quitte `index.html` : 14 fichiers numérotés, l'ordre est la cascade | § 6.2 |
 | 18/09/2026 | Les données statiques quittent le moteur : aérodromes, phraséologie, reconnaissance, icônes. Chargées AVANT le moteur | § 6.2 |
+| 19/09/2026 | Étape 2.1 : les sept blocs IIFE quittent `index.html` vers `assets/modules/`, chacun au même rang de chargement | § 6.2 |
 
 ### En attente de validation
 

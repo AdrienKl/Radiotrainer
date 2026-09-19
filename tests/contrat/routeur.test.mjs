@@ -16,13 +16,27 @@
    ========================================================================== */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { lire, inventaire } from './_source.mjs';
+import { lire, inventaire, toutLeCode } from './_source.mjs';
 
-const html = lire('index.html');
+/* DEUX SOURCES, ET IL FAUT LES DISTINGUER.
+
+   Le balisage des pages (<section id="page-…">) vit dans index.html : c'est du
+   HTML, il n'ira nulle part ailleurs.
+
+   Le CODE du routeur, lui, a quitté index.html à l'étape 2.1 pour
+   assets/modules/routeur.js. Ce test lisait les deux dans index.html et a donc
+   cassé le jour du déplacement — alors que le routeur, lui, marchait
+   parfaitement. C'était le test qui était écrit contre un FICHIER au lieu du
+   code réellement servi au navigateur.
+
+   La règle, ici comme ailleurs : on interroge ce que le navigateur charge, pas
+   l'endroit où on croit que ça se trouve. */
+const html = lire('index.html');      // le balisage
+const code = toutLeCode();            // tout le JavaScript servi, d'où qu'il vienne
 const inv = inventaire();
 
 const listeDe = (nom) => {
-  const m = new RegExp(`var\\s+${nom}\\s*=\\s*\\[([^\\]]+)\\]`).exec(html);
+  const m = new RegExp(`var\\s+${nom}\\s*=\\s*\\[([^\\]]+)\\]`).exec(code);
   assert.ok(m, `La liste ${nom} du routeur est introuvable.`);
   return m[1].split(',').map(s => s.trim().replace(/^'|'$/g, '')).filter(Boolean);
 };
@@ -55,7 +69,7 @@ test('les routes sans section sont bien redirigées', () => {
   for (const [de, vers] of Object.entries(REDIRIGEES)) {
     assert.ok(!html.includes(`id="page-${de}"`) === true,
       `La section page-${de} est revenue : retirer la redirection, ou ce test.`);
-    assert.match(html, new RegExp(`name===['"]${de}['"]\\s*\\)\\s*\\{\\s*name\\s*=\\s*['"]${vers}['"]`),
+    assert.match(code, new RegExp(`name===['"]${de}['"]\\s*\\)\\s*\\{\\s*name\\s*=\\s*['"]${vers}['"]`),
       `La route #${de} n'a plus de section ET plus de redirection : elle mène ` +
       `désormais à un écran vide pour tous ceux qui ont gardé le lien.`);
   }

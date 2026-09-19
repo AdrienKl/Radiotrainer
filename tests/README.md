@@ -93,8 +93,13 @@ indulgent**. Le projet a lui-même mesuré l'écart (`01-socle.css`) : `--ink-2`
 donne 4,83:1 en théorie et 4,07:1 en pixels à 13,5 px, parce qu'à ces tailles
 l'antialiasing n'atteint jamais la couleur pleine. Un relevé « conforme » à
 4,6:1 sur du petit texte ne l'est donc probablement pas à l'œil. D'où les
-correctifs visant 6:1 et non 4,6:1, et un contrôle sur les pixels qui reste à
-refaire. Le détail de l'audit est dans `INSCRIPTION.md § 8 bis`.
+correctifs visant 6:1 et non 4,6:1.
+
+Le contrôle sur les pixels existe à part : `node tests/mesurer-pixels.mjs`,
+un OUTIL et non un test — le rendu d'une police dépend de la machine, et un
+seuil dur rougirait un jour ailleurs sans qu'aucun code ait bougé. Il capture
+chaque texte et lit le noyau des glyphes. Le détail de l'audit est dans
+`INSCRIPTION.md § 8 bis` et `§ 8 ter`.
 
 Le test porte aussi un garde-fou contre lui-même : si moins de 65 % des textes
 deviennent mesurables (image de fond, dégradé, opacité d'un ancêtre), il échoue
@@ -229,11 +234,12 @@ Ce qui reste interdit — et c'est le seul vrai danger — est une lecture
    en double (les UUID de `assets/sync.js` sont là pour ça).
 4. **La ligne réellement écrite en base** — l'absence d'erreur côté client ne
    dit rien de ce qui a été enregistré.
-5. **Le contraste sur les PIXELS** — `contraste.spec.js` couvre désormais les
-   quatorze pages et les deux thèmes, mais sur les couleurs résolues. L'écart
-   théorie/pixels à petite taille (4,83:1 contre 4,07:1, mesuré par le projet)
-   n'est pas couvert. Ce qui passe entre 4,5:1 et ~5,5:1 sous 15 px est suspect
-   sans être prouvé.
+5. **Le contraste sur d'autres machines** — `contraste.spec.js` (couleurs
+   résolues, dans la suite) et `mesurer-pixels.mjs` (pixels, à la demande)
+   couvrent les quatorze pages et les deux thèmes. Mais le second n'a tourné
+   que sur une machine : le lissage des polices varie d'un système à l'autre.
+   Trois défauts sont ouverts, avec leurs valeurs correctives calculées —
+   `INSCRIPTION.md § 8 ter`.
 
 Ces cinq points étaient déjà les angles morts de l'ancienne série de tests
 (`INSCRIPTION.md § 7`), qui vivait dans `scratchpad/` — non versionné — et a

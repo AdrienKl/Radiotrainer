@@ -518,17 +518,42 @@ inactif.
 
 **Ce que l'audit change à la décision ci-dessous.** Le § 8 disait qu'il faudrait
 « basculer `--ink-2` partout », et que c'était un audit, pas une retouche. La
-mesure répond : **hors de ces trois règles, plus rien n'est sous le seuil.** La
-bascule globale de `--ink-2` n'est donc plus nécessaire pour être conforme.
+mesure répond : **hors de ces trois règles, plus rien n'est sous le seuil.**
 
-Elle resterait souhaitable pour une raison que ce test ne peut pas voir : il lit
-les couleurs **résolues**, pas les pixels, et le § 8 a justement démontré que
-les deux divergent à petite taille (4,83:1 théorique contre 4,07:1 mesuré). Tout
-ce qui passe ici entre 4,5:1 et ~5,5:1 sur du texte de moins de 15 px est donc
-**suspect sans être prouvé**. Trancher demande de remesurer sur les pixels —
-c'est le seul morceau de l'ancien `ins_contraste.py` qui n'a pas été repris.
+### 8 ter. Et sur les PIXELS — la question est tranchée
 
-**La décision reste ouverte, et elle est au développeur.**
+`tests/mesurer-pixels.mjs` reprend le dernier morceau manquant de
+`ins_contraste.py` : il capture chaque texte, trie ses pixels, et lit le noyau
+des glyphes plutôt que la valeur déclarée. **310 textes de moins de 16 px, deux
+thèmes.** Ce n'est pas un test mais un outil, lancé à la demande — le rendu
+d'une police dépend de la machine, et un seuil dur ici rougirait un jour ailleurs
+sans qu'aucun code ait bougé.
+
+```sh
+python3 -m http.server 8000            # dans un autre terminal
+node tests/mesurer-pixels.mjs          # les textes sous 16 px
+node tests/mesurer-pixels.mjs --ink-2  # seulement ce que --ink-2 porte
+```
+
+**LA RÉPONSE : 27 textes portés par `--ink-2`, zéro sous le seuil, le pire à
+4,55:1.** La bascule globale n'est **pas** justifiée par la mesure. Le 4,07:1
+du § 8 concernait `.auth-sub` à 13,5 px, qui porte `--ink-2-fort` depuis.
+
+**Ce que la mesure sur pixels a trouvé en plus**, parce qu'elle voit ce que les
+valeurs CSS ne peuvent pas voir — un texte posé sur un dégradé ou sur une photo :
+
+| Élément | Thème | Mesuré | Seuil | Piste |
+|---|---|---|---|---|
+| `.step__n` — les pastilles « 1 2 3 » (14,5 px) | sombre | 2,71 à 2,77:1 | 4,5:1 | assombrir le fond de la pastille : `#766bbf` → 4,56:1, `#6e63b3` → 5,11:1 |
+| L'accroche `.hero__tag` sur la photo (12 px) | sombre | 3,69:1 | 4,5:1 | densifier le verre derrière, ou l'encre |
+| `--bad` `#d9534f` sur blanc — « Imprévu » et le texte d'aléa | clair | 3,96:1 | 4,5:1 | `#c84c49` → 4,58:1, `#b84743` → 5,22:1 |
+
+**Ces trois-là ne sont PAS corrigés, et c'est volontaire.** Les précédents se
+réglaient avec un jeton qui existait déjà pour ça (`--ink-2-fort`) : c'était la
+continuation d'une décision prise. Ceux-ci demandent de toucher `--violet` et
+`--bad`, c'est-à-dire la palette — § 10 de `CLAUDE.md` conserve le design
+actuel, et § 4 demande une validation. **Les valeurs sont calculées ci-dessus :
+la décision tient en une minute, elle est au développeur.**
 
 **Ce qui n'a pas été fait, et qu'il faudra décider** (état d'origine, conservé
 pour la lecture — voir le § 8 bis ci-dessus pour ce que l'audit y a répondu) :

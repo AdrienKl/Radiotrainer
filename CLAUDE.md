@@ -593,6 +593,7 @@ sh tests/lancer_tout.sh contrat    # la lecture du code seule, < 1 s
 sh tests/lancer_tout.sh migrations # le SQL sur un PostgreSQL jetable, hors ligne
 sh tests/lancer_tout.sh base       # le catalogue et les politiques, CONTRE LE PROJET RÉEL
 node tests/comparer-rendu.mjs      # le rendu avant/après un découpage (voir son en-tête)
+node tests/mesurer-pixels.mjs      # le contraste sur les PIXELS (site servi requis)
 ```
 
 ### 21.2 CE QUI BLOQUE — `sql/002-progression.sql` n'est appliqué qu'à MOITIÉ
@@ -676,7 +677,7 @@ C'est fusionnable clé par clé. **Question posée, pas encore tranchée :** un 
 - **le micro réel** — la chaîne entière est couverte par une fausse `SpeechRecognition` (`tests/parcours/micro.spec.js`), mais pas l'audio. Un scénario et un vol au micro, à la main, après toute étape qui touche à la voix ou à la reconnaissance ;
 - **l'inscription, l'auth, les RLS avec deux comptes** — il faut le projet de test. Depuis le 19/09/2026, `tests/verifier-migrations.mjs` vérifie hors ligne que les politiques sont bien POSÉES et que le déclencheur crée un profil ; ce qu'un compte connecté voit des données d'un autre reste non couvert ;
 - **la fusion entre deux appareils** — jamais vérifiée, ni par un test ni à la main ;
-- **le contraste sur les PIXELS** — `tests/parcours/contraste.spec.js` couvre depuis le 20/09/2026 les quatorze pages et les deux thèmes (~1 350 relevés), mais sur les couleurs **résolues**. Le projet a mesuré l'écart avec les pixels à petite taille (4,83:1 théorique contre 4,07:1 réel) : ce qui passe entre 4,5:1 et ~5,5:1 sous 15 px reste suspect sans être prouvé. C'est le seul morceau de l'ancien `ins_contraste.py` qui n'a pas été repris. Détail : `INSCRIPTION.md § 8 bis`.
+- **le contraste sur d'autres machines** — couvert depuis le 20/09/2026 sur deux fronts : `tests/parcours/contraste.spec.js` (couleurs résolues, ~1 350 relevés, dans la suite) et `tests/mesurer-pixels.mjs` (les pixels, 310 textes, à la demande). Mais le second n'a tourné que sur une machine, et le lissage des polices varie d'un système à l'autre. Détail : `INSCRIPTION.md § 8 bis` et `§ 8 ter`.
 
 ---
 
@@ -708,6 +709,7 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 19/09/2026 | Les migrations sont rejouées à chaque exécution des tests sur un PostgreSQL jetable en mémoire — hors ligne, donc dans « tout » | `tests/README.md` |
 | 20/09/2026 | Le contraste des deux thèmes est audité à chaque commit, sur les quatorze pages. Cinq défauts trouvés, cinq corrigés — la bascule globale de `--ink-2` n'est plus nécessaire pour être conforme, et reste au développeur | `INSCRIPTION.md § 8 bis` |
 | 20/09/2026 | Le renommage visuel en AVIERO est appliqué : 51 occurrences visibles. Les clés de stockage, la configuration de production, les migrations appliquées et le dépôt ne bougent pas. `CGU_VERSION` non plus | § 10.1 |
+| 20/09/2026 | Le contraste se mesure sur DEUX fronts : les couleurs résolues dans la suite (large, rapide, indulgent), les pixels à la demande (juste, mais dépendant de la machine — donc jamais un test) | `INSCRIPTION.md § 8 ter` |
 
 ### En attente de validation
 
@@ -715,4 +717,6 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 - **Fusion des réglages clé par clé** (§ 21.5) — la règle « le plus récent gagne » existe, mais sur l'objet entier. Une question reste posée au développeur avant d'écrire quoi que ce soit.
 - **`sql/003` et `tests/verifier-catalogue.mjs`** (§ 21.3) — commités sur `sql-003-et-verif-catalogue`, non fusionnés. Fusion tentée, refusée par le garde-fou d'écriture sur `main`.
 - **`sql/000-socle.sql` et `tests/verifier-migrations.mjs`** (§ 21.3) — commités sur `sql-000-socle`, non fusionnés. Remplacent le `sql/004` annoncé : un socle se joue en PREMIER, son numéro doit le dire.
-- **`@electric-sql/pglite` en dépendance de test** — l'application reste un site statique sans aucune dépendance ; seule la suite de tests en gagne une. À confirmer.
+- **Trois contrastes sous le seuil AA, mesurés sur les pixels, NON corrigés** (`INSCRIPTION.md § 8 ter`) — les pastilles « 1 2 3 » en thème sombre (2,71:1), l'accroche de l'accueil sur la photo (3,69:1), et `--bad` `#d9534f` sur blanc (3,96:1). Les corriger touche `--violet` et `--bad`, donc la palette : § 10 conserve le design actuel, § 4 demande une validation. **Les valeurs correctives sont calculées** — la décision tient en une minute.
+- **La bascule globale de `--ink-2` — tranchée par la mesure, à confirmer** : 27 textes le portent, zéro sous le seuil en pixels, le pire à 4,55:1. Elle n'est plus nécessaire. La question du § 8 peut être close.
+- **`@electric-sql/pglite` et `pngjs` en dépendances de test** — l'application reste un site statique sans aucune dépendance ; seule la suite de tests en gagne deux. À confirmer.

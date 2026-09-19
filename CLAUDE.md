@@ -149,54 +149,41 @@ Note : les bibliothèques sont aujourd'hui vendorées (`assets/vendor/`, `assets
 
 ---
 
-### 6.2 Où en est le découpage — état au 18/09/2026
+### 6.2 Où en est le découpage — TERMINÉ le 19/09/2026
 
-`index.html` est passé de **14 979 lignes** (état de référence, tag `reference-avant-migration`) à **11 099** — un quart de moins. Le bloc du moteur de scénarios, lui, passe de 4 767 à 3 521 lignes.
+La phase 2 est close. `index.html` est passé de **14 979 lignes** (tag `reference-avant-migration`) à **2 397** — **−84 %**. Il ne contient plus que du HTML, ses balises, et **un seul script écrit dans la page** : les onze lignes qui posent le thème avant le premier pixel.
 
-Ce qui en est sorti :
+```
+index.html               2 397 l.   du HTML, 47 balises, un script de thème
+assets/css/        14 f.  2 869 l.  l'ordre EST la cascade
+assets/donnees/     4 f.  1 431 l.  aérodromes, phraséologie, reconnaissance, icônes
+assets/noyau/       7 f.  1 304 l.  alphabet-nombres, texte, réglages, bruit-radio, voix, micro, interface
+assets/modules/     7 f.  5 401 l.  routeur, épellation-cours, tuiles-oaci, navigation, carte, tableau-de-bord, paramètres
+assets/scenarios/   1 f.  2 528 l.  le moteur
+```
 
-| Sorti | Vers | Lignes |
-|---|---|---|
-| Tout le CSS du site | `assets/css/01-socle.css` … `14-carte.css` | 2 676 |
-| Les 387 aérodromes | `assets/donnees/aerodromes.js` | 424 |
-| Les 13 scénarios **et les fabriques de tours** | `assets/donnees/phraseologie-scenarios.js` | 669 |
-| Ce que la reconnaissance entend de travers | `assets/donnees/reconnaissance.js` | 176 |
-| Les icônes SVG | `assets/donnees/icones.js` | 16 |
+**Sur les quatre étapes, aucune ligne n'a été réécrite** — tout a été déplacé, et vérifié comme tel : concaténation identique octet pour octet pour le CSS, même multi-ensemble de lignes pour le JavaScript, ordre préservé pour le moteur.
 
-Rien n'a été réécrit : les lignes ont été **déplacées**, et vérifié comme telles (concaténation identique octet pour octet pour le CSS, même multi-ensemble de lignes pour le JavaScript).
-
-**Les deux règles d'ordre, qui ne se devinent pas :**
+#### Les trois règles d'ordre, qui ne se devinent pas
 
 1. **Le CSS.** Les quatorze `<link>` sont numérotés parce que c'est la cascade. `09-theme-sombre.css` ne vaut que placé après ce qu'il surcharge. Intervertir deux lignes ne produit aucune erreur — seulement un site méconnaissable.
-2. **Les données.** Leurs `<script src>` sont **avant** le bloc du moteur, parce qu'elles déclarent des `const` au niveau racine. Les descendre sous le moteur casse tout, sans la moindre erreur au chargement : `SCENARIOS is not defined` tombe au premier clic.
+2. **Les données et le noyau chargent AVANT le moteur.** Ils déclarent des `const` au niveau racine. Les descendre sous le moteur casse tout sans la moindre erreur au chargement : `SCENARIOS is not defined` tombe au premier clic.
+3. **La balise de `moteur.js` reste après toutes les `<section>`, sans `defer` ni `async`.** Ce fichier construit `el` par `document.getElementById` et pose une vingtaine d'écouteurs dès son chargement. Le remonter donnerait un `el` rempli de `null` — et une page qui se peint normalement pendant qu'aucun bouton ne répond.
 
-**Le piège déjà tombé, deux fois, en une soirée :**
+#### Ce qu'il ne faut JAMAIS faire au moteur
 
-- les `url("assets/images/…")` du CSS partaient de la racine tant qu'ils étaient dans la page ; dans `assets/css/`, il leur faut `../images/…`. Dix-sept images de fond en 404, **sans aucune erreur de console** ;
-- `SCENARIOS` **appelle** `tourVentArriere()` et consorts au moment où son tableau se construit. Ces fabriques ont donc dû partir avec lui. Les tests de contrat n'ont rien vu — tous les symboles étaient là, dans le bon ordre — et ce sont les tests de navigateur qui l'ont dit en trois secondes.
+**Ne pas l'envelopper dans une IIFE, ne pas remplacer ses `function` par des `const`.** Au niveau racine, `function` et `var` deviennent des propriétés de `window` ; `const` et `let` non. La console d'administration appelle `window.rtConfirm` et `window.showToast` derrière un `if (window.X)` : les enfermer couperait l'admin, Paramètres et la Navigation d'un coup, **sans aucune erreur**. `tests/contrat/api-window.test.mjs` surveille exactement ça.
 
-**Étape 2.1, faite le 19/09/2026.** Les sept blocs autonomes sont sortis : `index.html` passe de 11 100 à **5 881 lignes**. Il ne reste dans la page que le HTML, le script anti-flash du thème, et le moteur de scénarios.
+#### Les quatre pièges déjà tombés — ne pas les refaire
 
-| Sorti | Vers | Lignes |
-|---|---|---|
-| Routeur SPA | `assets/modules/routeur.js` | 333 |
-| Épellation + cours | `assets/modules/epellation-cours.js` | 635 |
-| Tuiles OACI | `assets/modules/tuiles-oaci.js` | 34 |
-| Navigation / vol | `assets/modules/navigation.js` | 3 524 |
-| Page Carte | `assets/modules/carte.js` | 118 |
-| Tableau de bord | `assets/modules/tableau-de-bord.js` | 235 |
-| Paramètres | `assets/modules/parametres.js` | 333 |
+- **Les `url()` du CSS.** Dans un `<style>` de la page, `assets/images/x.webp` part de la racine ; dans `assets/css/`, il faut `../images/x.webp`. Dix-sept images de fond en 404, **sans une erreur de console**. `tests/contrat/css.test.mjs` le surveille.
+- **`SCENARIOS` appelle `tourVentArriere()`** au moment où son tableau se construit. Les fabriques de tours ont dû partir avec lui. Les tests de contrat n'ont rien vu ; les tests de navigateur l'ont dit en trois secondes.
+- **Le décalage d'une ligne.** Le premier élément du corps d'un bloc `<script>` est la fin de la ligne de la balise, pas la ligne suivante. Un « +1 » de trop fait perdre à chaque tranche son ouverture de commentaire. **La vérification « même nombre de lignes » ne le voit pas** : elle prouve qu'on n'a rien perdu, pas qu'on a pris les bonnes lignes.
+- **Le `use strict`.** Sortir du code d'un bloc strict sans emporter la directive le fait basculer en mode permissif, silencieusement. Chaque fichier extrait du moteur porte donc le sien.
 
-Ces sept-là étaient déjà des IIFE : ils ne déclaraient rien dans la portée globale. Les sortir n'a déplacé aucun symbole, seulement des lignes — c'est ce qui en faisait l'étape la moins risquée, et pourquoi elle venait en premier.
+#### Prochaine étape possible, NON engagée
 
-**Ce que l'étape a appris, et qui n'était pas prévu :** deux de mes propres vérifications lisaient le routeur **dans `index.html`**. Le test est tombé — tant mieux. Le générateur d'inventaire, lui, n'est pas tombé : il a gelé `pages: []` en silence, et les tests sont restés verts parce qu'ils comparaient une liste vide à une liste vide. **Seule la relecture du diff de l'inventaire l'a vu.** C'est la raison d'être de la règle « on ne regèle jamais sans lire le diff ».
-
-**Prochaines étapes proposées, non engagées :**
-
-- **2.2** — le noyau de services vers `assets/noyau/` : phonétique, normalisation, voix, micro, bruit radio, plus `rtSettings` / `rtConfirm` / `showToast`, dispersés au milieu du moteur. ~1 228 lignes. Couplage mesuré : le noyau n'emprunterait que **6 symboles** au reste du moteur, contre 41 dans l'autre sens — la frontière est quasi à sens unique. **C'est la seule étape qui touche au chemin du micro, et le micro n'a aucun test automatique** : vérification manuelle obligatoire.
-- **2.3** — le reste du moteur vers `assets/scenarios/moteur.js`, ~2 294 lignes. `index.html` tomberait à ~2 380 lignes, c'est-à-dire du HTML.
-
-**Ce qu'il ne faudra pas faire en le faisant :** envelopper le moteur dans une IIFE. 158 de ses fonctions sont sur `window` par effet de bord, et c'est par là que la console d'administration appelle `window.rtConfirm` et `window.showToast`. Les enfermer casserait l'admin, Paramètres et la Navigation d'un coup, sans aucune erreur au chargement.
+Découper `assets/scenarios/moteur.js` (2 528 l., toujours le plus gros fichier, 145 symboles globaux dont 21 réellement empruntés). Frontières naturelles : état / carte du DOM / enchaînement des échanges / récapitulatif. **Ça améliore le code, pas le produit** — à mettre après ce qui compte pour les utilisateurs.
 
 ---
 
@@ -438,6 +425,7 @@ Avant de modifier une partie du projet, lis le document qui la couvre. Ils sont 
 | l'inscription, l'auth, les réglages Supabase, les e-mails | `INSCRIPTION.md` |
 | les mentions légales, les CGU, la confidentialité, les licences d'images | `LEGAL.md` (§ 15) |
 | les migrations SQL | `sql/` — numérotées, idempotentes, **jamais réécrites après application** |
+| l'état réel de la base, ce qui bloque, ce qui attend | **§ 21 de ce fichier** — à lire avant toute reprise |
 
 Si une modification rend un de ces documents faux, **mets le document à jour dans le même travail**. Un document périmé coûte plus cher que pas de document — c'est déjà arrivé (`assets/admin/README.md § 5` listait comme « à faire » des mesures que `assets/sync.js` prenait déjà).
 
@@ -590,6 +578,84 @@ L'objectif final est de construire AVIERO comme un produit réel, professionnel 
 
 ---
 
+## 21. OÙ EN EST LE TRAVAIL — à lire en premier, état au 19/09/2026
+
+### 21.1 Ce qui est fait et poussé
+
+La **phase 2 est close** (§ 6.2), et une base de tests existe : **148 vérifications automatiques** (91 de contrat, 57 de parcours), plus deux outils lancés à la demande. `main` et `origin/main` étaient synchronisés au dernier point.
+
+```sh
+sh tests/lancer_tout.sh            # les 148, hors réseau
+sh tests/lancer_tout.sh contrat    # la lecture du code seule, < 1 s
+sh tests/lancer_tout.sh base       # le catalogue et les politiques, CONTRE LE PROJET RÉEL
+node tests/comparer-rendu.mjs      # le rendu avant/après un découpage (voir son en-tête)
+```
+
+### 21.2 CE QUI BLOQUE — `sql/002-progression.sql` n'est appliqué qu'à MOITIÉ
+
+C'est le point le plus important de cette section.
+
+| § de la migration | État en base |
+|---|---|
+| § 1 — les 13 exercices | **appliqué** (le 19/09/2026) |
+| § 2 — `profiles.etat_vol` | **ABSENTE** (`42703`) |
+| § 4 — `v_daily_practice` | **ABSENTE** |
+| § 4 — les trois autres vues | présentes, mais elles l'étaient déjà avant |
+| § 5 — les politiques RLS | conformes, écriture anonyme refusée partout |
+
+**Pourquoi :** le fichier a été collé dans l'éditeur SQL de Supabase et le collage s'est arrêté en route. 390 lignes / 24 ko — un collage partiel passe sans la moindre erreur, on lit « Success » et la moitié n'est jamais partie.
+
+**Ce que ça coûte :** `profiles.etat_vol` porte le vol interrompu. Sans elle, un vol coupé au milieu ne se reprend que sur le navigateur où il a commencé.
+
+**À faire, et c'est au développeur — jamais à Claude :**
+
+```sh
+SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-sql.sh sql/002-progression.sql
+```
+
+Cette voie envoie le fichier d'un bloc par l'API : pas de presse-papier, pas de troncature. Le fichier est idempotent, le rejouer ne duplique rien. **Puis vérifier :** `sh tests/lancer_tout.sh base`.
+
+**Reste ensuite un rattrapage :** les séances des six scénarios enregistrées AVANT le 19/09/2026 ont `exercise_key = null` en base — `assets/sync.js` réessaie sans la clé quand la clé étrangère est refusée, ce qui sauve la séance mais la détache. Elles s'affichent « Scénario » et ne sont pas relançables. Les nouvelles s'attachent correctement. Visible depuis la console d'administration seulement (RLS).
+
+### 21.3 Travail écrit mais NON COMMITÉ
+
+Sur la branche **`sql-003-et-verif-catalogue`** :
+
+| Fichier | Quoi |
+|---|---|
+| `sql/003-is-admin-et-exercices.sql` | **nouveau** — verse `is_admin()` et la RLS d'`exercises` dans une migration versionnée |
+| `tests/verifier-catalogue.mjs` | **nouveau** — compare le catalogue de la base à celui de l'application, et sonde les politiques |
+| `tests/lancer_tout.sh` | modifié — ajout de l'étape `base` |
+
+Ces fichiers attendent la validation du développeur. **Ne pas commiter sans son accord.**
+
+### 21.4 Le fossé entre les migrations et la base réelle
+
+La base de production a été **bâtie à la main depuis `assets/admin/README.md`** : les tables, `is_admin()`, `profiles_garde()`, trois vues, toutes les politiques. Les migrations `sql/001` et `sql/002` ne décrivent qu'une partie de tout ça.
+
+Conséquence concrète : **rejouer les migrations sur un projet neuf ne reproduit pas la production.** `is_admin()` manquerait aux quatre politiques de `sql/002` qui l'appellent, et `exercises` se retrouverait sans RLS. C'est ce que `sql/003` commence à combler. Un `sql/004` reste à écrire pour le reste : `app_errors`, `admin_audit_log`, et les tables elles-mêmes.
+
+C'est le **préalable à un projet Supabase de test** — lequel est lui-même le préalable à tester l'inscription, les RLS et la fusion entre appareils, qu'aucun test ne couvre aujourd'hui (les tests coupent Supabase exprès, voir `tests/README.md`).
+
+### 21.5 Décisions en attente du développeur
+
+**La fusion des réglages.** Elle existe déjà (`assets/donnees.js § 7`, « le plus récent gagne », horodatage `_maj`) mais elle fusionne **l'objet entier**, pas clé par clé :
+
+> On change le **thème** sur son téléphone, puis le **débit de la voix** sur son ordinateur. Le plus récent écrase tout — le premier changement est perdu, en silence.
+
+C'est fusionnable clé par clé. **Question posée, pas encore tranchée :** un réglage remis à sa valeur par défaut sur un appareil doit-il redescendre chez les autres ? Avec une fusion par clé, « je n'ai jamais touché ce réglage » et « je l'ai remis à zéro » se ressemblent.
+
+**Ne pas coder cette fusion avant la réponse** (§ 7.1).
+
+### 21.6 Ce que les tests ne couvrent toujours pas
+
+- **le micro réel** — la chaîne entière est couverte par une fausse `SpeechRecognition` (`tests/parcours/micro.spec.js`), mais pas l'audio. Un scénario et un vol au micro, à la main, après toute étape qui touche à la voix ou à la reconnaissance ;
+- **l'inscription, l'auth, les RLS avec deux comptes** — il faut le projet de test ;
+- **la fusion entre deux appareils** — jamais vérifiée, ni par un test ni à la main ;
+- **le contraste des deux thèmes** — les 90 relevés de l'ancienne suite `ins_contraste.py` restent à refaire.
+
+---
+
 ## Journal des décisions
 
 Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de cette liste sans raison nouvelle.
@@ -609,8 +675,14 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 18/09/2026 | Le CSS quitte `index.html` : 14 fichiers numérotés, l'ordre est la cascade | § 6.2 |
 | 18/09/2026 | Les données statiques quittent le moteur : aérodromes, phraséologie, reconnaissance, icônes. Chargées AVANT le moteur | § 6.2 |
 | 19/09/2026 | Étape 2.1 : les sept blocs IIFE quittent `index.html` vers `assets/modules/`, chacun au même rang de chargement | § 6.2 |
+| 19/09/2026 | Étape 2.2 : le noyau de services vers `assets/noyau/`, sept fichiers numérotés par dépendance. La voix ATC déplacée telle quelle | § 6.2 |
+| 19/09/2026 | Étape 2.3 : le moteur vers `assets/scenarios/moteur.js`. `index.html` redevient un document — phase 2 close | § 6.2 |
+| 19/09/2026 | Le mode strict rendu aux fichiers de `assets/donnees/`, perdu lors de l'extraction de la phase 1 | § 21 |
+| 19/09/2026 | Les tests ne parlent jamais au Supabase de production ; l'étape `base` du lanceur est la seule exception, et en lecture | `tests/README.md` |
 
 ### En attente de validation
 
 - **Convention de nommage** (§ 16.2) — proposée, pas appliquée. Aucun renommage de masse avant accord.
-- **Plan de migration** — à relire et valider avant d'engager le découpage du monolithe.
+- **Fusion des réglages clé par clé** (§ 21.5) — la règle « le plus récent gagne » existe, mais sur l'objet entier. Une question reste posée au développeur avant d'écrire quoi que ce soit.
+- **`sql/003` et `tests/verifier-catalogue.mjs`** (§ 21.3) — écrits, non commités, sur la branche `sql-003-et-verif-catalogue`.
+- **`sql/004`** — reste à écrire : `app_errors`, `admin_audit_log` et les tables, qui ne vivent que dans `assets/admin/README.md`.

@@ -7,6 +7,13 @@
     "assets/donnees/phraseologie-scenarios.js",
     "assets/donnees/reconnaissance.js",
     "assets/donnees/icones.js",
+    "assets/noyau/1-alphabet-nombres.js",
+    "assets/noyau/2-texte.js",
+    "assets/noyau/3-reglages.js",
+    "assets/noyau/4-bruit-radio.js",
+    "assets/noyau/5-voix.js",
+    "assets/noyau/6-micro.js",
+    "assets/noyau/7-interface.js",
     "index.html#2",
     "assets/modules/routeur.js",
     "assets/modules/epellation-cours.js",
@@ -85,6 +92,7 @@
       "nom": "AERODROMES",
       "declare": "assets/donnees/aerodromes.js",
       "lu_par": [
+        "assets/noyau/2-texte.js",
         "index.html#2",
         "assets/modules/epellation-cours.js",
         "assets/modules/navigation.js",
@@ -105,16 +113,24 @@
       ]
     },
     {
+      "nom": "audioCtx",
+      "declare": "assets/noyau/4-bruit-radio.js",
+      "lu_par": [
+        "assets/noyau/5-voix.js"
+      ]
+    },
+    {
       "nom": "BIGRAMS",
       "declare": "assets/donnees/reconnaissance.js",
       "lu_par": [
-        "index.html#2"
+        "assets/noyau/2-texte.js"
       ]
     },
     {
       "nom": "bindPushToTalk",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/6-micro.js",
       "lu_par": [
+        "index.html#2",
         "assets/modules/epellation-cours.js",
         "assets/modules/navigation.js"
       ]
@@ -127,8 +143,22 @@
       ]
     },
     {
+      "nom": "canonPhrase",
+      "declare": "assets/noyau/2-texte.js",
+      "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
       "nom": "circuitChoiceStep",
       "declare": "assets/donnees/phraseologie-scenarios.js",
+      "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
+      "nom": "clearLog",
+      "declare": "assets/noyau/7-interface.js",
       "lu_par": [
         "index.html#2"
       ]
@@ -142,10 +172,31 @@
       ]
     },
     {
+      "nom": "ctrlOf",
+      "declare": "index.html#2",
+      "lu_par": [
+        "assets/noyau/5-voix.js"
+      ]
+    },
+    {
+      "nom": "DIGIT_WORDS",
+      "declare": "assets/noyau/1-alphabet-nombres.js",
+      "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
       "nom": "drawMeteo",
       "declare": "index.html#2",
       "lu_par": [
         "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "escapeHtml",
+      "declare": "assets/noyau/7-interface.js",
+      "lu_par": [
+        "index.html#2"
       ]
     },
     {
@@ -166,7 +217,15 @@
       "nom": "fillSpeech",
       "declare": "index.html#2",
       "lu_par": [
+        "assets/noyau/5-voix.js",
         "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "frenchCardinal",
+      "declare": "assets/noyau/1-alphabet-nombres.js",
+      "lu_par": [
+        "index.html#2"
       ]
     },
     {
@@ -178,8 +237,9 @@
     },
     {
       "nom": "fuzzyCorrect",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/2-texte.js",
       "lu_par": [
+        "index.html#2",
         "assets/modules/navigation.js"
       ]
     },
@@ -194,16 +254,24 @@
     },
     {
       "nom": "lev",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/2-texte.js",
       "lu_par": [
         "assets/modules/epellation-cours.js"
       ]
     },
     {
       "nom": "lissageTranscription",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/2-texte.js",
       "lu_par": [
         "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "logRow",
+      "declare": "assets/noyau/7-interface.js",
+      "lu_par": [
+        "assets/noyau/6-micro.js",
+        "index.html#2"
       ]
     },
     {
@@ -211,6 +279,13 @@
       "declare": "index.html#2",
       "lu_par": [
         "assets/modules/parametres.js"
+      ]
+    },
+    {
+      "nom": "maybeSpeakTraffic",
+      "declare": "assets/noyau/5-voix.js",
+      "lu_par": [
+        "index.html#2"
       ]
     },
     {
@@ -224,14 +299,17 @@
       "nom": "MISHEARD",
       "declare": "assets/donnees/reconnaissance.js",
       "lu_par": [
-        "index.html#2",
+        "assets/noyau/2-texte.js",
         "assets/modules/epellation-cours.js"
       ]
     },
     {
       "nom": "NATO",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/1-alphabet-nombres.js",
       "lu_par": [
+        "assets/noyau/2-texte.js",
+        "assets/noyau/6-micro.js",
+        "index.html#2",
         "assets/modules/epellation-cours.js"
       ]
     },
@@ -270,12 +348,11 @@
     },
     {
       "nom": "normalize",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/2-texte.js",
       "lu_par": [
-        "assets/modules/navigation.js",
-        "assets/inscription.js",
-        "assets/admin/data/contract.js",
-        "assets/admin/data/source-mock.js"
+        "index.html#2",
+        "assets/modules/epellation-cours.js",
+        "assets/modules/navigation.js"
       ]
     },
     {
@@ -310,25 +387,49 @@
       ]
     },
     {
+      "nom": "phoneticCallsign",
+      "declare": "assets/noyau/1-alphabet-nombres.js",
+      "lu_par": [
+        "assets/noyau/5-voix.js",
+        "index.html#2"
+      ]
+    },
+    {
       "nom": "pick",
       "declare": "index.html#2",
       "lu_par": [
+        "assets/noyau/5-voix.js",
         "assets/modules/epellation-cours.js",
         "assets/modules/navigation.js",
         "assets/admin/data/source-mock.js"
       ]
     },
     {
+      "nom": "pickVoice",
+      "declare": "assets/noyau/5-voix.js",
+      "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
+      "nom": "prononciationRadio",
+      "declare": "assets/noyau/1-alphabet-nombres.js",
+      "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
       "nom": "pttUI",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/6-micro.js",
       "lu_par": [
         "assets/modules/epellation-cours.js"
       ]
     },
     {
       "nom": "RECO_OK",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/6-micro.js",
       "lu_par": [
+        "index.html#2",
         "assets/modules/navigation.js"
       ]
     },
@@ -361,49 +462,24 @@
       ]
     },
     {
-      "nom": "RT_SCENARIOS_MAP",
-      "declare": "index.html#2",
-      "lu_par": [
-        "assets/donnees.js"
-      ]
-    },
-    {
       "nom": "RT_SUPABASE",
       "declare": "assets/supabase-config.js",
       "lu_par": [
-        "assets/auth.js",
-        "assets/sync.js",
-        "assets/admin/data/source-supabase.js"
-      ]
-    },
-    {
-      "nom": "rtBadges",
-      "declare": "index.html#2",
-      "lu_par": [
-        "assets/modules/tableau-de-bord.js"
+        "assets/sync.js"
       ]
     },
     {
       "nom": "rtConfirm",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/7-interface.js",
       "lu_par": [
+        "index.html#2",
         "assets/modules/navigation.js",
-        "assets/modules/parametres.js",
-        "assets/admin/pages/errors.js",
-        "assets/admin/pages/test.js"
-      ]
-    },
-    {
-      "nom": "rtRelancerScenario",
-      "declare": "index.html#2",
-      "lu_par": [
-        "assets/modules/tableau-de-bord.js",
-        "assets/admin/pages/test.js"
+        "assets/modules/parametres.js"
       ]
     },
     {
       "nom": "rtSaveSettings",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/3-reglages.js",
       "lu_par": [
         "assets/modules/navigation.js",
         "assets/modules/parametres.js"
@@ -411,8 +487,10 @@
     },
     {
       "nom": "rtSettings",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/3-reglages.js",
       "lu_par": [
+        "assets/noyau/6-micro.js",
+        "index.html#2",
         "assets/modules/navigation.js",
         "assets/modules/parametres.js"
       ]
@@ -426,7 +504,7 @@
     },
     {
       "nom": "sansAccent",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/1-alphabet-nombres.js",
       "lu_par": [
         "assets/inscription.js"
       ]
@@ -435,6 +513,7 @@
       "nom": "SCENARIOS",
       "declare": "assets/donnees/phraseologie-scenarios.js",
       "lu_par": [
+        "assets/noyau/5-voix.js",
         "index.html#2",
         "assets/admin/data/source-mock.js",
         "assets/admin/data/source-local.js",
@@ -445,19 +524,18 @@
     },
     {
       "nom": "setRecoSink",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/6-micro.js",
       "lu_par": [
         "assets/modules/navigation.js"
       ]
     },
     {
       "nom": "showToast",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/7-interface.js",
       "lu_par": [
+        "index.html#2",
         "assets/modules/navigation.js",
-        "assets/modules/parametres.js",
-        "assets/admin/pages/errors.js",
-        "assets/admin/pages/test.js"
+        "assets/modules/parametres.js"
       ]
     },
     {
@@ -469,22 +547,33 @@
     },
     {
       "nom": "speakATC",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/5-voix.js",
       "lu_par": [
+        "index.html#2",
         "assets/modules/navigation.js"
       ]
     },
     {
-      "nom": "startListening",
-      "declare": "index.html#2",
+      "nom": "spokenDigits",
+      "declare": "assets/noyau/1-alphabet-nombres.js",
       "lu_par": [
+        "index.html#2"
+      ]
+    },
+    {
+      "nom": "startListening",
+      "declare": "assets/noyau/6-micro.js",
+      "lu_par": [
+        "index.html#2",
         "assets/modules/navigation.js"
       ]
     },
     {
       "nom": "startRadioNoise",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/4-bruit-radio.js",
       "lu_par": [
+        "assets/noyau/5-voix.js",
+        "index.html#2",
         "assets/modules/navigation.js"
       ]
     },
@@ -493,25 +582,43 @@
       "declare": "index.html#2",
       "lu_par": [
         "assets/donnees/phraseologie-scenarios.js",
-        "assets/modules/epellation-cours.js",
+        "assets/noyau/2-texte.js",
+        "assets/noyau/4-bruit-radio.js",
+        "assets/noyau/5-voix.js",
+        "assets/noyau/6-micro.js",
         "assets/modules/navigation.js",
-        "assets/admin/admin.js",
-        "assets/admin/pages/dashboard.js",
-        "assets/admin/pages/analytics.js"
+        "assets/admin/admin.js"
+      ]
+    },
+    {
+      "nom": "stemTokens",
+      "declare": "assets/noyau/2-texte.js",
+      "lu_par": [
+        "index.html#2"
       ]
     },
     {
       "nom": "stopListening",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/6-micro.js",
       "lu_par": [
+        "index.html#2",
         "assets/modules/navigation.js"
       ]
     },
     {
       "nom": "stopRadioNoise",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/4-bruit-radio.js",
       "lu_par": [
+        "assets/noyau/5-voix.js",
+        "index.html#2",
         "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "suiteDeJetons",
+      "declare": "assets/noyau/2-texte.js",
+      "lu_par": [
+        "index.html#2"
       ]
     },
     {
@@ -544,27 +651,45 @@
     },
     {
       "nom": "Voix",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/5-voix.js",
       "lu_par": [
-        "assets/modules/navigation.js",
-        "assets/modules/parametres.js"
+        "index.html#2",
+        "assets/modules/navigation.js"
       ]
     },
     {
       "nom": "VOIX_ARRETS",
-      "declare": "index.html#2",
+      "declare": "assets/noyau/5-voix.js",
       "lu_par": [
+        "index.html#2",
         "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "voixCouperTout",
+      "declare": "assets/noyau/5-voix.js",
+      "lu_par": [
+        "assets/noyau/6-micro.js",
+        "index.html#2"
       ]
     }
   ],
   "lectures_differees": [
     "codeSSR@assets/donnees/phraseologie-scenarios.js",
+    "ctrlOf@assets/noyau/5-voix.js",
+    "el@assets/noyau/6-micro.js",
+    "el@assets/noyau/7-interface.js",
+    "fillSpeech@assets/noyau/5-voix.js",
     "freqMots@assets/donnees/phraseologie-scenarios.js",
+    "logRow@assets/noyau/6-micro.js",
     "numVariants@assets/donnees/phraseologie-scenarios.js",
     "orgVars@assets/donnees/phraseologie-scenarios.js",
+    "pick@assets/noyau/5-voix.js",
     "sivProche@assets/donnees/phraseologie-scenarios.js",
-    "state@assets/donnees/phraseologie-scenarios.js"
+    "state@assets/donnees/phraseologie-scenarios.js",
+    "state@assets/noyau/4-bruit-radio.js",
+    "state@assets/noyau/5-voix.js",
+    "state@assets/noyau/6-micro.js"
   ],
   "cles_stockage": [
     "radiotrainer_history_v2",

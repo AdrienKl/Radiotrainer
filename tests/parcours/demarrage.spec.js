@@ -18,6 +18,22 @@ test('le site se charge sans erreur de console', async ({ page }) => {
   expect(erreurs, 'Erreurs de console au chargement').toEqual([]);
 });
 
+test('aucun fichier du site ne répond 404', async ({ page }) => {
+  /* Une feuille de style, un script ou une image absente ne lève aucune erreur
+     JavaScript : la page se charge et il manque quelque chose. C'est ce qui est
+     arrivé aux dix-sept images de fond quand le CSS a quitté index.html —
+     « assets/images/… » ne partait plus de la racine mais de assets/css/.
+     On visite les pages à décor : ce sont elles qui chargent les images. */
+  const { absents } = await ouvrir(page);
+  await entrer(page, 'tableau');
+  for (const p of ['tableau', 'exercices', 'navigation', 'epellation', 'cours', 'parametres']) {
+    await page.evaluate(r => { location.hash = '#' + r; }, p);
+    await page.waitForTimeout(250);
+  }
+  await page.waitForTimeout(600);
+  expect(absents, 'Fichiers du site introuvables').toEqual([]);
+});
+
 test('aucun bloc de script n\'est mort au chargement', async ({ page }) => {
   /* Chaque bloc publie au moins un symbole. S'il manque, c'est que le bloc
      s'est arrêté avant la fin — sans que rien ne soit visible à l'écran. */

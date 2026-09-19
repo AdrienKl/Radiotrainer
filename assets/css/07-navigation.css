@@ -1,0 +1,440 @@
+/* =============================================================================
+   AVIERO — La Navigation
+   -----------------------------------------------------------------------------
+   La préparation de vol puis le vol en direct. La « zone de parole » est volontairement
+   placée APRÈS les règles .vf-* d'origine, qu'elle surcharge : ne pas la remonter.
+
+   Ce fichier est le n° 7 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ================= PAGE NAVIGATION (préparation de vol) — Phase 1 =================
+     Tout est préfixé .nav-* pour ne rien croiser avec les styles des scénarios. */
+  .nav-warn{ background:#fff6ed; border:1px solid #f0c9a6; border-left:3px solid #d97b3c;
+    border-radius:12px; padding:11px 14px; font-size:13px; line-height:1.55; color:#7a4418; margin:0 0 16px; }
+  .nav-warn strong{ color:#5f3312; }
+  /* Variante « fichier manquant » : rouge, pour ne pas la confondre avec
+     l'avertissement habituel sur la fraîcheur des données. */
+  .nav-warn.nav-fatal{ background:#fdf0ef; border-color:#e6b3b0; border-left-color:#c74a4a; color:#7d2f2b; }
+  .nav-warn.nav-fatal strong{ color:#5e211e; }
+  .nav-warn code{ font-family:var(--mono); font-size:12px; background:rgba(0,0,0,.06);
+    padding:1px 5px; border-radius:4px; }
+
+  .nav-mode{ display:inline-flex; gap:3px; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--pill); padding:3px; margin:0 0 16px; }
+  .nav-mode-opt{ cursor:pointer; border:none; background:transparent; border-radius:var(--pill);
+    padding:8px 18px; font-family:var(--sans); font-size:13.5px; font-weight:600; color:var(--ink-2); transition:.15s; }
+  .nav-mode-opt.active{ background:var(--violet); color:#fff; }
+
+  /* minmax(0,1fr) et non 1fr : sinon la carte Leaflet impose sa largeur intrinseque
+     et deborde la colonne sur les ecrans etroits.
+     .nav-col empile carte + historique : sans ce conteneur, le placement automatique
+     de la grille poussait .nav-form sur la rangee de l'historique, donc tres bas. */
+  .nav-layout{ display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:18px; align-items:start; }
+  .nav-col{ display:flex; flex-direction:column; gap:14px; min-width:0; }
+  .nav-mapwrap{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:10px; box-shadow:var(--shadow); }
+  .nav-map{ height:340px; border-radius:12px; background:var(--surface-2); z-index:0; }
+  .nav-legend{ display:flex; flex-wrap:wrap; gap:14px; padding:10px 4px 2px; font-size:12px; color:var(--ink-2); }
+  .nav-legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .nav-legend .lg{ width:14px; height:9px; border-radius:2px; display:inline-block; }
+  .lg-ctr{ background:rgba(91,75,206,.25); border:1.5px solid #5b4bce; }
+  .lg-tma{ background:rgba(56,132,196,.16); border:1.5px solid #3884c4; }
+  .lg-rpd{ background:rgba(199,74,74,.14); border:1.5px dashed #c74a4a; }
+  .lg-rte{ background:none; border-top:2.5px dashed #d9534f; height:0; }
+  .nav-maphint{ font-size:12px; color:var(--ink-2); margin:6px 4px 0; }
+
+  .nav-form{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px; box-shadow:var(--shadow); }
+  .nav-form .field{ margin-bottom:13px; }
+  .nav-form label{ display:block; font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-2); margin-bottom:6px; }
+  .nav-form label .opt{ text-transform:none; letter-spacing:0; font-family:var(--sans); opacity:.75; }
+  .nav-form input, .nav-form select{ width:100%; box-sizing:border-box; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:10px; padding:10px 12px;
+    font-family:var(--sans); font-size:14px; color:var(--ink); }
+  .nav-form input:focus, .nav-form select:focus{ outline:none; border-color:var(--violet);
+    box-shadow:0 0 0 3px var(--violet-soft); }
+  /* Champ « actif » : un clic sur la carte alimente ce champ-là. */
+  .nav-form .field.targeting input{ border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+  /* align-items:end → les deux champs restent alignés même si un libellé passe sur 2 lignes. */
+  .nav-row2{ display:grid; grid-template-columns:1fr 1fr; gap:11px; align-items:end; }
+  .nav-row2 .field{ margin-bottom:0; }
+  /* Regroupement visuel façon Learn ATC : sections titrées dans le panneau. */
+  .nav-grp{ border-top:1px solid var(--border); margin:15px 0 12px; padding-top:13px; }
+  .nav-grp:first-of-type{ border-top:none; margin-top:0; padding-top:0; }
+  .nav-grp > h4{ font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--violet-dark); margin:0 0 11px; font-weight:700; }
+  /* Bascule d'affichage des zones réglementées sur la carte. */
+  .nav-maptools{ display:flex; flex-wrap:wrap; align-items:center; gap:9px; padding:9px 4px 0; }
+  .nav-tgl{ display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;
+    color:var(--ink-2); background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--pill); padding:5px 11px; transition:.14s; }
+  .nav-tgl:hover{ color:var(--ink); border-color:var(--violet); }
+  .nav-tgl.on{ background:var(--violet-soft); border-color:var(--violet); color:var(--violet-dark); font-weight:600; }
+  .nav-zoomhint{ font-size:11.5px; color:var(--ink-2); margin-left:auto; }
+  /* Bascule de fond de carte : un seul bouton qui alterne OACI / OpenStreetMap. */
+  .nav-basemap{ font-weight:700; }
+  .nav-basemap::before{ content:""; width:8px; height:8px; border-radius:50%;
+    background:currentColor; display:inline-block; margin-right:2px; }
+  /* Le champ avion porte une liste absolue : le conteneur doit être positionné. */
+  .nav-form .field{ position:relative; }
+  /* Sélecteur de niveau (mêmes codes que la bascule Voyage / Vol local). */
+  .nav-diff{ display:inline-flex; gap:3px; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--pill); padding:3px; }
+  .nav-diff-opt{ cursor:pointer; border:none; background:transparent; border-radius:var(--pill);
+    padding:7px 16px; font-family:var(--sans); font-size:13px; font-weight:600; color:var(--ink-2); transition:.15s; }
+  .nav-diff-opt.active{ background:var(--violet); color:#fff; }
+  .nav-diff-note{ font-size:12px; color:var(--ink-2); margin:9px 0 0; line-height:1.5; }
+  /* Étiquettes de zone façon carte aéronautique (nom + plafond/plancher). */
+  .nav-zlabel{ background:none; border:none; box-shadow:none; padding:0;
+    font-family:var(--mono); font-size:9.5px; line-height:1.15; font-weight:700;
+    color:#2a3f6b; text-align:center; text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff; }
+  .nav-zlabel::before{ display:none; }
+  .nav-start{ width:100%; margin-top:6px; }
+  body.volmode-local .nav-only-voyage{ display:none; }
+
+  /* Bandeau distance / cap / durée estimée. */
+  /* Bandeau « vol interrompu ». */
+  .nav-resume{ display:flex; align-items:center; justify-content:space-between; gap:14px;
+    flex-wrap:wrap; background:var(--violet-soft); border:1px solid var(--violet);
+    border-radius:12px; padding:11px 15px; margin:0 0 14px; font-size:13.5px; color:var(--violet-dark); }
+  .nav-resume-act{ display:flex; gap:8px; }
+  .nav-navlog{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0 0;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:11px 13px; }
+  /* Le display:grid ci-dessus l'emporte sur le [hidden] de la feuille du navigateur :
+     sans cette regle, un bandeau gris vide restait affiche sous « Niveau » tant
+     qu'aucun trajet n'etait choisi. */
+  .nav-navlog[hidden]{ display:none; }
+  .nav-navlog div{ display:flex; flex-direction:column; gap:2px; }
+  .nav-navlog dt{ font-family:var(--mono); font-size:9.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-2); margin:0; }
+  .nav-navlog dd{ margin:0; font-size:15px; font-weight:700; color:var(--ink); font-family:var(--mono); }
+  .nav-navlog small{ font-size:10.5px; color:var(--ink-2); font-weight:400; font-family:var(--sans); }
+  .nav-zones{ margin:16px 0 14px; border-top:1px solid var(--border); padding-top:14px; }
+  .nav-zones h3{ font-family:var(--sans); font-size:13px; font-weight:700; color:var(--ink); margin:0 0 9px; }
+  .nav-zonelist{ max-height:210px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+  .nav-empty{ font-size:12.5px; color:var(--ink-2); margin:0; }
+  .nav-zone{ background:var(--surface-2); border:1px solid var(--border); border-left:3px solid var(--violet);
+    border-radius:9px; padding:8px 10px; font-size:12.5px; line-height:1.45; }
+  .nav-zone.z-tma{ border-left-color:#3884c4; }
+  .nav-zone.z-rpd{ border-left-color:#c74a4a; }
+  .nav-zone b{ color:var(--ink); font-weight:700; }
+  .nav-zone .zmeta{ display:block; color:var(--ink-2); font-size:11.5px; margin-top:2px; }
+  .nav-zonewarn{ background:#fdecec; border:1px solid #e6b3b0; border-left:3px solid var(--bad);
+    border-radius:9px; padding:9px 11px; font-size:12.5px; line-height:1.5; color:#7d2f2b; margin-bottom:8px; }
+  .nav-zonewarn b{ color:#5e211e; }
+  .nav-zone .zfreq{ font-family:var(--mono); color:var(--violet-dark); font-weight:700; }
+
+  .nav-recap{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:22px; box-shadow:var(--shadow); margin-top:6px; }
+  .nav-recap h3{ font-family:var(--sans); font-size:19px; font-weight:800; color:var(--ink); margin:0 0 14px; }
+  .nav-recap dl{ display:grid; grid-template-columns:auto 1fr; gap:8px 18px; margin:0 0 16px; font-size:14px; }
+  .nav-recap dt{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-2); align-self:center; }
+  .nav-recap dd{ margin:0; color:var(--ink); font-weight:600; }
+  .nav-recap .rz{ font-size:13px; color:var(--ink-2); font-weight:400; line-height:1.6; }
+  .nav-phase2{ background:var(--violet-soft); border:1px dashed var(--violet); border-radius:10px;
+    padding:11px 13px; font-size:12.5px; color:var(--violet-dark); line-height:1.55; margin:0 0 16px; }
+  /* Popup Leaflet aux couleurs du site. */
+  .leaflet-popup-content{ font-family:var(--sans); font-size:13px; margin:10px 12px; }
+  .leaflet-popup-content b{ color:var(--ink); }
+  .nav-adpop .pf{ font-family:var(--mono); font-size:11.5px; color:var(--violet-dark); }
+  .nav-adpop button{ margin-top:7px; cursor:pointer; background:var(--violet); color:#fff; border:none;
+    border-radius:8px; padding:5px 10px; font-family:var(--sans); font-size:12px; font-weight:600; }
+  /* Zone de clic large et transparente ; la pastille visible est centrée dedans. */
+  .nav-adhit{ display:flex; align-items:center; justify-content:center; background:none; border:none;
+    cursor:pointer; }
+  .nav-adhit:hover .nav-admark{ transform:scale(1.55); box-shadow:0 0 0 4px rgba(91,75,206,.22),0 1px 4px rgba(0,0,0,.4); }
+  .nav-admark{ display:block; background:var(--violet); border:2px solid #fff; border-radius:50%;
+    box-shadow:0 1px 4px rgba(0,0,0,.4); transition:transform .12s, box-shadow .12s; }
+  .nav-admark.sel-dep{ background:#2e9e5b; }
+  .nav-admark.sel-arr{ background:#d9534f; }
+  .nav-admark.sel-alt{ background:#e0a13a; }
+
+  @media (max-width:980px){
+    .nav-layout{ grid-template-columns:minmax(0,1fr); }
+    .nav-map{ height:380px; }
+    /* Une seule colonne : l'ordre utile devient carte -> configurateur -> historique.
+       display:contents fait remonter les enfants de .nav-col dans la grille, ce qui
+       permet de les ordonner avec le formulaire (sinon l'historique passait avant). */
+    .nav-col{ display:contents; }
+    .nav-mapwrap{ order:1; }
+    .nav-form{ order:2; }
+    .nav-hist{ order:3; }
+  }
+
+  /* ---- Vol en direct (Phase 2) ---- */
+  /* Avertissement d'évitement de classe A, affiché en tête du vol. */
+  .vf-evit{ display:flex; align-items:flex-start; gap:9px; background:#fff6ed;
+    border:1px solid #f0c9a6; border-left:3px solid var(--warn); border-radius:12px;
+    padding:12px 15px; margin-bottom:14px; font-size:13.5px; line-height:1.55; color:#7a4418; }
+  .vf-evit b{ color:#5f3312; }
+  .vf-top{ display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:11px 15px; margin-bottom:14px; box-shadow:var(--shadow); }
+  .vf-tune{ display:flex; align-items:baseline; gap:10px; min-width:0; }
+  .vf-station{ font-family:var(--sans); font-weight:800; font-size:15px; color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .vf-freq{ font-family:var(--mono); font-size:15px; font-weight:700; color:#fff; background:var(--violet);
+    border-radius:8px; padding:3px 9px; white-space:nowrap; }
+  /* Indicatif du joueur, toujours visible pendant le vol : c'est l'élément qu'on
+     doit prononcer à chaque message, il ne doit jamais être à retrouver ailleurs. */
+  .vf-call{ font-family:var(--mono); font-size:14.5px; font-weight:700; color:var(--violet-dark);
+    background:var(--violet-soft); border:1px solid var(--violet); border-radius:8px;
+    padding:3px 10px; white-space:nowrap; }
+  /* Fréquence ATIS du terrain de départ, affichée à côté de celle de l'organisme
+     pendant tout le vol : c'est la première à afficher, avant même d'appeler.
+     Volontairement en retrait (contour, pas de fond plein) pour ne pas concurrencer
+     la fréquence ACTIVE, qui est celle sur laquelle on émet. */
+  .vf-atis{ font-family:var(--mono); font-size:13px; font-weight:700; color:var(--ink-2);
+    background:var(--surface-2); border:1px dashed var(--border); border-radius:8px;
+    padding:2px 8px; white-space:nowrap; }
+  .vf-atis b{ color:var(--violet-dark); }
+  /* Altitude de croisière, rappelée en permanence. On la choisit à la
+     configuration puis on ne la revoit plus nulle part, alors qu'elle est à
+     annoncer à chaque transit et à chaque appel initial — et qu'elle a pu être
+     MODIFIÉE par l'évitement de la classe A, sans qu'on s'en souvienne. Volontairement
+     discrète : même retrait que l'ATIS, elle informe sans capter le regard. */
+  .vf-alt{ font-family:var(--mono); font-size:13px; font-weight:700; color:var(--ink-2);
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
+    padding:2px 8px; white-space:nowrap; }
+  .vf-alt b{ color:var(--violet-dark); }
+  .vf-freq.tuning{ animation:vfTune .5s ease 3; }
+  @keyframes vfTune{ 0%,100%{background:var(--violet)} 50%{background:#e0a13a} }
+  .vf-prog{ flex:1; height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden; min-width:60px; }
+  .vf-bar{ height:100%; width:0; background:var(--violet); border-radius:3px; transition:width .5s ease; }
+  .vf-quit{ flex:none; }
+
+  /* En vol, le panneau radio prime largement : la carte n'est qu'un repère de situation,
+     la zone de parole occupe les deux tiers de la largeur. */
+  /* Carte à DROITE (via order, sans toucher au HTML) et panneau radio en premier :
+     la zone de parole prend toute la largeur restante. */
+  /* La colonne de carte passe de 330 à 400 px : à 330 elle ne montrait guère plus
+     que le symbole de l'avion, et il fallait deviner la route autour. */
+  .vf-layout{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,400px); gap:18px; align-items:start; }
+  .vf-radio{ order:1; }
+  .vf-mapslot{ order:2; min-width:0; position:sticky; top:14px; }
+  /* Carte réduite pendant le vol + éléments propres à la configuration masqués. */
+  body.in-flight .nav-map{ height:420px; }
+  body.in-flight .nav-legend{ font-size:11px; gap:9px; }
+  body.in-flight .nav-maphint, body.in-flight .nav-maptools{ display:none; }
+  body.in-flight #page-navigation > .container > .section-sub{ display:none; }
+  /* En vol, on ne montre que ce qui sert à voler : l'historique et son détail
+     appartiennent à l'écran de configuration. */
+  body.in-flight .nav-hist, body.in-flight .nav-hist-detail{ display:none; }
+  .vf-radio{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px; box-shadow:var(--shadow); }
+  .vf-phase{ display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-2); margin-bottom:10px; }
+  .vf-src{ opacity:.8; text-transform:none; letter-spacing:0; font-size:10.5px; }
+  .vf-atc{ background:var(--violet-soft); border:1px solid var(--violet); border-radius:11px;
+    padding:11px 13px; font-size:14px; line-height:1.5; color:var(--violet-dark); margin-bottom:11px; }
+  .vf-atc:empty{ display:none; }
+  .vf-atc b{ font-weight:700; }
+  /* Mode Réel : le message du contrôleur n'est PAS écrit — on n'affiche que la
+     mention de la transmission et un bouton pour la réécouter, comme en vol où
+     l'on peut demander « répétez ». */
+  .vf-ecoute{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .vf-ecoute .qui{ display:flex; align-items:center; gap:9px; font-weight:700; }
+  .vf-ecoute .qui .ic-svg{ width:17px; height:17px; flex:none; }
+  .vf-rejouer{ display:inline-flex; align-items:center; gap:6px; flex:none; cursor:pointer;
+    background:var(--violet); color:#fff; border:none; border-radius:var(--pill);
+    padding:6px 13px; font-family:var(--sans); font-size:12.5px; font-weight:700; }
+  .vf-rejouer:hover{ filter:brightness(1.08); }
+  .vf-rejouer .ic-svg{ width:14px; height:14px; }
+  /* Ligne de journal en attente : le texte n'apparaît qu'une fois la réponse donnée. */
+  .vf-log .r.attente{ font-style:normal; opacity:.75; }
+  .vf-consigne:empty{ display:none; }
+  .vf-situation{ display:flex; align-items:flex-start; gap:10px; background:#fdf2f0;
+    border:1px solid #e6bdb7; border-radius:11px; padding:11px 13px; font-size:14.5px;
+    line-height:1.5; color:#7d2b26; margin-bottom:11px; font-weight:700; }
+  .vf-situation .ic-svg{ width:18px; height:18px; flex:none; margin-top:1px; }
+  .vf-situation.hidden{ display:none; }
+  :root[data-theme="dark"] .vf-situation{ background:#3a201d; border-color:#7a3b34; color:#f3b4b0; }
+  .vf-consigne{ background:var(--surface-2); border:1px solid var(--border); border-radius:11px;
+    padding:15px 17px; font-size:16px; line-height:1.6; color:var(--ink); margin-bottom:16px; }
+
+  .vf-ptt{ width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
+    background:var(--violet); color:#fff; border:none; border-radius:14px; padding:17px;
+    font-family:var(--sans); font-size:15px; font-weight:700; user-select:none;
+    -webkit-user-select:none; -webkit-touch-callout:none; touch-action:none; transition:.12s; }
+  /* .ic-svg n'impose aucune taille par défaut (elle vient de règles scopées comme
+     `.btn .ic-svg`). .vf-ptt n'étant pas un .btn, l'icône remplissait tout le bouton. */
+  .vf-ptt .ic-svg{ width:22px; height:22px; flex:none; }
+  .vf-ptt span{ white-space:nowrap; }
+  .vf-ptt:hover{ background:var(--violet-dark); }
+  .vf-ptt:active{ transform:scale(.985); }
+  .vf-ptt.listening{ background:#c0392b; box-shadow:0 0 0 4px rgba(192,57,43,.18); }
+  .vf-ptt.listening .ic-svg{ animation:vfPulse 1s ease-in-out infinite; }
+  @keyframes vfPulse{ 0%,100%{opacity:1} 50%{opacity:.45} }
+  .vf-ptt[disabled]{ opacity:.5; cursor:not-allowed; }
+  .vf-noreco{ font-size:12px; color:#8a5a1d; background:#fff6ed; border:1px solid #f0c9a6;
+    border-radius:9px; padding:8px 10px; margin:9px 0 0; line-height:1.45; }
+
+  /* Zone de transcription éditable (Navigation) — calquée sur celle des Scénarios. */
+  .vf-transwrap{ margin-top:13px; }
+  /* Étape d'ÉCOUTE PURE (ATIS) : rien à transmettre. On masque la saisie, le micro
+     et « Valider »… mais surtout PAS « Suivant », qui vit dans le même bloc : masquer
+     le bloc entier rendait le bouton invisible alors qu'il était bel et bien actif,
+     et l'élève restait planté sur l'écoute de l'ATIS. */
+  .vf-transwrap.ecoute label,
+  .vf-transwrap.ecoute textarea,
+  .vf-transwrap.ecoute .valider,
+  .vf-transwrap.ecoute #vfRerec,
+  .vf-transwrap.ecoute #reRecordBtn{ display:none; }
+  .vf-transwrap.ecoute .vf-transact{ margin-top:0; }
+  .vf-transwrap label{ display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-2); margin-bottom:6px; }
+  .vf-transwrap textarea{ width:100%; box-sizing:border-box; resize:vertical; min-height:56px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 13px;
+    font-family:var(--mono); font-size:14px; line-height:1.5; color:var(--ink); }
+  .vf-transwrap textarea:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+  .vf-transact{ display:flex; gap:8px; margin-top:9px; flex-wrap:wrap; }
+  /* Trois boutons sur une ligne : sans largeur plancher, « Valider ma réponse »
+     se coupait en deux lignes au milieu d'une rangée par ailleurs à l'aise. */
+  .vf-transact .btn{ flex:1 1 auto; min-width:158px; }
+  .vf-trans{ font-family:var(--mono); font-size:12.5px; color:var(--ink-2); background:var(--surface-2);
+    border:1px dashed var(--border); border-radius:9px; padding:9px 11px; margin-top:11px; min-height:16px;
+    word-break:break-word; }
+  .vf-trans:empty{ display:none; }
+  .vf-fb{ display:flex; flex-direction:column; gap:5px; margin-top:10px; }
+  .vf-fb .fb{ display:flex; align-items:center; gap:7px; font-size:12.5px; border-radius:8px; padding:6px 9px; }
+  .vf-fb .fb.ok{ background:rgba(46,158,91,.10); color:#1f6e40; }
+  .vf-fb .fb.ko{ background:rgba(199,74,74,.10); color:#96332f; }
+  .vf-fb .fb .ic-svg{ width:14px; height:14px; flex:none; }
+
+  .vf-actions{ display:flex; gap:8px; margin-top:13px; }
+  .vf-actions .btn{ flex:1; }
+  .vf-log{ margin-top:14px; border-top:1px solid var(--border); padding-top:11px;
+    max-height:190px; overflow-y:auto; font-size:12.5px; line-height:1.5; }
+  .vf-log:empty{ display:none; }   /* sinon une bordure orpheline flotte sous les boutons */
+  .vf-log .r{ margin-bottom:5px; }
+  .vf-log .r .who{ font-family:var(--mono); font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--ink-2); margin-right:6px; }
+  .vf-log .r.atc{ color:var(--violet-dark); }
+  .vf-log .r.you{ color:var(--ink); }
+  .vf-log .r.sys{ color:var(--ink-2); }
+
+  /* =========================================================================
+     SCÉNARIOS — session en direct
+     Le module reprend la charpente du vol Navigation (.vf-*) : bandeau d'accord,
+     pile avionique, deux colonnes. Ne restent ici que les pièces qui lui sont
+     propres — la fiche du terrain, qui prend la place de la carte, et le
+     débriefing.
+     ========================================================================= */
+  .sc-fiche{ order:2; position:sticky; top:14px; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius); padding:17px 19px;
+    box-shadow:var(--shadow); }
+  .sc-fiche-tete{ display:flex; align-items:center; justify-content:space-between;
+    gap:10px; margin-bottom:12px; }
+  .sc-fiche h3{ font-family:var(--sans); font-size:15.5px; font-weight:800; color:var(--ink);
+    margin:0; line-height:1.25; }
+  .sc-fiche-tag{ flex:none; font-family:var(--mono); font-size:10px; letter-spacing:.07em;
+    text-transform:uppercase; font-weight:700; color:var(--violet-dark);
+    background:var(--violet-soft); border:1px solid var(--violet);
+    border-radius:var(--pill); padding:3px 9px; white-space:nowrap; }
+  .sc-fiche-tag:empty{ display:none; }
+  .sc-fiche .terrain-toggle{ margin-bottom:14px; }
+  .sc-fiche-l{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 15px;
+    margin:0; font-size:13.5px; align-items:baseline; }
+  .sc-fiche-l dt{ font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-2); white-space:nowrap; }
+  .sc-fiche-l dd{ margin:0; color:var(--ink); }
+  .sc-fiche-l dd b{ font-family:var(--mono); font-weight:700; }
+  .sc-fiche-l:empty{ display:none; }
+  .sc-fiche-note{ margin:14px 0 0; padding-top:12px; border-top:1px solid var(--border);
+    font-size:12px; line-height:1.55; color:var(--ink-2); }
+  .sc-fiche-note:empty{ display:none; padding:0; border:none; }
+
+  /* Débriefing de session — même boîte que celui du vol. */
+  .sc-score{ font-family:var(--mono); font-size:33px; line-height:1.1; color:var(--violet);
+    font-weight:700; margin:2px 0 14px; }
+  .sc-score small{ display:block; font-family:var(--sans); font-size:13px;
+    color:var(--ink-2); font-weight:600; margin-top:5px; }
+  .sc-recap-l{ margin:0 0 18px; padding-left:19px; font-size:13.5px; line-height:1.75;
+    color:var(--ink-2); }
+  .sc-manques{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
+    padding:13px 16px; margin:0 0 18px; }
+  .sc-manques h4{ font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-2); margin:0 0 6px; font-weight:700; }
+  .sc-manques p{ margin:0; font-size:13.5px; line-height:1.6; color:var(--ink); }
+
+  /* Pendant une session on ne montre QUE la session : le configurateur et la
+     grille de scénarios restaient sous le panneau, si bien qu'on répondait au
+     contrôleur avec le formulaire de réglages sous les yeux. Même principe que
+     body.in-flight en Navigation. */
+  body.in-session #page-exercices .config,
+  body.in-session #page-exercices .scenarios,
+  body.in-session #page-exercices .section-sub,
+  body.in-session #page-exercices #noreco,
+  body.in-session #page-exercices #historyPanel,
+  /* Le débriefing prend lui aussi toute la place : affiché sous le configurateur
+     et les sept cartes, il atterrissait tout en bas de la page, là où on ne le
+     voyait qu'après un long défilement. */
+  body.in-recap #page-exercices .config,
+  body.in-recap #page-exercices .scenarios,
+  body.in-recap #page-exercices .section-sub,
+  body.in-recap #page-exercices #noreco{ display:none; }
+
+  @media (max-width:980px){
+    .vf-layout{ grid-template-columns:minmax(0,1fr); }
+    .sc-fiche{ position:static; order:0; }
+  }
+
+  /* Marqueur avion sur la carte pendant le vol */
+  .vf-plane{ font-size:0; }
+  /* Le rouge se confondait avec les zones R/P/D de la carte OACI. Bleu ardoise
+     cercle de blanc : lisible sur un fond charge, sans imiter un symbole reel. */
+  .vf-plane svg{ display:block; width:28px; height:28px; color:#1b3a63;
+    filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 3px #fff) drop-shadow(0 1px 3px rgba(0,0,0,.4));
+    transition:transform .8s linear; transform-origin:50% 50%; }
+
+  /* --- Zone de parole (placé APRÈS les règles .vf-* d'origine pour les surcharger) ---
+     C'est tout le panneau qui grandit, pas seulement le bouton micro : la page passe
+     en pleine largeur pendant le vol et la carte se réduit à un repère latéral. */
+  body.in-flight #page-navigation > .container{ max-width:1500px; }
+  .vf-radio{ padding:28px 30px; min-height:620px; display:flex; flex-direction:column; }
+  .vf-atc{ font-size:16px; padding:16px 18px; }
+  .vf-phase{ font-size:12px; margin-bottom:14px; }
+  .vf-consigne{ font-size:17.5px; padding:20px 22px; line-height:1.6; }
+  /* Bouton micro ramené à une taille raisonnable : c'est le cadre qui porte l'ampleur. */
+  .vf-ptt{ padding:17px; font-size:15.5px; border-radius:13px; }
+  .vf-ptt .ic-svg{ width:20px; height:20px; }
+  .vf-trans{ font-size:14px; padding:13px 15px; }
+  .vf-fb .fb{ font-size:14px; padding:9px 12px; }
+  .vf-actions{ margin-top:16px; }
+  .vf-actions .btn{ padding:12px 16px; font-size:14.5px; }
+  /* Le journal s'étire jusqu'au bas du panneau — mais reste masqué tant qu'il est
+     vide, sinon sa bordure supérieure flotte toute seule sous les boutons. */
+  .vf-log{ flex:1 1 auto; max-height:none; font-size:13.5px; }
+
+  @media (max-width:980px){
+    /* minmax(0,1fr) et non 1fr : la piste « auto » laissait la carte Leaflet imposer
+       sa largeur intrinsèque et déborder l'écran sous 360 px. */
+    .vf-layout{ grid-template-columns:minmax(0,1fr); }
+    .nav-mapwrap{ max-width:100%; overflow:hidden; }
+    .vf-top{ flex-wrap:wrap; }
+    .vf-mapslot{ position:static; }        /* pas de collage en colonne unique */
+    .vf-radio{ min-height:0; padding:20px; }
+    .vf-consigne{ font-size:16px; padding:16px 18px; }
+  }
+
+  /* Champ de recherche avec bouton « dérouler » (choix d'avion). */
+  .ac-combo{ position:relative; display:flex; align-items:center; }
+  .ac-combo input{ flex:1; padding-right:36px !important; }
+  .ac-open{ position:absolute; right:6px; background:none; border:none; cursor:pointer;
+    color:var(--ink-2); padding:4px; display:inline-flex; border-radius:6px; }
+  .ac-open:hover{ color:var(--violet); background:var(--surface-2); }
+  .ac-open .ic-svg{ width:16px; height:16px; }
+  /* En-tête de constructeur dans la liste déroulante. */
+  .ac-fam{ padding:7px 13px 4px; font-family:var(--mono); font-size:10px; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--violet-dark); font-weight:700;
+    background:var(--surface-2); position:sticky; top:0; }
+  /* Champ obligatoire non renseigné. */
+  .champ-requis{ border-color:var(--bad) !important; box-shadow:0 0 0 3px rgba(217,83,79,.16) !important; }
+

@@ -1,0 +1,111 @@
+/* =============================================================================
+   AVIERO — L'historique des vols
+   -----------------------------------------------------------------------------
+   Les lignes, le détail dépliable et les tuiles de résultat.
+
+   Ce fichier est le n° 12 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ================= Historique de vols ================= */
+  /* L'historique occupe la colonne de GAUCHE, sous la carte : en bas de page il se
+     retrouvait derriere le debriefing et le panneau de vol, et se melangeait a eux.
+     Il est desormais dans .nav-col ; c'est le gap du flex qui l'espace de la carte,
+     plus une marge (qui creait un decalage avec le formulaire d'en face). */
+  .nav-hist{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow-sm); margin:0; overflow:hidden; }
+  .nav-hist-head{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:14px;
+    background:none; border:none; cursor:pointer; padding:14px 17px; text-align:left; font-family:var(--sans); }
+  .nav-hist-head:hover{ background:var(--surface-2); }
+  .nhh-l{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .nhh-t{ font-size:14px; font-weight:700; color:var(--ink); }
+  .nhh-s{ font-size:12.5px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nhh-r{ display:flex; align-items:center; gap:9px; flex:none; color:var(--ink-2); }
+  .nhh-n{ font-family:var(--mono); font-size:12px; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:var(--pill); padding:2px 9px; }
+  .nhh-chev{ width:17px; height:17px; transition:transform .18s; }
+  .nav-hist-head[aria-expanded="true"] .nhh-chev{ transform:rotate(180deg); }
+  .nav-hist-body{ border-top:1px solid var(--border); max-height:340px; overflow-y:auto; }
+  .nh-row{ display:flex; align-items:center; gap:12px; width:100%; background:none; border:none;
+    border-bottom:1px solid var(--surface-2); cursor:pointer; padding:11px 17px; text-align:left;
+    font-family:var(--sans); }
+  .nh-row:hover{ background:var(--surface-2); }
+  .nh-row:last-child{ border-bottom:none; }
+  .nh-vol{ font-family:var(--mono); font-size:13px; font-weight:700; color:var(--ink); flex:none; }
+  .nh-meta{ font-size:12px; color:var(--ink-2); flex:1; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nh-pct{ font-family:var(--mono); font-size:12.5px; font-weight:700; flex:none;
+    border-radius:var(--pill); padding:3px 10px; }
+  .nh-pct.bon{ background:rgba(46,158,91,.14); color:#1f6e40; }
+  .nh-pct.moy{ background:rgba(224,145,42,.16); color:#8a5a1d; }
+  .nh-pct.bas{ background:rgba(199,74,74,.14); color:#96332f; }
+  /* Le detail d'un vol REMPLACE l'ecran de configuration : ouvrirVol() masque
+     .nav-layout, donc ce bloc doit vivre en dehors d'elle, sinon il disparaissait
+     avec elle et le clic sur un vol ne montrait rien. */
+  .nav-hist-detail{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px 24px; }
+  .nav-hist-detail h3{ font-family:var(--sans); font-size:20px; font-weight:800; color:var(--ink);
+    margin:16px 0 16px; letter-spacing:-.01em; }
+
+  /* Tuiles de score : le chiffre d'abord, le libellé en dessous. */
+  .nhd-stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));
+    gap:10px; margin-bottom:16px; }
+  .nhd-tile{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
+    padding:13px 15px; display:flex; flex-direction:column; gap:2px; }
+  .nhd-tile b{ font-family:var(--mono); font-size:23px; font-weight:700; color:var(--ink); line-height:1.1; }
+  .nhd-tile b i{ font-style:normal; font-size:15px; color:var(--ink-2); font-weight:400; }
+  .nhd-tile span{ font-size:11.5px; color:var(--ink-2); }
+  .nhd-tile.g-bon{ background:rgba(46,158,91,.10); border-color:rgba(46,158,91,.35); }
+  .nhd-tile.g-bon b{ color:#1f6e40; }
+  .nhd-tile.g-moy{ background:rgba(224,145,42,.12); border-color:rgba(224,145,42,.38); }
+  .nhd-tile.g-moy b{ color:#8a5a1d; }
+  .nhd-tile.g-bas{ background:rgba(199,74,74,.10); border-color:rgba(199,74,74,.35); }
+  .nhd-tile.g-bas b{ color:#96332f; }
+
+  .nhd-info{ display:flex; flex-wrap:wrap; gap:8px 22px; font-size:13.5px; color:var(--ink);
+    padding-top:2px; }
+  .nhd-info b{ font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-2); font-weight:700; margin-right:6px; }
+  .nhd-alea{ color:#8a5a1d; }
+
+  .nav-hist-actions{ display:flex; gap:9px; flex-wrap:wrap; margin:18px 0 0; }
+  .nav-hist-lignes{ margin-top:18px; border-top:1px solid var(--border); padding-top:16px;
+    display:flex; flex-direction:column; gap:10px; max-height:460px; overflow-y:auto; }
+
+  /* Un échange = une carte : en-tête, phrase attendue, ce qui a été dit. */
+  .nhl{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
+    padding:12px 14px; border-left:3px solid var(--border); }
+  .nhl.ok{ border-left-color:var(--ok); }
+  .nhl.ko{ border-left-color:var(--bad); }
+  .nhl.passe{ opacity:.72; }
+  .nhl-top{ display:flex; align-items:center; gap:9px; margin-bottom:9px; }
+  .nhl-num{ font-family:var(--mono); font-size:11px; color:var(--ink-2); background:var(--surface);
+    border:1px solid var(--border); border-radius:6px; padding:1px 6px; flex:none; }
+  .nhl-ph{ font-size:13.5px; font-weight:700; color:var(--ink); }
+  .nhl-stn{ font-size:12px; color:var(--ink-2); flex:1; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nhl-etat{ flex:none; display:inline-flex; color:var(--ink-2); }
+  .nhl.ok .nhl-etat{ color:var(--ok); }
+  .nhl.ko .nhl-etat{ color:var(--bad); }
+  .nhl-etat .ic-svg{ width:16px; height:16px; }
+  .nhl-bloc{ display:flex; gap:10px; align-items:baseline; margin-top:5px; }
+  .nhl-lab{ font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-2); flex:none; width:88px; }
+  .nhl-txt{ font-size:13.5px; line-height:1.5; color:var(--ink); }
+  .nhl-txt.ko{ color:var(--ink-2); }
+  .nhl-passe{ color:var(--ink-2); }
+  .nhl-man{ margin-top:8px; font-size:12.5px; color:#96332f; background:rgba(199,74,74,.09);
+    border-radius:8px; padding:6px 9px; }
+  :root[data-theme="dark"] .nhl-man{ color:#f3b4b0; background:rgba(224,100,95,.12); }
+  :root[data-theme="dark"] .nhd-tile.g-bon b{ color:#8fe3b8; }
+  :root[data-theme="dark"] .nhd-tile.g-moy b{ color:#f0c99b; }
+  :root[data-theme="dark"] .nhd-tile.g-bas b{ color:#f3b4b0; }
+  :root[data-theme="dark"] .nhd-alea{ color:#f0c99b; }
+  :root[data-theme="dark"] .nh-pct.bon{ background:rgba(69,193,135,.16); color:#8fe3b8; }
+  :root[data-theme="dark"] .nh-pct.moy{ background:rgba(232,169,74,.16); color:#f0c99b; }
+  :root[data-theme="dark"] .nh-pct.bas{ background:rgba(224,100,95,.16); color:#f3b4b0; }
+

@@ -1,0 +1,65 @@
+/* =============================================================================
+   AVIERO — Les optimisations mobile
+   -----------------------------------------------------------------------------
+   Ce qui ne tient qu'en petite largeur. Charge tard, exprès : ces règles corrigent les
+   précédentes.
+
+   Ce fichier est le n° 13 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ================= Optimisations mobile =================
+     Regroupées ici, après toutes les règles de base, pour qu'elles gagnent sans
+     recourir à !important. */
+  @media (max-width:560px){
+    /* --- Vue de vol : la barre de progression passait sur une 2e ligne, seule et
+       tronquée à gauche du bouton. On la met en pleine largeur sous les infos. --- */
+    .vf-top{ flex-wrap:wrap; gap:10px 12px; padding:11px 13px; }
+    .vf-tune{ flex:1 1 auto; min-width:0; flex-wrap:wrap; }
+    .vf-quit{ flex:0 0 auto; order:2; }
+    .vf-prog{ order:3; flex-basis:100%; min-width:0; }
+
+    /* Le libellé « Valider ma réponse » se coupait sur deux lignes pendant que
+       « Réenregistrer » tenait sur une : on empile pour des boutons homogènes. */
+    .vf-transact{ flex-direction:column; }
+    .vf-transact .btn{ width:100%; }
+    /* Placeholder tronqué : il tient sur 3 lignes à cette largeur. */
+    .vf-transwrap textarea{ min-height:84px; }
+
+    /* Confort tactile : cibles d'au moins 44 px de haut (recommandation Apple/WCAG). */
+    .btn, .sidelink, .seg3-opt, .nav-tgl, .nav-mode-opt, .nav-diff-opt,
+    .seg-opt, .navlink, .ac-item{ min-height:44px; }
+    .btn.small{ padding-top:11px; padding-bottom:11px; }
+    .ac-item{ display:flex; align-items:center; }
+
+    /* Les 3 colonnes du bandeau distance/route/durée deviennent illisibles :
+       on passe à 2 colonnes, la durée occupant la 2e ligne entière. */
+    .nav-navlog{ grid-template-columns:1fr 1fr; gap:10px 12px; }
+    .nav-navlog div:last-child{ grid-column:1 / -1; }
+
+    /* Marges de page resserrées : à 390 px, 30 px de chaque côté mangent la lecture. */
+    .container{ padding-left:16px; padding-right:16px; }
+
+    /* Le hero occupait presque deux écrans avant le premier contenu. */
+    .hero__title{ font-size:clamp(28px,8.5vw,40px); }
+    .hero__cta{ flex-wrap:wrap; gap:10px; }
+    .hero__cta .btn{ flex:1 1 auto; }
+  }
+
+  /* Appareils sans survol : « Survoler pour démasquer » n'a aucun sens au doigt. */
+  @media (hover:none){
+    #page-epellation .switch-line{ display:none; }
+  }
+
+  /* Règle .hidden générique : les toggles JS classList.toggle('hidden') sur des éléments
+     sans variante scopée (#coursCatalog / #coursDetail, #spellStatus.spell-status, …) n'avaient
+     aucune règle pour les masquer. Placée en fin de feuille : même spécificité que les sélecteurs
+     à une seule classe (ex. .spell-status), l'ordre source la fait gagner sur la propriété display.
+     Les règles scopées existantes (.panel.hidden, etc.) restent, plus spécifiques et cohérentes.
+     Pas de !important : aucun élément ne mélange un style inline display et la classe .hidden. */
+  .hidden{display:none}
+

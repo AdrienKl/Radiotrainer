@@ -26,13 +26,18 @@
    └──────────────────────────────────────────────────────────────────────────┘
    ========================================================================== */
 
-/* Messages de console qu'on attend, et qui ne signalent rien d'anormal. */
+/* Messages de console qu'on attend, et qui ne signalent rien d'anormal.
+
+   ┌─ CETTE LISTE DOIT RESTER ÉTROITE ──────────────────────────────────────┐
+   │ Le premier jet y mettait « Failed to load resource » en général — pour  │
+   │ faire taire les requêtes Supabase coupées. Elle aurait fait taire du    │
+   │ même coup les dix-sept images de fond passées en 404 le jour où le CSS  │
+   │ a quitté index.html. Un filtre trop large ne rend pas les tests plus    │
+   │ calmes : il les rend aveugles.                                          │
+   │ Ne rien ajouter ici sans nommer précisément ce qu'on fait taire.        │
+   └─────────────────────────────────────────────────────────────────────────┘ */
 const BRUIT_ATTENDU = [
   /supabase\.co/i,                    // coupé exprès par les tests (voir ci-dessus)
-  /Failed to load resource/i,
-  /net::ERR_FAILED/i,
-  /ERR_BLOCKED_BY_CLIENT/i,
-  /Failed to fetch/i,
   /AudioContext/i,                    // Chrome râle tant qu'aucun geste n'a eu lieu
   /speechSynthesis|SpeechRecognition/i,
   /favicon/i
@@ -43,9 +48,20 @@ export function estDuBruit(texte) {
 }
 
 /* Ouvre le site, coupe Supabase, et collecte tout ce que la console dit.
-   Renvoie { erreurs } — un tableau vivant, à lire APRÈS les actions du test. */
+
+   Renvoie { erreurs, absents } — deux tableaux VIVANTS, à lire APRÈS les
+   actions du test :
+     erreurs  — ce que la console signale, bruit connu retiré ;
+     absents  — les fichiers du site qui répondent autre chose que 200.
+
+   `absents` existe parce qu'une ressource manquante ne lève aucune erreur
+   JavaScript. Une image de fond en 404, une feuille de style en 404 : la page
+   se charge, la console reste calme, et il manque quelque chose à l'écran que
+   seul un œil humain verrait. C'est exactement ce qui s'est produit en sortant
+   le CSS d'index.html. */
 export async function ouvrir(page, route = '') {
   const erreurs = [];
+  const absents = [];
 
   await page.route('**://*.supabase.co/**', r => r.abort());
 
@@ -57,10 +73,15 @@ export async function ouvrir(page, route = '') {
        de script qui vient de mourir, et tout ce qu'il portait avec lui. */
     erreurs.push('EXCEPTION ' + e.message);
   });
+  page.on('response', r => {
+    const u = r.url();
+    if (!u.startsWith('http://localhost')) return;      // le site, et lui seul
+    if (r.status() >= 400) absents.push(`${r.status()} ${u.replace('http://localhost:8000/', '')}`);
+  });
 
   await page.goto('/index.html' + route);
   await page.waitForFunction(() => typeof window.rtSessionOuverte === 'function');
-  return { erreurs };
+  return { erreurs, absents };
 }
 
 /* Entrer dans l'application sans Supabase, par la porte du routeur. */

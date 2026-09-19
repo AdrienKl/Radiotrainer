@@ -1,0 +1,96 @@
+/* =============================================================================
+   AVIERO — Le thème sombre
+   -----------------------------------------------------------------------------
+   Il SURCHARGE tout ce qui précède, et ne vaut que par sa position : remonter ce fichier
+   d'un cran suffit à faire disparaître le thème sombre de tout ce qui charge après lui.
+
+   Ce fichier est le n° 9 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ================= Thème sombre (préférence système) =================
+     On ne redéfinit que les variables : toutes les règles du site consomment déjà
+     var(--…), donc la bascule est automatique. --violet-dark sert de couleur de TEXTE
+     à plusieurs endroits (.auth-link, .vf-atc, .zfreq, .sidelink.current) : en sombre
+     elle doit donc devenir un violet CLAIR, sinon le texte disparaît sur le fond. */
+  /* ================= Thème sombre =================
+     Piloté par l'attribut data-theme sur <html>, posé très tôt par le script
+     inline du <head> (réglage sauvegardé, ou préférence système si « Système »).
+     Une seule source de vérité : pas de palette dupliquée entre media query et
+     attribut, donc pas de dérive possible entre les deux.
+     --violet sert de FOND de bouton (texte blanc dessus), --violet-dark de couleur
+     de TEXTE : en sombre la première reste soutenue, la seconde devient très claire. */
+
+        :root[data-theme="dark"]{
+      /* --violet sert de FOND de bouton (texte blanc dessus) : trop clair, le blanc
+         ne passait plus le seuil AA. #6b5ae0 donne 5,04:1 avec le blanc et 3,64:1
+         sur le fond sombre. --violet-dark, elle, sert de couleur de TEXTE : très claire. */
+      --violet:#6b5ae0; --violet-dark:#b3a6ff; --violet-soft:rgba(139,124,240,.18); --violet-tint:#241f3d;
+      --ink:#e7e9f2; --ink-2:#9aa2b8;
+      /* En sombre, --ink-2 est clair sur fond foncé et passe largement le seuil :
+         le jeton renforcé n'a rien à corriger, il reprend --ink-2. Il doit
+         néanmoins être REDÉFINI ici — sinon il garderait la valeur du thème
+         clair (#4d5462), soit un gris foncé sur un fond presque noir. */
+      --ink-2-fort:var(--ink-2);
+      --bg:#12141c; --surface:#1b1e29; --surface-2:#242836; --border:#3b4256;
+      --ok:#45c187; --warn:#e8a94a; --bad:#e0645f;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
+      --shadow-md:0 8px 26px rgba(0,0,0,.45);
+      --shadow-lg:0 24px 60px rgba(0,0,0,.55);
+    }
+    /* --violet comme couleur de TEXTE : onze règles le font, et c'est une erreur
+       que le commentaire ci-dessus annonce sans l'avoir corrigée. #6b5ae0 est
+       un fond de bouton ; posé en texte sur le fond sombre il tombe à 2,5:1.
+       C'est --violet-dark (#b3a6ff) qui est la couleur de texte du thème, et
+       elle donne 7:1. Le défaut ne vient pas des décors photo — il se voyait
+       déjà sur le thème sombre nu — mais c'est en mesurant les scènes qu'il
+       est apparu. */
+    :root[data-theme="dark"] .ac-item .code,
+    :root[data-theme="dark"] .sc-btn .num,
+    :root[data-theme="dark"] .hint .label,
+    :root[data-theme="dark"] .choice .opt b,
+    :root[data-theme="dark"] .course-card .cic,
+    :root[data-theme="dark"] .alpha-card .ltr,
+    :root[data-theme="dark"] .digit-card .num,
+    :root[data-theme="dark"] .sc-score,
+    :root[data-theme="dark"] .tb-stat .tb-ic,
+    :root[data-theme="dark"] .tb-badge.ok .ic,
+    :root[data-theme="dark"] .radio-cible{ color:var(--violet-dark); }
+    /* Même histoire pour la pastille « Urgence », dont le rouge sombre (#96332f)
+       n'a jamais eu de variante nuit. */
+    :root[data-theme="dark"] .sc-btn .sc-tags i.urg{ color:#ff9b96;
+      background:rgba(224,100,95,.14); border-color:rgba(224,100,95,.42); }
+
+    /* Blocs à couleurs figées (avertissements) : variante sombre lisible. */
+    :root[data-theme="dark"] .nav-warn{ background:#2e2114; border-color:#5c4426; border-left-color:#d9873c; color:#f0c99b; }
+    :root[data-theme="dark"] .nav-warn strong{ color:#ffd9a8; }
+    :root[data-theme="dark"] .vf-noreco{ background:#2e2114; border-color:#5c4426; color:#f0c99b; }
+    :root[data-theme="dark"] .vf-evit{ background:#2e2114; border-color:#5c4426; color:#f0c99b; }
+    :root[data-theme="dark"] .vf-evit b{ color:#ffd9a8; }
+    :root[data-theme="dark"] .nav-warn.nav-fatal{ background:#301a19; border-color:#6b3330;
+      border-left-color:#c74a4a; color:#f3b4b0; }
+    :root[data-theme="dark"] .nav-warn.nav-fatal strong{ color:#ffcecb; }
+    :root[data-theme="dark"] .nav-zonewarn{ background:#301a19; border-color:#6b3330; color:#f3b4b0; }
+    :root[data-theme="dark"] .nav-zonewarn b{ color:#ffcecb; }
+    :root[data-theme="dark"] .nav-warn code{ background:rgba(255,255,255,.10); }
+    /* --bad reste clair (il sert de texte/bordure sur fond sombre) ; le bouton
+       « Abandonner » porte du blanc, il lui faut donc un rouge plus soutenu : 4,97:1. */
+    :root[data-theme="dark"] .modal-danger{ background:#c4433f; }
+    :root[data-theme="dark"] .modal-danger:hover{ background:#b23a36; }
+    /* Interface Leaflet : leaflet.css impose du blanc en dur. */
+    :root[data-theme="dark"] .leaflet-container{ background:var(--surface-2); }
+    :root[data-theme="dark"] .leaflet-bar a, :root[data-theme="dark"] .leaflet-bar a:hover{ background:var(--surface); color:var(--ink); border-color:var(--border); }
+    :root[data-theme="dark"] .leaflet-control-attribution{ background:rgba(27,30,41,.93); color:#b6bdcf; }
+    :root[data-theme="dark"] .leaflet-control-attribution a{ color:var(--violet-dark); }
+    :root[data-theme="dark"] .leaflet-popup-content-wrapper, :root[data-theme="dark"] .leaflet-popup-tip{ background:var(--surface); color:var(--ink);
+      box-shadow:var(--shadow-md); }
+    /* La carte OACI et l'OSM sont des images claires : on les adoucit pour ne pas
+       éblouir, sans dénaturer les couleurs aéronautiques (pas d'inversion). */
+    :root[data-theme="dark"] .leaflet-tile-pane{ filter:brightness(.86) contrast(1.04); }
+    /* Étiquettes de zone : le halo blanc reste correct, la carte dessous est claire. */
+    :root[data-theme="dark"] .badge.locked, :root[data-theme="dark"] .badge{ background:var(--surface-2); }
+

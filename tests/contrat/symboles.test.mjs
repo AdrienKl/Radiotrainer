@@ -82,26 +82,49 @@ test('aucun symbole partagé n\'est déclaré deux fois', () => {
    c'est une ReferenceError qui arrête la fonction en cours.
 
    Le test ne cherche donc pas à interdire ces lectures tardives. Il exige
-   qu'elles soient gardées.
+   qu'elles soient gardées — ou, à défaut, INSCRITES dans l'inventaire, ce qui
+   revient à dire « je sais, et voici pourquoi ». Le second cas existe pour les
+   appels écrits dans le corps d'une fonction, qui ne sont évalués que le jour
+   où la fonction est appelée : phraseologie-scenarios.js appelle ainsi le
+   moteur depuis le buildTours() du scénario « navigation ».
+
+   Ce qui reste interdit, et c'est le seul vrai danger : une lecture NOUVELLE,
+   ni gardée ni inscrite.
    ------------------------------------------------------------------------- */
-test('toute lecture d\'un symbole chargé plus tard est protégée par typeof', () => {
+test('aucune lecture anticipée nouvelle, ni gardée ni inscrite', () => {
+  const connues = new Set(inv.lectures_differees || []);
   const fautes = [];
   for (const s of inv.symboles_partages) {
     const iDecl = (declarations.get(s.nom) || [])[0];
     if (iDecl === undefined) continue;             // déjà signalé par le test ci-dessus
     nos.forEach((script, i) => {
       if (i >= iDecl || !utilise(script.code, s.nom)) return;
-      const garde = new RegExp(`typeof\\s+${s.nom}\\b`).test(script.code);
-      if (!garde) {
-        fautes.push(`${s.nom} : lu sans garde par ${script.origine}, qui charge AVANT ${nos[iDecl].origine}`);
-      }
+      if (new RegExp(`typeof\\s+${s.nom}\\b`).test(script.code)) return;   // gardée
+      if (connues.has(`${s.nom}@${script.origine}`)) return;               // inscrite
+      fautes.push(`${s.nom} : lu sans garde par ${script.origine}, qui charge AVANT ${nos[iDecl].origine}`);
     });
   }
   assert.deepEqual(fautes, [],
-    `Ce symbole est lu par un script qui charge avant celui qui le déclare, et ` +
-    `sans « typeof ». Si la lecture est différée (dans une fonction), il faut la ` +
-    `garder. Si elle ne l'est pas, c'est une ReferenceError au chargement, et ` +
-    `tout le reste du bloc est perdu.`);
+    `Ce symbole est lu par un script qui charge avant celui qui le déclare, sans ` +
+    `« typeof » et sans être inscrit dans lectures_differees.\n` +
+    `  · Si la lecture est immédiate : c'est une ReferenceError au chargement, et ` +
+    `tout le reste du bloc est perdu avec elle.\n` +
+    `  · Si elle est différée (dans le corps d'une fonction) : la garder, ou la ` +
+    `regeler en sachant ce qu'on inscrit.`);
+});
+
+test('les lectures différées inscrites existent toujours', () => {
+  /* Une inscription qui ne correspond plus à rien est une permission qui traîne.
+     On la retire, pour que la liste reste une liste de cas réels. */
+  const fantomes = (inv.lectures_differees || []).filter(entree => {
+    const [nom, origine] = entree.split('@');
+    const script = nos.find(s => s.origine === origine);
+    return !script || !utilise(script.code, nom);
+  });
+  assert.deepEqual(fantomes, [],
+    `Ces lectures différées sont inscrites mais n'existent plus. Regeler ` +
+    `l'inventaire pour les retirer : une permission oubliée finit par couvrir ` +
+    `autre chose.`);
 });
 
 test('les prises de test de l\'application sont toujours là', () => {

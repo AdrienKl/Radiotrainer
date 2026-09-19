@@ -1,0 +1,394 @@
+/* =============================================================================
+   AVIERO — La coquille applicative
+   -----------------------------------------------------------------------------
+   Écrans de connexion et d'inscription, les cinq étapes, le questionnaire, les pages
+   légales, la page Compte, la barre latérale, le rail replié et la barre mobile.
+
+   Ce fichier est le n° 6 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ================= Flux connexion/inscription + coquille applicative (barre latérale) =================
+     Restructuration visuelle uniquement ; la logique métier (scénarios, reco, etc.) est inchangée. */
+  :root{ --side-w:242px; }
+
+  /* Macro-états : par défaut (vitrine) on montre topnav/hero ; sidebar & barre appli masquées. */
+  .sidebar, .app-topbar, .side-overlay{ display:none; }
+  body.state-app .topnav, body.state-auth .topnav{ display:none; }
+  body.state-auth .disclaimer, body.state-app .disclaimer{ display:none; }
+  body.state-auth footer, body.state-app footer{ display:none; }
+  body.state-app .sidebar{ display:flex; }
+  body.state-app main{ margin-left:var(--side-w); }
+
+  /* --- Écrans d'authentification (carte centrée) --- */
+  .auth-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 18px;
+    background:radial-gradient(1100px 460px at 50% -12%, var(--violet-tint), transparent 70%),
+      linear-gradient(160deg, var(--grad-top), var(--grad-mid) 58%, var(--grad-bot)); }
+  .auth-card{ width:100%; max-width:424px; box-sizing:border-box; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:30px 28px 26px; }
+  .auth-brand{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; color:var(--ink); margin-bottom:20px; }
+  .auth-brand .logo{ color:var(--violet); display:inline-flex; }
+  .auth-brand .ic-svg{ width:20px; height:20px; }
+  .auth-title{ font-family:var(--sans); font-size:23px; font-weight:800; color:var(--ink); margin:0 0 4px; letter-spacing:-.01em; }
+  /* --ink-2 EST TROP PÂLE POUR CES DEUX TAILLES. Mesuré sur les pixels réels des
+     cartes de connexion et d'inscription : 4,07:1 pour le sous-titre (13,5 px) et
+     2,97:1 pour l'étiquette (11 px en chasse fixe, dont l'antialiasing mange le
+     noyau des glyphes). Le seuil AA est 4,5:1, et ces deux défauts sont
+     ANTÉRIEURS au parcours en cinq étapes — ils étaient déjà sur l'écran de
+     connexion. Le correctif est borné aux cartes d'authentification : --ink-2
+     sert partout dans le site, et le rebasculer globalement demanderait un audit
+     de toutes les pages, pas une retouche au passage. */
+  .auth-sub{ font-size:13.5px; color:var(--ink-2-fort); margin:0 0 20px; }
+  .auth-field{ margin-bottom:14px; }
+  .auth-field label{ display:block; font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink); margin-bottom:6px; }
+  .auth-field input{ width:100%; box-sizing:border-box; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:10px; padding:11px 13px; font-family:var(--sans); font-size:14.5px; color:var(--ink); }
+  .auth-field input:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+  .auth-row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .auth-submit{ width:100%; margin-top:6px; }
+  /* Retour de l'authentification : échec en rouge, succès en vert. Le bloc ne
+     prend aucune place tant qu'il n'a rien à dire — sans quoi le formulaire
+     sauterait de quelques pixels au premier message. */
+  .auth-msg{ margin:2px 0 12px; padding:10px 13px; border-radius:10px;
+    font-size:13.5px; line-height:1.5; border:1px solid; }
+  .auth-msg.hidden{ display:none; }
+  .auth-msg--err{ background:rgba(217,83,79,.10); border-color:rgba(217,83,79,.42); color:#a8342f; }
+  .auth-msg--ok{  background:rgba(47,163,107,.10); border-color:rgba(47,163,107,.42); color:#1d7a4d; }
+  :root[data-theme="dark"] .auth-msg--err{ color:#ff9d99; }
+  :root[data-theme="dark"] .auth-msg--ok{  color:#6fe3ab; }
+  .auth-switch{ text-align:center; font-size:13px; color:var(--ink-2-fort); margin:16px 0 0; }
+  .auth-link{ background:none; border:none; padding:0; cursor:pointer; color:var(--violet-dark);
+    font-weight:700; font-size:13px; text-decoration:underline; font-family:var(--sans); }
+  /* ---------- Inscription en cinq étapes ----------
+     La carte est plus large que celle de la connexion : le questionnaire y
+     déroule des listes de choix, qui deviennent illisibles à 424 px. */
+  .auth-card--parcours{ max-width:520px; }
+
+  /* Le fil d'étapes. Il dit où l'on en est et combien il reste — sans lui, un
+     parcours en cinq écrans donne l'impression de ne pas avoir de fin. Les
+     étapes franchies restent marquées : c'est ce qui donne le sentiment
+     d'avancer. */
+  .ins-fil{ display:flex; gap:6px; list-style:none; margin:0 0 22px; padding:0; }
+  /* PAS D'OPACITÉ SUR LE TEXTE, et ce n'est pas un détail de goût : ces libellés
+     étaient à opacity .5, soit 1,98:1 sur le blanc — un échec franc du seuil AA
+     (4,5:1 pour 10,5 px). Et l'opacité n'était pas rattrapable : même à 1, cette
+     encre-là ne monte qu'à 4,83:1, donc il n'existait aucune valeur intermédiaire
+     acceptable. C'est la PASTILLE qui porte l'état — remplie pour l'étape en
+     cours, cerclée pour les étapes franchies, grise pour la suite — et le texte
+     reste lisible du début à la fin. */
+  .ins-fil li{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+    font-size:10.5px; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase;
+    color:var(--ink); }
+  /* Le numéro en var(--ink) et non var(--ink-2) : sur --surface-2, la seconde
+     encre plafonne à 4,35:1, juste sous le seuil. La distinction entre les trois
+     états se lit de toute façon sur le FOND de la pastille, pas sur le chiffre. */
+  .ins-fil li b{ display:grid; place-items:center; width:26px; height:26px; border-radius:50%;
+    font-family:var(--sans); font-size:12.5px; font-weight:800;
+    background:var(--surface-2); border:1px solid var(--border); color:var(--ink);
+    transition:background .18s ease, border-color .18s ease; }
+  .ins-fil li.ici{ color:var(--ink); font-weight:700; }
+  .ins-fil li.ici b{ background:var(--violet); border-color:var(--violet); color:#fff; }
+  .ins-fil li.faite b{ background:var(--violet-soft); border-color:var(--violet-dark); color:var(--violet-dark); }
+  /* Le libellé disparaît avant le numéro : cinq mots côte à côte ne tiennent pas
+     sur un téléphone, cinq pastilles si. */
+  @media (max-width:520px){ .ins-fil li span{ display:none; } }
+
+  /* Une case à cocher et son libellé. align-items:flex-start et non center :
+     le libellé peut passer sur deux lignes, et la case doit rester en face de
+     la PREMIÈRE, pas au milieu du bloc. */
+  .ins-coche{ display:flex; align-items:flex-start; gap:10px; margin:0 0 11px; }
+  .ins-coche input{ margin:2px 0 0; width:17px; height:17px; flex:none; accent-color:var(--violet); }
+  .ins-coche label{ font-size:13px; line-height:1.45; color:var(--ink); cursor:pointer; }
+  /* Les liens vers les textes légaux vivent HORS du <label> : un <button> ou un
+     <a> à l'intérieur d'un label bascule la case quand on le clique. */
+  .ins-liens{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 16px; font-size:12.5px; }
+  .ins-liens a{ color:var(--violet-dark); font-weight:700; text-decoration:underline; }
+  /* Le point de séparation est décoratif (aria-hidden) : son contraste n'est
+     pas soumis au seuil, contrairement aux libellés du fil d'étapes. */
+  .ins-liens span{ color:var(--ink-2); opacity:.5; }
+  .ins-captcha:not([hidden]){ margin:0 0 16px; min-height:70px; }
+  /* Le bandeau « déjà connecté ». Traité comme un avertissement et non comme
+     une note : c'est lui qui remplace une navigation surprise, il doit donc se
+     voir avant qu'on ne commence à taper une adresse. */
+  .ins-deja{ margin:0 0 18px; padding:13px 15px; border-radius:11px;
+    background:var(--violet-soft); border:1px solid var(--border);
+    border-left:3px solid var(--violet);
+    font-size:13px; line-height:1.5; color:var(--ink); }
+  .ins-deja b{ color:var(--ink); }
+  .ins-deja #insDejaMail{ font-family:var(--mono); font-size:.94em; word-break:break-all; }
+  .ins-deja__act{ display:flex; flex-wrap:wrap; gap:8px; margin-top:11px; }
+  /* Le secours par code, sur l'écran de connexion : présent mais discret. Mis
+     en avant, il détournerait du mot de passe ceux qui s'en souviennent très
+     bien — et chaque envoi coûte un des deux e-mails autorisés par heure. */
+  .ins-secours{ margin:18px 0 0; padding-top:16px; border-top:1px solid var(--border); text-align:center; }
+  .ins-secours .auth-link{ font-size:12.5px; font-weight:600; }
+  .ins-secours #logCodeBloc:not([hidden]){ margin-top:14px; text-align:left; }
+
+  /* Le code à six chiffres : espacé et en chasse fixe, pour qu'on puisse le
+     relire caractère par caractère en le recopiant de l'e-mail. */
+  /* L'explication de secours sous le champ du code. Discrète, mais pas au point
+     d'être invisible : elle est la seule issue quand l'e-mail arrive sans code. */
+  .ins-aide{ margin:-4px 0 14px; font-size:12.5px; line-height:1.55; color:var(--ink-2) }
+
+  .ins-code{ font-family:var(--mono) !important; font-size:21px !important;
+    letter-spacing:.30em; text-align:center; }
+  .ins-aide{ font-size:12px; color:var(--ink-2-fort); margin:6px 0 0; line-height:1.45; }
+  .ins-aide.nok{ color:#a8342f; }
+  .ins-aide.ok{   color:#1d7a4d; }
+  :root[data-theme="dark"] .ins-aide.nok{ color:#ff9d99; }
+  :root[data-theme="dark"] .ins-aide.ok{   color:#6fe3ab; }
+  /* « (facultatif) » : la mention que la CNIL demande de rendre visible. Elle
+     doit se lire sans effort, donc pas en gris pâle sur le gris du libellé. */
+  .ins-opt{ font-style:normal; font-weight:600; text-transform:none; letter-spacing:0;
+    color:var(--violet-dark); }
+
+  /* ---------- Le questionnaire ----------
+     Des boutons plutôt que des <select> : sur un téléphone, un menu déroulant
+     cache les autres réponses derrière un tiroir natif, et on ne compare plus
+     rien. Ici tout est visible d'un coup. */
+  .ins-q{ margin:0 0 20px; }
+  .ins-q > h3{ font-family:var(--sans); font-size:14.5px; font-weight:800; color:var(--ink);
+    margin:0 0 3px; letter-spacing:-.005em; }
+  .ins-q > p{ font-size:12.5px; color:var(--ink-2-fort); margin:0 0 10px; }
+  .ins-choix{ display:flex; flex-direction:column; gap:7px; }
+  .ins-choix button{ text-align:left; font-family:var(--sans); font-size:13.5px; font-weight:600;
+    color:var(--ink); background:var(--surface-2); border:1px solid var(--border);
+    border-radius:11px; padding:11px 13px; cursor:pointer;
+    transition:border-color .15s ease, background .15s ease; }
+  .ins-choix button:hover{ border-color:var(--violet-dark); }
+  .ins-choix button:focus-visible{ outline:2px solid var(--violet); outline-offset:2px; }
+  .ins-choix button[aria-pressed="true"]{ background:var(--violet-soft);
+    border-color:var(--violet-dark); color:var(--violet-dark); }
+  /* Le choix « Autre » ouvre un champ libre, juste sous lui. */
+  .ins-libre{ margin:8px 0 0; }
+  .ins-libre input{ width:100%; box-sizing:border-box; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:10px; padding:10px 12px;
+    font-family:var(--sans); font-size:13.5px; color:var(--ink); }
+  .ins-libre input:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+
+  /* ---------- Pages légales ---------- */
+  .legal-wrap{ max-width:760px; padding-top:34px; padding-bottom:60px; }
+  .legal-fil{ margin:0 0 18px; }
+  .legal-h1{ font-family:var(--sans); font-size:clamp(25px,4vw,34px); font-weight:800;
+    color:var(--ink); margin:0 0 16px; letter-spacing:-.02em; }
+  .legal-h2{ font-family:var(--sans); font-size:17px; font-weight:800; color:var(--ink);
+    margin:30px 0 10px; letter-spacing:-.01em; }
+  .legal-p, .legal-liste li{ font-size:14.5px; line-height:1.62; color:var(--ink-2-fort); }
+  .legal-liste{ margin:0; padding-left:20px; }
+  .legal-liste li{ margin:0 0 9px; }
+  .legal-liste li b, .legal-p b{ color:var(--ink); }
+  /* L'état du document, annoncé haut et clair : quelqu'un qui arrive ici doit
+     comprendre en une phrase que le texte n'est pas encore opposable. */
+  .legal-etat{ font-size:14px; line-height:1.6; color:var(--ink); margin:0 0 8px;
+    background:var(--violet-soft); border:1px solid var(--border);
+    border-left:3px solid var(--violet); border-radius:11px; padding:14px 16px; }
+  /* L'avertissement « ce n'est pas une référence opérationnelle » est le seul
+     passage de ces pages qui puisse éviter un incident. Il est traité comme
+     tel, et non comme un paragraphe parmi d'autres. */
+  .legal-avert{ font-size:14.5px; line-height:1.62; color:var(--ink); margin:14px 0;
+    background:rgba(217,83,79,.08); border:1px solid rgba(217,83,79,.42);
+    border-left:3px solid #d9534f; border-radius:11px; padding:15px 17px; }
+  .legal-note{ font-size:13px; line-height:1.6; color:var(--ink-2-fort); margin:22px 0 0;
+    padding-top:16px; border-top:1px solid var(--border); }
+  .legal-mono{ font-family:var(--mono); font-size:.95em; }
+  .legal-retour{ margin:30px 0 0; display:flex; flex-wrap:wrap; gap:9px; }
+  .legal-maj{ font-size:12.5px; color:var(--ink-2-fort); margin:-6px 0 18px;
+    font-family:var(--mono); letter-spacing:.02em; }
+
+  /* Un champ que seul l'editeur peut remplir. Il doit se VOIR : une page
+     juridique a laquelle il manque l'identite du responsable n'est pas
+     conforme, et rien ne serait pire qu'elle en ait l'air. */
+  .legal-vide{ display:inline-block; font-family:var(--mono); font-size:.88em;
+    /* PAS var(--warn) : l'ambre du reste de l'interface (#e0912a) tombe a
+       2,40:1 sur le fond clair, tres en dessous du 4,5:1 exige pour ce corps.
+       Le marqueur le plus important de ces pages aurait ete le moins lisible.
+       Teinte foncee mesuree a 5,50:1 sur son propre fond ambre. Le theme sombre
+       garde var(--warn), qui y passe deja largement (8,93:1). */
+    color:#8a5300; background:rgba(224,145,42,.10);
+    border:1px dashed rgba(224,145,42,.62); border-radius:7px;
+    padding:1px 7px; white-space:normal; }
+  :root[data-theme="dark"] .legal-vide{ color:var(--warn); }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .legal-vide{ color:var(--warn); }
+  }
+
+  /* Tableaux : un inventaire de donnees se lit en colonnes, pas en phrases.
+     Le conteneur defile seul quand l'ecran est etroit — c'est lui qui porte
+     overflow-x, sinon c'est la PAGE qui defilerait lateralement. */
+  .legal-tabwrap{ overflow-x:auto; margin:12px 0 4px;
+    border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+  .legal-tab{ border-collapse:collapse; width:100%; min-width:520px; }
+  .legal-tab th, .legal-tab td{ text-align:left; vertical-align:top;
+    padding:10px 13px; font-size:13.5px; line-height:1.55;
+    border-bottom:1px solid var(--border); }
+  .legal-tab thead th{ font-family:var(--sans); font-weight:800; font-size:11.5px;
+    letter-spacing:.05em; text-transform:uppercase; color:var(--ink);
+    background:var(--surface-2); white-space:nowrap; }
+  .legal-tab tbody td{ color:var(--ink-2-fort); }
+  .legal-tab tbody td b{ color:var(--ink); }
+  .legal-tab tbody tr:last-child td{ border-bottom:none; }
+  @media (max-width:620px){
+    .legal-tab th, .legal-tab td{ padding:9px 11px; font-size:13px; }
+  }
+  /* ---------- Compte ----------
+     La page réutilise les cartes des Paramètres (.set-card / .set-row) : même
+     grammaire visuelle, rien de neuf à apprendre pour l'œil. Il ne manquait que
+     trois choses — une valeur en lecture seule, une pastille, et la grille de
+     chiffres, qui reprend .tb-stat du tableau de bord. */
+  .set-val{ font-size:13.5px; color:var(--ink); font-family:var(--mono); }
+  .set-chip{ display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.03em;
+    padding:4px 11px; border-radius:var(--pill); background:var(--violet-soft);
+    border:1px solid var(--border); color:var(--violet-dark); }
+  .cpt-stats{ display:grid; gap:12px; margin-top:14px;
+    grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr)); }
+  /* Les chiffres du compte peuvent être des durées ou des dates : on laisse la
+     taille s'adapter plutôt que de laisser « 4 h 30 » déborder de sa tuile. */
+  .cpt-stats .tb-stat b{ font-size:clamp(17px,2.2vw,24px); word-break:break-word; }
+  /* Une adresse e-mail est longue : les 210 px de .set-input la tronquaient en
+     plein milieu, ce qui donne à lire une adresse fausse. */
+  #cptMail{ max-width:300px; width:100%; }
+  /* Les objectifs sont la seule question à choix multiple : des cases à cocher,
+     empilées. En ligne, elles tomberaient en colonnes irrégulières selon la
+     longueur des libellés, et on ne saurait plus quelle case va avec quel mot. */
+  .cpt-coches{ display:flex; flex-direction:column; gap:7px; min-width:min(260px,100%); }
+  .cpt-coches label{ display:flex; align-items:flex-start; gap:8px; font-size:13px;
+    line-height:1.4; color:var(--ink); cursor:pointer; }
+  .cpt-coches input{ margin:1px 0 0; width:16px; height:16px; flex:none; accent-color:var(--violet); }
+  #cptQcm .set-row select{ min-width:min(260px,100%); }
+  #cptQcmDroits{ margin-top:14px; padding-top:13px; border-top:1px solid var(--border); }
+  #page-compte .auth-msg{ display:block; }
+  #page-compte .auth-msg.hidden{ display:none; }
+
+  /* --- Barre latérale (application) --- */
+  .sidebar{ position:fixed; top:0; left:0; bottom:0; width:var(--side-w); box-sizing:border-box;
+    flex-direction:column; gap:4px; background:var(--surface); border-right:1px solid var(--border);
+    padding:18px 14px; z-index:120; }
+  .side-head{ display:flex; align-items:center; gap:6px; padding:2px 2px 14px; }
+  .side-toggle{ flex:none; display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:10px; cursor:pointer; color:var(--ink-2);
+    background:transparent; border:1px solid transparent; transition:.14s; }
+  .side-toggle:hover{ background:var(--surface-2); color:var(--ink); }
+  .side-toggle .ic-svg{ width:20px; height:20px; }
+  .side-brand{ display:flex; align-items:center; gap:9px; font-family:var(--sans); font-weight:800; font-size:17px;
+    color:var(--ink); min-width:0; }
+  .side-brand > span:last-child{ white-space:nowrap; }
+  .side-brand .logo{ color:var(--violet); display:inline-flex; }
+  .side-brand .ic-svg{ width:22px; height:22px; }
+  .side-nav{ display:flex; flex-direction:column; gap:3px; }
+  .sidelink{ display:flex; align-items:center; gap:11px; width:100%; text-align:left; cursor:pointer;
+    background:transparent; border:1px solid transparent; border-radius:11px; padding:10px 12px;
+    font-family:var(--sans); font-size:14.5px; font-weight:600; color:var(--ink-2); transition:.14s; }
+  .sidelink .ic-svg{ width:19px; height:19px; flex:none; }
+  .sidelink:hover{ background:var(--surface-2); color:var(--ink); }
+  .sidelink.current{ background:var(--violet-soft); color:var(--violet-dark); border-color:var(--violet); }
+  /* --- Menu replié : un rail d'icônes. La largeur vit dans --side-w, que la
+     marge de <main> et le décor de l'épellation suivent tous les deux : un seul
+     nombre à changer, rien à resynchroniser. --- */
+  body.side-collapsed{ --side-w:76px; }
+  .sidebar, body.state-app main{ transition:width .22s ease, margin-left .22s ease; }
+  @media (prefers-reduced-motion:reduce){ .sidebar, body.state-app main{ transition:none; } }
+  body.side-collapsed .sidebar{ padding:18px 12px; }
+  body.side-collapsed .side-head{ justify-content:center; }
+  body.side-collapsed .side-brand{ display:none; }
+  body.side-collapsed .sidelink,
+  body.side-collapsed .side-logout{ justify-content:center; padding-left:0; padding-right:0; gap:0; }
+  body.side-collapsed .sidelink > span,
+  body.side-collapsed .side-logout > span{ display:none; }
+
+  .side-logout{ margin-top:auto; display:flex; align-items:center; gap:10px; cursor:pointer;
+    background:transparent; border:1px solid var(--border); border-radius:11px; padding:10px 12px;
+    font-family:var(--sans); font-size:13.5px; font-weight:600; color:var(--ink-2); transition:.14s; }
+  .side-logout .ic-svg{ width:18px; height:18px; }
+  .side-logout:hover{ border-color:var(--bad); color:var(--bad); }
+
+  /* --- Le rail : une console noire, en relief ------------------------------
+     La barre latérale passe en sombre DANS LES DEUX THÈMES. Ce n'est pas une
+     surface de contenu, c'est un plan fixe : le cadre depuis lequel on pilote
+     le reste. Elle écrit donc ses couleurs en dur (--sb-*) et ne touche pas à
+     --ink / --surface — même principe que la scène de l'épellation, et même
+     raison : aucune bascule de thème ne peut y rendre un libellé illisible.
+
+     Le relief ne tient qu'à quatre gestes, répétés partout :
+       · un dégradé de haut en bas — la lumière tombe du plafond ;
+       · un liseré clair d'un pixel posé À L'INTÉRIEUR du bord haut ;
+       · une ombre portée basse et large, jamais un contour dur ;
+       · une arête lumineuse sur le bord droit, qui détache le rail de la page.
+     --------------------------------------------------------------------- */
+  .sidebar{
+    --sb-ink:#eaedf7; --sb-ink-2:#8f97b0; --sb-accent:#a99cff;
+    color:var(--sb-ink);
+    background:
+      radial-gradient(118% 40% at 0% 0%, rgba(91,75,206,.32), transparent 62%),
+      linear-gradient(180deg,#151830 0%,#0e1020 46%,#0a0b14 100%);
+    border-right:0;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 16px 0 44px rgba(4,6,14,.26); }
+  /* L'arête droite : un dégradé, pas un trait — elle s'éteint vers le bas,
+     comme une lumière rasante. Un border-right uniforme faisait sticker. */
+  .sidebar::after{ content:""; position:absolute; top:0; right:0; bottom:0; width:1px; pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05) 38%, rgba(255,255,255,.02)); }
+
+  .side-head{ border-bottom:1px solid rgba(255,255,255,.07); margin-bottom:12px; }
+  .side-brand{ color:#fff; }
+  .side-brand .logo{ color:var(--sb-accent); }
+  .side-toggle{ color:var(--sb-ink-2); }
+  .side-toggle:hover{ color:#fff; background:rgba(255,255,255,.08);
+    border-color:rgba(255,255,255,.10); box-shadow:inset 0 1px 0 rgba(255,255,255,.10); }
+
+  .sidelink{ position:relative; color:var(--sb-ink-2); }
+  .sidelink:hover{ color:#fff;
+    background:linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.042));
+    border-color:rgba(255,255,255,.09);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.11), 0 5px 14px rgba(3,5,12,.38); }
+  .sidelink.current{ color:#fff;
+    background:linear-gradient(180deg, rgba(142,126,255,.36), rgba(91,75,206,.22));
+    border-color:rgba(162,148,255,.46);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 9px 24px rgba(66,52,176,.44); }
+  /* Le témoin de page courante est monté SUR l'arête gauche du rail, pas dans
+     la pastille : on lit la position d'un coup d'œil, même menu replié.
+     Son décalage suit le padding de la barre — d'où la reprise en mode rail. */
+  .sidelink.current::before{ content:""; position:absolute; left:-14px; top:50%; transform:translateY(-50%);
+    width:3px; height:21px; border-radius:0 3px 3px 0; background:var(--sb-accent);
+    box-shadow:0 0 12px rgba(169,156,255,.85); }
+  body.side-collapsed .sidelink.current::before{ left:-12px; }
+
+  .side-logout{ color:var(--sb-ink-2); border-color:rgba(255,255,255,.10);
+    background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08); }
+  .side-logout:hover{ color:#ff8a86; border-color:rgba(255,138,134,.50);
+    background:rgba(255,138,134,.10); box-shadow:inset 0 1px 0 rgba(255,255,255,.10); }
+
+  /* --- Barre applicative mobile (hamburger) + overlay --- */
+  .app-topbar{ position:sticky; top:0; z-index:110; align-items:center; gap:12px; padding:10px 14px;
+    background:var(--surface); border-bottom:1px solid var(--border); }
+  .app-topbar .brand{ display:flex; align-items:center; gap:8px; font-weight:800; color:var(--ink); }
+  .app-topbar .brand .logo{ color:var(--violet); display:inline-flex; }
+  .hamburger{ background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:7px;
+    cursor:pointer; color:var(--ink); display:inline-flex; }
+  .hamburger .ic-svg{ width:20px; height:20px; }
+  .side-overlay{ position:fixed; inset:0; background:rgba(20,16,40,.42); z-index:115; }
+
+  @media (max-width:860px){
+    /* Tiroir : le repli en rail n'a pas de sens ici, on l'annule entièrement. */
+    body.side-collapsed{ --side-w:242px; }
+    body.side-collapsed .side-brand{ display:flex; }
+    body.side-collapsed .sidelink, body.side-collapsed .side-logout{
+      justify-content:flex-start; padding-left:12px; padding-right:12px; gap:11px; }
+    body.side-collapsed .sidelink > span, body.side-collapsed .side-logout > span{ display:inline; }
+    body.side-collapsed .sidebar{ padding:18px 14px; }
+    .side-toggle{ display:none; }
+    body.state-app main{ margin-left:0; }
+    body.state-app .sidebar{ transform:translateX(-100%); transition:transform .22s ease; box-shadow:var(--shadow-lg); }
+    body.state-app .sidebar.open{ transform:none; }
+    body.state-app .app-topbar{ display:flex; }
+    body.state-app.drawer-open .side-overlay{ display:block; }
+  }
+
+  .config-note{ font-size:12.5px; line-height:1.55; color:var(--ink-2); background:var(--surface-2);
+    border:1px solid var(--border); border-radius:12px; padding:10px 13px; margin:12px 0 0; }
+  .config-note b{ color:var(--ink); }
+

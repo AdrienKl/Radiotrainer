@@ -1,0 +1,40 @@
+/* =============================================================================
+   AVIERO — La page Carte
+   -----------------------------------------------------------------------------
+   La consultation plein écran de la carte OACI.
+
+   Ce fichier est le n° 14 sur 14. L'ORDRE DE CHARGEMENT EST LE CONTRAT :
+   c'est la cascade CSS, et plusieurs règles de ce projet ne valent que par leur
+   position après une autre. Les <link> d'index.html sont numérotés pour cette
+   raison, et tests/contrat/chargement.test.mjs surveille cet ordre.
+
+   Extrait du <style> d'index.html le 18/09/2026, sans qu'aucune règle ne soit
+   modifiée, ajoutée ou supprimée.
+   ========================================================================== */
+  /* ==================== PAGE CARTE ====================
+     Consultation de la carte OACI en grand. Contrairement à #navMap (340 px, encastrée
+     dans le formulaire de préparation), celle-ci prend la hauteur de la fenêtre : c'est
+     une page de lecture, pas un outil de sélection. Le conteneur reste en position
+     relative pour que la barre d'outils flottante s'y ancre. */
+  .carte-wrap{ position:relative; }
+  .carte-map{ height:calc(100vh - 210px); min-height:420px; border-radius:var(--radius);
+              border:1px solid var(--border); background:var(--surface-2); z-index:0; }
+  /* La barre d'outils flotte SUR la carte : à cette hauteur, la placer dessous
+     l'aurait poussée hors de l'écran. z-index 401 = juste au-dessus des tuiles et
+     des marqueurs Leaflet (400), en dessous des popups (700). */
+  .carte-tools{ position:absolute; top:10px; right:10px; z-index:401;
+                display:flex; flex-direction:column; align-items:stretch; gap:6px;
+                background:var(--surface); border:1px solid var(--border);
+                border-radius:12px; padding:8px; box-shadow:0 2px 10px rgba(0,0,0,.14); }
+  .carte-tools .nav-tgl{ justify-content:center; }
+  .carte-hint{ font-size:12px; color:var(--ink-2); margin:8px 4px 0; }
+  /* Pastille d'aérodrome : même code visuel que la carte de navigation, en plus discret
+     (ici on consulte, on ne sélectionne pas). */
+  .carte-admark{ display:block; width:8px; height:8px; background:var(--violet);
+                 border:2px solid #fff; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,.45); }
+  @media (max-width:720px){
+    .carte-map{ height:calc(100vh - 250px); min-height:340px; }
+    .carte-tools{ top:8px; right:8px; padding:6px; gap:5px; }
+    .carte-tools .nav-tgl{ font-size:11px; }
+  }
+

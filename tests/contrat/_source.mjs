@@ -162,12 +162,50 @@ export function declarationsRacine(code) {
   return noms;
 }
 
-/* Une occurrence du symbole, en ignorant les chaînes et les commentaires les
-   plus évidents. On reste volontairement approximatif : ce test cherche à
-   savoir QUI a besoin de QUOI, pas à analyser du JavaScript. Un faux positif
-   rend seulement le test plus sévère sur l'ordre de chargement. */
+/* ---------------------------------------------------------------------------
+   Retirer les commentaires et les chaînes avant de chercher un symbole.
+
+   Sans cela, « voir buildQueue » écrit dans un commentaire compte comme un
+   usage de buildQueue. Ce n'était pas théorique : en sortant les scénarios du
+   moteur, neuf faux positifs sont apparus d'un coup — dont `entre`, qui est
+   aussi un mot français ordinaire, et `state`, cité dans une explication.
+
+   Un test qui crie pour un mot dans un commentaire finit ignoré, puis
+   désactivé. On paie donc le prix d'un petit automate.
+
+   CE QUE ÇA NE VOIT PLUS : un symbole atteint uniquement par une chaîne
+   (window['SCENARIOS']). Le projet ne le fait nulle part, et ce serait de
+   toute façon à éviter — précisément parce que plus rien ne peut le suivre.
+   ------------------------------------------------------------------------- */
+export function sansCommentairesNiChaines(code) {
+  let out = '', i = 0, chaine = null, comm = null;
+  while (i < code.length) {
+    const c = code[i], d = code[i + 1];
+    if (comm === 'ligne') { if (c === '\n') { comm = null; out += '\n'; } i++; continue; }
+    if (comm === 'bloc') { if (c === '*' && d === '/') { comm = null; i += 2; continue; } if (c === '\n') out += '\n'; i++; continue; }
+    if (chaine) {
+      if (c === '\\') { i += 2; continue; }
+      if (c === chaine) chaine = null;
+      if (c === '\n') out += '\n';
+      i++; continue;
+    }
+    if (c === '/' && d === '/') { comm = 'ligne'; i += 2; continue; }
+    if (c === '/' && d === '*') { comm = 'bloc'; i += 2; continue; }
+    if (c === '"' || c === "'" || c === '`') { chaine = c; i++; continue; }
+    out += c; i++;
+  }
+  return out;
+}
+
+const _nu = new Map();
+function nu(code) {
+  if (!_nu.has(code)) _nu.set(code, sansCommentairesNiChaines(code));
+  return _nu.get(code);
+}
+
+/* Le symbole est-il VRAIMENT employé par ce code ? */
 export function utilise(code, nom) {
-  return new RegExp(`\\b${nom.replace(/\$/g, '\\$')}\\b`).test(code);
+  return new RegExp(`\\b${nom.replace(/\$/g, '\\$')}\\b`).test(nu(code));
 }
 
 /* Le code JavaScript servi au navigateur, fichiers vendorés exclus : ceux-là ne

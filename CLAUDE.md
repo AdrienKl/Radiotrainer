@@ -151,7 +151,9 @@ Note : les bibliothèques sont aujourd'hui vendorées (`assets/vendor/`, `assets
 
 ### 6.2 Où en est le découpage — état au 18/09/2026
 
-`index.html` est passé de **15 016 à 11 099 lignes**. Ce qui en est sorti :
+`index.html` est passé de **14 979 lignes** (état de référence, tag `reference-avant-migration`) à **11 099** — un quart de moins. Le bloc du moteur de scénarios, lui, passe de 4 767 à 3 521 lignes.
+
+Ce qui en est sorti :
 
 | Sorti | Vers | Lignes |
 |---|---|---|

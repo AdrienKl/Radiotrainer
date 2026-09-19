@@ -1,5 +1,5 @@
 /* =============================================================================
-   RadioTrainer — ENREGISTREMENT DES SÉANCES EN BASE
+   AVIERO — ENREGISTREMENT DES SÉANCES EN BASE
    -----------------------------------------------------------------------------
    L'application continue d'écrire dans le stockage local exactement comme avant.
    Ce module AJOUTE une copie en base ; il ne remplace rien. Trois raisons :
@@ -140,7 +140,7 @@
     var clef = paquet.session.exercise_key;
     var bis = { session: Object.assign({}, paquet.session), steps: paquet.steps };
     bis.session.exercise_key = null;
-    try{ console.warn('[RadioTrainer] exercice « ' + clef + ' » absent du catalogue : '
+    try{ console.warn('[AVIERO] exercice « ' + clef + ' » absent du catalogue : '
                     + 'séance enregistrée sans son rattachement. '
                     + 'Jouer sql/002-progression.sql.'); }catch(x){}
     try{ if (window.RTAdmin && RTAdmin.logError)
@@ -166,7 +166,7 @@
                          definitif: fatal };
         if (fatal) defiler(paquet.session.id);   // inutile d'y revenir
         else       enfiler(paquet);
-        try{ console.warn('[RadioTrainer] séance ' + (fatal ? 'REFUSÉE' : 'mise en attente') + ' :',
+        try{ console.warn('[AVIERO] séance ' + (fatal ? 'REFUSÉE' : 'mise en attente') + ' :',
                           dernierEchec.message, dernierEchec.details || ''); }catch(x){}
         try{ if (window.RTAdmin && RTAdmin.logError)
                RTAdmin.logError({
@@ -265,6 +265,6 @@
   window.addEventListener('rt:auth', function(ev){
     if (!ev.detail || !ev.detail.connecte) return;
     RTSync.reprise = RTSync.solderLesAbandons().then(function(){ return RTSync.viderLaFile(); })
-      .then(function(n){ if (n) try{ console.info('[RadioTrainer] '+n+' séance(s) en attente envoyée(s).'); }catch(e){} });
+      .then(function(n){ if (n) try{ console.info('[AVIERO] '+n+' séance(s) en attente envoyée(s).'); }catch(e){} });
   });
 })();

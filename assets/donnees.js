@@ -1,5 +1,5 @@
 /* =============================================================================
-   RadioTrainer — LA PROGRESSION VIT EN BASE
+   AVIERO — LA PROGRESSION VIT EN BASE
    -----------------------------------------------------------------------------
    Ce module répond à une seule question : « je m'inscris sur Chrome, je
    travaille, je me connecte sur Safari — est-ce que je retrouve tout ? »
@@ -74,7 +74,7 @@
   }
 
   function journaliser(niveau, message, detail, cle){
-    try{ console[niveau==='error'?'warn':'info']('[RadioTrainer] '+message, detail||''); }catch(e){}
+    try{ console[niveau==='error'?'warn':'info']('[AVIERO] '+message, detail||''); }catch(e){}
     try{ if (window.RTAdmin && RTAdmin.logError)
            RTAdmin.logError({ level:niveau, kind:'network', message:message,
                               detail:detail||null, key:cle||'donnees' }); }catch(e){}

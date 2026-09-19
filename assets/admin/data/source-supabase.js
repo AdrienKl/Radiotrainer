@@ -1,5 +1,5 @@
 /* =============================================================================
-   RadioTrainer — Admin · SOURCE « SUPABASE »
+   AVIERO — Admin · SOURCE « SUPABASE »
    -----------------------------------------------------------------------------
    Les données sont RÉELLES : elles viennent du projet Supabase, lues avec la
    session de la personne connectée.

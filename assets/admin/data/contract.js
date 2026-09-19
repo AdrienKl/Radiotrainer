@@ -1,5 +1,5 @@
 /* =============================================================================
-   RadioTrainer — Admin · COUCHE DE DONNÉES : le contrat
+   AVIERO — Admin · COUCHE DE DONNÉES : le contrat
    -----------------------------------------------------------------------------
    Ce fichier ne contient AUCUNE donnée. Il définit :
      1. le contrat que toute source de données doit remplir ;

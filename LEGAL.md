@@ -37,6 +37,16 @@ Une fois les neuf champs remplis, passez `CGU_VERSION` de `'brouillon-1'` à
 `'1.0'` dans `assets/inscription.js` : chaque compte se verra redemander son
 accord sur le texte définitif.
 
+> **Le renommage en AVIERO (20/09/2026) n'a PAS fait bouger `CGU_VERSION`**, et
+> c'est volontaire. Le service change de nom, pas de nature : ni l'objet, ni
+> l'éditeur, ni les obligations, ni les données traitées. Surtout, le texte est
+> encore en `brouillon-1` — aucun consentement définitif n'a été recueilli, et
+> le passage à `1.0` ci-dessus redemandera de toute façon l'accord de tous.
+> Bumper la version pour un changement de nom aurait fait redemander leur
+> consentement à des comptes pour rien, ce que l'article 7 du RGPD n'apprécie
+> pas plus que l'inverse. **Si le passage à `1.0` devait être abandonné**, il
+> faudrait rouvrir la question.
+
 ## 2. Le point qui ne se règle pas en écrivant du texte
 
 `assets/oaci/` et `assets/oaci2/` contiennent **116 Mo de tuiles de la carte

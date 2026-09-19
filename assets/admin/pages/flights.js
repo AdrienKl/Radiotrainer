@@ -1,5 +1,5 @@
 /* =============================================================================
-   RadioTrainer — Admin · /admin/flights et /admin/flights/:id
+   AVIERO — Admin · /admin/flights et /admin/flights/:id
    -----------------------------------------------------------------------------
    L'Admin ne simule rien : il lit la TRACE laissée par le module Navigation
    d'index.html. Un vol y est construit dynamiquement par buildFlight() et n'est

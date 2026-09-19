@@ -2300,7 +2300,7 @@ function showRecap(){
 
 function buildRecapText(sc, found, total, missed){
   const d=new Date();
-  return 'RadioTrainer — Récap\n'
+  return 'AVIERO — Récap\n'
     + 'Scénario : '+sc.titre+'\n'
     + 'Aérodrome : '+(state.activeAd?state.activeAd.icao+' '+state.activeAd.nom:'')+' · Piste '+state.rwy.id+'\n'
     + 'Date : '+d.toLocaleString('fr-FR')+'\n'

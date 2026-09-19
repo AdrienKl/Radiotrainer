@@ -70,6 +70,41 @@ test('le thème est posé avant la première peinture', () => {
   assert.match(premier.code, /data-theme/);
 });
 
+test('index.html ne contient plus qu\'un seul script écrit dans la page', () => {
+  /* Symétrique de la vérification qui existe pour le CSS. À la fin de la phase 2,
+     tout le JavaScript vit dans assets/ — à UNE exception, et elle est voulue :
+     le script anti-flash du thème.
+
+     POURQUOI CELUI-LÀ RESTE, ET DOIT RESTER
+     Il lit rt-settings et pose data-theme AVANT que le navigateur ne peigne le
+     premier pixel. Sorti dans un fichier, il devient une requête réseau de
+     plus : la page s'affiche en clair, puis bascule en sombre sous les yeux de
+     l'utilisateur, à chaque chargement. C'est la seule raison pour laquelle il
+     échappe à la règle.
+
+     Ce test n'interdit pas d'écrire du code dans la page — il le rend visible.
+     Un bloc qui revient ici échappe à toute relecture de fichier, et c'est
+     exactement ce dont on vient de sortir. */
+  const inline = scripts().filter(s => !s.externe);
+  assert.equal(inline.length, 1,
+    `${inline.length} scripts écrits dans index.html au lieu d'un seul.\n` +
+    `  Lignes : ${inline.map(s => s.ligne).join(', ')}\n` +
+    `  Si l'ajout est voulu, le dire ici et expliquer pourquoi ce code ne peut ` +
+    `pas vivre dans un fichier.`);
+  assert.match(inline[0].code, /data-theme/,
+    `Le seul script restant n'est pas celui du thème.`);
+});
+
+test('tout le reste du JavaScript vient de assets/', () => {
+  const externes = scripts().filter(s => s.externe);
+  const hors = externes.filter(s => !s.src.startsWith('assets/'));
+  assert.deepEqual(hors.map(s => s.src), [],
+    `Script servi depuis ailleurs que assets/. Une dépendance chargée d'un CDN ` +
+    `rendrait le site tributaire d'un tiers — le projet vendore exprès ` +
+    `(assets/vendor/, assets/leaflet.js).`);
+  assert.ok(externes.length >= 40, `Seulement ${externes.length} fichiers chargés : il en manque.`);
+});
+
 test('la configuration Supabase charge avant ce qui s\'en sert', () => {
   const noms = scripts().map(s => s.origine);
   const cfg = noms.indexOf('assets/supabase-config.js');

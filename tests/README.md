@@ -81,8 +81,24 @@ que la console reste vide.
 | `vol.spec.js` | Vol lancé, sauvegardé, terminé, enregistré ; modes voyage et local ; imprévu imposé |
 | `epellation.spec.js` | Verdict juste, verdict faux, code suivant |
 | `stockage.spec.js` | Réglages, série de jours, quota, relecture de l'historique, file de synchronisation préservée |
+| `contraste.spec.js` | Le contraste WCAG AA des quatorze pages, dans les deux thèmes — ~1 350 relevés |
 
 Le projet `telephone` rejoue `demarrage` et `routeur` en largeur mobile (Pixel 7).
+
+**`contraste.spec.js` mérite un mot**, parce qu'il remplace un outil perdu.
+`scratchpad/ins_contraste.py` faisait 90 relevés sur les pixels réels — il
+vivait dans un dossier non versionné et n'existe plus. Celui-ci fait ~1 350
+relevés sur les couleurs **résolues** : beaucoup plus large, et **plus
+indulgent**. Le projet a lui-même mesuré l'écart (`01-socle.css`) : `--ink-2`
+donne 4,83:1 en théorie et 4,07:1 en pixels à 13,5 px, parce qu'à ces tailles
+l'antialiasing n'atteint jamais la couleur pleine. Un relevé « conforme » à
+4,6:1 sur du petit texte ne l'est donc probablement pas à l'œil. D'où les
+correctifs visant 6:1 et non 4,6:1, et un contrôle sur les pixels qui reste à
+refaire. Le détail de l'audit est dans `INSCRIPTION.md § 8 bis`.
+
+Le test porte aussi un garde-fou contre lui-même : si moins de 65 % des textes
+deviennent mesurables (image de fond, dégradé, opacité d'un ancêtre), il échoue
+au lieu de passer au vert en n'ayant plus rien regardé.
 
 ### `tests/verifier-migrations.mjs` — le SQL sur une base vide
 
@@ -213,9 +229,11 @@ Ce qui reste interdit — et c'est le seul vrai danger — est une lecture
    en double (les UUID de `assets/sync.js` sont là pour ça).
 4. **La ligne réellement écrite en base** — l'absence d'erreur côté client ne
    dit rien de ce qui a été enregistré.
-5. **Le contraste des deux thèmes** — l'ancienne suite `ins_contraste.py` faisait
-   90 relevés sur les pixels réels. Elle n'a jamais été versionnée et reste à
-   refaire.
+5. **Le contraste sur les PIXELS** — `contraste.spec.js` couvre désormais les
+   quatorze pages et les deux thèmes, mais sur les couleurs résolues. L'écart
+   théorie/pixels à petite taille (4,83:1 contre 4,07:1, mesuré par le projet)
+   n'est pas couvert. Ce qui passe entre 4,5:1 et ~5,5:1 sous 15 px est suspect
+   sans être prouvé.
 
 Ces cinq points étaient déjà les angles morts de l'ancienne série de tests
 (`INSCRIPTION.md § 7`), qui vivait dans `scratchpad/` — non versionné — et a

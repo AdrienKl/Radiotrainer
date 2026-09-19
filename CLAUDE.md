@@ -582,10 +582,10 @@ L'objectif final est de construire AVIERO comme un produit réel, professionnel 
 
 ### 21.1 Ce qui est fait et poussé
 
-La **phase 2 est close** (§ 6.2), et une base de tests existe : **159 vérifications automatiques** (91 de contrat, 11 de migration, 57 de parcours), plus deux outils lancés à la demande.
+La **phase 2 est close** (§ 6.2), et une base de tests existe : **161 vérifications automatiques** (91 de contrat, 11 de migration, 59 de parcours), plus deux outils lancés à la demande.
 
 ```sh
-sh tests/lancer_tout.sh            # les 159, hors réseau
+sh tests/lancer_tout.sh            # les 161, hors réseau
 sh tests/lancer_tout.sh contrat    # la lecture du code seule, < 1 s
 sh tests/lancer_tout.sh migrations # le SQL sur un PostgreSQL jetable, hors ligne
 sh tests/lancer_tout.sh base       # le catalogue et les politiques, CONTRE LE PROJET RÉEL
@@ -673,7 +673,7 @@ C'est fusionnable clé par clé. **Question posée, pas encore tranchée :** un 
 - **le micro réel** — la chaîne entière est couverte par une fausse `SpeechRecognition` (`tests/parcours/micro.spec.js`), mais pas l'audio. Un scénario et un vol au micro, à la main, après toute étape qui touche à la voix ou à la reconnaissance ;
 - **l'inscription, l'auth, les RLS avec deux comptes** — il faut le projet de test. Depuis le 19/09/2026, `tests/verifier-migrations.mjs` vérifie hors ligne que les politiques sont bien POSÉES et que le déclencheur crée un profil ; ce qu'un compte connecté voit des données d'un autre reste non couvert ;
 - **la fusion entre deux appareils** — jamais vérifiée, ni par un test ni à la main ;
-- **le contraste des deux thèmes** — les 90 relevés de l'ancienne suite `ins_contraste.py` restent à refaire.
+- **le contraste sur les PIXELS** — `tests/parcours/contraste.spec.js` couvre depuis le 20/09/2026 les quatorze pages et les deux thèmes (~1 350 relevés), mais sur les couleurs **résolues**. Le projet a mesuré l'écart avec les pixels à petite taille (4,83:1 théorique contre 4,07:1 réel) : ce qui passe entre 4,5:1 et ~5,5:1 sous 15 px reste suspect sans être prouvé. C'est le seul morceau de l'ancien `ins_contraste.py` qui n'a pas été repris. Détail : `INSCRIPTION.md § 8 bis`.
 
 ---
 
@@ -703,6 +703,7 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 19/09/2026 | Le socle du schéma devient `sql/000-socle.sql` et non `sql/004` : un numéro de migration est un ordre d'exécution, pas une étiquette | § 21.3 |
 | 19/09/2026 | `is_admin()` remonte dans le socle : `sql/002` l'appelait quatre fois et `sql/003`, qui la définissait, passe après | § 21.3 |
 | 19/09/2026 | Les migrations sont rejouées à chaque exécution des tests sur un PostgreSQL jetable en mémoire — hors ligne, donc dans « tout » | `tests/README.md` |
+| 20/09/2026 | Le contraste des deux thèmes est audité à chaque commit, sur les quatorze pages. Cinq défauts trouvés, cinq corrigés — la bascule globale de `--ink-2` n'est plus nécessaire pour être conforme, et reste au développeur | `INSCRIPTION.md § 8 bis` |
 
 ### En attente de validation
 

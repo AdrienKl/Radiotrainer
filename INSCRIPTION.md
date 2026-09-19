@@ -475,7 +475,7 @@ trouvé et qui n'a pas été corrigé.
 
 ---
 
-## 8. Un défaut de contraste plus large, constaté et non corrigé
+## 8. Un défaut de contraste plus large — audité le 20/09/2026
 
 En mesurant le contraste du parcours sur les pixels réels (et non sur les
 valeurs CSS, qui mentent : à petite taille l'antialiasing n'atteint jamais la
@@ -492,10 +492,47 @@ mais 4,07:1 mesuré** dès qu'on descend sous ~15 px.
 
 Ce qui a été fait : un jeton `--ink-2-fort` (`#464d5a`, ~7:1 mesuré), appliqué
 aux cartes d'authentification, au parcours et aux deux pages légales. Tout y
-passe désormais, dans les deux thèmes — `scratchpad/ins_contraste.py` le vérifie
-sur 90 relevés.
+passe désormais, dans les deux thèmes — `scratchpad/ins_contraste.py` le
+vérifiait sur 90 relevés. **Ce fichier a été perdu** : `scratchpad/` n'est pas
+versionné.
 
-**Ce qui n'a pas été fait, et qu'il faudra décider :** `--ink-2` est employé
+### 8 bis. L'audit annoncé, fait le 20/09/2026
+
+`tests/parcours/contraste.spec.js` remplace l'outil perdu, **dans le dépôt**
+cette fois, et tourne à chaque exécution de la suite : quatorze pages, deux
+thèmes, **~1 350 relevés** contre 90.
+
+Il a trouvé cinq endroits sous le seuil, et cinq seulement :
+
+| Élément | Thème | Mesuré | Cause | Corrigé en |
+|---|---|---|---|---|
+| `.scene-credit` / `.spell-credit` (crédits photo, 11 px) | clair | 3,48:1 | `--sc-credit` réglé pour du verre sur photo, employé sur le fond plat | `rgba(20,26,44,.70)` → 6,20:1 |
+| idem | sombre | 4,11:1 | idem | `rgba(255,255,255,.58)` → 6,70:1 |
+| `.rx__head` (accueil, 11,5 px) | clair | 4,35:1 | `--ink-2` sur `--surface-2` | `--ink-2-fort` → 7,66:1 |
+| `.nav-tgl` (Navigation et Carte, 12 px) | clair | 4,35:1 | idem | `--ink-2-fort` → 7,66:1 |
+| `.seg3-opt` (Paramètres, 12,5 px) | clair | 4,35:1 | idem | `--ink-2-fort` → 7,66:1 |
+
+Un sixième relevé, le bouton de dézoom **désactivé** de Leaflet (1,75:1), est
+exempté : WCAG 2.1 critère 1.4.3 ne demande aucun contraste à un composant
+inactif.
+
+**Ce que l'audit change à la décision ci-dessous.** Le § 8 disait qu'il faudrait
+« basculer `--ink-2` partout », et que c'était un audit, pas une retouche. La
+mesure répond : **hors de ces trois règles, plus rien n'est sous le seuil.** La
+bascule globale de `--ink-2` n'est donc plus nécessaire pour être conforme.
+
+Elle resterait souhaitable pour une raison que ce test ne peut pas voir : il lit
+les couleurs **résolues**, pas les pixels, et le § 8 a justement démontré que
+les deux divergent à petite taille (4,83:1 théorique contre 4,07:1 mesuré). Tout
+ce qui passe ici entre 4,5:1 et ~5,5:1 sur du texte de moins de 15 px est donc
+**suspect sans être prouvé**. Trancher demande de remesurer sur les pixels —
+c'est le seul morceau de l'ancien `ins_contraste.py` qui n'a pas été repris.
+
+**La décision reste ouverte, et elle est au développeur.**
+
+**Ce qui n'a pas été fait, et qu'il faudra décider** (état d'origine, conservé
+pour la lecture — voir le § 8 bis ci-dessus pour ce que l'audit y a répondu) :
+`--ink-2` est employé
 dans tout le site (tableau de bord, cours, progression, paramètres, console
 d'administration). Partout où il porte du texte sous ~15 px, le même défaut est
 là. Le corriger revient à basculer `--ink-2` en clair vers une valeur plus

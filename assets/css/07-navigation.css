@@ -71,8 +71,12 @@
     color:var(--violet-dark); margin:0 0 11px; font-weight:700; }
   /* Bascule d'affichage des zones réglementées sur la carte. */
   .nav-maptools{ display:flex; flex-wrap:wrap; align-items:center; gap:9px; padding:9px 4px 0; }
+  /* --ink-2-fort : 12 px sur --surface-2, --ink-2 n'y donnait que 4,35:1
+     (seuil AA 4,5:1). Le thème sombre est inchangé — il y redéfinit
+     --ink-2-fort à --ink-2 (09-theme-sombre.css), où le contraste tenait
+     déjà. Relevé le 20/09/2026 par tests/parcours/contraste.spec.js. */
   .nav-tgl{ display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;
-    color:var(--ink-2); background:var(--surface-2); border:1px solid var(--border);
+    color:var(--ink-2-fort); background:var(--surface-2); border:1px solid var(--border);
     border-radius:var(--pill); padding:5px 11px; transition:.14s; }
   .nav-tgl:hover{ color:var(--ink); border-color:var(--violet); }
   .nav-tgl.on{ background:var(--violet-soft); border-color:var(--violet); color:var(--violet-dark); font-weight:600; }

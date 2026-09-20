@@ -683,19 +683,27 @@ select tablename, policyname, cmd, qual, with_check from pg_policies
 
 Rien ne presse : ces deux fichiers existent pour monter un projet **neuf**, et c'est déjà vérifié hors ligne à chaque exécution de la suite.
 
-### 21.5 Décisions en attente du développeur
+### 21.5 La fusion des réglages — TRANCHÉE le 20/09/2026
 
-**La fusion des réglages.** Elle existe déjà (`assets/donnees.js § 7`, « le plus récent gagne », horodatage `_maj`) mais elle fusionne **l'objet entier**, pas clé par clé :
+**Le plus récent gagne, CLÉ PAR CLÉ, sans exception.**
 
-> On change le **thème** sur son téléphone, puis le **débit de la voix** sur son ordinateur. Le plus récent écrase tout — le premier changement est perdu, en silence.
+Ce qui ne marchait pas : `_maj` portait sur l'**objet entier**. On changeait le thème sur son téléphone, puis le débit de la voix sur son ordinateur — le plus récent des deux objets écrasait l'autre, et le premier changement disparaissait sans le moindre message. Exactement ce que le § 7.1 interdit.
 
-C'est fusionnable clé par clé. **Question posée, pas encore tranchée :** un réglage remis à sa valeur par défaut sur un appareil doit-il redescendre chez les autres ? Avec une fusion par clé, « je n'ai jamais touché ce réglage » et « je l'ai remis à zéro » se ressemblent.
+Ce qui est en place (`assets/donnees.js § 7`) : chaque clé porte son propre horodatage dans `_majCles`, et la fusion se fait clé par clé. Les deux changements survivent.
 
-**Ne pas coder cette fusion avant la réponse** (§ 7.1).
+**La question qui avait été posée, et sa réponse.** Un réglage **remis à sa valeur par défaut** sur un appareil redescend-il chez les autres ? **Oui** — c'est le plus récent qui gagne, sans exception. Remettre un réglage à zéro est un choix comme un autre, et le traiter à part aurait voulu dire distinguer « je n'ai jamais touché ce réglage » de « je l'ai remis à zéro », deux états qui se ressemblent et qu'on aurait devinés de travers une fois sur deux.
+
+Trois points qui ne se devinent pas :
+
+- **La forme ne change pas pour ceux qui lisent.** `_majCles` est une clé de plus **à côté** des valeurs, pas autour d'elles : `s.theme` reste `s.theme`. Envelopper chaque valeur dans un `{valeur, horodatage}` aurait cassé tous les lecteurs — y compris les onze lignes du `<head>` qui posent le thème avant le premier pixel, où une erreur ne se voit pas, elle se subit.
+- **L'existant ne vaut pas zéro.** Les réglages déjà en base n'ont qu'un `_maj` global : il sert de repli pour chacune de leurs clés. Sans lui, tout ce qui existe se ferait écraser par le premier appareil qui écrit.
+- **La photo de l'état se prend au CHARGEMENT**, pas au premier changement. `rtSaveSettings()` a déjà écrit la nouvelle valeur quand il appelle le module : photographier à ce moment-là, c'est photographier l'après, et ne plus jamais rien voir changer. Le piège s'est refermé une fois ; `tests/parcours/reglages-fusion.spec.js` le surveille.
+
+Huit vérifications couvrent la règle, et six d'entre elles rougissent si on revient à l'ancienne.
 
 ### 21.6 Ce que les tests ne couvrent toujours pas
 
-- **le micro réel** — la chaîne entière est couverte par une fausse `SpeechRecognition` (`tests/parcours/micro.spec.js`), mais pas l'audio. Un scénario et un vol au micro, à la main, après toute étape qui touche à la voix ou à la reconnaissance ;
+- **le micro réel** — la chaîne entière est couverte par une fausse `SpeechRecognition` (`tests/parcours/micro.spec.js`), mais pas l'audio. **Vérifié à la main par le développeur le 20/09/2026 : la Navigation et le micro fonctionnent.** À refaire après toute étape qui touche à la voix ou à la reconnaissance ;
 - **l'inscription, l'auth, les RLS avec deux comptes** — il faut le projet de test. Depuis le 19/09/2026, `tests/verifier-migrations.mjs` vérifie hors ligne que les politiques sont bien POSÉES et que le déclencheur crée un profil ; ce qu'un compte connecté voit des données d'un autre reste non couvert ;
 - **la fusion entre deux appareils** — jamais vérifiée, ni par un test ni à la main ;
 - **le contraste sur d'autres machines** — couvert depuis le 20/09/2026 sur deux fronts : `tests/parcours/contraste.spec.js` (couleurs résolues, ~1 350 relevés, dans la suite) et `tests/mesurer-pixels.mjs` (les pixels, 310 textes, à la demande). Mais le second n'a tourné que sur une machine, et le lissage des polices varie d'un système à l'autre. Détail : `INSCRIPTION.md § 8 bis` et `§ 8 ter`.
@@ -732,14 +740,14 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 20/09/2026 | Le renommage visuel en AVIERO est appliqué : 51 occurrences visibles. Les clés de stockage, la configuration de production, les migrations appliquées et le dépôt ne bougent pas. `CGU_VERSION` non plus | § 10.1 |
 | 20/09/2026 | `sql/002-progression.sql` appliqué en entier par l'API. Une migration se pose par `supabase/poser-sql.sh`, JAMAIS par le presse-papier de l'éditeur SQL — un collage partiel affiche « Success » | § 21.2 |
 | 20/09/2026 | Les séances détachées d'avant le 19/09 ne sont pas récupérables : `exercise_key` est à `null` et aucun autre champ ne dit quel scénario c'était. Les rattacher au jugé serait pire | § 21.2 |
+| 20/09/2026 | Fusion des réglages **clé par clé**, le plus récent gagne, sans exception — y compris le retour à la valeur par défaut | § 21.5 |
+| 20/09/2026 | Les trois derniers contrastes sous le seuil corrigés. `--ink-2` reste `#6b7280` : la mesure sur pixels ne justifie pas de bascule globale, la question du § 8 est close | `INSCRIPTION.md § 8` |
+| 20/09/2026 | Un jeton de couleur de TEXTE ne sert jamais de FOND : `--violet-dark` bascule en violet clair dans le thème sombre. `.step__n` en était mort | `INSCRIPTION.md § 8 ter` |
 | 20/09/2026 | Le contraste se mesure sur DEUX fronts : les couleurs résolues dans la suite (large, rapide, indulgent), les pixels à la demande (juste, mais dépendant de la machine — donc jamais un test) | `INSCRIPTION.md § 8 ter` |
 
 ### En attente de validation
 
 - **Convention de nommage** (§ 16.2) — proposée, pas appliquée. Aucun renommage de masse avant accord.
-- **Fusion des réglages clé par clé** (§ 21.5) — la règle « le plus récent gagne » existe, mais sur l'objet entier. Une question reste posée au développeur avant d'écrire quoi que ce soit.
 - **Poser `sql/000` et `sql/003` sur la PRODUCTION** (§ 21.4) — ils y seraient sans effet, mais recréent des politiques RLS vivantes. Le no-op de `sql/003` est prouvé ; celui de `sql/000` demande d'abord de lister les politiques d'`app_errors` et `admin_audit_log`, jamais vues. Sans urgence.
 - **Les séances détachées** (§ 21.2) — en compter le nombre avant de décider. Si elles sont peu nombreuses, ne rien faire est la bonne réponse.
-- **Trois contrastes sous le seuil AA, mesurés sur les pixels, NON corrigés** (`INSCRIPTION.md § 8 ter`) — les pastilles « 1 2 3 » en thème sombre (2,71:1), l'accroche de l'accueil sur la photo (3,69:1), et `--bad` `#d9534f` sur blanc (3,96:1). Les corriger touche `--violet` et `--bad`, donc la palette : § 10 conserve le design actuel, § 4 demande une validation. **Les valeurs correctives sont calculées** — la décision tient en une minute.
-- **La bascule globale de `--ink-2` — tranchée par la mesure, à confirmer** : 27 textes le portent, zéro sous le seuil en pixels, le pire à 4,55:1. Elle n'est plus nécessaire. La question du § 8 peut être close.
 - **`@electric-sql/pglite` et `pngjs` en dépendances de test** — l'application reste un site statique sans aucune dépendance ; seule la suite de tests en gagne deux. À confirmer.

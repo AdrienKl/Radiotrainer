@@ -475,7 +475,7 @@ trouvé et qui n'a pas été corrigé.
 
 ---
 
-## 8. Un défaut de contraste plus large — audité le 20/09/2026
+## 8. Un défaut de contraste plus large — CLOS le 20/09/2026
 
 En mesurant le contraste du parcours sur les pixels réels (et non sur les
 valeurs CSS, qui mentent : à petite taille l'antialiasing n'atteint jamais la
@@ -539,6 +539,11 @@ node tests/mesurer-pixels.mjs --ink-2  # seulement ce que --ink-2 porte
 4,55:1.** La bascule globale n'est **pas** justifiée par la mesure. Le 4,07:1
 du § 8 concernait `.auth-sub` à 13,5 px, qui porte `--ink-2-fort` depuis.
 
+> **Le développeur a clos la question le 20/09/2026.** `--ink-2` reste
+> `#6b7280`. Là où il ne suffit pas, c'est `--ink-2-fort` qu'on emploie —
+> au cas par cas, sur mesure, et non par une bascule globale qu'aucun chiffre
+> ne réclame.
+
 **Ce que la mesure sur pixels a trouvé en plus**, parce qu'elle voit ce que les
 valeurs CSS ne peuvent pas voir — un texte posé sur un dégradé ou sur une photo :
 
@@ -548,12 +553,29 @@ valeurs CSS ne peuvent pas voir — un texte posé sur un dégradé ou sur une p
 | L'accroche `.hero__tag` sur la photo (12 px) | sombre | 3,69:1 | 4,5:1 | densifier le verre derrière, ou l'encre |
 | `--bad` `#d9534f` sur blanc — « Imprévu » et le texte d'aléa | clair | 3,96:1 | 4,5:1 | `#c84c49` → 4,58:1, `#b84743` → 5,22:1 |
 
-**Ces trois-là ne sont PAS corrigés, et c'est volontaire.** Les précédents se
-réglaient avec un jeton qui existait déjà pour ça (`--ink-2-fort`) : c'était la
-continuation d'une décision prise. Ceux-ci demandent de toucher `--violet` et
-`--bad`, c'est-à-dire la palette — § 10 de `CLAUDE.md` conserve le design
-actuel, et § 4 demande une validation. **Les valeurs sont calculées ci-dessus :
-la décision tient en une minute, elle est au développeur.**
+**Les trois ont été corrigés le 20/09/2026, après validation du développeur.**
+Chacun avait une cause plus intéressante que sa valeur :
+
+- **`.step__n`** — le dégradé allait de `#7a68ff` à `var(--violet-dark)`. Or en
+  thème sombre `--violet-dark` devient `#b3a6ff`, un violet **très clair** :
+  c'est là-bas la couleur du **texte**, et `09-theme-sombre.css` prévient
+  justement que onze règles font l'erreur inverse. Le dégradé partait donc de
+  clair pour aller vers plus clair, avec du blanc écrit dessus. Il part
+  désormais de `--violet`, qui est un fond de bouton dans les **deux** thèmes,
+  vers un violet foncé écrit en clair — un fond n'a pas à basculer. Le liseré
+  intérieur passe de `.28` à `.18` : à `.28` il éclaircissait le haut de la
+  pastille au-delà du seuil à lui seul.
+- **`.hero__eyebrow`** — `--violet-soft` est **translucide** : ce qu'on lisait
+  dessus dépendait de la photo qui passe derrière, et changeait selon la zone
+  de l'image. Remplacé par `--violet-tint`, opaque, qui existait déjà dans les
+  deux thèmes (6,92:1 en clair, 7,33:1 en sombre).
+- **`--bad`** — `#d9534f` → `#bd4340` (5,20:1 sur blanc, 4,68:1 sur
+  `--surface-2`). Ce jeton porte du **texte** : l'étiquette « Imprévu » et la
+  phrase qui décrit l'aléa. Le thème sombre a son propre `--bad` (`#e0645f`,
+  4,87:1) : il tenait déjà, il n'est pas touché.
+
+Vérifié après coup par `node tests/mesurer-pixels.mjs` : **aucun texte sous le
+seuil, dans aucun des deux thèmes.**
 
 **Ce qui n'a pas été fait, et qu'il faudra décider** (état d'origine, conservé
 pour la lecture — voir le § 8 bis ci-dessus pour ce que l'audit y a répondu) :

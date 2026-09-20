@@ -30,7 +30,15 @@
        INSCRIPTION.md § 8. */
     --ink-2-fort:#464d5a;
     --bg:#f7f8fb; --surface:#ffffff; --surface-2:#f1f3f8; --border:#b9bec9;
-    --ok:#2fa36b; --warn:#e0912a; --bad:#d9534f;
+    --ok:#2fa36b; --warn:#e0912a;
+    /* #d9534f → #bd4340 le 20/09/2026. L'ancien donnait 3,96:1 sur blanc,
+       sous le seuil AA de 4,5:1 — et --bad porte du TEXTE : l'étiquette
+       « Imprévu » et la phrase qui décrit l'aléa. Le nouveau rend 5,20:1 sur
+       blanc et 4,68:1 sur --surface-2, avec la marge que demande le petit
+       corps (voir l'encadré de --ink-2-fort plus bas).
+       Le thème sombre a son propre --bad (#e0645f, 4,87:1) : il tenait déjà,
+       il n'est pas touché. Relevé par tests/mesurer-pixels.mjs. */
+    --bad:#bd4340;
     --shadow-sm:0 1px 2px rgba(36,40,56,.06), 0 1px 3px rgba(36,40,56,.05);
     --shadow-md:0 8px 26px rgba(36,40,56,.10);
     --shadow-lg:0 24px 60px rgba(36,40,56,.18);

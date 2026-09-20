@@ -468,28 +468,118 @@
      script qui pose le thème avant le premier pixel. Ils restent donc en
      stockage local, et ce module les tient à jour dans les deux sens.
 
-     QUI GAGNE, EN CAS DE DÉSACCORD : le plus récent. Chaque enregistrement
-     estampille les réglages (`_maj`). Quelqu'un qui change son thème hors-ligne
-     dans Safari, puis rouvre Chrome, ne se fait pas rendre son ancien thème par
-     la base — et inversement. Sans cet horodatage il aurait fallu choisir un
-     gagnant à l'aveugle, et l'un des deux appareils aurait toujours tort.
+     ┌─ QUI GAGNE, EN CAS DE DÉSACCORD : LE PLUS RÉCENT, CLÉ PAR CLÉ ───────┐
+     │ Décision du développeur, le 20/09/2026.                              │
+     │                                                                       │
+     │ CE QUI NE MARCHAIT PAS AVANT. L'horodatage `_maj` portait sur         │
+     │ l'OBJET ENTIER. On changeait le thème sur son téléphone, puis le      │
+     │ débit de la voix sur son ordinateur : le plus récent des deux objets  │
+     │ écrasait l'autre, et le premier changement disparaissait SANS le      │
+     │ moindre message. C'est exactement ce que le § 7.1 de CLAUDE.md        │
+     │ interdit — « ce qui peut être fusionné doit être fusionné, jamais     │
+     │ remplacé ».                                                           │
+     │                                                                       │
+     │ CE QU'ON FAIT MAINTENANT. Chaque clé porte son propre horodatage,     │
+     │ dans `_majCles`. La fusion se fait clé par clé : pour chacune, la     │
+     │ valeur dont l'horodatage est le plus récent gagne. Les deux           │
+     │ changements survivent.                                                 │
+     │                                                                       │
+     │ LA QUESTION QUI AVAIT ÉTÉ POSÉE, ET SA RÉPONSE. Un réglage REMIS À SA │
+     │ VALEUR PAR DÉFAUT sur un appareil doit-il redescendre chez les        │
+     │ autres ? Réponse : OUI — c'est le plus récent qui gagne, sans         │
+     │ exception. Remettre un réglage à zéro est un choix comme un autre, et │
+     │ le traiter à part aurait voulu dire distinguer « je n'ai jamais       │
+     │ touché ce réglage » de « je l'ai remis à zéro », deux états qui se    │
+     │ ressemblent et qu'on aurait devinés de travers une fois sur deux.     │
+     └───────────────────────────────────────────────────────────────────────┘
+
+     ┌─ LA FORME NE CHANGE PAS POUR CEUX QUI LISENT ────────────────────────┐
+     │ `_majCles` est une clé de plus À CÔTÉ des valeurs, pas autour d'elles.│
+     │ `s.theme` reste `s.theme`. Envelopper chaque valeur dans un           │
+     │ {valeur, horodatage} aurait cassé TOUS les lecteurs — y compris les   │
+     │ onze lignes du <head> qui posent le thème avant le premier pixel, où  │
+     │ une erreur ne se voit pas, elle se subit.                             │
+     └───────────────────────────────────────────────────────────────────────┘
      ====================================================================== */
+
+  /* Les clés de service, qui ne sont pas des réglages et ne se fusionnent pas. */
+  function estService(k){ return k === '_maj' || k === '_majCles'; }
+
+  function clesReelles(o){
+    return o ? Object.keys(o).filter(function(k){ return !estService(k); }) : [];
+  }
+
+  /* L'horodatage d'UNE clé.
+     Le repli sur `_maj` n'est pas une politesse : c'est la migration. Les
+     réglages déjà en base n'ont qu'un `_maj` global — il date le dernier
+     changement, donc c'est le meilleur horodatage connu pour chacune de leurs
+     clés. Sans ce repli, tout ce qui existe aujourd'hui vaudrait zéro et se
+     ferait écraser par le premier appareil qui écrit. */
+  function tCle(o, k){
+    if (!o) return 0;
+    var m = o._majCles && o._majCles[k];
+    return Date.parse(m || o._maj || '') || 0;
+  }
+
+  /* La fusion. Exposée sur RTDonnees pour être testable : c'est la seule
+     logique de ce module qui décide quelque chose sans rien afficher. */
+  function fusionnerReglages(local, base){
+    local = local || {}; base = base || {};
+    var sortie = {}, majCles = {}, cles = {};
+    clesReelles(local).forEach(function(k){ cles[k] = 1; });
+    clesReelles(base).forEach(function(k){ cles[k] = 1; });
+
+    Object.keys(cles).forEach(function(k){
+      var tL = tCle(local, k), tB = tCle(base, k);
+      var aL = Object.prototype.hasOwnProperty.call(local, k);
+      var aB = Object.prototype.hasOwnProperty.call(base, k);
+      /* Une clé que SEUL un côté possède n'a pas d'adversaire : elle passe.
+         C'est ce qui fait qu'un réglage ajouté par une version plus récente
+         de l'application ne disparaît pas au premier échange avec un appareil
+         qui ne le connaît pas encore. */
+      var prendreBase = aB && (!aL || tB >= tL);
+      sortie[k] = prendreBase ? base[k] : local[k];
+      var t = prendreBase ? tB : tL;
+      if (t) majCles[k] = new Date(t).toISOString();
+    });
+
+    if (Object.keys(majCles).length) sortie._majCles = majCles;
+    /* `_maj` reste le plus récent de tous : les anciennes versions de
+       l'application, qui ne lisent que lui, continuent de se comporter
+       correctement entre elles. */
+    var pire = 0;
+    Object.keys(majCles).forEach(function(k){ pire = Math.max(pire, Date.parse(majCles[k]) || 0); });
+    if (pire) sortie._maj = new Date(pire).toISOString();
+    return sortie;
+  }
+
+  function memesReglages(a, b){
+    var ka = clesReelles(a).sort(), kb = clesReelles(b).sort();
+    if (ka.length !== kb.length) return false;
+    for (var i = 0; i < ka.length; i++){
+      if (ka[i] !== kb[i]) return false;
+      if (JSON.stringify(a[ka[i]]) !== JSON.stringify(b[kb[i]])) return false;
+    }
+    return true;
+  }
+
   function appliquerReglages(base){
     var local = lire(K.reglages, {}) || {};
-    var tLocal = Date.parse(local._maj || '') || 0;
-    var tBase  = (base && Date.parse(base._maj || '')) || 0;
-    var vide   = function(o){ return !o || !Object.keys(o).filter(function(k){ return k !== '_maj'; }).length; };
+    var vide  = function(o){ return !clesReelles(o).length; };
 
-    if (!vide(base) && tBase >= tLocal){
-      ecrire(K.reglages, base);
-      return;
-    }
-    if (!vide(local)){
-      /* Le local est plus récent (ou la base n'a jamais rien reçu) : on monte.
-         C'est ce qui fait remonter les réglages d'un ancien compte la première
-         fois qu'il se connecte après cette mise à jour. */
-      pousserReglages();
-    }
+    if (vide(base) && vide(local)) return;
+
+    var fusion = fusionnerReglages(local, base);
+
+    /* On descend si le résultat diffère de ce que cet appareil avait. */
+    if (!memesReglages(fusion, local) || !local._majCles) ecrire(K.reglages, fusion);
+    dernierConnu = JSON.parse(JSON.stringify(fusion));
+
+    /* Et on monte si le résultat diffère de ce que la base avait. C'est le
+       propre d'une fusion : les DEUX côtés peuvent avoir quelque chose à
+       apprendre de l'autre. L'ancienne version ne montait que lorsque le local
+       gagnait en entier. */
+    if (!memesReglages(fusion, base) || !base || !base._majCles) pousserReglages();
   }
 
   var minuteurReglages = null;
@@ -510,12 +600,51 @@
     });
   }
 
+  /* Ce que cet appareil croit savoir des réglages, pour repérer CE QUI A
+     CHANGÉ. `rtSaveSettings()` ne dit pas quelle clé il vient de toucher — il
+     annonce seulement que quelque chose a bougé. On compare donc.
+
+     ┌─ LA PHOTO SE PREND AU CHARGEMENT, PAS AU PREMIER CHANGEMENT ─────────┐
+     │ Le piège s'est refermé ici, et le test l'a dit tout de suite : quand  │
+     │ `rtSaveSettings()` appelle ce module, il a DÉJÀ écrit la nouvelle     │
+     │ valeur dans le stockage. Photographier à ce moment-là, c'est          │
+     │ photographier l'après — et ne plus jamais rien voir changer. Cette    │
+     │ ligne-ci s'exécute au chargement du fichier, donc avant que qui que   │
+     │ ce soit ait pu toucher un réglage.                                    │
+     └───────────────────────────────────────────────────────────────────────┘
+
+     Un onglet voisin qui modifie un réglage rend cette copie périmée : on
+     réestampillera alors une clé dont la valeur n'a pas bougé de notre fait.
+     C'est sans conséquence — même valeur, horodatage plus récent. */
+  var dernierConnu = (function(){
+    try { return JSON.parse(JSON.stringify(lire(K.reglages, {}) || {})); }
+    catch (e) { return {}; }
+  })();
+
   /* Appelé par rtSaveSettings() à chaque réglage touché. On temporise : faire
      glisser un curseur ne doit pas produire vingt écritures. */
   function reglagesModifies(){
     var s = lire(K.reglages, {}) || {};
-    s._maj = new Date().toISOString();
+    var maintenant = new Date().toISOString();
+    var majCles = s._majCles || {};
+
+    clesReelles(s).forEach(function(k){
+      if (JSON.stringify(dernierConnu[k]) !== JSON.stringify(s[k])){
+        majCles[k] = maintenant;                 // touché : il gagne
+      } else if (!majCles[k]) {
+        /* Pas touché et jamais horodaté : c'est un réglage de l'ancienne
+           forme. Son meilleur horodatage connu est le `_maj` global — lui
+           donner `maintenant` ferait gagner cet appareil sur un réglage
+           qu'il n'a pas touché. */
+        majCles[k] = s._maj || maintenant;
+      }
+    });
+
+    s._majCles = majCles;
+    s._maj = maintenant;
     ecrire(K.reglages, s);
+    dernierConnu = JSON.parse(JSON.stringify(s));
+
     if (minuteurReglages) clearTimeout(minuteurReglages);
     minuteurReglages = setTimeout(function(){ minuteurReglages = null; pousserReglages(); }, 900);
   }
@@ -703,6 +832,9 @@
     charger          : charger,
     migrer           : migrer,
     reglagesModifies : reglagesModifies,
+    /* Exposée pour les tests : c'est la seule logique de ce module qui tranche
+       un désaccord entre deux appareils, et elle ne s'observe pas autrement. */
+    fusionnerReglages: fusionnerReglages,
     volModifie       : volModifie,
     effacerTout      : effacerTout,
     viderCache       : viderCache,

@@ -36,7 +36,40 @@ accepté — c'est justement ce qui permettra de leur demander leur accord).
 > « colonne absente » de « colonne vide », donc déployer le site avant la
 > migration ne piège personne. Mais l'inscription, elle, ne marche pas.
 
-### 1.2 Ajouter le code au gabarit d'e-mail — obligatoire
+### 1.2 Poser les TROIS gabarits d'e-mail — obligatoire
+
+> **Mise à jour du 20/09/2026.** Il y a désormais **trois** emplacements à
+> remplir, pas deux, et **deux gabarits distincts** dans le dépôt :
+>
+> | Emplacement Supabase | Gabarit du dépôt | Quand il part |
+> |---|---|---|
+> | **Magic Link** | `supabase/gabarit-magic-link.html` | adresse déjà connue |
+> | **Confirm signup** | `supabase/gabarit-magic-link.html` | adresse neuve |
+> | **Reset Password** | `supabase/gabarit-recuperation.html` | « mot de passe oublié » |
+>
+> Les deux premiers portent le **code de connexion**, le troisième le **code de
+> récupération**. Ce ne sont pas les mêmes jetons et ils ne sont pas
+> interchangeables : un code de connexion ne débloque pas l'étape « nouveau mot
+> de passe », et inversement.
+>
+> **Les gabarits ne contiennent plus de lien.** Décision du 20/09/2026 : le
+> parcours d'AVIERO est un parcours par **code**. Un lien ouvre un nouvel
+> onglet et le formulaire de l'ancien reprend à zéro — exactement ce que le
+> code évite. `RTAuth.otpVerifierLien()` reste en place pour qui aurait un
+> ancien message sous la main ; on ne l'annonce simplement plus.
+>
+> ```sh
+> SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-reglages.sh
+> ```
+>
+> **Ce script ne touche plus au Site URL ni à la liste blanche** — CLAUDE.md
+> § 9.1 les gèle tant que le domaine n'est pas acheté. Ajouter `--urls` pour
+> les poser, le jour venu.
+
+Ce qui suit décrit l'ancien état à deux gabarits ; le raisonnement reste
+valable, seul le nombre a changé.
+
+### 1.2 (historique) Ajouter le code au gabarit d'e-mail
 
 **Où :** colonne de gauche → **Authentication** → **Emails** → onglet
 **Magic Link** → champ **Message body**.
@@ -214,6 +247,57 @@ déclarer les enregistrements DNS de votre domaine.
 dépôt.** Tout ce qui est servi au navigateur est public : `assets/` ne contient
 et ne doit contenir que l'URL du projet et la clé publiable (`anonKey`), qui
 sont publiques par conception.
+
+---
+
+## 1 bis. Le parcours « mot de passe oublié » — ajouté le 20/09/2026
+
+Jusque-là, il n'existait pas. Le lien « Mot de passe oublié, ou inscription
+interrompue ? » envoyait un code de **connexion**, ouvrait une session, et
+laissait l'utilisateur trouver tout seul le chemin des Paramètres pour changer
+son mot de passe. Ce n'était pas un parcours de récupération, c'était un
+contournement.
+
+**Les deux cas sont désormais deux portes distinctes, parce qu'ils ne sont pas
+la même chose :**
+
+| Porte | Pour qui | Mécanisme Supabase | Gabarit |
+|---|---|---|---|
+| **Mot de passe oublié ?** | un compte qui A un mot de passe, et l'a perdu | `resetPasswordForEmail` → `verifyOtp({type:'recovery'})` → `updateUser` | Reset Password |
+| **Inscription interrompue ?** | un compte qui n'a **aucun** mot de passe | `signInWithOtp` → `verifyOtp` | Magic Link / Confirm signup |
+
+On ne récupère pas un mot de passe qui n'a jamais existé : la seconde porte
+reste indispensable, et `shouldCreateUser: false` l'empêche de fabriquer un
+compte fantôme à chaque faute de frappe.
+
+**Le type de vérification est `recovery`, et lui seul.** `otpVerifier()` essaie
+trois types parce qu'un code de connexion arrive sous `signup` ou `magiclink`
+selon que l'adresse est neuve ou connue. Réutiliser cette souplesse ici
+ouvrirait une session de **connexion** là où on attend une session de
+**récupération** — et laisserait entrer dans le parcours « changer le mot de
+passe » quelqu'un qui a seulement un code de connexion en cours.
+`tests/contrat/auth-otp.test.mjs` surveille ce point.
+
+**Les trois étapes sont des panneaux, pas des routes**, comme les cinq étapes
+de l'inscription : une étape n'a aucun sens hors de sa séquence, et `#login/3`
+serait une adresse à mettre en favori. L'étape « nouveau mot de passe »
+n'apparaît qu'**après** la vérification du code : sans session de récupération
+ouverte, `updateUser` échouerait, et proposer le champ avant reviendrait à
+faire saisir un mot de passe pour rien.
+
+**Le délai entre deux envois n'est pas une protection, et il ne faut pas le
+prendre pour telle.** Un compteur dans le navigateur se contourne depuis la
+console — CLAUDE.md § 8. Ce qui protège est chez Supabase : limite par adresse
+IP, plafond du service d'envoi, et le « you can only request this after N
+seconds » que GoTrue renvoie de lui-même. Le délai d'AVIERO évite seulement
+qu'on consomme son propre plafond en cliquant cinq fois, puis qu'on attende une
+heure.
+
+**Ce que les tests ne peuvent pas dire.** Huit vérifications de parcours
+couvrent l'enchaînement, la neutralité des messages, le nettoyage des champs et
+le garde-fou de renvoi — avec Supabase remplacé par une doublure, puisque les
+tests ne parlent jamais au projet réel. **Qu'un e-mail parte vraiment et que
+Supabase accepte le code demande une vraie adresse, à la main.**
 
 ---
 

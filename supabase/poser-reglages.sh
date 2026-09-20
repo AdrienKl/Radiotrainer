@@ -6,7 +6,9 @@
 # — elle change souvent de nom et de place, l'API non.
 #
 # Ce qu'il pose, en une fois :
-#   · le gabarit des DEUX e-mails qui peuvent porter le code — « Magic Link »
+#   · le gabarit des TROIS e-mails — « Magic Link » et « Confirm signup » qui
+#     portent le code de connexion, « Reset Password » qui porte celui de
+#     récupération de compte
 #     ET « Confirm signup ». Une adresse qui n'a jamais servi declenche une
 #     INSCRIPTION, et Supabase envoie alors le second, pas le premier : ne
 #     corriger que « Magic Link » ne change donc rien pour un compte neuf, ce
@@ -37,9 +39,24 @@ set -eu
 PROJET='vbziwjeuzcbvrbrihhrg'
 SITE='https://adrienkl.github.io/Radiotrainer/'
 RETOURS='https://adrienkl.github.io/Radiotrainer/**'
-SUJET='Votre code RadioTrainer'
+SUJET='AVIERO — votre code de connexion'
+SUJET_RECUP='AVIERO — récupération de votre compte'
 ICI=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 GABARIT="$ICI/gabarit-magic-link.html"
+GABARIT_RECUP="$ICI/gabarit-recuperation.html"
+
+# ┌─ LES URL NE PARTENT QUE SI ON LE DEMANDE ------------------------------┐
+# │ Ce script posait les gabarits ET le Site URL / la liste blanche d'un   │
+# │ même bloc. Or CLAUDE.md § 9.1 gèle toute configuration de production   │
+# │ liée au domaine tant qu'il n'est pas acheté — et le jour où il le      │
+# │ sera, l'ORDRE des opérations comptera.                                 │
+# │ Travailler sur les e-mails ne doit pas entraîner les URL avec soi :    │
+# │ par défaut ce script ne touche QUE les gabarits et les sujets.         │
+# │   sh poser-reglages.sh            les e-mails seuls                    │
+# │   sh poser-reglages.sh --urls     les e-mails ET les URL               │
+# └────────────────────────────────────────────────────────────────────────┘
+AVEC_URLS='non'
+for a in "$@"; do [ "$a" = "--urls" ] && AVEC_URLS='oui'; done
 
 if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
   echo "SUPABASE_ACCESS_TOKEN n'est pas défini." >&2
@@ -47,10 +64,12 @@ if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
   echo "  SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-reglages.sh" >&2
   exit 1
 fi
-[ -f "$GABARIT" ] || { echo "Gabarit introuvable : $GABARIT" >&2; exit 1; }
+[ -f "$GABARIT" ]       || { echo "Gabarit introuvable : $GABARIT" >&2; exit 1; }
+[ -f "$GABARIT_RECUP" ] || { echo "Gabarit introuvable : $GABARIT_RECUP" >&2; exit 1; }
 
 # Le gabarit est du HTML : il doit voyager comme une chaîne JSON échappée.
 CORPS=$(python3 -c 'import json,sys; print(json.dumps(open(sys.argv[1],encoding="utf-8").read()))' "$GABARIT")
+CORPS_RECUP=$(python3 -c 'import json,sys; print(json.dumps(open(sys.argv[1],encoding="utf-8").read()))' "$GABARIT_RECUP")
 
 # -----------------------------------------------------------------------------
 # Relire le projet et dire ce qui s'y trouve.
@@ -93,8 +112,10 @@ def etat(cle, nom):
 print("Ce que le projet enverra vraiment :")
 etat("mailer_templates_confirmation_content", "Confirm signup")
 etat("mailer_templates_magic_link_content",   "Magic Link")
+etat("mailer_templates_recovery_content",     "Reset Password")
 print("  %-17s %s" % ("Sujet signup",   c.get("mailer_subjects_confirmation") or "(defaut)"))
 print("  %-17s %s" % ("Sujet magique",  c.get("mailer_subjects_magic_link")   or "(defaut)"))
+print("  %-17s %s" % ("Sujet recup",    c.get("mailer_subjects_recovery")     or "(defaut)"))
 print("  %-17s %s" % ("Site URL",       c.get("site_url")       or "(vide)"))
 print("  %-17s %s" % ("Redirect URLs",  c.get("uri_allow_list") or "(vide)"))
 
@@ -124,25 +145,38 @@ if [ "${1:-}" = "--verifier" ] || [ "${1:-}" = "-v" ]; then
 fi
 
 echo "Projet        : $PROJET"
-echo "Site URL      : $SITE"
-echo "Redirect URLs : $RETOURS"
-echo "Sujet         : $SUJET   (posé sur Magic Link ET Confirm signup)"
-echo "Gabarit       : $(wc -c < "$GABARIT" | tr -d ' ') caractères, {{ .Token }} $(grep -c '{{ .Token }}' "$GABARIT") fois"
+if [ "$AVEC_URLS" = "oui" ]; then
+  echo "Site URL      : $SITE"
+  echo "Redirect URLs : $RETOURS"
+else
+  echo "Site URL      : NON TOUCHÉ (CLAUDE.md § 9.1). Ajouter --urls pour les poser."
+fi
+echo "Sujet code    : $SUJET   (posé sur Magic Link ET Confirm signup)"
+echo "Sujet récup   : $SUJET_RECUP   (posé sur Reset Password)"
+echo "Gabarit code  : $(wc -c < "$GABARIT" | tr -d ' ') caractères, {{ .Token }} $(grep -c '{{ .Token }}' "$GABARIT") fois"
+echo "Gabarit récup : $(wc -c < "$GABARIT_RECUP" | tr -d ' ') caractères, {{ .Token }} $(grep -c '{{ .Token }}' "$GABARIT_RECUP") fois"
 printf 'Écrire ces réglages dans le projet ? [o/N] '
 read -r rep
 case "$rep" in o|O|oui|OUI) ;; *) echo "Abandonné."; exit 0 ;; esac
+
+if [ "$AVEC_URLS" = "oui" ]; then
+  URLS_JSON="\"site_url\": \"$SITE\", \"uri_allow_list\": \"$RETOURS\","
+else
+  URLS_JSON=''
+fi
 
 REPONSE=$(curl -s -w '\n%{http_code}' -X PATCH \
   "https://api.supabase.com/v1/projects/$PROJET/config/auth" \
   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H 'Content-Type: application/json' \
   -d "{
-    \"site_url\": \"$SITE\",
-    \"uri_allow_list\": \"$RETOURS\",
+    $URLS_JSON
     \"mailer_subjects_magic_link\": \"$SUJET\",
     \"mailer_templates_magic_link_content\": $CORPS,
     \"mailer_subjects_confirmation\": \"$SUJET\",
-    \"mailer_templates_confirmation_content\": $CORPS
+    \"mailer_templates_confirmation_content\": $CORPS,
+    \"mailer_subjects_recovery\": \"$SUJET_RECUP\",
+    \"mailer_templates_recovery_content\": $CORPS_RECUP
   }")
 
 CODE=$(printf '%s' "$REPONSE" | tail -1)

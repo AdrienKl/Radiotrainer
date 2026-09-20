@@ -330,6 +330,85 @@
       return essayer(0);
     },
 
+    /* ---------- MOT DE PASSE OUBLIÉ : le parcours de récupération ----------
+       ┌─ POURQUOI UNE PORTE À PART, ET PAS L'OTP DE CONNEXION ──────────────┐
+       │ Le bouton « recevoir un code » ci-dessous existait déjà et servait à │
+       │ DEUX choses : l'inscription interrompue (un compte SANS mot de       │
+       │ passe) et le mot de passe oublié. Il ouvrait une session, puis       │
+       │ laissait l'utilisateur trouver tout seul le chemin des Paramètres    │
+       │ pour changer son mot de passe. Ce n'était pas un parcours de         │
+       │ récupération, c'était un contournement.                              │
+       │                                                                       │
+       │ Les deux cas sont désormais distincts, parce qu'ils NE SONT PAS la   │
+       │ même chose :                                                          │
+       │   · inscription interrompue → otpEnvoyer / otpVerifier, type de      │
+       │     connexion, et le parcours d'inscription reprend où il s'est      │
+       │     arrêté ;                                                          │
+       │   · mot de passe oublié → resetPasswordForEmail / verifyOtp type     │
+       │     'recovery', puis updateUser. C'est le mécanisme que Supabase a   │
+       │     prévu pour ça, et il emploie un AUTRE gabarit d'e-mail — celui   │
+       │     de récupération, qu'on identifie comme tel.                      │
+       └───────────────────────────────────────────────────────────────────────┘
+
+       LE CODE EST UN VRAI OTP SUPABASE. resetPasswordForEmail engendre un
+       `recovery_token` à usage unique, que {{ .Token }} affiche dans l'e-mail
+       et que verifyOtp consomme. Rien n'est fabriqué, stocké ni comparé ici. */
+    recuperationEnvoyer: function(email){
+      var c = C();
+      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      var opts = {};
+      var retour = RTAuth.lienRetour();
+      if (retour) opts.redirectTo = retour;
+      return c.auth.resetPasswordForEmail(String(email||'').trim(), opts)
+        .then(function(r){ if (r && r.error) throw r.error; return true; });
+    },
+
+    /* Le type est 'recovery', et UNIQUEMENT lui.
+       otpVerifier() essaie trois types parce que le code de connexion peut
+       arriver sous 'signup' ou 'magiclink' selon que l'adresse est neuve ou
+       connue. Ici il n'y a aucune ambiguïté : resetPasswordForEmail range
+       toujours le code dans `recovery_token`. Essayer les autres types
+       ouvrirait une session de CONNEXION là où on attend une session de
+       RÉCUPÉRATION — et laisserait entrer quelqu'un qui a un code de
+       connexion en cours dans un parcours qui va changer le mot de passe. */
+    recuperationVerifier: function(email, code){
+      var c = C();
+      if (!c) return Promise.reject(new Error(RTAuth.raisonIndisponible()));
+      return c.auth.verifyOtp({
+        email: String(email||'').trim(),
+        token: String(code||'').replace(/\s+/g, ''),
+        type: 'recovery'
+      }).then(function(r){ if (r.error) throw r.error; return r.data; });
+    },
+
+    /* ---------- Le délai entre deux envois ---------------------------------
+       ┌─ CE N'EST PAS UNE PROTECTION, ET IL FAUT LE DIRE ───────────────────┐
+       │ Un compteur dans le navigateur ne protège de rien : la page          │
+       │ appartient à l'utilisateur, et la console la contourne en une ligne. │
+       │ CLAUDE.md § 8 le répète — toute règle qui compte se prend en base.   │
+       │                                                                       │
+       │ CE QUI PROTÈGE VRAIMENT est chez Supabase, et existe déjà :          │
+       │   · une limite par adresse IP sur les envois d'e-mail ;              │
+       │   · le plafond du service d'envoi (2 messages/heure sur l'intégré) ; │
+       │   · « For security purposes, you can only request this after N       │
+       │     seconds », que GoTrue renvoie de lui-même.                       │
+       │                                                                       │
+       │ CE COMPTEUR-CI sert à autre chose : éviter que quelqu'un qui n'a pas │
+       │ encore reçu son message clique cinq fois et consomme le plafond de   │
+       │ son propre projet — puis attende une heure. C'est de l'ergonomie qui │
+       │ évite un dégât réel, pas un rempart.                                 │
+       └───────────────────────────────────────────────────────────────────────┘ */
+    DELAI_RENVOI: 60,
+    _dernierEnvoi: {},
+    attenteRestante: function(quoi){
+      var t = RTAuth._dernierEnvoi[quoi || 'otp'] || 0;
+      var reste = Math.ceil((t + RTAuth.DELAI_RENVOI * 1000 - Date.now()) / 1000);
+      return reste > 0 ? reste : 0;
+    },
+    marquerEnvoi: function(quoi){
+      RTAuth._dernierEnvoi[quoi || 'otp'] = Date.now();
+    },
+
     /* Pose le mot de passe d'un compte qui vient d'être vérifié par code. Le
        mot de passe part directement à Supabase : il n'est ni lu, ni comparé, ni
        conservé ici — exactement comme dans connexion(). */
@@ -428,6 +507,114 @@
         .catch(function(e){ libre(); msg('loginMsg', messageFr(e)); });
     });
 
+    /* ---- MOT DE PASSE OUBLIÉ : les trois étapes -----------------------
+       Un seul panneau à la fois. L'étape 3 n'apparaît qu'APRÈS que le code a
+       été vérifié : sans session de récupération ouverte, updateUser échoue,
+       et proposer le champ avant reviendrait à faire saisir un mot de passe
+       pour rien. */
+    var bOubli = $('mdpOublie'), mdpBloc = $('mdpBloc');
+    var mdpE1 = $('mdpEtape1'), mdpE2 = $('mdpEtape2'), mdpE3 = $('mdpEtape3');
+    var bMdpDem = $('mdpDemander'), bMdpVal = $('mdpValider');
+    var bMdpRen = $('mdpRenvoyer'), bMdpEnr = $('mdpEnregistrer');
+
+    function mdpEtape(n){
+      if (mdpE1) mdpE1.hidden = n !== 1;
+      if (mdpE2) mdpE2.hidden = n !== 2;
+      if (mdpE3) mdpE3.hidden = n !== 3;
+    }
+
+    if (bOubli) bOubli.addEventListener('click', function(){
+      if (!mdpBloc) return;
+      mdpBloc.hidden = !mdpBloc.hidden;
+      if (!mdpBloc.hidden){
+        mdpEtape(1);
+        /* L'autre porte se referme : deux champs « code » ouverts en même
+           temps, c'est l'assurance de coller le code dans le mauvais. */
+        if (bloc) bloc.hidden = true;
+        msg('loginMsg','');
+      }
+    });
+
+    /* L'envoi, partagé par « Envoyer » et « Renvoyer » — c'est le même appel,
+       et le même garde-fou. */
+    function mdpEnvoyer(bouton){
+      var email = ($('loginId').value||'').trim();
+      if (!email) return msg('loginMsg', "Renseignez d'abord votre adresse e-mail.");
+      var reste = RTAuth.attenteRestante('recuperation');
+      if (reste) return msg('loginMsg', 'Patientez ' + reste + ' seconde' + (reste > 1 ? 's' : '')
+                                      + ' avant de demander un nouveau code.');
+      msg('loginMsg','');
+      var libre = occuper(bouton, 'Envoi…');
+      /* Réponse NEUTRE, au conditionnel, et identique que le compte existe ou
+         non : sinon, comparer les deux réponses suffirait à savoir quelles
+         adresses ont un compte ici. Supabase applique d'ailleurs la même
+         prudence — resetPasswordForEmail réussit sur une adresse inconnue. */
+      var neutre = function(){
+        libre();
+        RTAuth.marquerEnvoi('recuperation');
+        mdpEtape(2);
+        var ch = $('mdpCode'); if (ch) try{ ch.focus(); }catch(e){}
+        msg('loginMsg', "Si un compte existe pour cette adresse, un code de récupération vient d'y être envoyé.", 'ok');
+      };
+      RTAuth.recuperationEnvoyer(email).then(neutre).catch(function(e){
+        var m = (e && e.message) || '';
+        if (/user not found|not found/i.test(m)) return neutre();
+        libre(); msg('loginMsg', messageFr(e));
+      });
+    }
+
+    if (bMdpDem) bMdpDem.addEventListener('click', function(){ mdpEnvoyer(bMdpDem); });
+    if (bMdpRen) bMdpRen.addEventListener('click', function(){ mdpEnvoyer(bMdpRen); });
+
+    if (bMdpVal) bMdpVal.addEventListener('click', function(){
+      var email = ($('loginId').value||'').trim();
+      var code  = ($('mdpCode').value||'').replace(/\s+/g,'');
+      if (code.length < 6) return msg('loginMsg', "Saisissez le code à six chiffres reçu par e-mail.");
+      msg('loginMsg','');
+      var libre = occuper(bMdpVal, 'Vérification…');
+      RTAuth.recuperationVerifier(email, code)
+        .then(function(){
+          libre();
+          $('mdpCode').value = '';        // le code est consommé : il ne traîne pas dans le DOM
+          mdpEtape(3);
+          var n = $('mdpNouveau'); if (n) try{ n.focus(); }catch(e){}
+          msg('loginMsg', 'Code vérifié. Choisissez votre nouveau mot de passe.', 'ok');
+        })
+        .catch(function(e){ libre(); msg('loginMsg', messageFr(e)); });
+    });
+
+    if (bMdpEnr) bMdpEnr.addEventListener('click', function(){
+      var a = $('mdpNouveau').value || '', b = $('mdpConfirme').value || '';
+      /* Les deux mêmes garde-fous que l'inscription, et pas un de plus : la
+         longueur minimale est celle de Supabase, qui refuserait de toute façon.
+         Vérifier ici évite un aller-retour, ça ne remplace rien. */
+      if (a.length < 8) return msg('loginMsg', 'Le mot de passe doit faire au moins 8 caractères.');
+      if (a !== b)      return msg('loginMsg', 'Les deux mots de passe ne correspondent pas.');
+      msg('loginMsg','');
+      var libre = occuper(bMdpEnr, 'Enregistrement…');
+      RTAuth.definirMotDePasse(a)
+        .then(function(){ return chargerProfil(); })
+        .then(function(){
+          libre();
+          /* Le mot de passe ne traîne dans aucun des deux champs. */
+          $('mdpNouveau').value = ''; $('mdpConfirme').value = '';
+          if (mdpBloc) mdpBloc.hidden = true;
+          annoncer();
+          /* La session de récupération EST une session : l'utilisateur est
+             déjà entré. rtSessionOuverte plutôt que rtEntrer, pour qu'un
+             parcours d'inscription inachevé reprenne où il s'était arrêté. */
+          if (window.rtSessionOuverte) window.rtSessionOuverte();
+        })
+        .catch(function(e){ libre(); msg('loginMsg', messageFr(e)); });
+    });
+
+    ['mdpCode'].forEach(function(id){
+      var e=$(id); if(e) e.addEventListener('keydown', function(ev){ if(ev.key==='Enter' && bMdpVal) bMdpVal.click(); });
+    });
+    ['mdpNouveau','mdpConfirme'].forEach(function(id){
+      var e=$(id); if(e) e.addEventListener('keydown', function(ev){ if(ev.key==='Enter' && bMdpEnr) bMdpEnr.click(); });
+    });
+
     /* ---- Secours : entrer avec un code reçu par e-mail ----------------
        Deux usages pour un seul mécanisme : le mot de passe oublié, et le
        compte dont l'inscription s'est arrêtée avant l'étape du mot de passe —
@@ -445,7 +632,17 @@
     if (bDem) bDem.addEventListener('click', function(){
       var email = ($('loginId').value||'').trim();
       if (!email) return msg('loginMsg', "Renseignez d'abord votre adresse e-mail.");
+      /* Le même garde-fou que la porte 1, et pour la même raison : cinq clics
+         d'affilée consomment le plafond d'envoi du projet, et c'est une heure
+         d'attente pour tout le monde. Compteur distinct — les deux portes
+         emploient deux gabarits différents et deux jetons différents. */
+      var reste = RTAuth.attenteRestante('otp');
+      if (reste) return msg('loginMsg', 'Patientez ' + reste + ' seconde' + (reste > 1 ? 's' : '')
+                                      + ' avant de demander un nouveau code.');
       msg('loginMsg','');
+      /* L'autre porte se referme : deux champs « code » ouverts en même temps,
+         c'est l'assurance de coller le code dans le mauvais. */
+      if (mdpBloc) mdpBloc.hidden = true;
       var libre = occuper(bDem, 'Envoi…');
       /* La phrase est au conditionnel, et c'est voulu : elle est affichée à
          l'identique que le compte existe ou non. Sans ça, comparer les deux
@@ -454,6 +651,7 @@
          pas lequel des deux est faux. */
       var neutre = function(){
         libre();
+        RTAuth.marquerEnvoi('otp');
         if (bloc) bloc.hidden = false;
         var c = $('logCode'); if (c) try{ c.focus(); }catch(e){}
         msg('loginMsg', "Si un compte existe pour cette adresse, un code vient d'y être envoyé.", 'ok');

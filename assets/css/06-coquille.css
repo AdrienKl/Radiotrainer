@@ -127,7 +127,16 @@
      bien — et chaque envoi coûte un des deux e-mails autorisés par heure. */
   .ins-secours{ margin:18px 0 0; padding-top:16px; border-top:1px solid var(--border); text-align:center; }
   .ins-secours .auth-link{ font-size:12.5px; font-weight:600; }
-  .ins-secours #logCodeBloc:not([hidden]){ margin-top:14px; text-align:left; }
+  /* Le conteneur centre ses deux liens ; les FORMULAIRES qu'il ouvre doivent
+     retrouver l'alignement du reste de la carte. Sans ça, « NOUVEAU MOT DE
+     PASSE » se retrouve centré au-dessus d'un champ pleine largeur, à deux
+     centimètres d'« ADRESSE E-MAIL » qui est à gauche — et l'œil bute. */
+  .ins-secours #logCodeBloc:not([hidden]),
+  .ins-secours #mdpBloc:not([hidden]){ margin-top:14px; text-align:left; }
+  /* Les deux liens du bloc de récupération (« Renvoyer un code ») restent
+     centrés : ce sont des liens, pas des champs. */
+  .ins-secours #mdpBloc .auth-switch{ text-align:center; }
+  .ins-secours #mdpBloc .auth-sub{ margin:0 0 12px; font-size:13px; }
 
   /* Le code à six chiffres : espacé et en chasse fixe, pour qu'on puisse le
      relire caractère par caractère en le recopiant de l'e-mail. */

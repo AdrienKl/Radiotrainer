@@ -581,7 +581,7 @@ L'objectif final est de construire AVIERO comme un produit réel, professionnel 
 
 ---
 
-## 21. OÙ EN EST LE TRAVAIL — à lire en premier, état au 19/09/2026
+## 21. OÙ EN EST LE TRAVAIL — à lire en premier, état au 20/09/2026
 
 ### 21.1 Ce qui est fait et poussé
 
@@ -596,59 +596,68 @@ node tests/comparer-rendu.mjs      # le rendu avant/après un découpage (voir s
 node tests/mesurer-pixels.mjs      # le contraste sur les PIXELS (site servi requis)
 ```
 
-### 21.2 CE QUI BLOQUE — `sql/002-progression.sql` n'est appliqué qu'à MOITIÉ
+### 21.2 `sql/002-progression.sql` — APPLIQUÉ EN ENTIER le 20/09/2026
 
-C'est le point le plus important de cette section.
+Ce paragraphe a été, pendant une journée, le point le plus important de cette section. Il ne l'est plus.
 
 | § de la migration | État en base |
 |---|---|
-| § 1 — les 13 exercices | **appliqué** (le 19/09/2026) |
-| § 2 — `profiles.etat_vol` | **ABSENTE** (`42703`) |
-| § 4 — `v_daily_practice` | **ABSENTE** |
-| § 4 — les trois autres vues | présentes, mais elles l'étaient déjà avant |
-| § 5 — les politiques RLS | conformes, écriture anonyme refusée partout |
+| § 1 — les 13 exercices | appliqué (19/09/2026) |
+| § 2 — `profiles.etat_vol` | **appliqué** (20/09/2026) |
+| § 3 — `v_daily_practice` et les trois autres vues | **les quatre présentes** (20/09/2026) |
+| § 4 — les politiques RLS | conformes, écriture anonyme refusée partout |
 
-**Pourquoi :** le fichier a été collé dans l'éditeur SQL de Supabase et le collage s'est arrêté en route. 390 lignes / 24 ko — un collage partiel passe sans la moindre erreur, on lit « Success » et la moitié n'est jamais partie.
+Vérifié par `sh tests/lancer_tout.sh base`, qui interroge le projet réel : « Le catalogue et les politiques sont conformes. »
 
-**Ce que ça coûte :** `profiles.etat_vol` porte le vol interrompu. Sans elle, un vol coupé au milieu ne se reprend que sur le navigateur où il a commencé.
+**Ce que ça débloque :** `profiles.etat_vol` porte le vol interrompu. Un vol coupé au milieu se reprend désormais depuis n'importe quel appareil, ce que le code savait faire depuis le 18/09 sans pouvoir s'en servir.
 
-**À faire, et c'est au développeur — jamais à Claude :**
+#### La leçon, qui vaut plus que la panne
+
+Le fichier avait été **collé dans l'éditeur SQL** de Supabase, et le collage s'était arrêté en route. 390 lignes, 24 ko : un collage partiel passe **sans la moindre erreur**, l'éditeur affiche « Success », et la moitié n'est jamais partie. Personne ne l'a su pendant une journée, et rien dans l'application ne pouvait le dire — le code était juste, c'est la base qui était incomplète.
+
+**Règle qui en découle, et qui vaut pour toute migration à venir :** un fichier SQL se pose par l'API, jamais par le presse-papier.
 
 ```sh
-SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-sql.sh sql/002-progression.sql
+SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-sql.sh sql/00X-….sql
+sh tests/lancer_tout.sh base
 ```
 
-Cette voie envoie le fichier d'un bloc par l'API : pas de presse-papier, pas de troncature. Le fichier est idempotent, le rejouer ne duplique rien. **Puis vérifier :** `sh tests/lancer_tout.sh base`.
+Le jeton se crée sur `supabase.com/dashboard/account/tokens` et **se révoque après usage** : il donne un accès complet à tous les projets, bien au-delà de ce site.
 
-**Reste ensuite un rattrapage :** les séances des six scénarios enregistrées AVANT le 19/09/2026 ont `exercise_key = null` en base — `assets/sync.js` réessaie sans la clé quand la clé étrangère est refusée, ce qui sauve la séance mais la détache. Elles s'affichent « Scénario » et ne sont pas relançables. Les nouvelles s'attachent correctement. Visible depuis la console d'administration seulement (RLS).
+`assets/admin/README.md § 4.2` porte désormais cet avertissement à la place du « collez ce script », et `tests/verifier-migrations.mjs` vérifie hors ligne, à chaque exécution de la suite, que l'enchaînement des fichiers monte bien un projet neuf.
 
-### 21.3 Travail commité mais NON FUSIONNÉ
+#### Ce qui reste, et pourquoi on n'y touche pas
 
-Deux branches attendent, `main` et `origin/main` sont restées au 19/09/2026 sur `2703b57`.
+Les séances des six scénarios enregistrées **avant le 19/09/2026** ont `exercise_key = null` en base. `assets/sync.js` réessaie sans la clé quand la clé étrangère est refusée : la séance est sauvée, mais détachée. Elles s'affichent « Scénario » et ne sont pas relançables. Les nouvelles s'attachent correctement.
 
-**`sql-003-et-verif-catalogue`** — 2 commits, tests verts.
+**Elles ne sont pas récupérables automatiquement, et c'est démontré :** la ceinture de `sync.js` met `exercise_key` à `null`, et **aucun autre champ de la ligne ne dit quel scénario c'était**. Le déroulé des échanges (`session_steps.phase`, `.station`) le trahirait peut-être, mais rattacher une séance au **mauvais** exercice serait pire que la laisser générique — l'élève relancerait un exercice qu'il n'a jamais fait, et la console compterait faux.
 
-| Fichier | Quoi |
+Avant d'envisager quoi que ce soit, il faudrait d'abord **savoir combien elles sont**. C'est une lecture, et elle demande un accès administrateur (RLS) :
+
+```sql
+select count(*) as detachees, min(started_at) as la_plus_ancienne, max(started_at) as la_plus_recente
+  from public.sessions where kind = 'scenario' and exercise_key is null;
+```
+
+Si le compte est petit — ce qui est probable, le site n'est pas ouvert au public — **ne rien faire est la bonne réponse.**
+
+### 21.3 Ce qui a été fusionné dans la nuit du 19 au 20/09/2026
+
+`main` et `origin/main` sont synchronisés. Cinq lots, chacun sur sa branche, chacun fusionné tests verts (§ 13.1).
+
+| Lot | Quoi |
 |---|---|
-| `sql/003-is-admin-et-exercices.sql` | **nouveau** — verse `is_admin()` et la RLS d'`exercises` dans une migration versionnée |
-| `tests/verifier-catalogue.mjs` | **nouveau** — compare le catalogue de la base à celui de l'application, et sonde les politiques |
-| `tests/lancer_tout.sh` | modifié — ajout de l'étape `base` |
+| `sql-003-et-verif-catalogue` | `sql/003` (verse `is_admin()` et la RLS d'`exercises` dans une migration) et `tests/verifier-catalogue.mjs` (compare le catalogue réel à celui du code, sonde les politiques) |
+| `sql-000-socle` | `sql/000-socle.sql` — les six tables, `handle_new_user()` et son déclencheur, la clé étrangère du catalogue, cinq index, la RLS des six tables, les politiques d'`app_errors` et `admin_audit_log`. Plus `tests/verifier-migrations.mjs` |
+| `contraste-audit` | L'audit annoncé par `INSCRIPTION.md § 8`, et cinq textes repassés au-dessus du seuil AA |
+| `renommage-aviero` | La décision § 10.1 appliquée : 51 occurrences visibles |
+| `mesure-pixels` | `tests/mesurer-pixels.mjs`, et la réponse chiffrée à la question du § 8 |
 
-**`sql-000-socle`** — part de la précédente. Ce que le § 21.4 annonçait sous le nom `sql/004`.
+**Pourquoi `sql/000` et pas le `sql/004` annoncé.** Un numéro de migration est un **ordre d'exécution**. `sql/001` fait `alter table public.profiles`, `sql/002` insère dans `public.exercises` : les deux supposent ces tables. Un fichier numéroté 004 qu'il faut jouer en premier est un piège — sur un projet neuf, jouer 001 avant lui s'arrête sur « relation does not exist ».
 
-| Fichier | Quoi |
-|---|---|
-| `sql/000-socle.sql` | **nouveau** — les six tables, `is_admin()`, `handle_new_user()` et son déclencheur, la clé étrangère du catalogue, cinq index, la RLS des six tables et les politiques d'`app_errors` et `admin_audit_log` |
-| `tests/verifier-migrations.mjs` | **nouveau** — rejoue `sql/*.sql` sur un PostgreSQL jetable en mémoire, deux fois, puis contrôle le schéma obtenu |
-| `tests/lancer_tout.sh` | modifié — étape `migrations`, **dans « tout »** (hors ligne) |
-| `package.json` | modifié — `@electric-sql/pglite` en dépendance de **test** ; l'application reste sans aucune dépendance |
-| `tests/README.md`, `assets/admin/README.md` | mis à jour |
+**Ce que le banc d'essai a trouvé en tournant la première fois**, et qui n'était pas qu'un défaut du nouveau fichier : `public.is_admin()` n'était définie qu'en `sql/003`, alors que `sql/000` **et** `sql/002` l'appellent — 002 quatre fois, dans son § 4. Sur une base vide, les migrations s'arrêtaient là. L'en-tête de `sql/003` **annonçait** la panne sans que son numéro permette de l'éviter. Elle vit désormais dans le socle ; `sql/003` garde son `create or replace`, sans effet, comme trace de la fois où le manque a été trouvé.
 
-**Pourquoi `000` et pas `004`.** Un numéro de migration est un ordre d'exécution. `sql/001` fait `alter table public.profiles`, `sql/002` insère dans `public.exercises` : les deux supposent ces tables. Un fichier numéroté 004 qu'il faut jouer en premier est un piège.
-
-**Ce que le banc d'essai a trouvé en tournant la première fois** — et qui n'était pas qu'un défaut du nouveau fichier : `public.is_admin()` n'était définie qu'en `sql/003`, alors que `sql/000` **et** `sql/002` l'appellent (002 quatre fois, dans son § 4). Sur une base vide, les migrations s'arrêtaient là. L'en-tête de `sql/003` **annonçait** la panne sans que son numéro permette de l'éviter. Elle vit désormais dans le socle ; `sql/003` garde son `create or replace`, sans effet, comme trace de la fois où le manque a été trouvé.
-
-**Ces deux branches attendent la validation du développeur.** La fusion de la première a été tentée et refusée par le garde-fou d'écriture sur `main`.
+**Deux dépendances de TEST ont été ajoutées** — `@electric-sql/pglite` (le PostgreSQL jetable) et `pngjs` (la lecture des pixels). L'application, elle, reste un site statique sans aucune dépendance.
 
 ### 21.4 Le fossé entre les migrations et la base réelle
 
@@ -661,6 +670,18 @@ Conséquence concrète, tant que c'était vrai : **rejouer les migrations sur un
 Ce qui reste hors de portée de ce banc d'essai, parce que PGlite est un PostgreSQL et non un Supabase : le comportement réel des politiques face à un **vrai jeton**, avec **deux comptes**. Ça demande toujours un **projet Supabase de test** — lequel reste le préalable à tester l'inscription, les RLS entre comptes et la fusion entre appareils (les tests coupent Supabase exprès, voir `tests/README.md`).
 
 La bonne nouvelle : monter ce projet de test n'est plus un chantier. C'est quatre commandes, dans l'ordre des numéros, et une vérification.
+
+**`sql/000` et `sql/003` ne sont PAS posés sur la production, et c'est délibéré.** Ils y seraient en principe sans effet — mais tous deux font `drop policy if exists` puis `create policy` sur des politiques RLS **vivantes**. Le 20/09/2026, la sortie de `sql/002` a montré que la production porte exactement les noms et les définitions que `sql/003` recrée (`exercice : lecture` → `true`, `exercice : écriture admin` → `is_admin()`) : pour celui-là, le no-op est **prouvé**. Pour `sql/000`, les politiques d'`app_errors` et d'`admin_audit_log` n'ont jamais été listées — leurs noms en production sont **inconnus**. Si la base les porte sous d'autres noms, les siennes resteraient EN PLUS des nôtres : les politiques se cumulent par OU, rien ne devient plus permissif, mais on ne saurait plus laquelle décide.
+
+À faire avant, en lecture seule :
+
+```sql
+select tablename, policyname, cmd, qual, with_check from pg_policies
+ where schemaname = 'public' and tablename in ('app_errors','admin_audit_log')
+ order by tablename, cmd;
+```
+
+Rien ne presse : ces deux fichiers existent pour monter un projet **neuf**, et c'est déjà vérifié hors ligne à chaque exécution de la suite.
 
 ### 21.5 Décisions en attente du développeur
 
@@ -709,14 +730,16 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 19/09/2026 | Les migrations sont rejouées à chaque exécution des tests sur un PostgreSQL jetable en mémoire — hors ligne, donc dans « tout » | `tests/README.md` |
 | 20/09/2026 | Le contraste des deux thèmes est audité à chaque commit, sur les quatorze pages. Cinq défauts trouvés, cinq corrigés — la bascule globale de `--ink-2` n'est plus nécessaire pour être conforme, et reste au développeur | `INSCRIPTION.md § 8 bis` |
 | 20/09/2026 | Le renommage visuel en AVIERO est appliqué : 51 occurrences visibles. Les clés de stockage, la configuration de production, les migrations appliquées et le dépôt ne bougent pas. `CGU_VERSION` non plus | § 10.1 |
+| 20/09/2026 | `sql/002-progression.sql` appliqué en entier par l'API. Une migration se pose par `supabase/poser-sql.sh`, JAMAIS par le presse-papier de l'éditeur SQL — un collage partiel affiche « Success » | § 21.2 |
+| 20/09/2026 | Les séances détachées d'avant le 19/09 ne sont pas récupérables : `exercise_key` est à `null` et aucun autre champ ne dit quel scénario c'était. Les rattacher au jugé serait pire | § 21.2 |
 | 20/09/2026 | Le contraste se mesure sur DEUX fronts : les couleurs résolues dans la suite (large, rapide, indulgent), les pixels à la demande (juste, mais dépendant de la machine — donc jamais un test) | `INSCRIPTION.md § 8 ter` |
 
 ### En attente de validation
 
 - **Convention de nommage** (§ 16.2) — proposée, pas appliquée. Aucun renommage de masse avant accord.
 - **Fusion des réglages clé par clé** (§ 21.5) — la règle « le plus récent gagne » existe, mais sur l'objet entier. Une question reste posée au développeur avant d'écrire quoi que ce soit.
-- **`sql/003` et `tests/verifier-catalogue.mjs`** (§ 21.3) — commités sur `sql-003-et-verif-catalogue`, non fusionnés. Fusion tentée, refusée par le garde-fou d'écriture sur `main`.
-- **`sql/000-socle.sql` et `tests/verifier-migrations.mjs`** (§ 21.3) — commités sur `sql-000-socle`, non fusionnés. Remplacent le `sql/004` annoncé : un socle se joue en PREMIER, son numéro doit le dire.
+- **Poser `sql/000` et `sql/003` sur la PRODUCTION** (§ 21.4) — ils y seraient sans effet, mais recréent des politiques RLS vivantes. Le no-op de `sql/003` est prouvé ; celui de `sql/000` demande d'abord de lister les politiques d'`app_errors` et `admin_audit_log`, jamais vues. Sans urgence.
+- **Les séances détachées** (§ 21.2) — en compter le nombre avant de décider. Si elles sont peu nombreuses, ne rien faire est la bonne réponse.
 - **Trois contrastes sous le seuil AA, mesurés sur les pixels, NON corrigés** (`INSCRIPTION.md § 8 ter`) — les pastilles « 1 2 3 » en thème sombre (2,71:1), l'accroche de l'accueil sur la photo (3,69:1), et `--bad` `#d9534f` sur blanc (3,96:1). Les corriger touche `--violet` et `--bad`, donc la palette : § 10 conserve le design actuel, § 4 demande une validation. **Les valeurs correctives sont calculées** — la décision tient en une minute.
 - **La bascule globale de `--ink-2` — tranchée par la mesure, à confirmer** : 27 textes le portent, zéro sous le seuil en pixels, le pire à 4,55:1. Elle n'est plus nécessaire. La question du § 8 peut être close.
 - **`@electric-sql/pglite` et `pngjs` en dépendances de test** — l'application reste un site statique sans aucune dépendance ; seule la suite de tests en gagne deux. À confirmer.

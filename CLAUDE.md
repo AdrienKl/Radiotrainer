@@ -585,10 +585,10 @@ L'objectif final est de construire AVIERO comme un produit réel, professionnel 
 
 ### 21.1 Ce qui est fait et poussé
 
-La **phase 2 est close** (§ 6.2), et une base de tests existe : **161 vérifications automatiques** (91 de contrat, 11 de migration, 59 de parcours), plus deux outils lancés à la demande.
+La **phase 2 est close** (§ 6.2), et une base de tests existe : **184 vérifications automatiques** (98 de contrat, 11 de migration, 75 de parcours), plus deux outils lancés à la demande.
 
 ```sh
-sh tests/lancer_tout.sh            # les 161, hors réseau
+sh tests/lancer_tout.sh            # les 184, hors réseau
 sh tests/lancer_tout.sh contrat    # la lecture du code seule, < 1 s
 sh tests/lancer_tout.sh migrations # le SQL sur un PostgreSQL jetable, hors ligne
 sh tests/lancer_tout.sh base       # le catalogue et les politiques, CONTRE LE PROJET RÉEL
@@ -704,7 +704,8 @@ Huit vérifications couvrent la règle, et six d'entre elles rougissent si on re
 ### 21.6 Ce que les tests ne couvrent toujours pas
 
 - **le micro réel** — la chaîne entière est couverte par une fausse `SpeechRecognition` (`tests/parcours/micro.spec.js`), mais pas l'audio. **Vérifié à la main par le développeur le 20/09/2026 : la Navigation et le micro fonctionnent.** À refaire après toute étape qui touche à la voix ou à la reconnaissance ;
-- **l'inscription, l'auth, les RLS avec deux comptes** — il faut le projet de test. Depuis le 19/09/2026, `tests/verifier-migrations.mjs` vérifie hors ligne que les politiques sont bien POSÉES et que le déclencheur crée un profil ; ce qu'un compte connecté voit des données d'un autre reste non couvert ;
+- **l'inscription et les deux parcours d'authentification avec un VRAI e-mail** — les huit vérifications de `mot-de-passe-oublie.spec.js` couvrent l'enchaînement avec Supabase remplacé par une doublure. Qu'un message parte et que Supabase accepte le code demande une vraie adresse, à la main. **Et les trois gabarits doivent être posés sur le projet** (`sh supabase/poser-reglages.sh`), sans quoi le message arrive sans code ;
+- **les RLS avec deux comptes** — il faut le projet de test. Depuis le 19/09/2026, `tests/verifier-migrations.mjs` vérifie hors ligne que les politiques sont bien POSÉES et que le déclencheur crée un profil ; ce qu'un compte connecté voit des données d'un autre reste non couvert ;
 - **la fusion entre deux appareils** — jamais vérifiée, ni par un test ni à la main ;
 - **le contraste sur d'autres machines** — couvert depuis le 20/09/2026 sur deux fronts : `tests/parcours/contraste.spec.js` (couleurs résolues, ~1 350 relevés, dans la suite) et `tests/mesurer-pixels.mjs` (les pixels, 310 textes, à la demande). Mais le second n'a tourné que sur une machine, et le lissage des polices varie d'un système à l'autre. Détail : `INSCRIPTION.md § 8 bis` et `§ 8 ter`.
 
@@ -740,6 +741,10 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 20/09/2026 | Le renommage visuel en AVIERO est appliqué : 51 occurrences visibles. Les clés de stockage, la configuration de production, les migrations appliquées et le dépôt ne bougent pas. `CGU_VERSION` non plus | § 10.1 |
 | 20/09/2026 | `sql/002-progression.sql` appliqué en entier par l'API. Une migration se pose par `supabase/poser-sql.sh`, JAMAIS par le presse-papier de l'éditeur SQL — un collage partiel affiche « Success » | § 21.2 |
 | 20/09/2026 | Les séances détachées d'avant le 19/09 ne sont pas récupérables : `exercise_key` est à `null` et aucun autre champ ne dit quel scénario c'était. Les rattacher au jugé serait pire | § 21.2 |
+| 20/09/2026 | L'authentification reste **entièrement Supabase** : `signInWithOtp` / `resetPasswordForEmail` / `verifyOtp` / `updateUser`. Aucun code n'est fabriqué, stocké ni comparé côté client — `tests/contrat/auth-otp.test.mjs` le surveille | `INSCRIPTION.md § 1 bis` |
+| 20/09/2026 | « Mot de passe oublié » et « inscription interrompue » deviennent DEUX portes : on ne récupère pas un mot de passe qui n'a jamais existé, et les deux jetons ne sont pas interchangeables | `INSCRIPTION.md § 1 bis` |
+| 20/09/2026 | Les gabarits d'e-mail ne portent plus de lien : le parcours est un parcours par CODE, et un lien ouvre un onglet où le formulaire reprend à zéro | `INSCRIPTION.md § 1.2` |
+| 20/09/2026 | `poser-reglages.sh` ne touche plus au Site URL ni à la liste blanche sans `--urls` : travailler sur les e-mails ne doit pas entraîner la configuration du domaine (§ 9.1) | § 9.1 |
 | 20/09/2026 | Fusion des réglages **clé par clé**, le plus récent gagne, sans exception — y compris le retour à la valeur par défaut | § 21.5 |
 | 20/09/2026 | Les trois derniers contrastes sous le seuil corrigés. `--ink-2` reste `#6b7280` : la mesure sur pixels ne justifie pas de bascule globale, la question du § 8 est close | `INSCRIPTION.md § 8` |
 | 20/09/2026 | Un jeton de couleur de TEXTE ne sert jamais de FOND : `--violet-dark` bascule en violet clair dans le thème sombre. `.step__n` en était mort | `INSCRIPTION.md § 8 ter` |

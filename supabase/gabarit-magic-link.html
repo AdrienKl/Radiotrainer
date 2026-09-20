@@ -1,32 +1,42 @@
-<!-- AVIERO — corps de l'e-mail « Magic Link ». À coller TEL QUEL dans
-     Supabase → Authentication → Emails → onglet Magic Link, champ « Message
-     body », en remplacement de tout ce qui s'y trouve. Le pourquoi est dans
-     INSCRIPTION.md § 1.2. Styles en ligne : les clients de messagerie ignorent
-     les feuilles de style. -->
+<!-- AVIERO — corps de l'e-mail qui porte le CODE DE CONNEXION.
+     À poser sur DEUX emplacements Supabase : « Magic Link » (adresse déjà
+     connue) et « Confirm signup » (adresse neuve). C'est le piège du § 1.2
+     d'INSCRIPTION.md : n'en corriger qu'un laisse sans code exactement le cas
+     où l'on en a besoin — le compte neuf.
+     `supabase/poser-reglages.sh` pose les deux d'un coup.
+
+     PAS DE LIEN MAGIQUE ICI, et c'est une décision du 20/09/2026.
+     Le parcours d'AVIERO est un parcours par CODE : on saisit six chiffres sur
+     la page où l'on se trouve déjà. Un lien ouvre un nouvel onglet, et le
+     formulaire de l'ancien reprend à zéro — c'est exactement ce que le code
+     évite. Proposer les deux, c'était inviter la moitié des gens dans le
+     chemin le plus fragile.
+     Le code lu dans le lien reste accepté par `RTAuth.otpVerifierLien()` pour
+     qui aurait un ancien message sous la main ; on ne l'ANNONCE simplement
+     plus.
+
+     Styles en ligne : les clients de messagerie ignorent les feuilles de style. -->
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 4px;color:#242838">
 
-  <h2 style="margin:0 0 6px;font-size:20px;font-weight:700;color:#161b2a">Votre code AVIERO</h2>
+  <p style="margin:0 0 4px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5b4bce">AVIERO</p>
+
+  <h2 style="margin:0 0 6px;font-size:20px;font-weight:700;color:#161b2a">Votre code de connexion</h2>
 
   <p style="margin:0 0 18px;font-size:15px;line-height:1.55;color:#3a4356">
-    Saisissez ce code dans la page d'inscription&nbsp;:
+    Saisissez ce code dans AVIERO&nbsp;:
   </p>
 
-  <p style="margin:0 0 18px;font-size:28px;font-weight:bold;letter-spacing:6px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#161b2a">{{ .Token }}</p>
+  <p style="margin:0 0 18px;font-size:30px;font-weight:bold;letter-spacing:7px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#161b2a">{{ .Token }}</p>
 
   <p style="margin:0 0 22px;font-size:13.5px;line-height:1.55;color:#3a4356">
-    Il est valable une heure. Si vous n'avez pas demandé ce code, ignorez ce message&nbsp;:
-    personne ne peut s'en servir sans accéder à votre boîte.
+    Ce code est à usage unique et expire prochainement. Si vous n'avez pas
+    demandé de connexion, ignorez ce message&nbsp;: personne ne peut s'en
+    servir sans accéder à votre boîte.
   </p>
 
   <hr style="border:none;border-top:1px solid #e3e6ee;margin:0 0 18px">
 
-  <p style="margin:0;font-size:12.5px;line-height:1.6;color:#6b7280">
-    Vous préférez cliquer&nbsp;? <a href="{{ .ConfirmationURL }}" style="color:#5b4bce">Ouvrir la page directement</a>.<br>
-    Si ce lien ne s'ouvre pas, copiez son adresse et collez-la dans le champ
-    «&nbsp;Code reçu&nbsp;»&nbsp;: elle fait la même chose.
-  </p>
-
-  <p style="margin:18px 0 0;font-size:11.5px;line-height:1.6;color:#8a90a0">
+  <p style="margin:0;font-size:11.5px;line-height:1.6;color:#6b7280">
     AVIERO — entraînement à la phraséologie radio VFR.
     Outil pédagogique&nbsp;: il ne remplace pas la formation avec un instructeur.
   </p>

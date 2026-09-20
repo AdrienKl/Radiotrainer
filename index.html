@@ -456,7 +456,69 @@
                vérifié par le serveur. shouldCreateUser vaut false ici : cette
                porte ne doit pas pouvoir créer de compte. -->
           <div class="ins-secours">
-            <button class="auth-link" type="button" id="logCodeDemander">Mot de passe oublié, ou inscription interrompue ? Recevoir un code par e-mail</button>
+
+            <!-- ---- PORTE 1 : mot de passe oublié ----
+                 Le vrai parcours de récupération : resetPasswordForEmail →
+                 code à usage unique → verifyOtp type 'recovery' → nouveau mot
+                 de passe. Trois panneaux, pas trois routes — une étape n'a
+                 aucun sens hors de sa séquence, exactement comme les cinq
+                 étapes de l'inscription.
+
+                 AVANT, ce cas passait par la porte 2 : on ouvrait une session
+                 de connexion et l'utilisateur devait trouver tout seul le
+                 chemin des Paramètres pour changer son mot de passe. Ce n'était
+                 pas un parcours de récupération, c'était un contournement. -->
+            <button class="auth-link" type="button" id="mdpOublie">Mot de passe oublié ?</button>
+            <div id="mdpBloc" hidden>
+
+              <!-- Étape 1 : demander le code -->
+              <div id="mdpEtape1">
+                <p class="auth-sub">Nous enverrons un code à usage unique à l'adresse saisie ci-dessus.</p>
+                <button class="btn auth-submit" id="mdpDemander" type="button">Envoyer le code de récupération</button>
+              </div>
+
+              <!-- Étape 2 : saisir le code -->
+              <div id="mdpEtape2" hidden>
+                <div class="auth-field">
+                  <label for="mdpCode">Code de récupération</label>
+                  <input id="mdpCode" type="text" inputmode="numeric" autocomplete="one-time-code"
+                         maxlength="8" spellcheck="false" placeholder="123456" class="ins-code">
+                </div>
+                <button class="btn auth-submit" id="mdpValider" type="button">Vérifier le code</button>
+                <p class="auth-switch"><button class="auth-link" type="button" id="mdpRenvoyer">Renvoyer un code</button></p>
+              </div>
+
+              <!-- Étape 3 : le nouveau mot de passe.
+                   Il ne s'affiche QU'APRÈS que le code a été vérifié : sans
+                   session de récupération ouverte, updateUser échouerait, et
+                   proposer le champ avant reviendrait à faire saisir un mot de
+                   passe pour rien. -->
+              <div id="mdpEtape3" hidden>
+                <div class="auth-field">
+                  <label for="mdpNouveau">Nouveau mot de passe</label>
+                  <input id="mdpNouveau" type="password" autocomplete="new-password" placeholder="••••••••">
+                </div>
+                <div class="auth-field">
+                  <label for="mdpConfirme">Confirmation</label>
+                  <input id="mdpConfirme" type="password" autocomplete="new-password" placeholder="••••••••">
+                </div>
+                <button class="btn cta auth-submit" id="mdpEnregistrer" type="button">Enregistrer le nouveau mot de passe</button>
+              </div>
+            </div>
+
+            <!-- ---- PORTE 2 : inscription interrompue ----
+                 Un compte dont le parcours d'inscription s'est arrêté avant
+                 l'étape « mot de passe » existe VRAIMENT en base, mais n'a
+                 AUCUN mot de passe : ni le formulaire ci-dessus, ni la porte 1
+                 ne peuvent rien pour lui — on ne récupère pas un mot de passe
+                 qui n'a jamais existé. Sans cette porte, chaque inscription
+                 abandonnée laisserait un compte mort ET une adresse
+                 définitivement inutilisable, puisque déjà prise.
+
+                 shouldCreateUser vaut false : cette porte ne crée jamais de
+                 compte. Sinon une faute de frappe dans l'adresse fabriquerait
+                 un compte fantôme à chaque tentative. -->
+            <button class="auth-link" type="button" id="logCodeDemander">Inscription interrompue ? Recevoir un code par e-mail</button>
             <div id="logCodeBloc" hidden>
               <div class="auth-field">
                 <label for="logCode">Code reçu</label>

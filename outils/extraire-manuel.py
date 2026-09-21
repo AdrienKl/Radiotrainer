@@ -69,6 +69,14 @@ import pypdf, json, re, sys, collections, unicodedata, os
 PDF = 'Manuel_Phraseologie.pdf'
 DECALAGE = 18                       # page PDF = page imprimée + 18
 
+# La page 8 est la SEULE où les pictogrammes sont montrés au lieu d'être
+# employés : c'est la légende (« Le symbole [avion] indique une communication
+# d'un pilote »). Le script y lisait donc quatre répliques qui n'en sont pas.
+# C'est aussi la seule page qui porte le pictogramme ATIS — il n'y a, dans tout
+# le manuel, aucune communication ATIS marquée par un pictogramme ; le message
+# ATIS de la page 214 est du texte courant.
+PAGES_SANS_PHRASEOLOGIE = {8}
+
 # Les pictogrammes du manuel, reconnus à leurs dimensions d'image (manuel p. 8).
 LOCUTEUR = {(51,53):'pilote', (53,52):'pilote', (67,72):'controleur',
             (61,45):'vehicule', (55,40):'vehicule', (69,52):'atis'}
@@ -252,6 +260,7 @@ def construire():
         # collée aux premières pages du suivant (le message MAYDAY, p. 238).
         if any(numero == debut for debut, _t in CHAPITRES):
             section = sous = soussous = None
+        if numero in PAGES_SANS_PHRASEOLOGIE: continue
         d = lire_page(page, numero)
         evenements = [(t['y'], 'titre', t) for t in d['titres']]
         evenements += [(l[0][0], 'cellule', (i2, l)) for i2, l in d['cellules'].items() if l]
@@ -419,7 +428,10 @@ def main(sortie):
         'deduit': {
           'locuteur': "le pictogramme posé à côté du texte, que le manuel nomme p. 8 : "
                       "(51×53) et (53×52) = pilote, (67×72) = contrôleur, "
-                      "(61×45) = agent à bord d'un véhicule, (69×52) = ATIS.",
+                      "(61×45) = agent à bord d'un véhicule, (69×52) = ATIS. "
+                      "La page 8, qui montre ces pictogrammes au lieu de les "
+                      "employer, est écartée : sa légende n'est pas de la "
+                      "phraséologie.",
           'langue': "la police : Calibri gras = français, Calibri italique = anglais.",
           'colonnes': "dans les tableaux EXPRESSIONS, le contrôleur est à gauche "
                       "et le pilote à droite.",

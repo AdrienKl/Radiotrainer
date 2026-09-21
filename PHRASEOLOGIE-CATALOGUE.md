@@ -1,6 +1,6 @@
 # Le catalogue du manuel — toute la phraséologie, en un fichier
 
-`assets/donnees/phraseologie-manuel.json` — **1 058 répliques**, tirées des
+`assets/donnees/phraseologie-manuel.json` — **1 054 répliques**, tirées des
 281 pages du *Manuel de phraséologie à l'usage de la circulation aérienne
 générale* (DSNA, 10ᵉ édition, 15 avril 2023).
 
@@ -20,8 +20,8 @@ imprimée**, et l'endroit exact du manuel d'où elle vient.
 
 ## 1. Pourquoi un script plutôt qu'une saisie
 
-Le § 2 de `CLAUDE.md` interdit d'inventer une phrase. Saisir 1 058 répliques à
-la main, c'est 1 058 occasions de se tromper d'un mot — et rien pour s'en
+Le § 2 de `CLAUDE.md` interdit d'inventer une phrase. Saisir 1 054 répliques à
+la main, c'est 1 054 occasions de se tromper d'un mot — et rien pour s'en
 apercevoir.
 
 Ici, `fr` et `en` sont les **chaînes exactes du PDF**, jamais réécrites. Les
@@ -43,7 +43,7 @@ quatre points, page 8 (« Clés de lecture ») :
 
 | Quoi | D'où ça vient |
 |---|---|
-| **Qui parle** | le pictogramme posé à côté du texte, que le manuel nomme p. 8. On le reconnaît aux dimensions de l'image : (51×53) et (53×52) = pilote, (67×72) = contrôleur, (61×45) = agent à bord d'un véhicule, (69×52) = ATIS. |
+| **Qui parle** | le pictogramme posé à côté du texte, que le manuel nomme p. 8. On le reconnaît aux dimensions de l'image : (51×53) et (53×52) = pilote, (67×72) = contrôleur, (61×45) = agent à bord d'un véhicule, (69×52) = ATIS. La page 8 elle-même est écartée : elle *montre* les pictogrammes au lieu de les employer, sa légende n'est pas de la phraséologie. C'est aussi la seule page qui porte le pictogramme ATIS — dans tout le manuel, aucune communication ATIS n'est marquée ainsi, le message ATIS de la p. 214 est du texte courant. |
 | **La langue** | la police. Calibri **gras** = français, Calibri *italique* = anglais. Sans exception dans tout le manuel. |
 | **Les colonnes** | dans les tableaux EXPRESSIONS, le contrôleur est à gauche, le pilote à droite. |
 | **L'appariement FR/EN** | le manuel imprime le dialogue entier en français, **puis** le même en anglais. Les deux suites sont recollées dans l'ordre. |
@@ -57,7 +57,7 @@ six ancres du circuit VFR (décollage, alignement, atterrissage) dont
 **L'appariement ne devine jamais.** Les deux suites ne sont recollées que si
 la **suite des locuteurs concorde des deux côtés**. Sinon rien n'est collé :
 l'entrée porte `traductionSeparee: true` et n'a qu'une langue. C'est le cas de
-**341 entrées sur 1 058** — un couple absent vaut mieux qu'un faux couple.
+**341 entrées sur 1 054** — un couple absent vaut mieux qu'un faux couple.
 
 ---
 
@@ -83,13 +83,13 @@ l'entrée porte `traductionSeparee: true` et n'a qu'une langue. C'est le cas de
 | Champ | Ce qu'il dit |
 |---|---|
 | `genre` | `expressions` = le tableau **normatif** de la section, ce qu'on **peut** dire. `base`, `complementaire`, `exemple` = des dialogues qui l'illustrent. `texte` = de la prose. |
-| `locuteur` | `pilote`, `controleur`, `vehicule`, `atis`. |
+| `locuteur` | `pilote` (457), `controleur` (583), `vehicule` (14). |
 | `facultatifs` | les `[mots entre crochets]` — facultatifs selon le manuel p. 8. |
 | `aCompleter` | les `(mots entre parenthèses)` — à compléter, ou variante possible (p. 8). |
 | `traductionSeparee` | l'anglais n'a pas pu être apparié avec certitude ; l'entrée n'a qu'une langue. |
 | `dejaCite` | cette page du manuel est déjà citée quelque part dans le simulateur. **Faux = matière encore inexploitée.** |
 
-À côté des entrées, `contexte` (335 blocs) garde la **prose** du manuel —
+À côté des entrées, `contexte` (334 blocs) garde la **prose** du manuel —
 EMPLOI, CONDITIONS D'UTILISATION, ACTIONS du contrôleur et du pilote — rattachée
 à sa section. C'est là que se trouvent les règles qui encadrent les phrases,
 par exemple : *« En l'absence d'ATIS, avant de délivrer la clairance d'entrée
@@ -116,10 +116,10 @@ service, la direction et la vitesse du vent, le QNH »* (p. 148).
 | SERVICE D'INFORMATION DE VOL | 28 | 0 | 28 |
 | COLLATIONNEMENT PAR LE PILOTE | 20 | 0 | 0 |
 | SITUATIONS PARTICULIÈRES | 14 | 10 | 2 |
-| GÉNÉRALITÉS | 12 | 0 | 0 |
+| GÉNÉRALITÉS | 8 | 0 | 0 |
 | FRÉQUENCES | 11 | 11 | 2 |
 | RENSEIGNEMENTS SUR L'ÉTAT DE L'AÉRODROME | 3 | 1 | 0 |
-| **Total** | **1 058** | **324** | **365** |
+| **Total** | **1 054** | **324** | **365** |
 
 **Les deux tiers du manuel ne sont pas exploités.** Le détail, dans le chapitre
 qui compte pour le VFR :
@@ -164,7 +164,25 @@ croisière, la descente, l'approche. Plus le VFR spécial, les attentes, et les
 
 ---
 
-## 6. Si une entrée paraît fausse
+## 6. Le lire ailleurs — CSV et Markdown
+
+Le JSON fait 638 ko et porte des champs internes. Pour trier dans un tableur,
+ou faire analyser le corpus par un autre outil :
+
+```sh
+python3 outils/exporter-catalogue.py
+```
+
+Écrit à la racine `Albatros-VFR-phraseologie-DSNA.csv` (203 ko, séparateur `;`,
+BOM UTF-8 pour qu'Excel ne massacre pas les accents) et
+`Albatros-VFR-phraseologie-DSNA.md` (130 ko, groupé par section).
+
+Les deux sont **ignorés par Git** : ce sont des vues, elles se refont en une
+commande, et deux copies d'une même donnée finissent toujours par diverger.
+
+---
+
+## 7. Si une entrée paraît fausse
 
 Ne la corrigez pas dans le JSON : la prochaine regénération l'écrasera.
 

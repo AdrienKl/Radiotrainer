@@ -23,3 +23,9 @@ carte oaci/
 node_modules/
 test-results/
 playwright-report/
+
+# Les exports du catalogue de phraseologie : deux vues du JSON, refaites
+# en une commande (outils/exporter-catalogue.py). Deux copies d une meme
+# donnee finissent toujours par diverger — la source reste le JSON.
+Albatros-VFR-phraseologie-DSNA.csv
+Albatros-VFR-phraseologie-DSNA.md

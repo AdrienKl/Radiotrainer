@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE CSS, ET LE PIÈGE QU'IL A TENDU LE JOUR DE SON EXTRACTION
+   Albatros VFR — LE CSS, ET LE PIÈGE QU'IL A TENDU LE JOUR DE SON EXTRACTION
    -----------------------------------------------------------------------------
    Ce fichier existe à cause d'une panne qui a bien failli passer.
 

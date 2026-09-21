@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Admin · /admin/test — MODE TEST / CONTROLLER
+   Albatros VFR — Admin · /admin/test — MODE TEST / CONTROLLER
    -----------------------------------------------------------------------------
    La seule page de la console qui AGIT sur l'application. Et elle agit en
    passant par les mêmes portes que l'interface élève :

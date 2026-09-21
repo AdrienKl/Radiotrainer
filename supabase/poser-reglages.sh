@@ -39,8 +39,8 @@ set -eu
 PROJET='vbziwjeuzcbvrbrihhrg'
 SITE='https://adrienkl.github.io/Radiotrainer/'
 RETOURS='https://adrienkl.github.io/Radiotrainer/**'
-SUJET='AVIERO — votre code de connexion'
-SUJET_RECUP='AVIERO — récupération de votre compte'
+SUJET='Albatros VFR — votre code de connexion'
+SUJET_RECUP='Albatros VFR — récupération de votre compte'
 ICI=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 GABARIT="$ICI/gabarit-magic-link.html"
 GABARIT_RECUP="$ICI/gabarit-recuperation.html"

@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LES TUILES DE LA CARTE OACI
+   Albatros VFR — LES TUILES DE LA CARTE OACI
    -----------------------------------------------------------------------------
    Les 142 tuiles vivent dans DEUX dossiers, et ce n'est pas un caprice : l'interface
    web de GitHub n'accepte que 100 fichiers par envoi.

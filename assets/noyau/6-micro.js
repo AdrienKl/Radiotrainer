@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LA RECONNAISSANCE VOCALE
+   Albatros VFR — LA RECONNAISSANCE VOCALE
    -----------------------------------------------------------------------------
    Une SEULE instance, créée au chargement et réutilisée à chaque appui sur
    l'alternat. C'est délibéré : un `new SR()` par appui fait redemander la

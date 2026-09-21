@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LES PRÉFÉRENCES
+   Albatros VFR — LES PRÉFÉRENCES
    -----------------------------------------------------------------------------
    Une seule clé de stockage local, `rt-settings`, lue par tout le monde — y
    compris par le script du <head> qui pose le thème avant le premier pixel.

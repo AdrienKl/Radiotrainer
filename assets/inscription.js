@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — PARCOURS D'INSCRIPTION (5 étapes)
+   Albatros VFR — PARCOURS D'INSCRIPTION (5 étapes)
    -----------------------------------------------------------------------------
    L'ordre est celui d'un parcours honnête : on demande l'adresse, on la PROUVE
    par un code reçu dessus, et seulement ensuite on pose un mot de passe. Le

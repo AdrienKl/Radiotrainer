@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — COMPARER LE RENDU AVANT / APRÈS UN DÉCOUPAGE
+   Albatros VFR — COMPARER LE RENDU AVANT / APRÈS UN DÉCOUPAGE
    -----------------------------------------------------------------------------
    Les tests de parcours disent que l'application FONCTIONNE. Ils ne disent rien
    de ce à quoi elle RESSEMBLE. Or déplacer du CSS ne casse presque jamais un
@@ -13,8 +13,8 @@
    │ 1. poser la version de référence à côté, sans toucher au dossier de      │
    │    travail :                                                             │
    │                                                                          │
-   │      git worktree add /tmp/aviero-ref main                               │
-   │      (cd /tmp/aviero-ref && python3 -m http.server 8001 &)               │
+   │      git worktree add /tmp/albatros-ref main                               │
+   │      (cd /tmp/albatros-ref && python3 -m http.server 8001 &)               │
    │      python3 -m http.server 8000 &                                       │
    │                                                                          │
    │ 2. comparer :                                                            │
@@ -23,7 +23,7 @@
    │                                                                          │
    │ 3. ranger :                                                              │
    │                                                                          │
-   │      git worktree remove /tmp/aviero-ref                                 │
+   │      git worktree remove /tmp/albatros-ref                                 │
    └──────────────────────────────────────────────────────────────────────────┘
 
    ┌─ LIRE LE RÉSULTAT — LE PIÈGE ───────────────────────────────────────────┐

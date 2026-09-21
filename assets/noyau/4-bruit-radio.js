@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE SOUFFLE DE LA RADIO
+   Albatros VFR — LE SOUFFLE DE LA RADIO
    -----------------------------------------------------------------------------
    Bruit de fond généré par Web Audio, sans aucun fichier son. Il se déclenche
    pendant que le contrôleur parle, et s'arrête avec lui.

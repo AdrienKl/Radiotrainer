@@ -1,5 +1,5 @@
 -- =============================================================================
--- AVIERO — 000 : LE SOCLE
+-- Albatros VFR — 000 : LE SOCLE
 --                les six tables, le profil créé à l'inscription, et la RLS
 --                des deux tables qu'aucune migration ne décrivait
 -- -----------------------------------------------------------------------------

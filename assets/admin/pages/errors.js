@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Admin · /admin/errors
+   Albatros VFR — Admin · /admin/errors
    -----------------------------------------------------------------------------
    La question à laquelle cette page doit répondre est toujours la même :
    « pourquoi cette personne a-t-elle eu ce problème ? »

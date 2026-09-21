@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — UN VOL COMPLET, DE LA PRÉPARATION À L'HISTORIQUE
+   Albatros VFR — UN VOL COMPLET, DE LA PRÉPARATION À L'HISTORIQUE
    -----------------------------------------------------------------------------
    La page Navigation est le deuxième gros module du projet (≈3 500 lignes) et
    celui qui emprunte le plus au moteur de scénarios : une trentaine de symboles,

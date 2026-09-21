@@ -1,11 +1,11 @@
 /* =============================================================================
-   AVIERO — LE CATALOGUE DE PHRASÉOLOGIE
+   Albatros VFR — LE CATALOGUE DE PHRASÉOLOGIE
    -----------------------------------------------------------------------------
    Les treize scénarios : ce que le contrôleur dit, ce que le pilote doit
    répondre, et les mots-clés sur lesquels la réponse est notée.
 
    ┌─ CE FICHIER EST LE PLUS SENSIBLE DU PROJET ────────────────────────────┐
-   │ AVIERO enseigne la radiotéléphonie à de vrais pilotes. Une formulation  │
+   │ Albatros VFR enseigne la radiotéléphonie à de vrais pilotes. Une formulation  │
    │ inventée ici est une erreur qui sera apprise, répétée en vol, et        │
    │ entendue par un contrôleur.                                             │
    │                                                                          │

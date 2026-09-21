@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE ROUTEUR ET LES TROIS PAGES QUI DOIVENT RESTER OUVERTES
+   Albatros VFR — LE ROUTEUR ET LES TROIS PAGES QUI DOIVENT RESTER OUVERTES
    -----------------------------------------------------------------------------
    Le routeur tient une liste de pages, et chaque page de cette liste doit
    trouver sa section dans le document. Un découpage qui déplace du HTML peut

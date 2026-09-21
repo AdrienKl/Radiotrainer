@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Admin · COLLECTEUR D'ERREURS LOCAL
+   Albatros VFR — Admin · COLLECTEUR D'ERREURS LOCAL
    -----------------------------------------------------------------------------
    Capte les erreurs JavaScript et les promesses rejetées, et les range dans
    localStorage sous `rt-admin-errors` (100 entrées au maximum, les plus

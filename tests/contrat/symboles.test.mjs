@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE FILET DU DÉCOUPAGE
+   Albatros VFR — LE FILET DU DÉCOUPAGE
    -----------------------------------------------------------------------------
    Ce fichier est le plus important du dossier. Il surveille la seule chose qui
    peut casser l'application en silence pendant la migration.

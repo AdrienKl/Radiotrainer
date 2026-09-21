@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — L'API window RÉPOND VRAIMENT, DANS UN VRAI NAVIGATEUR
+   Albatros VFR — L'API window RÉPOND VRAIMENT, DANS UN VRAI NAVIGATEUR
    -----------------------------------------------------------------------------
    tests/contrat/api-window.test.mjs vérifie la NATURE des déclarations en lisant
    le code : `function` et `var` atterrissent sur window, `const` et `let` non.

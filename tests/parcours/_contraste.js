@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — MESURE DU CONTRASTE, DANS LA PAGE
+   Albatros VFR — MESURE DU CONTRASTE, DANS LA PAGE
    -----------------------------------------------------------------------------
    Sert à contraste.spec.js. Le code ci-dessous part s'exécuter DANS le
    navigateur (page.evaluate) : il n'a accès à rien du dossier tests/.

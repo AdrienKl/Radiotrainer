@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LA FUSION DES RÉGLAGES ENTRE DEUX APPAREILS
+   Albatros VFR — LA FUSION DES RÉGLAGES ENTRE DEUX APPAREILS
    -----------------------------------------------------------------------------
    ┌─ LE SCÉNARIO QUI A MOTIVÉ TOUT ÇA ──────────────────────────────────────┐
    │ On change le THÈME sur son téléphone, puis le DÉBIT DE LA VOIX sur son  │

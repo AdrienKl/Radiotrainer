@@ -1,8 +1,8 @@
 {
-  "name": "aviero",
+  "name": "albatros-vfr",
   "version": "0.1.0",
   "private": true,
-  "description": "AVIERO — plateforme de formation aeronautique. Site statique : ce fichier ne sert qu'a lancer les tests, l'application n'a aucune dependance.",
+  "description": "Albatros VFR — plateforme de formation aeronautique. Site statique : ce fichier ne sert qu'a lancer les tests, l'application n'a aucune dependance.",
   "scripts": {
     "test": "sh tests/lancer_tout.sh",
     "test:contrat": "node --test tests/contrat/",

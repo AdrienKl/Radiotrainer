@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE CHEMIN DU MICRO, AVEC UNE FAUSSE RECONNAISSANCE VOCALE
+   Albatros VFR — LE CHEMIN DU MICRO, AVEC UNE FAUSSE RECONNAISSANCE VOCALE
    -----------------------------------------------------------------------------
    C'était le trou de la suite, et il était grand : les autres tests TAPENT leur
    réponse dans le champ de transcription. Ils vérifient donc la notation, mais

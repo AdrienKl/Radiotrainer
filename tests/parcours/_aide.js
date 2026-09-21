@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — OUTILLAGE COMMUN DES TESTS DE PARCOURS
+   Albatros VFR — OUTILLAGE COMMUN DES TESTS DE PARCOURS
    -----------------------------------------------------------------------------
    Deux décisions sont prises ici, et elles valent d'être expliquées.
 

@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LA NAVIGATION — PREPARATION ET VOL EN DIRECT
+   Albatros VFR — LA NAVIGATION — PREPARATION ET VOL EN DIRECT
    -----------------------------------------------------------------------------
    Le plus gros module de l'application apres le moteur : preparation du vol,
    carte, vol en direct, organismes de controle, aleas, radio, transpondeur,

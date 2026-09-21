@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — COMPARER CE QUI A ÉTÉ DIT À CE QUI ÉTAIT ATTENDU
+   Albatros VFR — COMPARER CE QUI A ÉTÉ DIT À CE QUI ÉTAIT ATTENDU
    -----------------------------------------------------------------------------
    Normalisation, correction floue, formes voisines. C'est ce qui décide qu'un
    collationnement juste est compté juste — autrement dit la différence entre un

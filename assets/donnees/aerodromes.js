@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Les aérodromes français
+   Albatros VFR — Les aérodromes français
    -----------------------------------------------------------------------------
    387 aérodromes (source OurAirports, filtrée France), plus la courte liste des
    grands terrains remontés en tête des sélecteurs.

@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LECTURE DU SITE TEL QUE LE NAVIGATEUR LE VOIT
+   Albatros VFR — LECTURE DU SITE TEL QUE LE NAVIGATEUR LE VOIT
    -----------------------------------------------------------------------------
    Tous les tests de contrat partent d'ici. Le principe tient en une phrase :
    on ne lit JAMAIS index.html à coups de numéros de ligne.

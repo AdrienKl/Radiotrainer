@@ -1,5 +1,5 @@
 -- =============================================================================
--- AVIERO — 003 : is_admin() ET LA PROTECTION DU CATALOGUE
+-- Albatros VFR — 003 : is_admin() ET LA PROTECTION DU CATALOGUE
 -- -----------------------------------------------------------------------------
 -- Ce fichier ne change RIEN à la base de production. Il y est déjà — à la main.
 -- Il existe pour que les migrations DÉCRIVENT enfin ce qui tourne.

@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — RIEN DE SECRET NE PART DANS LE NAVIGATEUR
+   Albatros VFR — RIEN DE SECRET NE PART DANS LE NAVIGATEUR
    -----------------------------------------------------------------------------
    La page appartient à l'utilisateur. Tout ce qui y est servi est lisible par
    qui la reçoit — « voir la source » suffit. Deux valeurs sont publiques par

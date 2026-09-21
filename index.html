@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AVIERO — Simulateur de phraséologie VFR</title>
+<title>Albatros VFR — Simulateur de phraséologie VFR</title>
 
 <!-- Favicon : avion en papier blanc sur pastille violette, repris du logo du site.
      SVG inline en data URI — aucun fichier à charger, fonctionne aussi en file://. -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235b4bce'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M25 7 14 18'/%3E%3Cpath d='M25 7l-7 18-4-8-8-4 19-6z'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235b4bce'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M25 7 14 18'/%3E%3Cpath d='M25 7l-7 18-4-8-8-4 19-6z'/%3E%3C/g%3E%3C/svg%3E">
 
-<meta name="description" content="AVIERO — simulateur de phraséologie radio VFR en français. Entraînez-vous au micro sur des scénarios réels, de la mise en route à l'atterrissage, avec un contrôleur qui vous répond et un retour immédiat sur votre phraséologie.">
+<meta name="description" content="Albatros VFR — simulateur de phraséologie radio VFR en français. Entraînez-vous au micro sur des scénarios réels, de la mise en route à l'atterrissage, avec un contrôleur qui vous répond et un retour immédiat sur votre phraséologie.">
 <meta name="theme-color" content="#5b4bce">
 <meta property="og:type" content="website">
-<meta property="og:title" content="AVIERO — Simulateur de phraséologie radio VFR">
+<meta property="og:title" content="Albatros VFR — Simulateur de phraséologie radio VFR">
 <meta property="og:description" content="Entraînez-vous à la radio VFR en français : reconnaissance vocale au micro, contrôleur qui répond, aérodromes et espaces aériens réels, score et progression. Outil pédagogique — ne remplace pas la formation avec un instructeur.">
 <meta property="og:locale" content="fr_FR">
 <!-- Thème posé AVANT le rendu : sinon la page s'affiche en clair puis bascule en
@@ -72,7 +72,7 @@
 <body>
 
   <nav class="topnav" id="topnav">
-    <div class="brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>AVIERO</span></div>
+    <div class="brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>Albatros VFR</span></div>
     <div class="nav-right">
       <button class="navlink" type="button" data-page="login">Se connecter</button>
       <button class="nav-cta" type="button" data-page="signup">S'inscrire</button>
@@ -90,7 +90,7 @@
               aria-label="Réduire le menu" aria-expanded="true" title="Réduire le menu">
         <svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
       </button>
-      <div class="side-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>AVIERO</span></div>
+      <div class="side-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>Albatros VFR</span></div>
     </div>
     <nav class="side-nav">
       <button class="sidelink" type="button" data-page="tableau"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="1.5"/></svg><span>Accueil</span></button>
@@ -116,7 +116,7 @@
   <!-- Barre applicative mobile (hamburger) — visible sur petit écran en mode application -->
   <div class="app-topbar" id="appTopbar">
     <button class="hamburger" id="hamburger" type="button" aria-label="Menu" aria-expanded="false"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-    <div class="brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>AVIERO</span></div>
+    <div class="brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>Albatros VFR</span></div>
   </div>
 
   <!-- Toile de fond des trois scènes (Scénarios, Navigation, Épellation). Elle
@@ -145,7 +145,7 @@
           <div class="hero__content">
             <span class="hero__eyebrow">Phraséologie radio VFR · en français</span>
             <h1 class="hero__title">Maîtrisez la phraséologie VFR comme un vrai pilote.</h1>
-            <p class="hero__sub">AVIERO vous fait parler à la radio comme en vol&nbsp;: des scénarios complets sur les vrais terrains français, un contrôleur qui vous répond à la voix, et votre phrase reprise mot pour mot.</p>
+            <p class="hero__sub">Albatros VFR vous fait parler à la radio comme en vol&nbsp;: des scénarios complets sur les vrais terrains français, un contrôleur qui vous répond à la voix, et votre phrase reprise mot pour mot.</p>
             <div class="hero__cta">
               <button class="btn cta" type="button" data-page="signup">Commencer l'essai gratuit</button>
               <button class="btn cta-ghost" type="button" data-page="login">Se connecter</button>
@@ -340,7 +340,7 @@
 
           <div class="strip reveal">
             <div class="strip__head">
-              <span class="strip__id">AVIERO<small> · Bande de progression</small></span>
+              <span class="strip__id">Albatros VFR<small> · Bande de progression</small></span>
               <span class="strip__kind" data-offre="kind">Essai</span>
             </div>
             <dl class="strip__fields">
@@ -427,7 +427,7 @@
     <section id="page-login" class="page">
       <div class="auth-wrap">
         <div class="auth-card">
-          <div class="auth-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>AVIERO</span></div>
+          <div class="auth-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>Albatros VFR</span></div>
           <h2 class="auth-title">Se connecter</h2>
           <p class="auth-sub">Accédez à vos exercices de phraséologie.</p>
           <div class="auth-field">
@@ -545,7 +545,7 @@
     <section id="page-signup" class="page">
       <div class="auth-wrap">
         <div class="auth-card auth-card--parcours">
-          <div class="auth-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>AVIERO</span></div>
+          <div class="auth-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>Albatros VFR</span></div>
 
           <ol class="ins-fil" id="insFil">
             <li data-fil="1"><b>1</b><span>Adresse</span></li>
@@ -713,7 +713,7 @@
          conforme. -->
     <section id="page-mentions" class="page">
       <div class="container legal-wrap">
-        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← AVIERO</button></p>
+        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← Albatros VFR</button></p>
         <h1 class="legal-h1">Mentions légales</h1>
         <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 12 septembre 2026.</p>
 
@@ -767,7 +767,7 @@
           seul le tableau de bord peut fournir avec certitude.</p>
 
         <h2 class="legal-h2">3. Propriété intellectuelle et sources</h2>
-        <p class="legal-p">Le code et les textes de AVIERO sont l'œuvre de son éditeur. Les données
+        <p class="legal-p">Le code et les textes d'Albatros VFR sont l'œuvre de son éditeur. Les données
           et les contenus repris de tiers restent la propriété de leurs auteurs, aux conditions
           suivantes.</p>
         <ul class="legal-liste">
@@ -810,7 +810,7 @@
          L'avertissement du § 3 est la raison d'être du document. -->
     <section id="page-cgu" class="page">
       <div class="container legal-wrap">
-        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← AVIERO</button></p>
+        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← Albatros VFR</button></p>
         <h1 class="legal-h1">Conditions d'utilisation</h1>
         <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 12 septembre 2026.</p>
 
@@ -821,7 +821,7 @@
           accord vous sera redemandé.</p>
 
         <h2 class="legal-h2">1. Objet</h2>
-        <p class="legal-p">AVIERO est un service d'entraînement à la phraséologie radiotéléphonique
+        <p class="legal-p">Albatros VFR est un service d'entraînement à la phraséologie radiotéléphonique
           française pour le vol à vue. Il s'adresse aux élèves pilotes, aux pilotes brevetés qui veulent
           se remettre en état, et à quiconque s'intéresse aux communications air-sol.</p>
         <p class="legal-p">Le service est <b>gratuit</b> à ce jour. Une formule payante est annoncée sur la
@@ -834,8 +834,8 @@
         <p class="legal-p">L'éditeur, son adresse et son contact figurent aux
           <button class="auth-link" type="button" data-page="mentions">mentions légales</button>.</p>
 
-        <h2 class="legal-h2">3. Ce que AVIERO n'est pas — à lire en entier</h2>
-        <p class="legal-avert"><b>AVIERO est un outil d'entraînement. Ce n'est pas une référence
+        <h2 class="legal-h2">3. Ce qu'Albatros VFR n'est pas — à lire en entier</h2>
+        <p class="legal-avert"><b>Albatros VFR est un outil d'entraînement. Ce n'est pas une référence
           opérationnelle, et aucune décision de vol ne doit être prise sur la foi de ce site.</b><br><br>
           Il ne remplace ni votre instructeur, ni le <i>Manuel de phraséologie</i> de la DSNA, ni les
           cartes VFR, ni les documents d'information aéronautique en vigueur. Les fréquences, les
@@ -947,7 +947,7 @@
          confidentialité qui retarde sur le schéma est fausse, pas incomplète. -->
     <section id="page-confidentialite" class="page">
       <div class="container legal-wrap">
-        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← AVIERO</button></p>
+        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← Albatros VFR</button></p>
         <h1 class="legal-h1">Politique de confidentialité</h1>
         <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 12 septembre 2026.</p>
 

@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — L'ÉPELLATION RADIO
+   Albatros VFR — L'ÉPELLATION RADIO
    -----------------------------------------------------------------------------
    Module volontairement isolé du moteur de scénarios : instance micro
    indépendante, aucune variable partagée. Il emprunte seulement des données

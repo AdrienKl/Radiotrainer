@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — CONFIGURATION DES TESTS DE PARCOURS
+   Albatros VFR — CONFIGURATION DES TESTS DE PARCOURS
    -----------------------------------------------------------------------------
    Les tests de contrat (tests/contrat/) lisent le code. Ceux-ci OUVRENT le site
    dans un vrai navigateur et s'en servent : ils sont les seuls à pouvoir dire

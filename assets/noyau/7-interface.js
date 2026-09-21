@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — CE QUI PARLE À L'UTILISATEUR
+   Albatros VFR — CE QUI PARLE À L'UTILISATEUR
    -----------------------------------------------------------------------------
    Le journal radio, les messages passagers, et la demande de confirmation.
 

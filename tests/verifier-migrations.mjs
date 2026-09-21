@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LES MIGRATIONS SUFFISENT-ELLES À MONTER UN PROJET NEUF ?
+   Albatros VFR — LES MIGRATIONS SUFFISENT-ELLES À MONTER UN PROJET NEUF ?
    -----------------------------------------------------------------------------
    Rejoue sql/*.sql dans l'ordre sur un PostgreSQL VIERGE et JETABLE, puis
    recommence. Deux questions, une par passe :
@@ -246,9 +246,9 @@ if (!problemes) {
   /* 8. Et pour finir, la seule chose qui se prouve en agissant : une
         inscription crée-t-elle vraiment un profil ? */
   await db.exec(`insert into auth.users (email, raw_user_meta_data)
-                 values ('essai@aviero.test', '{"display_name":"Essai"}'::jsonb)`);
+                 values ('essai@albatros.test', '{"display_name":"Essai"}'::jsonb)`);
   const profil = await q(`select email, display_name, role, status from public.profiles
-                           where email = 'essai@aviero.test'`);
+                           where email = 'essai@albatros.test'`);
   if (!profil.length) {
     rate('une inscription ne crée PAS de profil');
     console.log(rouge(`      Le compte existe et n'a pas de ligne dans profiles : la première`));

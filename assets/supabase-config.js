@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — coordonnées du projet Supabase
+   Albatros VFR — coordonnées du projet Supabase
    -----------------------------------------------------------------------------
    UN SEUL endroit à modifier pour changer de projet. Deux fichiers lisent ces
    valeurs : assets/auth.js (la session) et assets/admin/data/source-supabase.js

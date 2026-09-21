@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Admin · SOURCE « CET APPAREIL »
+   Albatros VFR — Admin · SOURCE « CET APPAREIL »
    -----------------------------------------------------------------------------
    Ces données sont RÉELLES. Elles viennent du localStorage de ce navigateur —
    les vols et les sessions de la personne qui utilise l'application ici. Rien

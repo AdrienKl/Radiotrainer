@@ -1,13 +1,14 @@
-# AVIERO — Instructions pour Claude Code
+# Albatros VFR — Instructions pour Claude Code
 
-> **AVIERO est le nouveau nom de RadioTrainer.** Même projet, même code, même design.
-> Ce n'est ni un nouveau produit ni une refonte : seuls le nom et le logo changent.
+> **Albatros VFR est le nom du projet.** Il s'est appelé RadioTrainer, puis AVIERO
+> le 20/09/2026, puis Albatros VFR le 21/09/2026. Même projet, même code, même design.
+> Ce ne sont ni de nouveaux produits ni des refontes : seul le nom change.
 
 ---
 
 ## 1. Vision du projet
 
-AVIERO est une plateforme de formation aéronautique destinée à évoluer bien au-delà de l'entraînement à la radiotéléphonie VFR.
+Albatros VFR est une plateforme de formation aéronautique destinée à évoluer bien au-delà de l'entraînement à la radiotéléphonie VFR.
 
 La vision à long terme est de créer une plateforme complète de formation pour pilotes, pouvant intégrer notamment :
 
@@ -27,7 +28,7 @@ Ne limite donc jamais tes propositions à ce qui existe actuellement dans l'appl
 
 C'est la règle la plus importante du projet, avant toute considération technique.
 
-AVIERO enseigne la radiotéléphonie à de vrais pilotes. **Une formulation inventée est une erreur qui sera apprise, répétée en vol, et entendue par un contrôleur.**
+Albatros VFR enseigne la radiotéléphonie à de vrais pilotes. **Une formulation inventée est une erreur qui sera apprise, répétée en vol, et entendue par un contrôleur.**
 
 Donc, sans exception :
 
@@ -42,7 +43,7 @@ Cette règle vaut aussi pour les variantes acceptées à l'oral (`motsCles`, `va
 
 ## 3. Rôle de Claude
 
-Tu es un partenaire de développement du projet AVIERO, pas simplement un exécutant.
+Tu es un partenaire de développement du projet Albatros VFR, pas simplement un exécutant.
 
 Tu dois :
 
@@ -135,7 +136,7 @@ Privilégie une migration progressive :
 
 ### 6.1 Le mode `file://` n'est plus une contrainte produit
 
-**Décision du 18/09/2026.** AVIERO est une application web en ligne. Supabase exige de toute façon un environnement `http(s)` — l'authentification est déjà dégradée en `file://` (`lienRetour()` rend `null`).
+**Décision du 18/09/2026.** Albatros VFR est une application web en ligne. Supabase exige de toute façon un environnement `http(s)` — l'authentification est déjà dégradée en `file://` (`lienRetour()` rend `null`).
 
 Le support de l'ouverture par double-clic **n'est donc plus une priorité et ne doit plus dicter l'architecture**.
 
@@ -278,7 +279,7 @@ doit être analysée avec attention avant modification.
 
 L'architecture prévue pour les emails d'authentification est :
 
-AVIERO → Supabase Auth → fournisseur email
+Albatros VFR → Supabase Auth → fournisseur email
 
 Resend pourra être utilisé comme fournisseur d'envoi en production.
 
@@ -289,7 +290,7 @@ Supabase Auth doit rester responsable de la logique d'authentification, notammen
 - changement d'adresse email ;
 - OTP ou magic link si utilisés.
 
-Plus tard, les emails personnalisés propres à AVIERO pourront utiliser :
+Plus tard, les emails personnalisés propres à Albatros VFR pourront utiliser :
 
 Supabase Edge Functions → Resend
 
@@ -297,7 +298,7 @@ Ne mélange pas la logique d'authentification avec les emails marketing ou trans
 
 ### 9.1 Le domaine n'est pas encore acheté — ne touche pas à la production
 
-**Décision du 18/09/2026.** Le domaine définitif d'AVIERO est prévu mais pas acquis. **Ne modifie aucune configuration de production liée au domaine** (Site URL Supabase, liste blanche de redirection, `supabase/poser-reglages.sh`, `CNAME`, nom du dépôt GitHub).
+**Décision du 18/09/2026.** Le domaine définitif d'Albatros VFR est prévu mais pas acquis. **Ne modifie aucune configuration de production liée au domaine** (Site URL Supabase, liste blanche de redirection, `supabase/poser-reglages.sh`, `CNAME`, nom du dépôt GitHub).
 
 Resend exige un domaine vérifié : le chantier e-mail est donc **bloqué en amont** par cette décision, et c'est normal.
 
@@ -315,7 +316,7 @@ Quand le domaine sera choisi, l'ordre des opérations compte — une erreur de s
 
 ## 10. Design
 
-Pour le moment, conserve les principes et le design actuels d'AVIERO.
+Pour le moment, conserve les principes et le design actuels d'Albatros VFR.
 
 Ne lance pas spontanément une refonte graphique complète simplement parce qu'une autre approche serait possible.
 
@@ -325,10 +326,21 @@ Les améliorations UI/UX pertinentes peuvent toutefois être proposées lorsqu'e
 
 ### 10.1 Le renommage visuel — nom et logo seulement
 
-**Décision du 18/09/2026.** AVIERO est le nouveau nom de RadioTrainer, pas un nouveau produit.
+**Décision du 18/09/2026, appliquée deux fois.** Le nom change, le produit non.
 
-- **Fait le 20/09/2026** : le nom. Les 51 occurrences visibles de « RadioTrainer » sont devenues AVIERO — titre, méta, les cinq marques de l'interface, l'accroche, les trois pages légales, la console d'administration, le gabarit d'e-mail, les noms des fichiers d'export.
-- **Volontairement NON renommé** : `radiotrainer_history_v2` (clé de stockage — § 7.2 : la renommer sans migration efface l'historique sans message d'erreur), `supabase/poser-reglages.sh` (§ 9.1), les migrations `sql/` déjà appliquées (§ 14), le dépôt GitHub (§ 13.1), et la prose des documents qui *racontent* le passé, où « RadioTrainer » reste exact.
+- **20/09/2026** : « RadioTrainer » devient **AVIERO** — 51 occurrences visibles.
+- **21/09/2026** : « AVIERO » devient **Albatros VFR** — 165 occurrences dans 98 fichiers,
+  visibles et internes (titre, méta, les cinq marques de l'interface, l'accroche, les trois
+  pages légales, la console d'administration, les deux gabarits d'e-mail, les sujets des
+  e-mails, le préfixe `[Albatros VFR]` de la console, les noms des fichiers d'export, le nom
+  npm, et les en-têtes de commentaire de tous les fichiers).
+  Deux élisions corrigées à la main : « les textes **d'**Albatros VFR », « ce **qu'**Albatros VFR n'est pas ».
+- **Volontairement NON renommé** : `radiotrainer_history_v2` et les quatorze autres clés de
+  stockage (§ 7.2 : les renommer sans migration efface des données sans message d'erreur),
+  la configuration de production et le domaine (§ 9.1), les migrations `sql/` déjà appliquées
+  (§ 14 — leurs deux en-têtes disent encore AVIERO, et c'est voulu : un fichier posé ne se
+  réécrit pas), le dépôt GitHub (§ 13.1), le nom de la branche `renommage-aviero` dans le
+  journal ci-dessous (c'est une branche qui existe), et la prose qui *raconte* le passé.
 - **`CGU_VERSION` n'a pas bougé**, et c'est raisonné dans `LEGAL.md § 1`.
 - **Le logo reste l'icône actuelle** : § 10 interdit une refonte graphique spontanée, et il n'existe pas d'autre marque dessinée. Seul le mot a changé.
 - **Conservé tel quel** : la charte actuelle — violet `#5b4bce`, bandeau noir, jetons de couleur, typographie, mise en page.
@@ -348,7 +360,7 @@ Après une modification importante :
 - vérifie les données lorsque Supabase est concerné ;
 - vérifie que les fonctionnalités existantes n'ont pas été cassées.
 
-L'objectif est de pouvoir faire évoluer AVIERO rapidement sans introduire progressivement des régressions.
+L'objectif est de pouvoir faire évoluer Albatros VFR rapidement sans introduire progressivement des régressions.
 
 ### 11.1 Les tests sont un prérequis, pas une amélioration future
 
@@ -442,7 +454,7 @@ Le détail est dans `LEGAL.md` et dans les trois pages du site (mentions légale
 - Les trois pages légales doivent rester **accessibles sans compte** (RGPD art. 13) : elles sont dans la liste `PAGES` du routeur pour cette raison.
 - Les jalons de consentement (`cgu_le`, `age_15_le`, `cgu_version`) sont horodatés **par la base**, jamais par le client. Ne jamais contourner `inscription_jalon()`.
 - **Modifier les CGU peut obliger à redemander le consentement** — c'est à quoi sert `cgu_version`.
-- La question « comment avez-vous connu AVIERO » est **facultative par obligation légale** (consentement, art. 7.4 RGPD). Ne jamais la rendre obligatoire.
+- La question « comment avez-vous connu Albatros VFR » est **facultative par obligation légale** (consentement, art. 7.4 RGPD). Ne jamais la rendre obligatoire.
 - Les images ont des licences distinctes (usage, attribution) : `LEGAL.md § 2 bis`.
 - Le bloc légal complet sera revu **avant la mise en ligne publique** ; en attendant, on corrige au fil de l'eau ce qui est devenu faux.
 
@@ -520,7 +532,7 @@ Ne déclare jamais une tâche terminée sur la seule absence d'erreur (§ 11).
 
 ## 18. Propositions et nouvelles idées
 
-Tu es encouragé à proposer de nouvelles idées pour AVIERO.
+Tu es encouragé à proposer de nouvelles idées pour Albatros VFR.
 
 Tu peux notamment proposer :
 
@@ -539,7 +551,7 @@ Ne considère jamais que la liste actuelle des fonctionnalités représente la l
 Lorsque tu proposes une idée importante, explique :
 
 - le problème qu'elle résout ;
-- son intérêt pour AVIERO ;
+- son intérêt pour Albatros VFR ;
 - sa difficulté approximative ;
 - ses éventuelles conséquences techniques.
 
@@ -549,9 +561,9 @@ Puis attends une validation avant de lancer une modification importante.
 
 ## 19. Principe général de développement
 
-Le but n'est pas simplement de faire fonctionner AVIERO aujourd'hui.
+Le but n'est pas simplement de faire fonctionner Albatros VFR aujourd'hui.
 
-Le but est de construire une base suffisamment propre, sécurisée et évolutive pour permettre à AVIERO de devenir progressivement une véritable plateforme aéronautique.
+Le but est de construire une base suffisamment propre, sécurisée et évolutive pour permettre à Albatros VFR de devenir progressivement une véritable plateforme aéronautique.
 
 Pour chaque décision importante, réfléchis donc à :
 
@@ -577,7 +589,7 @@ Pour les petites corrections sans risque :
 
 COMPRENDRE → MODIFIER → TESTER
 
-L'objectif final est de construire AVIERO comme un produit réel, professionnel et capable d'évoluer sur le long terme.
+L'objectif final est de construire Albatros VFR comme un produit réel, professionnel et capable d'évoluer sur le long terme.
 
 ---
 
@@ -650,7 +662,7 @@ Si le compte est petit — ce qui est probable, le site n'est pas ouvert au publ
 | `sql-003-et-verif-catalogue` | `sql/003` (verse `is_admin()` et la RLS d'`exercises` dans une migration) et `tests/verifier-catalogue.mjs` (compare le catalogue réel à celui du code, sonde les politiques) |
 | `sql-000-socle` | `sql/000-socle.sql` — les six tables, `handle_new_user()` et son déclencheur, la clé étrangère du catalogue, cinq index, la RLS des six tables, les politiques d'`app_errors` et `admin_audit_log`. Plus `tests/verifier-migrations.mjs` |
 | `contraste-audit` | L'audit annoncé par `INSCRIPTION.md § 8`, et cinq textes repassés au-dessus du seuil AA |
-| `renommage-aviero` | La décision § 10.1 appliquée : 51 occurrences visibles |
+| `renommage-aviero` | La décision § 10.1 appliquée une première fois : RadioTrainer → AVIERO, 51 occurrences visibles |
 | `mesure-pixels` | `tests/mesurer-pixels.mjs`, et la réponse chiffrée à la question du § 8 |
 
 **Pourquoi `sql/000` et pas le `sql/004` annoncé.** Un numéro de migration est un **ordre d'exécution**. `sql/001` fait `alter table public.profiles`, `sql/002` insère dans `public.exercises` : les deux supposent ces tables. Un fichier numéroté 004 qu'il faut jouer en premier est un piège — sur un projet neuf, jouer 001 avant lui s'arrête sur « relation does not exist ».
@@ -719,7 +731,7 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 |---|---|---|
 | 18/09/2026 | `file://` abandonné comme contrainte produit ; modules ES, bundler, TypeScript, React autorisés si bénéfice réel, migration majeure à valider | § 6.1 |
 | 18/09/2026 | Fusion des données entre appareils, jamais remplacement ; UUID de séance ; signaler tout type non fusionnable | § 7.1 |
-| 18/09/2026 | AVIERO = nouveau nom de RadioTrainer ; nom + logo maintenant, design conservé, identité visuelle plus tard | § 10.1 |
+| 18/09/2026 | Albatros VFR = nouveau nom de RadioTrainer ; nom + logo maintenant, design conservé, identité visuelle plus tard | § 10.1 |
 | 18/09/2026 | Frontière refactoring / validation : comportement observable inchangé → agir ; contrat modifié → demander | § 5.1 |
 | 18/09/2026 | Tests = prérequis avant le premier gros découpage ; migration étape par étape avec vérification | § 11.1 |
 | 18/09/2026 | Domaine pas encore acheté : ne pas toucher à la configuration de production ; ordre imposé le jour J | § 9.1 |
@@ -739,6 +751,7 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 19/09/2026 | Les migrations sont rejouées à chaque exécution des tests sur un PostgreSQL jetable en mémoire — hors ligne, donc dans « tout » | `tests/README.md` |
 | 20/09/2026 | Le contraste des deux thèmes est audité à chaque commit, sur les quatorze pages. Cinq défauts trouvés, cinq corrigés — la bascule globale de `--ink-2` n'est plus nécessaire pour être conforme, et reste au développeur | `INSCRIPTION.md § 8 bis` |
 | 20/09/2026 | Le renommage visuel en AVIERO est appliqué : 51 occurrences visibles. Les clés de stockage, la configuration de production, les migrations appliquées et le dépôt ne bougent pas. `CGU_VERSION` non plus | § 10.1 |
+| 21/09/2026 | Le projet s'appelle **Albatros VFR**. 165 occurrences dans 98 fichiers. Mêmes exclusions qu'au 20/09 — clés de stockage, production, `sql/` posés, dépôt, `CGU_VERSION` | § 10.1 |
 | 20/09/2026 | `sql/002-progression.sql` appliqué en entier par l'API. Une migration se pose par `supabase/poser-sql.sh`, JAMAIS par le presse-papier de l'éditeur SQL — un collage partiel affiche « Success » | § 21.2 |
 | 20/09/2026 | Les séances détachées d'avant le 19/09 ne sont pas récupérables : `exercise_key` est à `null` et aucun autre champ ne dit quel scénario c'était. Les rattacher au jugé serait pire | § 21.2 |
 | 20/09/2026 | L'authentification reste **entièrement Supabase** : `signInWithOtp` / `resetPasswordForEmail` / `verifyOtp` / `updateUser`. Aucun code n'est fabriqué, stocké ni comparé côté client — `tests/contrat/auth-otp.test.mjs` le surveille | `INSCRIPTION.md § 1 bis` |

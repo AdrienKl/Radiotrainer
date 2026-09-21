@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LA PAGE CARTE — CONSULTATION PLEIN ECRAN
+   Albatros VFR — LA PAGE CARTE — CONSULTATION PLEIN ECRAN
    -----------------------------------------------------------------------------
    Lecture de la carte OACI, independante de la Navigation. Celle-ci DEPLACE son
    conteneur (.nav-mapwrap) dans la vue de vol : on ne peut donc pas reutiliser son

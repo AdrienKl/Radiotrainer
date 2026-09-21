@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE MOTEUR DE SCÉNARIOS
+   Albatros VFR — LE MOTEUR DE SCÉNARIOS
    -----------------------------------------------------------------------------
    Ce qui fait tourner la page Exercices, de bout en bout : l'état d'une session,
    la résolution des gabarits de phraséologie, la météo et l'ATIS, la carte du
@@ -2300,7 +2300,7 @@ function showRecap(){
 
 function buildRecapText(sc, found, total, missed){
   const d=new Date();
-  return 'AVIERO — Récap\n'
+  return 'Albatros VFR — Récap\n'
     + 'Scénario : '+sc.titre+'\n'
     + 'Aérodrome : '+(state.activeAd?state.activeAd.icao+' '+state.activeAd.nom:'')+' · Piste '+state.rwy.id+'\n'
     + 'Date : '+d.toLocaleString('fr-FR')+'\n'

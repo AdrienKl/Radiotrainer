@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LA VOIX DU CONTRÔLEUR
+   Albatros VFR — LA VOIX DU CONTRÔLEUR
    -----------------------------------------------------------------------------
    Choix de la voix française, file d'attente, découpage en énoncés courts, et
    `speakATC()` qui parle au nom du contrôle.

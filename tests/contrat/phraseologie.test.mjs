@@ -1,7 +1,7 @@
 /* =============================================================================
-   AVIERO — LA RÈGLE QUI PASSE AVANT LA TECHNIQUE
+   Albatros VFR — LA RÈGLE QUI PASSE AVANT LA TECHNIQUE
    -----------------------------------------------------------------------------
-   AVIERO enseigne la radiotéléphonie à de vrais pilotes. Une formulation
+   Albatros VFR enseigne la radiotéléphonie à de vrais pilotes. Une formulation
    inventée est une erreur qui sera apprise, répétée en vol, et entendue par un
    contrôleur. C'est la règle n° 1 du projet (CLAUDE.md § 2), et elle passe
    avant toute considération d'architecture.

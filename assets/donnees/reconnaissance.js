@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Ce que la reconnaissance vocale entend de travers
+   Albatros VFR — Ce que la reconnaissance vocale entend de travers
    -----------------------------------------------------------------------------
    Deux tables, toutes deux relevées À L'USAGE et non déduites : ce ne sont pas
    des règles de français, ce sont des constats sur ce que Chrome renvoie quand

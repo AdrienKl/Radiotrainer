@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — AUTHENTIFICATION (Supabase Auth)
+   Albatros VFR — AUTHENTIFICATION (Supabase Auth)
    -----------------------------------------------------------------------------
    Remplace la fausse connexion d'origine, qui posait simplement `authed = true`
    dans une variable en mémoire. Ici, c'est Supabase qui délivre la session et la

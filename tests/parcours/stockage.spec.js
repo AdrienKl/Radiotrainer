@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — CE QUI EST GARDÉ D'UNE VISITE À L'AUTRE
+   Albatros VFR — CE QUI EST GARDÉ D'UNE VISITE À L'AUTRE
    -----------------------------------------------------------------------------
    Quinze clés de stockage local sont écrites par cinq fichiers différents.
    Elles ne servent pas toutes à la même chose :

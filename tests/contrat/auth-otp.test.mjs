@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — L'AUTHENTIFICATION PASSE PAR SUPABASE, ET PAR RIEN D'AUTRE
+   Albatros VFR — L'AUTHENTIFICATION PASSE PAR SUPABASE, ET PAR RIEN D'AUTRE
    -----------------------------------------------------------------------------
    Ce fichier surveille une contrainte d'ARCHITECTURE, pas un comportement :
 

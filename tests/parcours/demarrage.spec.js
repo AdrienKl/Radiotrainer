@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LA PAGE SE CHARGE, ET RIEN NE CASSE EN SILENCE
+   Albatros VFR — LA PAGE SE CHARGE, ET RIEN NE CASSE EN SILENCE
    -----------------------------------------------------------------------------
    Neuf blocs de script s'exécutent au chargement d'index.html. Une erreur dans
    l'un d'eux n'arrête pas les autres : la page se peint, et seule la

@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LES CLÉS DE STOCKAGE NE SE RENOMMENT PAS TOUTES SEULES
+   Albatros VFR — LES CLÉS DE STOCKAGE NE SE RENOMMENT PAS TOUTES SEULES
    -----------------------------------------------------------------------------
    Renommer une clé du stockage local efface des données utilisateur SANS AUCUN
    message d'erreur : l'ancienne clé reste dans le navigateur, plus personne ne

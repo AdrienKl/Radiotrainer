@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Les icônes SVG
+   Albatros VFR — Les icônes SVG
    -----------------------------------------------------------------------------
    Icônes monochromes réutilisées partout où du HTML est écrit en JavaScript :
    retours d'évaluation, badges, boutons dont le libellé est réécrit. Le trait

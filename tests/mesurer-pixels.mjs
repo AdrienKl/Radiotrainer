@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE CONTRASTE SUR LES PIXELS, PAS SUR LES VALEURS CSS
+   Albatros VFR — LE CONTRASTE SUR LES PIXELS, PAS SUR LES VALEURS CSS
    -----------------------------------------------------------------------------
    Le dernier morceau de `scratchpad/ins_contraste.py`, l'outil perdu. Il
    répond à UNE question, restée ouverte depuis le 18/09/2026 :

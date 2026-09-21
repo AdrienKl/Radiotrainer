@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — L'ALPHABET OACI ET LA FAÇON DE DIRE LES NOMBRES
+   Albatros VFR — L'ALPHABET OACI ET LA FAÇON DE DIRE LES NOMBRES
    -----------------------------------------------------------------------------
    Comment une lettre et un nombre se PRONONCENT à la radio. Rien d'autre : ni
    interface, ni état, ni scénario.

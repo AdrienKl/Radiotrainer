@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Admin · COQUILLE
+   Albatros VFR — Admin · COQUILLE
    -----------------------------------------------------------------------------
    Le rail de navigation, la barre du haut, le routeur interne, la garde d'accès
    et le sélecteur de source. C'est le seul fichier qui parle au routeur SPA
@@ -127,7 +127,7 @@
     var tete = el('div', 'adm-rail__head');
     tete.innerHTML =
       '<span class="adm-rail__logo">' + I.spark + '</span>' +
-      '<span class="adm-rail__brand"><b>AVIERO</b><i>Console d\'administration</i></span>';
+      '<span class="adm-rail__brand"><b>Albatros VFR</b><i>Console d\'administration</i></span>';
     var replier = el('button', 'adm-iconbtn adm-rail__toggle',
       '<svg class="ic-svg" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>');
     replier.type = 'button';
@@ -342,7 +342,7 @@
     racine.classList.remove('adm--drawer');
     UI.fermerTiroir();
     UI.vide(vue);
-    document.title = titreDe(base) + ' · Admin — AVIERO';
+    document.title = titreDe(base) + ' · Admin — Albatros VFR';
 
     if (!def){
       vue.appendChild(UI.etatVide('Page inconnue', 'La route « ' + route + ' » n\'existe pas.', I.warn));

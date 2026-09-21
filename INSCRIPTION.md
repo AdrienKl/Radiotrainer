@@ -53,7 +53,7 @@ accepté — c'est justement ce qui permettra de leur demander leur accord).
 > de passe », et inversement.
 >
 > **Les gabarits ne contiennent plus de lien.** Décision du 20/09/2026 : le
-> parcours d'AVIERO est un parcours par **code**. Un lien ouvre un nouvel
+> parcours d'Albatros VFR est un parcours par **code**. Un lien ouvre un nouvel
 > onglet et le formulaire de l'ancien reprend à zéro — exactement ce que le
 > code évite. `RTAuth.otpVerifierLien()` reste en place pour qui aurait un
 > ancien message sous la main ; on ne l'annonce simplement plus.
@@ -289,7 +289,7 @@ faire saisir un mot de passe pour rien.
 prendre pour telle.** Un compteur dans le navigateur se contourne depuis la
 console — CLAUDE.md § 8. Ce qui protège est chez Supabase : limite par adresse
 IP, plafond du service d'envoi, et le « you can only request this after N
-seconds » que GoTrue renvoie de lui-même. Le délai d'AVIERO évite seulement
+seconds » que GoTrue renvoie de lui-même. Le délai d'Albatros VFR évite seulement
 qu'on consomme son propre plafond en cliquant cinq fois, puis qu'on attende une
 heure.
 

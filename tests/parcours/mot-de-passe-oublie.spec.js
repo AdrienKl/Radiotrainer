@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE PARCOURS « MOT DE PASSE OUBLIÉ »
+   Albatros VFR — LE PARCOURS « MOT DE PASSE OUBLIÉ »
    -----------------------------------------------------------------------------
    Trois étapes : demander un code, le vérifier, choisir un nouveau mot de
    passe. Une seule visible à la fois.

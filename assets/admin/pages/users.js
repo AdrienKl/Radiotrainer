@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Admin · /admin/users et /admin/users/:id
+   Albatros VFR — Admin · /admin/users et /admin/users/:id
    -----------------------------------------------------------------------------
    La liste sert à TROUVER quelqu'un ; la fiche sert à COMPRENDRE quelqu'un.
    Deux intentions différentes, donc deux mises en page différentes — pas la

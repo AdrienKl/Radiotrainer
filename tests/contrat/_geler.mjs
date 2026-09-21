@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — REGÉNÈRE inventaire.json À PARTIR DU SITE TEL QU'IL EST
+   Albatros VFR — REGÉNÈRE inventaire.json À PARTIR DU SITE TEL QU'IL EST
    -----------------------------------------------------------------------------
    À lancer À LA MAIN, jamais depuis les tests :
 

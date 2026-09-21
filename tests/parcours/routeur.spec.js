@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LA NAVIGATION ENTRE LES PAGES
+   Albatros VFR — LA NAVIGATION ENTRE LES PAGES
    -----------------------------------------------------------------------------
    Seize routes, une seule application, un seul historique. Le routeur décide
    aussi qui entre où : une page applicative sans session renvoie à la

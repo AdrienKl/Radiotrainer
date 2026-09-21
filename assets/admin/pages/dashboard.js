@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Admin · /admin — TABLEAU DE BORD
+   Albatros VFR — Admin · /admin — TABLEAU DE BORD
    -----------------------------------------------------------------------------
    Ce qu'on veut savoir en trente secondes, le matin :
      1. est-ce que quelque chose ne va pas ?      → Alertes, en premier

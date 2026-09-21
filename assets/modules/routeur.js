@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE ROUTEUR
+   Albatros VFR — LE ROUTEUR
    -----------------------------------------------------------------------------
    Une seule application, un seul historique, une seule barre d'adresse. Ce module
    decide quelle <section> est affichee, qui a le droit d'y entrer, et il porte les

@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — Admin · COUCHE DE DONNÉES : le contrat
+   Albatros VFR — Admin · COUCHE DE DONNÉES : le contrat
    -----------------------------------------------------------------------------
    Ce fichier ne contient AUCUNE donnée. Il définit :
      1. le contrat que toute source de données doit remplir ;

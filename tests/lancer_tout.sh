@@ -1,6 +1,6 @@
 #!/bin/sh
 # =============================================================================
-# AVIERO — LANCE TOUTE LA VÉRIFICATION
+# Albatros VFR — LANCE TOUTE LA VÉRIFICATION
 # -----------------------------------------------------------------------------
 #   sh tests/lancer_tout.sh            tout, HORS la base
 #   sh tests/lancer_tout.sh contrat    seulement la lecture du code (< 1 s)

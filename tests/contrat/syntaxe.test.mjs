@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE CODE SERVI AU NAVIGATEUR SE LIT SANS ERREUR
+   Albatros VFR — LE CODE SERVI AU NAVIGATEUR SE LIT SANS ERREUR
    -----------------------------------------------------------------------------
    Une erreur de syntaxe dans un bloc inline d'index.html n'arrête pas la page :
    elle arrête CE BLOC. Les autres continuent de s'exécuter, la page se peint,
@@ -19,7 +19,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { scripts, VENDOR } from './_source.mjs';
 
-const dossier = mkdtempSync(join(tmpdir(), 'aviero-syntaxe-'));
+const dossier = mkdtempSync(join(tmpdir(), 'albatros-syntaxe-'));
 
 for (const s of scripts()) {
   if (VENDOR.includes(s.src)) continue;        // pas notre code

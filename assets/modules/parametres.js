@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LA PAGE PARAMETRES
+   Albatros VFR — LA PAGE PARAMETRES
    -----------------------------------------------------------------------------
    Principe tenu de bout en bout : un reglage ne duplique JAMAIS une logique metier.
    Il ecrit dans le controle d'origine (#voiceSelect, #call, #noiseToggle…) puis emet
@@ -304,7 +304,7 @@
     var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='aviero-donnees-'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='albatros-donnees-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ URL.revokeObjectURL(a.href); },2000);
   });

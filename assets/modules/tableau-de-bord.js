@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — L'ACCUEIL DE L'APPLICATION
+   Albatros VFR — L'ACCUEIL DE L'APPLICATION
    -----------------------------------------------------------------------------
    N'invente aucune donnee : il agrege ce qui existe deja — l'historique des vols
    (rt-vols, ecrit par la Navigation) et celui des scenarios

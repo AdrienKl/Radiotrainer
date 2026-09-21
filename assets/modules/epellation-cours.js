@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — L'EPELLATION RADIO ET LE CATALOGUE DE COURS
+   Albatros VFR — L'EPELLATION RADIO ET LE CATALOGUE DE COURS
    -----------------------------------------------------------------------------
    Deux ecrans dans un seul module autonome. L'instance micro de l'epellation est
    100 % independante de celle des Exercices : aucune variable, aucune fonction,
@@ -7,7 +7,7 @@
 
    Pour AJOUTER un cours, il suffit d'ajouter une entree a COURSES :
    { id, icon, title, desc, render(container) } — render() recoit un element vide
-   a remplir. C'est deja la forme qu'attend la vision long terme d'AVIERO.
+   a remplir. C'est deja la forme qu'attend la vision long terme d'Albatros VFR.
 
    Expose sur window : RT_TEST_EPEL
    Emprunte          : NATO, lev, bindPushToTalk (moteur) ; MISHEARD, AERODROMES, ICONS (donnees)

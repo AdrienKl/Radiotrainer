@@ -1,4 +1,4 @@
-<!-- AVIERO — corps de l'e-mail de RÉCUPÉRATION DE COMPTE.
+<!-- Albatros VFR — corps de l'e-mail de RÉCUPÉRATION DE COMPTE.
      À poser sur l'emplacement Supabase « Reset Password »
      (`mailer_templates_recovery_content`). `supabase/poser-reglages.sh` le fait.
 
@@ -11,7 +11,7 @@
 
      `resetPasswordForEmail` engendre un `recovery_token` à usage unique, que
      {{ .Token }} affiche et que `verifyOtp({type:'recovery'})` consomme. Rien
-     n'est fabriqué ni stocké par AVIERO.
+     n'est fabriqué ni stocké par Albatros VFR.
 
      PAS DE LIEN : le parcours se termine sur la page où il a commencé, et un
      lien de réinitialisation est précisément ce qu'on apprend aux gens à ne
@@ -20,13 +20,13 @@
      Styles en ligne : les clients de messagerie ignorent les feuilles de style. -->
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 4px;color:#242838">
 
-  <p style="margin:0 0 4px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5b4bce">AVIERO</p>
+  <p style="margin:0 0 4px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5b4bce">Albatros VFR</p>
 
   <h2 style="margin:0 0 6px;font-size:20px;font-weight:700;color:#161b2a">Récupération de votre compte</h2>
 
   <p style="margin:0 0 18px;font-size:15px;line-height:1.55;color:#3a4356">
     Une demande de nouveau mot de passe a été faite pour ce compte.
-    Saisissez ce code dans AVIERO pour en choisir un&nbsp;:
+    Saisissez ce code dans Albatros VFR pour en choisir un&nbsp;:
   </p>
 
   <p style="margin:0 0 18px;font-size:30px;font-weight:bold;letter-spacing:7px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#161b2a">{{ .Token }}</p>
@@ -44,7 +44,7 @@
   <hr style="border:none;border-top:1px solid #e3e6ee;margin:0 0 18px">
 
   <p style="margin:0;font-size:11.5px;line-height:1.6;color:#6b7280">
-    AVIERO — entraînement à la phraséologie radio VFR.
+    Albatros VFR — entraînement à la phraséologie radio VFR.
     Outil pédagogique&nbsp;: il ne remplace pas la formation avec un instructeur.
   </p>
 </div>

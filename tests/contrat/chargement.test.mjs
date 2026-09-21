@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — L'ORDRE DE CHARGEMENT EST UN CONTRAT
+   Albatros VFR — L'ORDRE DE CHARGEMENT EST UN CONTRAT
    -----------------------------------------------------------------------------
    Deux ordres comptent dans ce projet, et aucun des deux ne se devine à la
    lecture.

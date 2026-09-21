@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — UN SCÉNARIO JOUÉ DU DÉBUT À LA FIN
+   Albatros VFR — UN SCÉNARIO JOUÉ DU DÉBUT À LA FIN
    -----------------------------------------------------------------------------
    C'est le test le plus important de la suite, parce qu'il est le seul à
    traverser tout le moteur : résolution des gabarits de phraséologie, voix du

@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE CONTRASTE DES DEUX THÈMES
+   Albatros VFR — LE CONTRASTE DES DEUX THÈMES
    -----------------------------------------------------------------------------
    Quatorze pages, deux thèmes, ~1 350 relevés. Le seuil est celui de WCAG 2.1
    AA : 4,5:1 pour du texte courant, 3:1 pour du grand texte.

@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — LE CATALOGUE DE LA BASE DIT-IL LA MÊME CHOSE QUE L'APPLICATION ?
+   Albatros VFR — LE CATALOGUE DE LA BASE DIT-IL LA MÊME CHOSE QUE L'APPLICATION ?
    -----------------------------------------------------------------------------
    Ce contrôle existe à cause d'un angle mort que les autres n'ont pas pu voir.
 

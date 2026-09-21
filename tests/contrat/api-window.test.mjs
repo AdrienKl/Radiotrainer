@@ -1,5 +1,5 @@
 /* =============================================================================
-   AVIERO — L'API QUI PASSE PAR window, ET POURQUOI ELLE EST FRAGILE
+   Albatros VFR — L'API QUI PASSE PAR window, ET POURQUOI ELLE EST FRAGILE
    -----------------------------------------------------------------------------
    Il y a deux façons, dans ce projet, qu'un fichier en atteigne un autre :
 

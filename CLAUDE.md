@@ -436,6 +436,7 @@ Avant de modifier une partie du projet, lis le document qui la couvre. Ils sont 
 | Avant de toucher à… | Lire |
 |---|---|
 | la phraséologie, un scénario, une réponse du contrôleur | `PHRASEOLOGIE-MANUEL.md` + `Manuel_Phraseologie.pdf` — **obligatoire** (§ 2) |
+| chercher une formulation que le simulateur n'a pas encore | `PHRASEOLOGIE-CATALOGUE.md`, puis `assets/donnees/phraseologie-manuel.json` — les 1 058 répliques du manuel, avec qui parle |
 | le schéma Supabase, les RLS, les vues, la console d'admin | `assets/admin/README.md` (schéma, RLS, notice) puis `ADMIN.md` (décisions) |
 | l'inscription, l'auth, les réglages Supabase, les e-mails | `INSCRIPTION.md` |
 | les mentions légales, les CGU, la confidentialité, les licences d'images | `LEGAL.md` (§ 15) |
@@ -752,6 +753,7 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 20/09/2026 | Le contraste des deux thèmes est audité à chaque commit, sur les quatorze pages. Cinq défauts trouvés, cinq corrigés — la bascule globale de `--ink-2` n'est plus nécessaire pour être conforme, et reste au développeur | `INSCRIPTION.md § 8 bis` |
 | 20/09/2026 | Le renommage visuel en AVIERO est appliqué : 51 occurrences visibles. Les clés de stockage, la configuration de production, les migrations appliquées et le dépôt ne bougent pas. `CGU_VERSION` non plus | § 10.1 |
 | 21/09/2026 | Le projet s'appelle **Albatros VFR**. 165 occurrences dans 98 fichiers. Mêmes exclusions qu'au 20/09 — clés de stockage, production, `sql/` posés, dépôt, `CGU_VERSION` | § 10.1 |
+| 21/09/2026 | Les 281 pages du manuel DSNA deviennent un catalogue de 1 058 répliques, **produit par un script** et non saisi : `fr`/`en` sont les chaînes exactes du PDF, le locuteur vient des pictogrammes (manuel p. 8). Un couple français/anglais douteux n'est JAMAIS deviné — l'entrée sort avec une seule langue | `PHRASEOLOGIE-CATALOGUE.md` |
 | 20/09/2026 | `sql/002-progression.sql` appliqué en entier par l'API. Une migration se pose par `supabase/poser-sql.sh`, JAMAIS par le presse-papier de l'éditeur SQL — un collage partiel affiche « Success » | § 21.2 |
 | 20/09/2026 | Les séances détachées d'avant le 19/09 ne sont pas récupérables : `exercise_key` est à `null` et aucun autre champ ne dit quel scénario c'était. Les rattacher au jugé serait pire | § 21.2 |
 | 20/09/2026 | L'authentification reste **entièrement Supabase** : `signInWithOtp` / `resetPasswordForEmail` / `verifyOtp` / `updateUser`. Aucun code n'est fabriqué, stocké ni comparé côté client — `tests/contrat/auth-otp.test.mjs` le surveille | `INSCRIPTION.md § 1 bis` |

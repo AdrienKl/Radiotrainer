@@ -31,8 +31,12 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     /* Largeur téléphone : le § 17.2 la demande à chaque modification touchant
-       une page. Elle rejoue le même parcours de démarrage et de navigation. */
-    { name: 'telephone', use: { ...devices['Pixel 7'] }, testMatch: /demarrage|routeur/ }
+       une page. Elle rejoue le même parcours de démarrage et de navigation.
+       « contact » l'a rejointe le 22/09/2026 : la modale y change de forme
+       sous 560 px (elle se colle en bas, ses boutons passent en colonne et
+       l'ordre s'inverse pour mettre « Envoyer » sous le pouce). Une règle
+       responsive qu'aucun test ne traverse n'est pas une règle vérifiée. */
+    { name: 'telephone', use: { ...devices['Pixel 7'] }, testMatch: /demarrage|routeur|contact/ }
   ],
   webServer: {
     command: 'python3 -m http.server 8000',

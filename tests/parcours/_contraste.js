@@ -22,7 +22,11 @@
    du « grand texte » (≥ 24 px, ou ≥ 18,66 px en gras).
    ========================================================================== */
 
-export const MESURER = function () {
+/* `ou` est un sélecteur facultatif. Sans lui, on mesure la page active — c'est
+   ce que fait contraste.spec.js sur les quatorze pages. Avec lui, on mesure un
+   morceau précis du document : une modale, par exemple, vit HORS de `.page` et
+   n'aurait donc jamais été relevée. */
+export const MESURER = function (ou) {
   /* --- WCAG 2.1 : luminance relative, puis rapport de contraste ----------- */
   function canal(v) {
     v /= 255;
@@ -126,7 +130,7 @@ export const MESURER = function () {
   }
 
   const releves = [];
-  const section = document.querySelector('.page.active') || document.body;
+  const section = (ou && document.querySelector(ou)) || document.querySelector('.page.active') || document.body;
 
   for (const el of section.querySelectorAll('*')) {
     /* Seulement les éléments qui portent EUX-MÊMES du texte : sinon on mesure

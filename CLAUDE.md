@@ -163,6 +163,12 @@ assets/modules/     7 f.  5 401 l.  routeur, épellation-cours, tuiles-oaci, nav
 assets/scenarios/   1 f.  2 528 l.  le moteur
 ```
 
+Ce tableau est l'**état à la clôture de la phase 2**, et il n'est pas réécrit à chaque
+ajout — c'est un repère, pas un inventaire. L'inventaire vivant, lui, est
+`tests/contrat/inventaire.json`, regénéré par `node tests/contrat/_geler.mjs`.
+Ajouté depuis : `assets/css/15-contact.css` et `assets/modules/contact.js`
+(Contact / Feedback, 22/09/2026).
+
 **Sur les quatre étapes, aucune ligne n'a été réécrite** — tout a été déplacé, et vérifié comme tel : concaténation identique octet pour octet pour le CSS, même multi-ensemble de lignes pour le JavaScript, ordre préservé pour le moteur.
 
 #### Les trois règles d'ordre, qui ne se devinent pas
@@ -720,7 +726,75 @@ Huit vérifications couvrent la règle, et six d'entre elles rougissent si on re
 - **l'inscription et les deux parcours d'authentification avec un VRAI e-mail** — les huit vérifications de `mot-de-passe-oublie.spec.js` couvrent l'enchaînement avec Supabase remplacé par une doublure. Qu'un message parte et que Supabase accepte le code demande une vraie adresse, à la main. **Et les trois gabarits doivent être posés sur le projet** (`sh supabase/poser-reglages.sh`), sans quoi le message arrive sans code ;
 - **les RLS avec deux comptes** — il faut le projet de test. Depuis le 19/09/2026, `tests/verifier-migrations.mjs` vérifie hors ligne que les politiques sont bien POSÉES et que le déclencheur crée un profil ; ce qu'un compte connecté voit des données d'un autre reste non couvert ;
 - **la fusion entre deux appareils** — jamais vérifiée, ni par un test ni à la main ;
+- **l'envoi réel vers Formspree** — les vingt-six vérifications de
+  `tests/parcours/contact.spec.js` interceptent le service et fabriquent sa réponse. Que
+  le formulaire accepte le corps JSON envoyé et que le message arrive demande un envoi
+  réel, à la main, une fois (§ 22) ;
 - **le contraste sur d'autres machines** — couvert depuis le 20/09/2026 sur deux fronts : `tests/parcours/contraste.spec.js` (couleurs résolues, ~1 350 relevés, dans la suite) et `tests/mesurer-pixels.mjs` (les pixels, 310 textes, à la demande). Mais le second n'a tourné que sur une machine, et le lissage des polices varie d'un système à l'autre. Détail : `INSCRIPTION.md § 8 bis` et `§ 8 ter`.
+
+---
+
+---
+
+## 22. Contact / Feedback — ajouté le 22/09/2026
+
+Une entrée dans le menu (« Contact / Feedback », sans `data-page`) et une dans le
+pied de page (accessible **sans compte** — le signalement le plus utile est
+souvent « l'inscription ne marche pas »). Les deux ouvrent la même modale.
+
+`assets/modules/contact.js` + `assets/css/15-contact.css`. Le module n'emprunte
+**aucun** symbole au moteur ni aux autres modules : il ne lit que le DOM,
+`location.hash` et `window.RTAuth` s'il existe, toujours derrière un test. Sa
+place dans la liste des `<script>` est donc libre — ce qui n'est le cas d'aucun
+de ses voisins.
+
+### Les cinq points qui ne se devinent pas
+
+1. **Le bouton ne porte PAS de `data-page`.** Le routeur relie chaque
+   `[data-page]` à une `<section>` : un `data-page="contact"` serait tombé sur
+   l'accueil, sans erreur, puisque « contact » n'est pas dans `PAGES`. Le bouton
+   garde `.sidelink` pour le style et l'infobulle du menu replié — sans
+   `data-page`, la règle qui marque l'entrée courante le laisse tranquille.
+   `tests/parcours/contact.spec.js` surveille exactement ça.
+
+2. **L'envoi passe par `fetch` avec `Accept: application/json`.** Sans cet
+   en-tête, Formspree répond par une **redirection** vers sa page de
+   remerciement. Ici, ça voudrait dire perdre le scénario en cours — exactement
+   au moment où quelqu'un signale ce qui vient d'y mal tourner.
+
+3. **Le garde anti-double-envoi n'est pas `bouton.disabled`.** Un formulaire se
+   soumet aussi par Entrée depuis un champ, et ce chemin ne passe pas par le
+   bouton. Le drapeau `envoiEnCours` est testé au **début** du gestionnaire de
+   `submit`.
+
+4. **Le contexte est relevé à l'OUVERTURE, pas à l'envoi.** Entre les deux, on a
+   pu quitter son scénario pour venir cliquer sur « Contact » : relever à
+   l'envoi rapporterait la page d'où l'on écrit, pas celle dont on parle. Il est
+   **montré** dans la modale, jamais caché — on envoie une information sur ce que
+   la personne faisait, elle doit pouvoir la lire avant d'appuyer.
+
+5. **Rien n'est stocké en base.** Pas de table, pas de RLS, pas de clé de
+   stockage local de plus (§ 7.2). Un formulaire de contact n'a pas à entrer
+   dans le schéma tant qu'on ne veut pas en faire un suivi de tickets — et le
+   jour où on le voudra, ce sera une décision de § 4, pas un effet de bord.
+
+### Ce que ça a révélé ailleurs
+
+La mesure de contraste de la modale en largeur téléphone a trouvé un défaut qui
+n'a rien à voir avec elle : `.cta:hover` et `.btn.primary:hover` posent
+`var(--violet-dark)` **en fond**, et ce jeton bascule en violet clair dans le
+thème sombre — le blanc du libellé tombait à **2,16:1** au survol, sur tous les
+boutons pleins du site. C'est le piège déjà nommé le 20/09 (« un jeton de
+couleur de TEXTE ne sert jamais de FOND », `INSCRIPTION.md § 8 ter`). Corrigé
+dans `09-theme-sombre.css`.
+
+### Ce qui reste à faire à la main
+
+**Un envoi réel n'a jamais été tenté** : les vingt-six vérifications de
+`contact.spec.js` interceptent Formspree et fabriquent la réponse, pour la même
+raison que Supabase est coupé (`tests/README.md`). Que le formulaire
+`xjykwqbg` accepte bien ce corps JSON et que le message arrive demande **un
+envoi réel, une fois**. À faire avant la mise en ligne.
 
 ---
 
@@ -764,6 +838,10 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 20/09/2026 | Les trois derniers contrastes sous le seuil corrigés. `--ink-2` reste `#6b7280` : la mesure sur pixels ne justifie pas de bascule globale, la question du § 8 est close | `INSCRIPTION.md § 8` |
 | 20/09/2026 | Un jeton de couleur de TEXTE ne sert jamais de FOND : `--violet-dark` bascule en violet clair dans le thème sombre. `.step__n` en était mort | `INSCRIPTION.md § 8 ter` |
 | 20/09/2026 | Le contraste se mesure sur DEUX fronts : les couleurs résolues dans la suite (large, rapide, indulgent), les pixels à la demande (juste, mais dépendant de la machine — donc jamais un test) | `INSCRIPTION.md § 8 ter` |
+| 22/09/2026 | « Contact / Feedback » : une modale à trois vues, envoyée à Formspree en arrière-plan (`fetch` + `Accept: application/json`), JAMAIS par soumission de formulaire — une redirection vers l'écran de remerciement ferait perdre le scénario en cours. Aucune table Supabase : un formulaire de contact n'entre pas dans le schéma tant qu'on n'en fait pas un suivi de tickets | § 22 |
+| 22/09/2026 | L'identifiant de formulaire Formspree est **public** par construction, comme la clé anonyme de Supabase. La protection contre les abus est chez le prestataire (quota, piège à robots), pas dans un `if` du navigateur | § 22 |
+| 22/09/2026 | La politique de confidentialité et le pied de page NOMMENT Formspree et disent ce qui part. § 15 : une phrase fausse sur les données de l'utilisateur est une promesse rompue, pas une tournure de style | § 15, § 22 |
+| 22/09/2026 | `.cta:hover` et `.btn.primary:hover` posaient `--violet-dark` EN FOND : en thème sombre, le blanc du libellé tombait à 2,16:1 sur TOUS les boutons pleins du site. Même piège que `.step__n` le 20/09. Corrigé en assombrissant au survol (#5849c9, 6,54:1), comme le fait le thème clair | `assets/css/09-theme-sombre.css` |
 
 ### En attente de validation
 

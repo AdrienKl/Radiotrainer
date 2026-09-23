@@ -1,6 +1,6 @@
 {
   "_lisezmoi": "Genere par tests/contrat/_geler.mjs. Ne pas modifier a la main : regenerer et lire le diff.",
-  "gele_le": "2026-09-19",
+  "gele_le": "2026-09-22",
   "ordre_scripts": [
     "index.html#1",
     "assets/donnees/aerodromes.js",
@@ -26,6 +26,7 @@
     "assets/modules/carte.js",
     "assets/modules/tableau-de-bord.js",
     "assets/modules/parametres.js",
+    "assets/modules/contact.js",
     "assets/supabase-config.js",
     "assets/vendor/supabase.js",
     "assets/auth.js",
@@ -64,6 +65,7 @@
     "assets/css/12-historique.css",
     "assets/css/13-mobile.css",
     "assets/css/14-carte.css",
+    "assets/css/15-contact.css",
     "assets/admin/admin.css"
   ],
   "symboles_partages": [

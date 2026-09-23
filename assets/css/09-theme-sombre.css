@@ -65,6 +65,20 @@
     :root[data-theme="dark"] .sc-btn .sc-tags i.urg{ color:#ff9b96;
       background:rgba(224,100,95,.14); border-color:rgba(224,100,95,.42); }
 
+    /* LE SURVOL DES BOUTONS PLEINS — le même piège, une fois de plus.
+       « Un jeton de couleur de TEXTE ne sert jamais de FOND » (journal du
+       20/09/2026, INSCRIPTION.md § 8 ter). `.cta:hover` et `.btn.primary:hover`
+       posent pourtant var(--violet-dark) EN FOND (02-vitrine.css), et ce jeton
+       bascule en violet CLAIR ici : le blanc du libellé tombait à 2,16:1 au
+       survol — sous le seuil AA, et sur tous les boutons pleins du site, pas
+       seulement ceux de la modale de contact où la mesure l'a trouvé.
+       Le thème clair ASSOMBRIT au survol ; on fait pareil, avec un violet dense
+       qui garde 6,54:1 avec le blanc. Trouvé le 22/09/2026 par la mesure de
+       contraste de la modale en largeur téléphone — au doigt, l'état de survol
+       reste collé après l'appui, ce qui l'a rendu visible. */
+    :root[data-theme="dark"] .cta:hover,
+    :root[data-theme="dark"] .btn.primary:hover{ background:#5849c9; }
+
     /* Blocs à couleurs figées (avertissements) : variante sombre lisible. */
     :root[data-theme="dark"] .nav-warn{ background:#2e2114; border-color:#5c4426; border-left-color:#d9873c; color:#f0c99b; }
     :root[data-theme="dark"] .nav-warn strong{ color:#ffd9a8; }

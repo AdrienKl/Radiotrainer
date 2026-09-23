@@ -1,0 +1,108 @@
+/* =============================================================================
+   Albatros VFR — LA MODALE « CONTACT / FEEDBACK »
+   -----------------------------------------------------------------------------
+   Ce fichier est le n° 15 sur 15. Il charge APRÈS 09-theme-sombre.css, et c'est
+   volontaire : il ne pose ici AUCUNE couleur en dur. Tout passe par les jetons
+   (--surface, --ink, --violet, --border…) que le thème sombre redéfinit d'un
+   bloc — donc la modale suit les deux thèmes sans qu'une seule règle ne les
+   nomme. Y écrire un `#fff` casserait le thème sombre SANS produire d'erreur.
+
+   Il réutilise volontairement des classes existantes plutôt que d'en refaire :
+
+     .modal / .modal-card / .modal-title  — la modale de confirmation (08)
+     .auth-field / .auth-msg              — les champs des cartes d'auth (06)
+     .btn / .btn.cta / .sidelink          — les boutons et le menu (02, 06)
+
+   Ce qui reste ici, ce sont les trois choses que ces classes ne savent pas
+   faire : le choix entre deux natures de message, le <textarea>, et la vue de
+   confirmation qui remplace le formulaire sans fermer la modale.
+   ========================================================================== */
+
+  /* La carte est un peu plus large que celle de la confirmation (430 px) : un
+     formulaire à trois champs dont deux zones de texte y devient à l'étroit.
+     Elle est aussi bornée en hauteur et défilable : sur un téléphone posé en
+     paysage, la carte dépassait l'écran par le bas et le bouton d'envoi
+     devenait inatteignable — on ne pouvait pas faire défiler une modale. */
+  .modal-card--contact{ max-width:480px; max-height:calc(100vh - 40px); overflow-y:auto; }
+
+  /* Le sous-titre de la modale. --ink-2-fort et non --ink-2 : à 13,5 px sur
+     --surface, la seconde encre tombe sous le seuil AA (voir 06-coquille.css,
+     même arbitrage pour .auth-sub). */
+  .ct-sub{ font-size:13.5px; line-height:1.5; color:var(--ink-2-fort); margin:0 0 18px; }
+
+  /* ---------- Étape 1 : la nature du message ---------- */
+  /* Deux cartes cliquables plutôt qu'une liste déroulante : le choix conditionne
+     le formulaire qui suit, et il vaut mieux le voir que le dérouler. */
+  .ct-choix{ display:grid; gap:10px; margin-bottom:4px; }
+  .ct-opt{ display:flex; align-items:flex-start; gap:13px; width:100%; text-align:left; cursor:pointer;
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:15px 16px; font-family:var(--sans); color:var(--ink);
+    transition:border-color .15s, background .15s, transform .12s, box-shadow .18s; }
+  .ct-opt:hover{ border-color:var(--violet); background:var(--violet-soft); transform:translateY(-1px);
+    box-shadow:var(--shadow-sm); }
+  .ct-opt .ic-svg{ width:21px; height:21px; flex:none; margin-top:2px; color:var(--violet-dark); }
+  .ct-opt b{ display:block; font-size:14.5px; font-weight:700; margin-bottom:2px; }
+  .ct-opt span{ display:block; font-size:12.5px; line-height:1.45; color:var(--ink-2-fort); }
+
+  /* ---------- Étape 2 : le formulaire ---------- */
+  /* Le <textarea> n'hérite de rien : .auth-field ne style que ses <input>.
+     Mêmes valeurs que lui, au pixel près, pour que les deux se ressemblent. */
+  .auth-field textarea{ width:100%; box-sizing:border-box; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:10px; padding:11px 13px;
+    font-family:var(--sans); font-size:14.5px; line-height:1.5; color:var(--ink);
+    resize:vertical; min-height:92px; }
+  .auth-field textarea:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+  .auth-field textarea::placeholder, .auth-field input::placeholder{ color:var(--ink-2); }
+
+  /* « Facultatif » en regard de l'étiquette. Dire ce qui est facultatif coûte
+     moins cher que faire deviner ce qui est obligatoire. */
+  .ct-facultatif{ float:right; font-family:var(--sans); font-size:10.5px; font-weight:600;
+    letter-spacing:0; text-transform:none; color:var(--ink-2-fort); }
+
+  /* Le contexte relevé automatiquement (page ou scénario en cours). Il est
+     MONTRÉ, pas caché : on envoie une information sur ce que la personne était
+     en train de faire, elle a le droit de la lire avant d'appuyer. */
+  .ct-contexte{ display:flex; align-items:center; gap:8px; margin:0 0 16px;
+    padding:9px 12px; border-radius:10px; background:var(--surface-2);
+    border:1px solid var(--border); font-size:12.5px; color:var(--ink-2-fort); }
+  .ct-contexte b{ color:var(--ink); font-weight:600; }
+  .ct-contexte .ic-svg{ width:15px; height:15px; flex:none; }
+
+  /* La ligne sur le sous-traitant. Elle n'est pas décorative : un message part
+     chez un tiers, et la politique de confidentialité s'engage à le dire (§ 15
+     de CLAUDE.md — ne jamais écrire à l'utilisateur quelque chose de faux sur
+     ses données). */
+  .ct-avis{ font-size:11.5px; line-height:1.5; color:var(--ink-2-fort); margin:14px 0 0; }
+  .ct-avis .auth-link{ font-size:11.5px; }
+
+  /* ---------- Étape 3 : la confirmation, DANS la modale ---------- */
+  /* Formspree redirige vers sa propre page de remerciement quand on lui poste
+     un formulaire à l'ancienne. On envoie donc en arrière-plan (fetch + Accept:
+     application/json) et on peint le résultat ici : sortir du site pour dire
+     « merci » ferait perdre le scénario en cours. */
+  .ct-fin{ text-align:center; padding:8px 0 4px; }
+  .ct-fin .ct-rond{ width:54px; height:54px; margin:0 auto 16px; border-radius:50%;
+    display:grid; place-items:center; background:var(--violet-soft); color:var(--violet-dark); }
+  .ct-fin .ct-rond .ic-svg{ width:26px; height:26px; stroke-width:2; }
+  .ct-fin h4{ font-family:var(--sans); font-size:18px; font-weight:800; color:var(--ink); margin:0 0 8px; }
+  .ct-fin p{ font-size:13.5px; line-height:1.55; color:var(--ink-2-fort); margin:0 0 20px; }
+
+  /* Pendant l'envoi : le bouton reste à la même largeur, sinon la modale
+     sursaute quand son libellé passe de « Envoyer » à « Envoi… ». */
+  .ct-envoi{ min-width:132px; }
+
+  /* ---------- Téléphone ---------- */
+  /* Même seuil que 13-mobile.css. Les actions passent en colonne et le bouton
+     principal se retrouve EN HAUT de la pile : sur un écran étroit, c'est la
+     position atteignable au pouce. */
+  @media (max-width:560px){
+    /* Scopé par #contactModal, et pas par .modal : la modale de confirmation
+       « Abandonner ? » partage la classe, et la faire glisser en bas de l'écran
+       serait un changement d'une fonctionnalité qu'on ne touche pas ici. */
+    #contactModal{ padding:12px; align-items:flex-end; }
+    #contactModal .modal-card{ max-height:calc(100vh - 24px); padding:22px 20px 18px; border-radius:18px; }
+    #contactModal .modal-actions{ flex-direction:column-reverse; gap:8px; }
+    #contactModal .modal-actions .btn{ width:100%; }
+    .ct-envoi{ min-width:0; }
+    .ct-opt{ padding:14px; }
+  }

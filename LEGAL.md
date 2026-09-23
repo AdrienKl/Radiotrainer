@@ -111,6 +111,26 @@ de minimisation (RGPD art. 5.1.c). Deux issues : lui donner un usage, ou cesser
 de le demander. La politique le dit franchement plutôt que de le cacher, mais
 c'est une dette, pas une solution.
 
+**Formspree est un sous-traitant, nommé comme tel (22/09/2026).** Le formulaire
+« Contact / Feedback » envoie à Formspree, Inc. l'adresse e-mail saisie, le texte
+écrit, et un contexte technique (page ou scénario en cours, taille de fenêtre,
+thème, navigateur). Trois choses en découlent, et elles sont faites :
+
+- le **§ 2** de la politique liste la donnée, sa finalité et sa conservation ;
+- le **§ 4** nomme le tiers et dit ce qu'il voit — « **seulement** si vous nous
+  écrivez », parce que rien ne part tant qu'on n'appuie pas sur « Envoyer » ;
+- le **pied de page** ajoute le message à sa liste de ce qui sort de la machine.
+  Il disait « trois choses » et les énumérait : laisser la phrase telle quelle
+  l'aurait rendue fausse, et le § 15 de `CLAUDE.md` en fait une règle dure.
+
+La modale elle-même nomme Formspree au-dessus du bouton d'envoi et renvoie à la
+politique : c'est le seul endroit où l'information arrive au moment où elle sert.
+Le contexte technique joint y est **affiché**, jamais caché.
+
+Reste à faire le jour du domaine : Formspree, Inc. est une société américaine.
+L'encadrement du transfert (clauses contractuelles types, ou adhésion au
+Data Privacy Framework) est à vérifier et à citer, comme pour Supabase.
+
 **Les durées de conservation** sont des propositions défendables, pas des
 obligations légales chiffrées : 30 jours après fermeture (le temps des
 sauvegardes), 12 mois pour les erreurs techniques, 5 ans pour la preuve du

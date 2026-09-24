@@ -677,9 +677,19 @@
                  pour qui se déclare pilote, donc « cinq questions » devient faux
                  aussitôt qu'on répond. -->
             <p class="auth-sub">Quelques questions, pour adapter les exercices à votre niveau. Une minute, pas plus.</p>
+            <!-- Une question à la fois (24/09/2026). Le compteur et la barre sont
+                 recalculés à chaque pas : la question des heures de vol n'existe
+                 que pour qui se déclare pilote, le total change donc en route. -->
+            <div class="ins-pas" aria-live="polite">
+              <span class="ins-pas__txt" id="insQcmPas">Question 1 sur 6</span>
+              <span class="ins-pas__barre" aria-hidden="true"><i id="insQcmBarre"></i></span>
+            </div>
             <div id="insQcm"></div>
             <p class="auth-msg hidden" id="insMsg4" role="status" aria-live="polite"></p>
-            <button class="btn cta auth-submit" id="insQcmOk" type="button">Continuer</button>
+            <div class="ins-nav">
+              <button class="btn ghost ins-nav__prec" id="insQcmPrec" type="button" hidden>Précédent</button>
+              <button class="btn cta auth-submit" id="insQcmOk" type="button">Suivant</button>
+            </div>
           </div>
 
           <!-- ---------- ÉTAPE 5 : identité ---------- -->

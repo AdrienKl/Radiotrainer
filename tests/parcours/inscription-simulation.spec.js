@@ -25,6 +25,46 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+/* Une question à la fois : on répond, puis « Suivant ». */
+async function repondre(page, q, val) {
+  await page.click(`[data-q="${q}"] button[data-val="${val}"]`);
+  await page.click('#insQcmOk');
+}
+
+test('le questionnaire se fait une question à la fois', async ({ page }) => {
+  await ouvrir(page);
+  await page.evaluate(() => { location.hash = '#signup'; RTInscription._aller(4); });
+  await expect(page.locator('.ins-q:not([hidden])')).toHaveCount(1);
+  await expect(page.locator('#insQcmPas')).toHaveText('Question 1 sur 5');
+  await expect(page.locator('#insQcmPrec')).toBeHidden();
+
+  /* Suivant sans réponse : on reste, avec un motif. */
+  await page.click('#insQcmOk');
+  await expect(page.locator('#insMsg4')).toContainText(/choisissez une réponse/i);
+  await expect(page.locator('#insQcmPas')).toHaveText('Question 1 sur 5');
+
+  /* « Breveté » fait apparaître la question des heures : le total passe à 6. */
+  await page.click('[data-q="profil"] button[data-val="brevete"]');
+  await expect(page.locator('#insQcmPas')).toHaveText('Question 1 sur 6');
+  await page.click('#insQcmOk');
+  await expect(page.locator('[data-q="heures"]')).toBeVisible();
+  await expect(page.locator('#insQcmPas')).toHaveText('Question 2 sur 6');
+
+  /* Précédent ramène à la question d'avant, réponse conservée. */
+  await page.click('#insQcmPrec');
+  await expect(page.locator('[data-q="profil"] button[data-val="brevete"]')).toHaveAttribute('aria-pressed', 'true');
+
+  await page.click('#insQcmOk');
+  await repondre(page, 'heures', '10-50');
+  await repondre(page, 'objectifs', 'aise');
+  await repondre(page, 'avion', 'dr400');
+  await repondre(page, 'radio', 'bases');
+  /* La dernière est la facultative : son bouton dit qu'on peut passer, puis
+     qu'on termine une fois qu'on y a répondu. */
+  await expect(page.locator('[data-q="decouverte"]')).toBeVisible();
+  await expect(page.locator('#insQcmOk')).toHaveText('Continuer');
+});
+
 test('l\'œil montre puis masque le mot de passe choisi', async ({ page }) => {
   await ouvrir(page);
   await page.evaluate(() => { location.hash = '#signup'; RTInscription._aller(3); });
@@ -60,11 +100,11 @@ test('la simulation va du questionnaire à l\'application, sans rien écrire', a
   await expect(page.locator('.ins-etape[data-etape="4"]')).toBeVisible();
   await expect(page.locator('#insSimu')).toBeVisible();
 
-  await page.click('[data-q="profil"] button[data-val="eleve-debut"]');
-  await page.click('[data-q="objectifs"] button[data-val="aise"]');
-  await page.click('[data-q="avion"] button[data-val="dr400"]');
-  await page.click('[data-q="radio"] button[data-val="bases"]');
-  await page.click('#insQcmOk');
+  await repondre(page, 'profil', 'eleve-debut');
+  await repondre(page, 'objectifs', 'aise');
+  await repondre(page, 'avion', 'dr400');
+  await repondre(page, 'radio', 'bases');
+  await page.click('#insQcmOk');                     // la facultative, laissée vide : Continuer
   await expect(page.locator('.ins-etape[data-etape="5"]')).toBeVisible();
 
   await page.fill('#insPseudo', 'essai-simu');

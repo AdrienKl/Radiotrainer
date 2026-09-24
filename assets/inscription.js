@@ -140,7 +140,7 @@
      autre onglet ferait plus de dégâts que de bien — et de toute façon la
      vérité est en base, dans les jalons.
      -------------------------------------------------------------------------- */
-  var etat = { etape:1, email:'', reponses:{}, libres:{}, simulation:false };
+  var etat = { etape:1, email:'', reponses:{}, libres:{}, simulation:false, qi:0 };
 
   function $(id){ return document.getElementById(id); }
   function msg(n, texte, type){
@@ -312,9 +312,7 @@
        commencer par la seule question qui ne sert pas à l'élève. L'ordre de
        QUESTIONS, lui, ne bouge pas — la page Compte et l'enregistrement le
        lisent tel quel. Tri STABLE : les obligatoires gardent leur ordre. */
-    var ordre = QUESTIONS.filter(function(q){ return !q.facultative; })
-                  .concat(QUESTIONS.filter(function(q){ return q.facultative; }));
-    ordre.forEach(function(q){
+    ordreAffiche().forEach(function(q){
       /* La question des heures de vol ne concerne que ceux qui volent. Elle est
          peinte quand même mais masquée, pour que la réponse déjà donnée ne soit
          pas perdue si l'on revient changer son profil. */
@@ -365,7 +363,78 @@
       hote.appendChild(bloc);
     });
     rejouerQcm();
-    majVisibilite();
+    montrerQuestion(false);
+  }
+
+  function ordreAffiche(){
+    return QUESTIONS.filter(function(q){ return !q.facultative; })
+             .concat(QUESTIONS.filter(function(q){ return q.facultative; }));
+  }
+
+  /* ---------- Une question à la fois (24/09/2026) ----------
+     Les six questions d'un coup faisaient une page de deux mille pixels, et le
+     fond bougeait à chaque réponse. Désormais une seule est affichée, avec
+     « Suivant » et « Précédent ».
+
+     La liste des questions VISIBLES se recalcule à chaque pas, et pas une fois
+     pour toutes : « Combien d'heures de vol ? » n'existe que pour qui se
+     déclare en formation ou breveté. Répondre « curieux » puis revenir à
+     « breveté » fait donc apparaître une question de plus EN ROUTE — le
+     compteur et la barre suivent.
+
+     On ne force pas le passage automatique au clic : « Autre » ouvre un champ
+     à remplir, et les objectifs acceptent plusieurs réponses. Avancer sous le
+     doigt de quelqu'un qui n'a pas fini serait pire qu'un clic de plus. */
+  function visibles(){
+    return ordreAffiche().filter(function(q){
+      return !q.siProfil || q.siProfil.indexOf(etat.reponses.profil) >= 0;
+    });
+  }
+  function repondue(q){
+    var d = etat.reponses[q.id];
+    return q.type === 'plusieurs' ? !!(d && d.length) : !!d;
+  }
+  function montrerQuestion(focus){
+    var vis = visibles();
+    if (etat.qi >= vis.length) etat.qi = vis.length - 1;
+    if (etat.qi < 0) etat.qi = 0;
+    var q = vis[etat.qi];
+    QUESTIONS.forEach(function(x){
+      var bloc = document.querySelector('.ins-q[data-q="'+x.id+'"]');
+      if (bloc) bloc.hidden = (x !== q);
+    });
+    var pas = $('insQcmPas'), barre = $('insQcmBarre');
+    if (pas) pas.textContent = 'Question ' + (etat.qi + 1) + ' sur ' + vis.length;
+    if (barre) barre.style.width = Math.round((etat.qi + 1) / vis.length * 100) + '%';
+    var prec = $('insQcmPrec'); if (prec) prec.hidden = (etat.qi === 0);
+    majBoutonSuivant();
+    if (focus){
+      var b = document.querySelector('.ins-q[data-q="'+q.id+'"] .ins-choix button');
+      if (b) try{ b.focus({ preventScroll:true }); }catch(e){}
+    }
+  }
+  /* Le libellé dit ce que le bouton va faire : « Passer » sur la question
+     facultative laissée vide (on peut, et on doit le voir), « Continuer » sur la
+     dernière — c'est là que les réponses partent. */
+  function majBoutonSuivant(){
+    var ok = $('insQcmOk'); if (!ok) return;
+    var vis = visibles(), q = vis[etat.qi];
+    var derniere = etat.qi === vis.length - 1;
+    ok.textContent = derniere ? 'Continuer'
+                   : (q && q.facultative && !repondue(q)) ? 'Passer' : 'Suivant';
+  }
+  function suivant(){
+    var vis = visibles(), q = vis[etat.qi];
+    if (q && !q.facultative && !repondue(q))
+      return msg(4, "Choisissez une réponse pour continuer.");
+    msg(4, '');
+    if (etat.qi >= vis.length - 1) return enregistrerQcm();
+    etat.qi++;
+    montrerQuestion(true);
+  }
+  function precedent(){
+    msg(4, '');
+    if (etat.qi > 0){ etat.qi--; montrerQuestion(true); }
   }
 
   function choisir(q, val, liste){
@@ -380,7 +449,11 @@
       etat.reponses[q.id] = (etat.reponses[q.id] === val) ? null : val;
     }
     peindreChoix(q, liste);
-    if (q.id === 'profil') majVisibilite();
+    msg(4, '');
+    /* Changer de profil peut faire apparaître ou disparaître la question des
+       heures : le compteur est recalculé, la question affichée ne bouge pas. */
+    if (q.id === 'profil') montrerQuestion(false);
+    else majBoutonSuivant();
   }
 
   function peindreChoix(q, liste){
@@ -400,14 +473,6 @@
       peindreChoix(q, bloc.querySelector('.ins-choix'));
       var inp = bloc.querySelector('.ins-libre input');
       if (inp && etat.libres[q.id]) inp.value = etat.libres[q.id];
-    });
-  }
-
-  function majVisibilite(){
-    QUESTIONS.forEach(function(q){
-      if (!q.siProfil) return;
-      var bloc = document.querySelector('.ins-q[data-q="'+q.id+'"]');
-      if (bloc) bloc.hidden = q.siProfil.indexOf(etat.reponses.profil) < 0;
     });
   }
 
@@ -443,9 +508,12 @@
   function enregistrerQcm(){
     var q = manquante();
     if (q){
+      /* Filet : « Suivant » refuse déjà d'avancer sans réponse, mais un
+         retour en arrière qui efface une réponse peut en laisser une vide. On
+         y ramène, au lieu de seulement la nommer. */
+      etat.qi = Math.max(0, visibles().indexOf(q));
+      montrerQuestion(true);
       msg(4, "Il reste une question sans réponse : « " + q.titre + " »");
-      var bloc = document.querySelector('.ins-q[data-q="'+q.id+'"]');
-      if (bloc) try{ bloc.scrollIntoView({ block:'center', behavior:'smooth' }); }catch(e){}
       return;
     }
     msg(4, '');
@@ -705,7 +773,7 @@
   }
   function simuler(){
     etat.simulation = true;
-    etat.reponses = {}; etat.libres = {};
+    etat.reponses = {}; etat.libres = {}; etat.qi = 0;
     ['insPseudo','insPrenom','insNom','insAero'].forEach(function(id){ var e = $(id); if (e) e.value = ''; });
     pseudoLibre = false; dernierPseudoTeste = null;
     aidePseudo("3 à 20 caractères : minuscules, chiffres, tiret ou souligné.");
@@ -758,7 +826,8 @@
     $('insEnvoyer').addEventListener('click', envoyerCode);
     $('insVerifier').addEventListener('click', verifier);
     $('insMdpOk').addEventListener('click', poserMotDePasse);
-    $('insQcmOk').addEventListener('click', enregistrerQcm);
+    $('insQcmOk').addEventListener('click', suivant);
+    $('insQcmPrec').addEventListener('click', precedent);
     $('insTerminer').addEventListener('click', terminer);
 
     $('insDejaSortir').addEventListener('click', function(){

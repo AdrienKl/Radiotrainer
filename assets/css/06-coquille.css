@@ -25,36 +25,29 @@
   body.state-app main{ margin-left:var(--side-w); }
 
   /* --- Écrans d'authentification (carte centrée) --- */
-  /* LE FOND EST CELUI DE L'ACCUEIL (24/09/2026) : la carte OACI et la tour,
-     à la place de l'ancien dégradé violet. Mêmes fichiers, même traitement que
-     .hero__carte et .hero__tour (02-vitrine.css) — la carte est fabriquée
-     éclaircie, donc aucun voile par-dessus ; en thème sombre, c'est elle qui
-     s'assombrit, par un filtre porté par SA couche seule.
+  /* LE FOND EST LA CARTE DE L'ACCUEIL (24/09/2026), à la place de l'ancien
+     dégradé violet. Même fichier, même traitement que .hero__carte
+     (02-vitrine.css) : la carte est fabriquée éclaircie, donc aucun voile
+     par-dessus ; en thème sombre, c'est elle qui s'assombrit, par un filtre
+     porté par SA couche seule. La tour de l'accueil y a été posée quelques
+     heures, puis retirée à la demande : la carte seule, carte centrée.
 
-     Deux pseudo-éléments et non deux balises : les deux écrans (connexion,
-     inscription) partagent .auth-wrap, et le décor n'a rien à dire à un
-     lecteur d'écran. ::before porte la carte, ::after la tour. `isolation`
-     garde l'empilement dans la page : le z-index négatif ne passe pas sous le
-     fond du <body>.
-
-     La tour est à droite, la carte à gauche sur grand écran — la composition
-     de l'accueil. En dessous de 1000 px il n'y a plus la place pour les deux :
-     la tour s'en va, la carte reste. Les url() partent de assets/css/, d'où le
-     ../ (CLAUDE.md § 6.2, le piège des dix-sept images en 404). */
+     ┌─ position:FIXED, ET C'EST LE CORRECTIF ─────────────────────────────┐
+     │ La première version peignait la carte en position:absolute sur toute │
+     │ la hauteur de .auth-wrap, en background-size:cover. Or le            │
+     │ questionnaire change de hauteur à chaque réponse (la question des    │
+     │ heures apparaît, le champ « Autre » s'ouvre) : « cover » recalculait │
+     │ son cadrage, et la carte ZOOMAIT ou DÉZOOMAIT sous le doigt à chaque │
+     │ clic. Fixée à l'écran, elle ne dépend plus de la hauteur de la page. │
+     └──────────────────────────────────────────────────────────────────────┘
+     Un pseudo-élément fixe n'est rendu que si sa page l'est : les <section>
+     inactives sont en display:none, la carte ne déborde donc sur aucune autre
+     page. Les url() partent de assets/css/, d'où le ../ (CLAUDE.md § 6.2). */
   .auth-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 18px;
-    position:relative; isolation:isolate; overflow:hidden; background:var(--bg); }
-  .auth-wrap::before{ content:""; position:absolute; inset:0; z-index:-2;
+    position:relative; isolation:isolate; background:var(--bg); }
+  .auth-wrap::before{ content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
     background:url("../images/carte-oaci-hero.webp") 50% 46%/cover no-repeat; }
   :root[data-theme="dark"] .auth-wrap::before{ filter:brightness(.30) saturate(.72) contrast(1.06); }
-  .auth-wrap::after{ content:""; position:absolute; z-index:-1; right:clamp(0px,3vw,64px); bottom:0;
-    width:min(46vw,640px); height:min(88%,690px);
-    background:url("../images/tour-decoupee.webp") right bottom/contain no-repeat;
-    filter:drop-shadow(0 22px 26px rgba(36,40,56,.30)); }
-  :root[data-theme="dark"] .auth-wrap::after{ filter:drop-shadow(0 22px 26px rgba(0,0,0,.55)) brightness(.84); }
-  @media (min-width:1000px){
-    .auth-wrap{ justify-content:flex-start; padding-left:clamp(40px,9vw,170px); }
-  }
-  @media (max-width:999px){ .auth-wrap::after{ display:none; } }
   .auth-card{ width:100%; max-width:424px; box-sizing:border-box; background:var(--surface);
     border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:30px 28px 26px; }
   .auth-brand{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; color:var(--ink); margin-bottom:20px; }
@@ -197,15 +190,18 @@
          de teinte pâle — on voit d'en haut ce qui est déjà répondu ;
        · la question facultative passe en dernier et se fait petite (voir
          .ins-q--facultative) : elle ne doit pas coûter d'effort à qui l'ignore. */
-  .ins-q{ margin:0; padding:16px 0 18px; border-top:1px solid var(--border); counter-increment:insq; }
-  #insQcm{ counter-reset:insq; margin:6px 0 14px; }
-  #insQcm .ins-q:first-child{ border-top:0; padding-top:4px; }
-  .ins-q > h3{ font-family:var(--sans); font-size:15px; font-weight:800; color:var(--ink);
-    margin:0 0 3px; letter-spacing:-.005em; display:flex; align-items:baseline; gap:9px; }
-  .ins-q > h3::before{ content:counter(insq, decimal-leading-zero); flex:none;
-    font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--violet-dark); }
-  .ins-q > p{ font-size:12.5px; color:var(--ink-2-fort); margin:0 0 11px 29px; }
-  .ins-choix{ display:flex; flex-wrap:wrap; gap:7px; margin-left:29px; }
+  /* Une seule question à l'écran (inscription.js › montrerQuestion) : le
+     compteur « Question 2 sur 6 » tient lieu de numéro, et plus besoin de filet
+     entre les questions. min-height : les questions n'ont pas le même nombre
+     de réponses, et sans plancher le bouton « Suivant » sautait de haut en bas
+     d'une question à l'autre — sous le doigt de qui clique en série. */
+  .ins-q{ margin:0; padding:2px 0 4px; }
+  .ins-q[hidden]{ display:none; }
+  #insQcm{ margin:4px 0 12px; min-height:236px; }
+  .ins-q > h3{ font-family:var(--sans); font-size:17px; font-weight:800; color:var(--ink);
+    margin:0 0 4px; letter-spacing:-.01em; }
+  .ins-q > p{ font-size:12.5px; color:var(--ink-2-fort); margin:0 0 13px; }
+  .ins-choix{ display:flex; flex-wrap:wrap; gap:8px; }
   .ins-choix button{ text-align:left; font-family:var(--sans); font-size:13px; font-weight:600; line-height:1.3;
     color:var(--ink); background:var(--surface); border:1px solid var(--border);
     border-radius:999px; padding:8px 14px; cursor:pointer;
@@ -217,28 +213,45 @@
   .ins-choix button[aria-pressed="true"]{ background:var(--violet); border-color:var(--violet); color:#fff; }
   .ins-choix button[aria-pressed="true"]::before{ content:"✓"; margin-right:6px; font-weight:800; }
   @media (prefers-reduced-motion:reduce){ .ins-choix button:hover{ transform:none; } }
-  @media (max-width:520px){ .ins-q > p, .ins-choix{ margin-left:0; } }
 
   /* La question facultative : en dernier, plus petite, et ses réponses sont des
      pastilles SANS fond. Discrète, mais pas illisible — sa mention
      « (facultatif) » reste au-dessus du seuil de contraste (RGPD : on doit
      pouvoir voir qu'on peut passer). */
-  .ins-q--facultative{ padding-top:14px; border-top-style:dashed; }
-  .ins-q--facultative > h3{ font-size:13px; font-weight:700; color:var(--ink-2-fort); }
-  .ins-q--facultative > h3::before{ content:"—"; color:var(--ink-2-fort); }
-  .ins-q--facultative > p{ font-size:12px; margin-bottom:9px; }
+  .ins-q--facultative > h3{ font-size:15px; font-weight:700; color:var(--ink-2-fort); }
+  .ins-q--facultative > p{ font-size:12px; margin-bottom:11px; }
   .ins-q--facultative .ins-choix{ gap:5px; }
   .ins-q--facultative .ins-choix button{ font-size:12px; font-weight:500; padding:5px 11px;
     background:transparent; color:var(--ink-2-fort); border-color:var(--border); }
   .ins-q--facultative .ins-choix button[aria-pressed="true"]{ background:var(--violet); border-color:var(--violet); color:#fff; }
 
   /* Le choix « Autre » ouvre un champ libre, juste sous les pastilles. */
-  .ins-libre{ margin:9px 0 0 29px; }
-  @media (max-width:520px){ .ins-libre{ margin-left:0; } }
+  .ins-libre{ margin:10px 0 0; }
   .ins-libre input{ width:100%; box-sizing:border-box; background:var(--surface-2);
     border:1px solid var(--border); border-radius:10px; padding:10px 12px;
     font-family:var(--sans); font-size:13.5px; color:var(--ink); }
   .ins-libre input:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+
+  /* Le compteur et sa barre, au-dessus de la question. */
+  .ins-pas{ display:flex; align-items:center; gap:12px; margin:2px 0 16px; }
+  .ins-pas__txt{ flex:none; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink); }
+  .ins-pas__barre{ flex:1; height:5px; border-radius:99px; background:var(--surface-2);
+    border:1px solid var(--border); overflow:hidden; }
+  .ins-pas__barre i{ display:block; height:100%; width:0; border-radius:99px; background:var(--violet);
+    transition:width .3s ease; }
+  @media (prefers-reduced-motion:reduce){ .ins-pas__barre i{ transition:none; } }
+
+  /* « Précédent » à gauche, « Suivant » à droite. Précédent est un bouton
+     secondaire, bordé et sans fond : on ne doit pas le prendre pour l'action
+     principale. */
+  .ins-nav{ display:flex; gap:10px; align-items:stretch; }
+  .ins-nav .auth-submit{ flex:1; margin-top:0; }
+  .ins-nav__prec{ flex:none; margin:0; padding:0 18px; border-radius:999px; cursor:pointer;
+    font-family:var(--sans); font-size:14px; font-weight:700;
+    background:transparent; color:var(--ink); border:1px solid var(--border); box-shadow:none; }
+  .ins-nav__prec:hover{ border-color:var(--violet-dark); background:transparent; }
+  .ins-nav__prec[hidden]{ display:none; }
 
   /* Le Piper Cub au-dessus du questionnaire : un bout de ciel dans la carte.
      La photo est un détourage, posé sur un ciel dessiné en CSS — un ciel de

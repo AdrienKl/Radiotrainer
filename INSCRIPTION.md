@@ -108,7 +108,7 @@ Sélectionnez tout (⌘A dans le champ), effacez, et collez le contenu de
 > Mettez le même contenu dans les deux. `supabase/poser-reglages.sh` le fait.
 
 **Ce qui compte, et pourquoi.** Le gabarit d'origine ne contient que
-`{{ .ConfirmationURL }}`. Le message part donc **sans le code à six chiffres**
+`{{ .ConfirmationURL }}`. Le message part donc **sans le code** (huit chiffres sur ce projet — réglage « Email OTP Length »)
 que demande l'étape 2, et cette étape devient infranchissable — c'est le
 « message presque vide ». `{{ .Token }}` **est** le code ; il n'apparaît que si
 on l'écrit dans le gabarit.
@@ -306,7 +306,7 @@ Supabase accepte le code demande une vraie adresse, à la main.**
 | Étape | Ce qu'on demande | Ce qui se passe en base |
 |---|---|---|
 | 1 | Adresse e-mail, acceptation des CGU, déclaration des 15 ans | rien encore — pas de session, donc rien à attribuer |
-| 2 | Le code à six chiffres reçu | `verifyOtp` ouvre la session ; `inscription_jalon('consentement')` horodate `cgu_le`, `cgu_version`, `age_15_le` |
+| 2 | Le code à huit chiffres reçu | `verifyOtp` ouvre la session ; `inscription_jalon('consentement')` horodate `cgu_le`, `cgu_version`, `age_15_le` |
 | 3 | Mot de passe + confirmation | `updateUser({password})` puis `inscription_jalon('mot-de-passe')` |
 | 4 | Le questionnaire (6 questions) | `update profiles` sur `decouverte`, `profil_pilote`, `heures_vol`, `objectifs`, `type_avion`, `niveau_radio` |
 | 5 | Nom d'utilisateur, prénom, nom, aérodrome | `update profiles` puis `inscription_jalon('termine')` |

@@ -102,15 +102,6 @@
       <button class="sidelink" type="button" data-page="cours"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg><span>Cours</span></button>
       <button class="sidelink" type="button" data-page="progression"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg><span>Progression</span></button>
       <button class="sidelink" type="button" data-page="parametres"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg><span>Paramètres</span></button>
-      <!-- Contact / Feedback. PAS de data-page, et c'est la seule chose qui
-           compte ici : le routeur relie tout [data-page] à une <section>, et un
-           data-page="contact" enverrait vers une page qui n'existe pas — donc
-           vers l'accueil, silencieusement. Ce bouton ouvre une modale, il ne
-           navigue pas. Il garde la classe .sidelink pour le style et pour
-           l'infobulle du menu replié ; sans data-page, la règle qui marque
-           l'entrée courante (routeur.js, a.dataset.page===name) le laisse
-           tranquille. -->
-      <button class="sidelink" type="button" data-contact><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.8-5.1A8.4 8.4 0 0 1 4 11.5C4 6.9 7.8 3.5 12.5 3.5S21 6.9 21 11.5z"/><path d="M9 10.5h7M9 14h4.5"/></svg><span>Contact / Feedback</span></button>
       <!-- L'entree « Compte » a disparu du menu : sa page est maintenant dans
            « Parametres ». Deux entrees pour une seule page auraient oblige a
            deviner laquelle mene ou. -->
@@ -462,7 +453,7 @@
                son mot de passe.
 
                Rien de nouveau à sécuriser : c'est la même primitive Supabase
-               que l'inscription — un code à six chiffres, envoyé à l'adresse,
+               que l'inscription — un code à huit chiffres, envoyé à l'adresse,
                vérifié par le serveur. shouldCreateUser vaut false ici : cette
                porte ne doit pas pouvoir créer de compte. -->
           <div class="ins-secours">
@@ -492,7 +483,7 @@
                 <div class="auth-field">
                   <label for="mdpCode">Code de récupération</label>
                   <input id="mdpCode" type="text" inputmode="numeric" autocomplete="one-time-code"
-                         maxlength="8" spellcheck="false" placeholder="123456" class="ins-code">
+                         maxlength="12" spellcheck="false" placeholder="12345678" class="ins-code">
                 </div>
                 <button class="btn auth-submit" id="mdpValider" type="button">Vérifier le code</button>
                 <p class="auth-switch"><button class="auth-link" type="button" id="mdpRenvoyer">Renvoyer un code</button></p>
@@ -506,11 +497,11 @@
               <div id="mdpEtape3" hidden>
                 <div class="auth-field">
                   <label for="mdpNouveau">Nouveau mot de passe</label>
-                  <input id="mdpNouveau" type="password" autocomplete="new-password" placeholder="••••••••">
+                  <input id="mdpNouveau" type="password" data-voir-mdp autocomplete="new-password" placeholder="••••••••">
                 </div>
                 <div class="auth-field">
                   <label for="mdpConfirme">Confirmation</label>
-                  <input id="mdpConfirme" type="password" autocomplete="new-password" placeholder="••••••••">
+                  <input id="mdpConfirme" type="password" data-voir-mdp autocomplete="new-password" placeholder="••••••••">
                 </div>
                 <button class="btn cta auth-submit" id="mdpEnregistrer" type="button">Enregistrer le nouveau mot de passe</button>
               </div>
@@ -533,7 +524,7 @@
               <div class="auth-field">
                 <label for="logCode">Code reçu</label>
                 <input id="logCode" type="text" inputmode="numeric" autocomplete="one-time-code"
-                       maxlength="8" spellcheck="false" placeholder="123456" class="ins-code">
+                       maxlength="12" spellcheck="false" placeholder="12345678" class="ins-code">
               </div>
               <button class="btn auth-submit" id="logCodeValider" type="button">Valider le code</button>
             </div>
@@ -556,6 +547,12 @@
       <div class="auth-wrap">
         <div class="auth-card auth-card--parcours">
           <div class="auth-brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>Albatros VFR</span></div>
+
+          <!-- Simulation lancée depuis la console d'administration (Test /
+               Controller). Visible, et c'est voulu : un essai qu'on pourrait
+               confondre avec une vraie inscription finirait par être pris pour
+               une panne (« j'ai répondu et rien n'est enregistré »). -->
+          <p class="ins-simu" id="insSimu" hidden><b>Simulation</b> — première connexion rejouée depuis l'administration. Rien n'est enregistré.</p>
 
           <ol class="ins-fil" id="insFil">
             <li data-fil="1"><b>1</b><span>Adresse</span></li>
@@ -584,7 +581,7 @@
               </span>
             </div>
             <h2 class="auth-title">Créer un compte</h2>
-            <p class="auth-sub">On commence par votre adresse. Nous vous y enverrons un code à six chiffres.</p>
+            <p class="auth-sub">On commence par votre adresse. Nous vous y enverrons un code à huit chiffres.</p>
             <div class="auth-field">
               <label for="insEmail">Adresse e-mail</label>
               <input id="insEmail" type="email" autocomplete="email" spellcheck="false" placeholder="vous@exemple.fr">
@@ -624,7 +621,7 @@
           <!-- ---------- ÉTAPE 2 : le code reçu par e-mail ---------- -->
           <div class="ins-etape" data-etape="2" hidden>
             <h2 class="auth-title">Confirmez votre adresse</h2>
-            <p class="auth-sub">Nous avons envoyé un code à six chiffres à <b id="insRappelMail"></b>. Il est valable une heure.</p>
+            <p class="auth-sub">Nous avons envoyé un code à huit chiffres à <b id="insRappelMail"></b>. Il est valable une heure.</p>
             <div class="auth-field">
               <label for="insCode">Code reçu</label>
               <!-- inputmode numeric plutôt que type=number : ce dernier affiche des
@@ -632,7 +629,7 @@
                    Plus de maxlength : le champ accepte aussi le LIEN du message,
                    qui fait deux cents caractères. Huit le tronquaient en silence. -->
               <input id="insCode" type="text" inputmode="numeric" autocomplete="one-time-code"
-                     spellcheck="false" placeholder="123456" class="ins-code">
+                     spellcheck="false" placeholder="12345678" class="ins-code">
             </div>
             <!-- Un message sans code n'est pas une hypothèse d'école : c'est ce
                  que Supabase envoie tant qu'on n'a pas ajouté {{ .Token }} au
@@ -657,11 +654,11 @@
             <p class="auth-sub">Votre adresse est confirmée. Il ne reste qu'à protéger le compte.</p>
             <div class="auth-field">
               <label for="insMdp1">Mot de passe</label>
-              <input id="insMdp1" type="password" autocomplete="new-password" placeholder="8 caractères au minimum">
+              <input id="insMdp1" type="password" data-voir-mdp autocomplete="new-password" placeholder="8 caractères au minimum">
             </div>
             <div class="auth-field">
               <label for="insMdp2">Confirmation</label>
-              <input id="insMdp2" type="password" autocomplete="new-password" placeholder="le même, pour être sûr">
+              <input id="insMdp2" type="password" data-voir-mdp autocomplete="new-password" placeholder="le même, pour être sûr">
             </div>
             <p class="auth-msg hidden" id="insMsg3" role="status" aria-live="polite"></p>
             <button class="btn cta auth-submit" id="insMdpOk" type="button">Continuer</button>
@@ -669,11 +666,17 @@
 
           <!-- ---------- ÉTAPE 4 : le questionnaire (peint par inscription.js) ---------- -->
           <div class="ins-etape" data-etape="4" hidden>
+            <!-- Le Piper Cub : décoratif (alt vide), il ne porte aucune
+                 information. Même photo que la flotte de l'application,
+                 licence dans LEGAL.md § 2 bis. -->
+            <div class="ins-ciel" aria-hidden="true">
+              <img src="assets/avions/piper-cub-d-elyh.webp" alt="" width="760" height="183" decoding="async" loading="lazy">
+            </div>
             <h2 class="auth-title">Parlez-nous de vous</h2>
             <!-- Pas de décompte annoncé : la question des heures de vol apparaît
                  pour qui se déclare pilote, donc « cinq questions » devient faux
                  aussitôt qu'on répond. -->
-            <p class="auth-sub">Quelques questions, pour adapter les exercices à votre niveau. Les questions facultatives sont signalées.</p>
+            <p class="auth-sub">Quelques questions, pour adapter les exercices à votre niveau. Une minute, pas plus.</p>
             <div id="insQcm"></div>
             <p class="auth-msg hidden" id="insMsg4" role="status" aria-live="polite"></p>
             <button class="btn cta auth-submit" id="insQcmOk" type="button">Continuer</button>
@@ -2365,6 +2368,19 @@
        séparés veulent dire qu'un brouillon de bug ne se retrouve pas dans le
        champ « idée » quand on change d'avis.
        ============================================================= -->
+  <!-- Contact / Feedback : le bouton flottant, en bas à droite, sur TOUTES les
+       pages — vitrine, connexion et application. Il a remplacé l'entrée du menu
+       (22/09 → 24/09/2026) : le menu n'existe qu'une fois connecté, et le
+       signalement le plus utile est souvent « l'inscription ne marche pas ».
+       Pas de data-page, pour la même raison que l'ancienne entrée : il ouvre une
+       modale, il ne navigue pas (contact.js écoute [data-contact]). -->
+  <button class="ct-fab" type="button" data-contact aria-label="Contact / Feedback — nous écrire ou signaler un bug" title="Contact / Feedback"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.8-5.1A8.4 8.4 0 0 1 4 11.5C4 6.9 7.8 3.5 12.5 3.5S21 6.9 21 11.5z"/><path d="M9 10.5h7M9 14h4.5"/></svg></button>
+  <!-- La bulle de première connexion (contact.js › RTContact.bulle). -->
+  <div class="ct-bulle" id="ctBulle" role="status" hidden>
+    <p><b>Une question, un bug ?</b> C'est ici. Écrivez-nous à tout moment : ça arrive directement à l'équipe.</p>
+    <button class="btn small" type="button" id="ctBulleOk">Compris</button>
+  </div>
+
   <div class="modal" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="ctTitre" hidden>
     <div class="modal-card modal-card--contact">
       <h3 class="modal-title" id="ctTitre">Contact / Feedback</h3>

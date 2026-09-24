@@ -274,6 +274,34 @@
       + "de démonstration. C'est irréversible.", 'danger'));
       grille.appendChild(cRaz);
 
+      /* ================= Première connexion ================= */
+      /* Rejoue ce que voit un nouveau compte JUSTE APRÈS avoir choisi son mot de
+         passe : le questionnaire, l'identité, puis l'arrivée dans l'application
+         avec la bulle « Contact ». Tout passe par le vrai code d'inscription.js
+         (RTInscription.simuler) — seules les écritures en base sont coupées. Les
+         étapes 1 à 3 ne sont pas rejouables d'ici : elles enverraient un e-mail
+         et changeraient le mot de passe du compte qui teste. */
+      var cPrem = UI.carte('Simuler une première connexion',
+        { sub:'Le parcours d’un nouveau compte, à partir du questionnaire — autant de fois que nécessaire.' });
+      var rowPrem = el('div', 'adm-btnrow');
+      rowPrem.appendChild(UI.bouton('Lancer la simulation', { cls:'primary', onClick:function(){
+        if (!window.RTInscription || !window.RTInscription.simuler){
+          toast('Module d’inscription indisponible.'); return;
+        }
+        window.RTInscription.simuler();
+      } }));
+      rowPrem.appendChild(UI.bouton('Revoir seulement la bulle « Contact »', { onClick:function(){
+        if (!window.RTContact){ toast('Module Contact indisponible.'); return; }
+        if (window.rtNaviguer) window.rtNaviguer('tableau');
+        window.RTContact.bulle(true);
+      } }));
+      cPrem.body.appendChild(rowPrem);
+      cPrem.body.appendChild(UI.notice(
+        "Rien n’est enregistré : ni les réponses au questionnaire, ni le nom d’utilisateur, "
+      + "ni les jalons d’inscription. Votre profil réel reste tel quel. Seule lecture faite en base : "
+      + "la disponibilité du nom d’utilisateur saisi.", 'info'));
+      grille.appendChild(cPrem);
+
       /* ================= État de l'environnement ================= */
       var cEnv = UI.carte('État de l\'environnement',
         { sub:'Ce que le navigateur sait faire, et ce que l\'application a en mémoire.' });

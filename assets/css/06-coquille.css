@@ -25,9 +25,36 @@
   body.state-app main{ margin-left:var(--side-w); }
 
   /* --- Écrans d'authentification (carte centrée) --- */
+  /* LE FOND EST CELUI DE L'ACCUEIL (24/09/2026) : la carte OACI et la tour,
+     à la place de l'ancien dégradé violet. Mêmes fichiers, même traitement que
+     .hero__carte et .hero__tour (02-vitrine.css) — la carte est fabriquée
+     éclaircie, donc aucun voile par-dessus ; en thème sombre, c'est elle qui
+     s'assombrit, par un filtre porté par SA couche seule.
+
+     Deux pseudo-éléments et non deux balises : les deux écrans (connexion,
+     inscription) partagent .auth-wrap, et le décor n'a rien à dire à un
+     lecteur d'écran. ::before porte la carte, ::after la tour. `isolation`
+     garde l'empilement dans la page : le z-index négatif ne passe pas sous le
+     fond du <body>.
+
+     La tour est à droite, la carte à gauche sur grand écran — la composition
+     de l'accueil. En dessous de 1000 px il n'y a plus la place pour les deux :
+     la tour s'en va, la carte reste. Les url() partent de assets/css/, d'où le
+     ../ (CLAUDE.md § 6.2, le piège des dix-sept images en 404). */
   .auth-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 18px;
-    background:radial-gradient(1100px 460px at 50% -12%, var(--violet-tint), transparent 70%),
-      linear-gradient(160deg, var(--grad-top), var(--grad-mid) 58%, var(--grad-bot)); }
+    position:relative; isolation:isolate; overflow:hidden; background:var(--bg); }
+  .auth-wrap::before{ content:""; position:absolute; inset:0; z-index:-2;
+    background:url("../images/carte-oaci-hero.webp") 50% 46%/cover no-repeat; }
+  :root[data-theme="dark"] .auth-wrap::before{ filter:brightness(.30) saturate(.72) contrast(1.06); }
+  .auth-wrap::after{ content:""; position:absolute; z-index:-1; right:clamp(0px,3vw,64px); bottom:0;
+    width:min(46vw,640px); height:min(88%,690px);
+    background:url("../images/tour-decoupee.webp") right bottom/contain no-repeat;
+    filter:drop-shadow(0 22px 26px rgba(36,40,56,.30)); }
+  :root[data-theme="dark"] .auth-wrap::after{ filter:drop-shadow(0 22px 26px rgba(0,0,0,.55)) brightness(.84); }
+  @media (min-width:1000px){
+    .auth-wrap{ justify-content:flex-start; padding-left:clamp(40px,9vw,170px); }
+  }
+  @media (max-width:999px){ .auth-wrap::after{ display:none; } }
   .auth-card{ width:100%; max-width:424px; box-sizing:border-box; background:var(--surface);
     border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:30px 28px 26px; }
   .auth-brand{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; color:var(--ink); margin-bottom:20px; }
@@ -160,25 +187,91 @@
      Des boutons plutôt que des <select> : sur un téléphone, un menu déroulant
      cache les autres réponses derrière un tiroir natif, et on ne compare plus
      rien. Ici tout est visible d'un coup. */
-  .ins-q{ margin:0 0 20px; }
-  .ins-q > h3{ font-family:var(--sans); font-size:14.5px; font-weight:800; color:var(--ink);
-    margin:0 0 3px; letter-spacing:-.005em; }
-  .ins-q > p{ font-size:12.5px; color:var(--ink-2-fort); margin:0 0 10px; }
-  .ins-choix{ display:flex; flex-direction:column; gap:7px; }
-  .ins-choix button{ text-align:left; font-family:var(--sans); font-size:13.5px; font-weight:600;
-    color:var(--ink); background:var(--surface-2); border:1px solid var(--border);
-    border-radius:11px; padding:11px 13px; cursor:pointer;
-    transition:border-color .15s ease, background .15s ease; }
-  .ins-choix button:hover{ border-color:var(--violet-dark); }
+  /* REFONTE DU 24/09/2026. L'ancienne version empilait trente-six boutons
+     pleine largeur, tous identiques : deux mille pixels de haut, et rien pour
+     dire où finissait une question et où commençait la suivante. Désormais :
+       · les réponses sont des PASTILLES qui s'enroulent — on voit toute une
+         question d'un coup d'œil, et la page fait moins de la moitié ;
+       · chaque question porte son numéro, et un filet la sépare de la suivante ;
+       · la réponse choisie se REMPLIT (violet plein, coche) au lieu de changer
+         de teinte pâle — on voit d'en haut ce qui est déjà répondu ;
+       · la question facultative passe en dernier et se fait petite (voir
+         .ins-q--facultative) : elle ne doit pas coûter d'effort à qui l'ignore. */
+  .ins-q{ margin:0; padding:16px 0 18px; border-top:1px solid var(--border); counter-increment:insq; }
+  #insQcm{ counter-reset:insq; margin:6px 0 14px; }
+  #insQcm .ins-q:first-child{ border-top:0; padding-top:4px; }
+  .ins-q > h3{ font-family:var(--sans); font-size:15px; font-weight:800; color:var(--ink);
+    margin:0 0 3px; letter-spacing:-.005em; display:flex; align-items:baseline; gap:9px; }
+  .ins-q > h3::before{ content:counter(insq, decimal-leading-zero); flex:none;
+    font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--violet-dark); }
+  .ins-q > p{ font-size:12.5px; color:var(--ink-2-fort); margin:0 0 11px 29px; }
+  .ins-choix{ display:flex; flex-wrap:wrap; gap:7px; margin-left:29px; }
+  .ins-choix button{ text-align:left; font-family:var(--sans); font-size:13px; font-weight:600; line-height:1.3;
+    color:var(--ink); background:var(--surface); border:1px solid var(--border);
+    border-radius:999px; padding:8px 14px; cursor:pointer;
+    transition:border-color .15s ease, background .15s ease, color .15s ease, transform .12s ease; }
+  .ins-choix button:hover{ border-color:var(--violet-dark); transform:translateY(-1px); }
   .ins-choix button:focus-visible{ outline:2px solid var(--violet); outline-offset:2px; }
-  .ins-choix button[aria-pressed="true"]{ background:var(--violet-soft);
-    border-color:var(--violet-dark); color:var(--violet-dark); }
-  /* Le choix « Autre » ouvre un champ libre, juste sous lui. */
-  .ins-libre{ margin:8px 0 0; }
+  /* Fond --violet et non --violet-dark : ce dernier est un jeton de TEXTE, qui
+     bascule en violet clair dans le thème sombre (INSCRIPTION.md § 8 ter). */
+  .ins-choix button[aria-pressed="true"]{ background:var(--violet); border-color:var(--violet); color:#fff; }
+  .ins-choix button[aria-pressed="true"]::before{ content:"✓"; margin-right:6px; font-weight:800; }
+  @media (prefers-reduced-motion:reduce){ .ins-choix button:hover{ transform:none; } }
+  @media (max-width:520px){ .ins-q > p, .ins-choix{ margin-left:0; } }
+
+  /* La question facultative : en dernier, plus petite, et ses réponses sont des
+     pastilles SANS fond. Discrète, mais pas illisible — sa mention
+     « (facultatif) » reste au-dessus du seuil de contraste (RGPD : on doit
+     pouvoir voir qu'on peut passer). */
+  .ins-q--facultative{ padding-top:14px; border-top-style:dashed; }
+  .ins-q--facultative > h3{ font-size:13px; font-weight:700; color:var(--ink-2-fort); }
+  .ins-q--facultative > h3::before{ content:"—"; color:var(--ink-2-fort); }
+  .ins-q--facultative > p{ font-size:12px; margin-bottom:9px; }
+  .ins-q--facultative .ins-choix{ gap:5px; }
+  .ins-q--facultative .ins-choix button{ font-size:12px; font-weight:500; padding:5px 11px;
+    background:transparent; color:var(--ink-2-fort); border-color:var(--border); }
+  .ins-q--facultative .ins-choix button[aria-pressed="true"]{ background:var(--violet); border-color:var(--violet); color:#fff; }
+
+  /* Le choix « Autre » ouvre un champ libre, juste sous les pastilles. */
+  .ins-libre{ margin:9px 0 0 29px; }
+  @media (max-width:520px){ .ins-libre{ margin-left:0; } }
   .ins-libre input{ width:100%; box-sizing:border-box; background:var(--surface-2);
     border:1px solid var(--border); border-radius:10px; padding:10px 12px;
     font-family:var(--sans); font-size:13.5px; color:var(--ink); }
   .ins-libre input:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+
+  /* Le Piper Cub au-dessus du questionnaire : un bout de ciel dans la carte.
+     La photo est un détourage, posé sur un ciel dessiné en CSS — un ciel de
+     jour en thème clair, un ciel de fin de journée en sombre, pour que l'avion
+     ne flotte pas sur un rectangle blanc au milieu d'une page noire. Il
+     traverse une fois, de gauche à droite, puis ne bouge plus : rien ne doit
+     remuer pendant qu'on lit les questions. */
+  .ins-ciel{ position:relative; height:108px; margin:-4px 0 18px; border-radius:14px; overflow:hidden;
+    background:linear-gradient(180deg,#b9d4ee 0%,#dce9f6 62%,#eef4fa 100%); }
+  .ins-ciel img{ position:absolute; left:50%; top:50%; width:min(76%,330px); height:auto;
+    transform:translate(-50%,-46%); filter:drop-shadow(0 10px 10px rgba(30,50,80,.22));
+    animation:insPiper 1.6s .1s cubic-bezier(.16,.62,.28,1) both; }
+  @keyframes insPiper{ from{ opacity:0; transform:translate(-78%,-30%) } to{ opacity:1; transform:translate(-50%,-46%) } }
+  @media (prefers-reduced-motion:reduce){ .ins-ciel img{ animation:none; } }
+  :root[data-theme="dark"] .ins-ciel{ background:linear-gradient(180deg,#1d2d4d 0%,#3d4f76 58%,#7c6f86 100%); }
+  :root[data-theme="dark"] .ins-ciel img{ filter:drop-shadow(0 10px 10px rgba(0,0,0,.45)) brightness(.92); }
+
+  /* L'œil du mot de passe (inscription.js › oeil). Le champ garde toute sa
+     largeur ; on lui réserve seulement la place du bouton à droite. */
+  .mdp-boite{ position:relative; display:block; }
+  .mdp-boite input{ padding-right:44px !important; }
+  .mdp-oeil{ position:absolute; right:4px; top:50%; transform:translateY(-50%);
+    width:36px; height:36px; display:grid; place-items:center; padding:0; border:0; border-radius:8px;
+    background:transparent; color:var(--ink-2-fort); cursor:pointer; }
+  .mdp-oeil:hover{ color:var(--ink); background:var(--violet-soft); }
+  .mdp-oeil:focus-visible{ outline:2px solid var(--violet); outline-offset:1px; }
+  .mdp-oeil svg{ width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.9;
+    stroke-linecap:round; stroke-linejoin:round; }
+
+  /* Le bandeau « Simulation » (console d'administration). */
+  .ins-simu:not([hidden]){ display:block; margin:0 0 16px; padding:9px 13px; border-radius:10px;
+    font-size:12.5px; line-height:1.45; color:var(--ink);
+    background:rgba(214,158,46,.14); border:1px dashed rgba(180,120,20,.6); }
 
   /* ---------- Pages légales ---------- */
   .legal-wrap{ max-width:760px; padding-top:34px; padding-bottom:60px; }

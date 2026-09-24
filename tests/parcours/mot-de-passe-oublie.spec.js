@@ -37,7 +37,7 @@ async function doubler(page, options = {}) {
       window.RTAuth.recuperationVerifier = (email, code) => {
         window.__appels.push(['verifier', email, code]);
         return attendre().then(() => {
-          if (code !== '123456') throw new Error('Token has expired or is invalid');
+          if (code !== '12345678') throw new Error('Token has expired or is invalid');
           return { user: { id: 'essai' } };
         });
       };
@@ -77,7 +77,7 @@ test('les trois étapes se suivent, une seule à la fois', async ({ page }) => {
      mot de passe pour rien. */
   await expect(page.locator('#mdpEtape3'), 'le mot de passe ne se demande qu\'après le code').toBeHidden();
 
-  await page.locator('#mdpCode').fill('123456');
+  await page.locator('#mdpCode').fill('12345678');
   await page.locator('#mdpValider').click();
   await expect(page.locator('#mdpEtape3')).toBeVisible();
   await expect(page.locator('#mdpEtape2')).toBeHidden();
@@ -101,7 +101,7 @@ test('un code faux laisse à l\'étape 2 avec un motif clair', async ({ page }) 
   await page.locator('#mdpOublie').click();
   await page.locator('#loginId').fill('pilote@exemple.fr');
   await page.locator('#mdpDemander').click();
-  await page.locator('#mdpCode').fill('000000');
+  await page.locator('#mdpCode').fill('00000000');
   await page.locator('#mdpValider').click();
   await expect(page.locator('#loginMsg')).toContainText(/code incorrect ou expiré/i);
   await expect(page.locator('#mdpEtape3'), 'un code faux n\'ouvre pas l\'étape du mot de passe').toBeHidden();
@@ -114,7 +114,7 @@ test('le code consommé ne reste pas dans le DOM', async ({ page }) => {
   await page.locator('#mdpOublie').click();
   await page.locator('#loginId').fill('pilote@exemple.fr');
   await page.locator('#mdpDemander').click();
-  await page.locator('#mdpCode').fill('123456');
+  await page.locator('#mdpCode').fill('12345678');
   await page.locator('#mdpValider').click();
   await expect(page.locator('#mdpEtape3')).toBeVisible();
   await expect(page.locator('#mdpCode')).toHaveValue('');
@@ -126,7 +126,7 @@ test('le nouveau mot de passe part à Supabase, puis quitte les deux champs', as
   await page.locator('#mdpOublie').click();
   await page.locator('#loginId').fill('pilote@exemple.fr');
   await page.locator('#mdpDemander').click();
-  await page.locator('#mdpCode').fill('123456');
+  await page.locator('#mdpCode').fill('12345678');
   await page.locator('#mdpValider').click();
   await expect(page.locator('#mdpEtape3')).toBeVisible();
 
@@ -149,7 +149,7 @@ test('deux mots de passe différents sont refusés AVANT d\'atteindre Supabase',
   await page.locator('#mdpOublie').click();
   await page.locator('#loginId').fill('pilote@exemple.fr');
   await page.locator('#mdpDemander').click();
-  await page.locator('#mdpCode').fill('123456');
+  await page.locator('#mdpCode').fill('12345678');
   await page.locator('#mdpValider').click();
   await page.locator('#mdpNouveau').fill('unMotDePasseSolide');
   await page.locator('#mdpConfirme').fill('unAutreMotDePasse');

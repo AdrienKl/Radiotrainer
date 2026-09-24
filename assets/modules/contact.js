@@ -434,4 +434,78 @@
   /* Ouverture programmatique. Sert aux tests de parcours, et ouvre la porte à
      un « signaler ce scénario » posé plus tard à même le récapitulatif. */
   window.rtContactOuvrir = function(n){ ouvrir(n || null); };
+
+  /* ----------------------------------------------------------------------
+     6) LA BULLE DE PREMIÈRE CONNEXION
+     ----------------------------------------------------------------------
+     Un bouton rond sans libellé, en bas à droite, ne dit pas ce qu'il fait. La
+     bulle le dit UNE fois, à la première entrée dans l'application, puis se
+     tait pour de bon.
+
+     ┌─ OÙ EST RETENU « DÉJÀ VUE » ─────────────────────────────────────────┐
+     │ Dans les RÉGLAGES (`rt-settings`, clé `bulleContactVue`), et pas dans │
+     │ une clé de stockage à elle. Les réglages montent dans                │
+     │ profiles.settings et redescendent sur chaque appareil (donnees.js    │
+     │ § 7) : la bulle vue sur l'ordinateur ne se remontre pas sur le       │
+     │ téléphone. Une clé de plus, elle, resterait collée au navigateur —   │
+     │ exactement ce que CLAUDE.md § 7.2 veut éviter.                       │
+     └──────────────────────────────────────────────────────────────────────┘
+
+     Le délai avant l'affichage laisse aux réglages du compte le temps de
+     redescendre de la base : sans lui, un nouvel appareil montrerait la bulle
+     avant d'apprendre qu'elle a déjà été vue ailleurs.
+
+     Comme le reste de ce fichier, rien n'est emprunté sans test : rtSettings
+     et rtSaveSettings viennent du noyau, et leur absence coupe la bulle au
+     lieu de casser la page. */
+  var bulle = document.getElementById('ctBulle');
+  var bulleOk = document.getElementById('ctBulleOk');
+  var minuteurBulle = null;
+  function bulleDejaVue(){
+    try { return typeof rtSettings === 'function' && !!rtSettings().bulleContactVue; }
+    catch(e){ return true; }
+  }
+  function retenirBulle(){
+    try {
+      if (typeof rtSettings !== 'function' || typeof rtSaveSettings !== 'function') return;
+      var s = rtSettings();
+      if (s.bulleContactVue) return;
+      s.bulleContactVue = true;
+      rtSaveSettings(s);
+    } catch(e){}
+  }
+  function cacherBulle(){
+    if (minuteurBulle){ clearTimeout(minuteurBulle); minuteurBulle = null; }
+    if (bulle && !bulle.hidden){ bulle.hidden = true; retenirBulle(); }
+  }
+  /* force : montrer même si déjà vue — la simulation de première connexion
+     de la console d'administration en a besoin. */
+  function montrerBulle(force){
+    if (!bulle) return;
+    if (!force && bulleDejaVue()) return;
+    if (minuteurBulle) clearTimeout(minuteurBulle);
+    minuteurBulle = setTimeout(function(){
+      minuteurBulle = null;
+      if (!document.body.classList.contains('state-app')) return;
+      if (!force && bulleDejaVue()) return;
+      bulle.hidden = false;
+    }, force ? 600 : 1500);
+  }
+  if (bulleOk) bulleOk.addEventListener('click', cacherBulle);
+  /* Ouvrir la modale par le bouton, c'est avoir compris : la bulle se retire. */
+  document.addEventListener('click', function(ev){
+    if (ev.target && ev.target.closest && ev.target.closest('[data-contact]')) cacherBulle();
+  });
+  window.addEventListener('rt:page', function(){
+    /* Hors de l'application (vitrine, connexion, déconnexion), la bulle n'a
+       rien à faire là. Sans marquer « vue » : elle n'a pas été lue. */
+    if (!document.body.classList.contains('state-app')){
+      if (minuteurBulle){ clearTimeout(minuteurBulle); minuteurBulle = null; }
+      if (bulle) bulle.hidden = true;
+      return;
+    }
+    if (bulle && bulle.hidden) montrerBulle(false);
+  });
+
+  window.RTContact = { bulle: function(force){ montrerBulle(!!force); } };
 })();

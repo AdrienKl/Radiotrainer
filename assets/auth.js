@@ -98,7 +98,7 @@
        service intégré). Lui dire « trop d'essais » l'enverrait chercher une
        faute de son côté. */
     [/email rate limit exceeded/i,        "Le service d'envoi d'e-mails est momentanément saturé. Réessayez dans une heure, ou contactez-nous."],
-    /* Parcours par code à 6 chiffres. Supabase emploie « token » pour désigner
+    /* Parcours par code à 8 chiffres (longueur réglée côté Supabase, « Email OTP Length »). Supabase emploie « token » pour désigner
        le code ; l'utilisateur, lui, n'a jamais vu ce mot. On ne distingue pas
        « expiré » de « faux » : le message de Supabase ne le fait pas non plus,
        et deviner serait mentir. */
@@ -206,7 +206,7 @@
        son identité. Relevé au chargement : voir PAR_LIEN plus haut. */
     arriveParLien: function(){ return PAR_LIEN; },
 
-    /* ---------- Inscription par code à 6 chiffres --------------------------
+    /* ---------- Inscription par code à 8 chiffres --------------------------
        Le parcours en plusieurs étapes demande l'adresse AVANT le mot de passe,
        ce que signUp(email, password) ne sait pas faire : il exige les deux
        d'un coup. On passe donc par signInWithOtp, primitive prévue pour ça —
@@ -277,7 +277,7 @@
 
     /* Reconnaît le lien de Supabase et en extrait le jeton. Rend null pour tout
        le reste — c'est ce qui permet à l'appelant de distinguer « il a collé un
-       lien » de « il a tapé six chiffres ». */
+       lien » de « il a tapé huit chiffres ». */
     jetonDuLien: function(lien){
       var t = String(lien||'').trim();
       if (t.indexOf('token') < 0) return null;
@@ -288,7 +288,7 @@
                type: ty ? decodeURIComponent(ty[1]) : 'magiclink' };
     },
 
-    /* ---------- Vérifier le code à six chiffres -----------------------------
+    /* ---------- Vérifier le code à huit chiffres -----------------------------
        Le même code à l'écran, mais PAS le même type côté serveur, et c'est ce
        qui piégeait le compte neuf.
 
@@ -398,7 +398,7 @@
        │ son propre projet — puis attende une heure. C'est de l'ergonomie qui │
        │ évite un dégât réel, pas un rempart.                                 │
        └───────────────────────────────────────────────────────────────────────┘ */
-    DELAI_RENVOI: 60,
+    DELAI_RENVOI: 120,
     _dernierEnvoi: {},
     attenteRestante: function(quoi){
       var t = RTAuth._dernierEnvoi[quoi || 'otp'] || 0;
@@ -569,7 +569,7 @@
     if (bMdpVal) bMdpVal.addEventListener('click', function(){
       var email = ($('loginId').value||'').trim();
       var code  = ($('mdpCode').value||'').replace(/\s+/g,'');
-      if (code.length < 6) return msg('loginMsg', "Saisissez le code à six chiffres reçu par e-mail.");
+      if (code.length < 8) return msg('loginMsg', "Saisissez le code à huit chiffres reçu par e-mail.");
       msg('loginMsg','');
       var libre = occuper(bMdpVal, 'Vérification…');
       RTAuth.recuperationVerifier(email, code)
@@ -669,7 +669,7 @@
     if (bVal) bVal.addEventListener('click', function(){
       var email = ($('loginId').value||'').trim();
       var code  = ($('logCode').value||'').replace(/\s+/g,'');
-      if (code.length < 6) return msg('loginMsg', "Saisissez le code à six chiffres reçu par e-mail.");
+      if (code.length < 8) return msg('loginMsg', "Saisissez le code à huit chiffres reçu par e-mail.");
       msg('loginMsg','');
       var libre = occuper(bVal, 'Vérification…');
       RTAuth.otpVerifier(email, code)

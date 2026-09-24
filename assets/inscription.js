@@ -140,7 +140,7 @@
      autre onglet ferait plus de dégâts que de bien — et de toute façon la
      vérité est en base, dans les jalons.
      -------------------------------------------------------------------------- */
-  var etat = { etape:1, email:'', reponses:{}, libres:{} };
+  var etat = { etape:1, email:'', reponses:{}, libres:{}, simulation:false };
 
   function $(id){ return document.getElementById(id); }
   function msg(n, texte, type){
@@ -203,10 +203,14 @@
     if (!emailPlausible(email)) return msg(1, "Vérifiez votre adresse e-mail.");
     if (!$('insCgu').checked)   return msg(1, "Vous devez accepter les conditions d'utilisation pour créer un compte.");
     if (!$('insAge').checked)   return msg(1, "L'inscription est réservée aux personnes de 15 ans révolus.");
+    var reste = RTAuth.attenteRestante('otp');
+    if (reste) return msg(1, 'Patientez ' + reste + ' seconde' + (reste > 1 ? 's' : '')
+                           + ' avant de demander un nouveau code.');
     msg(1, '');
     var libre = occuper($('insEnvoyer'), 'Envoi…');
     RTAuth.otpEnvoyer(email, true).then(function(){
       libre();
+      RTAuth.marquerEnvoi('otp');
       etat.email = email;
       $('insRappelMail').textContent = email;
       aller(2);
@@ -231,8 +235,8 @@
       suite = RTAuth.otpVerifierLien(saisi);
     } else {
       var code = saisi.replace(/\s+/g, '');
-      if (code.length < 6)
-        return msg(2, "Saisissez le code à six chiffres reçu par e-mail — ou collez ici le lien du message.");
+      if (code.length < 8)
+        return msg(2, "Saisissez le code à huit chiffres reçu par e-mail — ou collez ici le lien du message.");
       suite = RTAuth.otpVerifier(etat.email, code);
     }
     msg(2, '');
@@ -303,12 +307,19 @@
   function peindreQcm(){
     var hote = $('insQcm'); if (!hote) return;
     hote.textContent = '';
-    QUESTIONS.forEach(function(q){
+    /* Les questions facultatives passent en DERNIER à l'affichage (24/09/2026) :
+       ouvrir le questionnaire sur « Où nous avez-vous connu ? » faisait
+       commencer par la seule question qui ne sert pas à l'élève. L'ordre de
+       QUESTIONS, lui, ne bouge pas — la page Compte et l'enregistrement le
+       lisent tel quel. Tri STABLE : les obligatoires gardent leur ordre. */
+    var ordre = QUESTIONS.filter(function(q){ return !q.facultative; })
+                  .concat(QUESTIONS.filter(function(q){ return q.facultative; }));
+    ordre.forEach(function(q){
       /* La question des heures de vol ne concerne que ceux qui volent. Elle est
          peinte quand même mais masquée, pour que la réponse déjà donnée ne soit
          pas perdue si l'on revient changer son profil. */
       var bloc = document.createElement('div');
-      bloc.className = 'ins-q';
+      bloc.className = 'ins-q' + (q.facultative ? ' ins-q--facultative' : '');
       bloc.setAttribute('data-q', q.id);
 
       var h = document.createElement('h3');
@@ -450,8 +461,12 @@
       }
     });
     var libre = occuper($('insQcmOk'), 'Enregistrement…');
-    RTAuth.majProfil(champs)
-      .then(function(){ return RTAuth.rechargerProfil(); })
+    /* En simulation (console d'administration), rien ne part en base : le
+       compte qui teste est un vrai compte, déjà inscrit, et ses réponses
+       réelles ne doivent pas être écrasées par celles d'un essai. */
+    var ecriture = etat.simulation ? Promise.resolve()
+      : RTAuth.majProfil(champs).then(function(){ return RTAuth.rechargerProfil(); });
+    ecriture
       .then(function(){ libre(); aller(5); })
       .catch(function(e){ libre(); erreur(4, e); });
   }
@@ -556,6 +571,15 @@
       display_name: [prenom, nom].filter(Boolean).join(' ')
     };
     var libre = occuper($('insTerminer'), 'Création…');
+    if (etat.simulation){
+      /* Fin de la simulation : on entre dans l'application comme un compte
+         neuf, et la bulle « Contact » se montre même si ce compte l'a déjà
+         vue — c'est tout l'intérêt de rejouer une première connexion. */
+      libre(); finirSimulation();
+      if (window.rtEntrer) window.rtEntrer();
+      if (window.RTContact) RTContact.bulle(true);
+      return;
+    }
     RTAuth.majProfil(champs)
       .then(function(){ return RTAuth.jalon('termine'); })
       .then(function(){ return RTAuth.rechargerProfil(); })
@@ -610,6 +634,10 @@
     _manquante: function(){ var q = manquante(); return q ? q.id : null; },
     _aero:      function(v){ return resoudreAerodrome(v); },
     _pseudoOk:  function(){ return pseudoLibre; },
+    _simulation: function(){ return etat.simulation; },
+
+    /* Appelé par la console d'administration (Test / Controller). */
+    simuler: simuler,
 
     /* La définition du questionnaire, pour la page Compte. Elle doit y afficher
        EXACTEMENT les mêmes questions et les mêmes choix : la rectification
@@ -655,8 +683,45 @@
     return !!(window.RTAuth && RTAuth.profil() && !RTInscription.aReprendre());
   }
 
+  /* ==========================================================================
+     SIMULATION D'UNE PREMIÈRE CONNEXION — console d'administration
+     --------------------------------------------------------------------------
+     Rejoue le parcours À PARTIR DU QUESTIONNAIRE (étape 4), c'est-à-dire juste
+     après le mot de passe, puis l'identité, puis l'arrivée dans l'application
+     avec la bulle « Contact ». Les étapes 1 à 3 sont exclues exprès : elles
+     envoient un e-mail et posent un mot de passe, sur le compte qui teste.
+
+     AUCUNE ÉCRITURE : ni majProfil, ni jalon. Seule lecture réseau : la
+     disponibilité du pseudo, qui ne modifie rien. La simulation n'accorde donc
+     aucun droit — n'importe qui pourrait l'appeler depuis la console du
+     navigateur, il n'y gagnerait qu'un formulaire qui n'enregistre rien.
+
+     Quitter la page d'inscription en cours de route arrête la simulation :
+     sinon, un vrai parcours repris plus tard dans le même onglet se croirait
+     encore en essai et n'enregistrerait rien. */
+  function finirSimulation(){
+    etat.simulation = false;
+    var b = $('insSimu'); if (b) b.hidden = true;
+  }
+  function simuler(){
+    etat.simulation = true;
+    etat.reponses = {}; etat.libres = {};
+    ['insPseudo','insPrenom','insNom','insAero'].forEach(function(id){ var e = $(id); if (e) e.value = ''; });
+    pseudoLibre = false; dernierPseudoTeste = null;
+    aidePseudo("3 à 20 caractères : minuscules, chiffres, tiret ou souligné.");
+    [4,5].forEach(function(n){ msg(n, ''); });
+    var b = $('insSimu'); if (b) b.hidden = false;
+    etat.etape = 4;
+    if (window.rtNaviguer) window.rtNaviguer('signup');
+    else location.hash = '#signup';
+    aller(4);
+  }
+
   window.addEventListener('rt:page', function(ev){
-    if (!ev.detail || ev.detail.page !== 'signup') return;
+    if (!ev.detail) return;
+    if (etat.simulation && ev.detail.page !== 'signup') finirSimulation();
+    if (ev.detail.page !== 'signup') return;
+    if (etat.simulation){ bandeauDeja(false); aller(etat.etape); return; }
     if (!window.RTAuth) return;
     if (RTInscription.aReprendre()){
       etat.email = (RTAuth.utilisateur() || {}).email || etat.email;
@@ -710,10 +775,13 @@
 
     $('insRetourMail').addEventListener('click', function(){ msg(2, ''); aller(1); });
     $('insRenvoyer').addEventListener('click', function(){
+      var reste = RTAuth.attenteRestante('otp');
+      if (reste) return msg(2, 'Patientez ' + reste + ' seconde' + (reste > 1 ? 's' : '')
+                             + ' avant de demander un nouveau code.');
       msg(2, '');
       var libre = occuper($('insRenvoyer'), 'Envoi…');
       RTAuth.otpEnvoyer(etat.email, true).then(function(){
-        libre(); msg(2, "Nouveau code envoyé.", 'ok');
+        libre(); RTAuth.marquerEnvoi('otp'); msg(2, "Nouveau code envoyé.", 'ok');
       }).catch(function(e){ libre(); erreur(2, e); });
     });
 
@@ -752,8 +820,48 @@
       });
     });
 
+    [].forEach.call(document.querySelectorAll('input[data-voir-mdp]'), oeil);
+
     if (window.RTAuth && !RTAuth.disponible()) msg(1, RTAuth.raisonIndisponible());
     aller(1);
+  }
+
+  /* L'œil qui montre le mot de passe, sur les champs où on le CHOISIT (ici et
+     dans le parcours « mot de passe oublié », qui vit dans la même page — d'où
+     un sélecteur global, et un seul endroit pour ce code).
+
+     Le bouton est construit ici plutôt qu'écrit quatre fois dans index.html :
+     il a besoin d'un conteneur positionné autour du champ, et quatre copies à
+     la main finissent toujours par diverger. type="button" est indispensable —
+     sans lui, Entrée dans le champ déclencherait l'œil au lieu de l'étape.
+
+     Montrer le mot de passe ne l'envoie nulle part : c'est une propriété
+     d'affichage du champ, rien d'autre. Et le champ se vide toujours après
+     l'envoi (voir poserMotDePasse), qu'il soit affiché ou non. */
+  var OEIL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var OEIL_BARRE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  function oeil(champ){
+    if (champ.parentNode.classList.contains('mdp-boite')) return;   // déjà équipé
+    var boite = document.createElement('span');
+    boite.className = 'mdp-boite';
+    champ.parentNode.insertBefore(boite, champ);
+    boite.appendChild(champ);
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'mdp-oeil';
+    var peindre = function(){
+      var vu = champ.type === 'text';
+      b.innerHTML = vu ? OEIL_BARRE : OEIL;
+      b.setAttribute('aria-label', vu ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+      b.setAttribute('aria-pressed', vu ? 'true' : 'false');
+      b.title = b.getAttribute('aria-label');
+    };
+    b.addEventListener('click', function(){
+      champ.type = (champ.type === 'password') ? 'text' : 'password';
+      peindre();
+      try{ champ.focus(); }catch(e){}
+    });
+    peindre();
+    boite.appendChild(b);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', brancher);

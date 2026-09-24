@@ -106,3 +106,42 @@
     .ct-envoi{ min-width:0; }
     .ct-opt{ padding:14px; }
   }
+
+/* ---------- Le bouton flottant (24/09/2026) ----------
+   Il remplace l'entrée du menu de gauche. En bas à droite, sur toutes les
+   pages. z-index 300 : au-dessus de la coquille (menu 120, barre 110, voile
+   115), SOUS les modales (400) — la sienne comprise, qu'il ne doit pas
+   recouvrir une fois ouverte.
+   Fond --violet et non --violet-dark : le second est un jeton de TEXTE, qui
+   devient violet clair en thème sombre (le piège de .cta:hover, § 22). */
+.ct-fab{ position:fixed; right:clamp(14px,2.2vw,26px); bottom:clamp(14px,2.2vw,26px); z-index:300;
+  width:52px; height:52px; border-radius:50%; border:0; padding:0; cursor:pointer;
+  display:grid; place-items:center; color:#fff; background:var(--violet);
+  box-shadow:0 8px 22px rgba(60,45,160,.38), 0 2px 6px rgba(20,16,40,.18);
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease; }
+.ct-fab:hover{ transform:translateY(-2px); background:#5849c9;
+  box-shadow:0 12px 28px rgba(60,45,160,.45), 0 3px 8px rgba(20,16,40,.2); }
+.ct-fab:focus-visible{ outline:3px solid var(--violet-soft); outline-offset:3px; }
+.ct-fab svg{ width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round; }
+@media (prefers-reduced-motion:reduce){ .ct-fab, .ct-fab:hover{ transition:none; transform:none; } }
+/* Plus petit sur téléphone : il ne doit pas cacher le bas des formulaires. */
+@media (max-width:520px){ .ct-fab{ width:46px; height:46px; } .ct-fab svg{ width:21px; height:21px; } }
+
+/* ---------- La bulle de première connexion ----------
+   Au-dessus du bouton, avec une pointe qui le désigne. role=status : un
+   lecteur d'écran l'annonce sans voler le focus — on ne coupe pas quelqu'un
+   qui vient d'arriver sur son tableau de bord. */
+.ct-bulle{ position:fixed; z-index:300; right:clamp(14px,2.2vw,26px);
+  bottom:calc(clamp(14px,2.2vw,26px) + 66px); width:min(290px, calc(100vw - 32px)); box-sizing:border-box;
+  padding:14px 15px 13px; border-radius:14px; background:var(--surface); color:var(--ink);
+  border:1px solid var(--border); box-shadow:var(--shadow-lg);
+  animation:ctBulle .35s cubic-bezier(.16,.62,.28,1) both; }
+.ct-bulle[hidden]{ display:none; }
+.ct-bulle::after{ content:""; position:absolute; right:19px; bottom:-7px; width:13px; height:13px;
+  background:var(--surface); border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+  transform:rotate(45deg); }
+.ct-bulle p{ margin:0 0 11px; font-size:13.5px; line-height:1.5; color:var(--ink); }
+.ct-bulle b{ color:var(--ink); }
+@keyframes ctBulle{ from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:none } }
+@media (prefers-reduced-motion:reduce){ .ct-bulle{ animation:none; } }

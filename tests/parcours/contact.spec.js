@@ -46,18 +46,13 @@ async function doublerFormspree(page, { statut = 200, corps = { ok: true } } = {
   return envois;
 }
 
-test('le bouton du menu ouvre la modale et ne navigue pas', async ({ page }) => {
+test('le bouton flottant ouvre la modale et ne navigue pas', async ({ page }) => {
   const { erreurs } = await ouvrir(page);
   await entrer(page, 'exercices');
 
-  /* En largeur téléphone, la barre latérale est un tiroir : l'entrée n'est
-     atteignable qu'après le hamburger. Passer par `force: true` aurait fait
-     « passer » le test sans jamais prouver que le bouton est cliquable là où
-     l'utilisateur le voit. */
-  const hamburger = page.locator('#hamburger');
-  if (await hamburger.isVisible()) await hamburger.click();
-
-  await page.locator('.sidelink[data-contact]').click();
+  /* Pas de `force: true` : le test doit prouver que le bouton est cliquable là
+     où l'utilisateur le voit — en largeur téléphone comme sur un bureau. */
+  await page.locator('.ct-fab').click();
 
   await expect(page.locator('#contactModal')).toBeVisible();
   /* Le point entier de ce test : la page N'A PAS changé. Un data-page="contact"
@@ -65,6 +60,58 @@ test('le bouton du menu ouvre la modale et ne navigue pas', async ({ page }) => 
   expect(await page.evaluate(() => location.hash)).toBe('#exercices');
   await expect(page.locator('#page-exercices')).toBeVisible();
   expect(erreurs).toEqual([]);
+});
+
+/* L'entrée du menu a été remplacée par le bouton flottant le 24/09/2026. Deux
+   points d'entrée dans la même coquille, c'est deux endroits à tenir. */
+test('le menu de gauche ne porte plus d\'entrée Contact', async ({ page }) => {
+  await ouvrir(page);
+  await entrer(page, 'tableau');
+  await expect(page.locator('.sidebar [data-contact]')).toHaveCount(0);
+});
+
+test('le bouton flottant est là sans compte, sur la vitrine et la connexion', async ({ page }) => {
+  await ouvrir(page);
+  await expect(page.locator('.ct-fab')).toBeVisible();
+  await page.evaluate(() => { location.hash = '#login'; });
+  await expect(page.locator('.ct-fab')).toBeVisible();
+  await page.locator('.ct-fab').click();
+  await expect(page.locator('#contactModal')).toBeVisible();
+});
+
+/* ---- La bulle de première connexion ---------------------------------------
+   Elle se montre une fois, à la première entrée dans l'application, et le
+   « déjà vue » vit dans les RÉGLAGES (rt-settings) pour suivre le compte d'un
+   appareil à l'autre — pas dans une clé de stockage à elle. */
+test('la bulle se montre à la première entrée, puis plus jamais', async ({ page }) => {
+  await ouvrir(page);
+  await entrer(page, 'tableau');
+  await expect(page.locator('#ctBulle')).toBeVisible({ timeout: 4000 });
+  await page.locator('#ctBulleOk').click();
+  await expect(page.locator('#ctBulle')).toBeHidden();
+  const vue = await page.evaluate(() => JSON.parse(localStorage.getItem('rt-settings') || '{}').bulleContactVue);
+  expect(vue, 'retenue dans les réglages, qui suivent le compte').toBe(true);
+
+  await page.reload();
+  await entrer(page, 'tableau');
+  await page.waitForTimeout(2000);
+  await expect(page.locator('#ctBulle')).toBeHidden();
+});
+
+test('ouvrir la modale par le bouton vaut « compris »', async ({ page }) => {
+  await ouvrir(page);
+  await entrer(page, 'tableau');
+  await expect(page.locator('#ctBulle')).toBeVisible({ timeout: 4000 });
+  await page.locator('.ct-fab').click();
+  await expect(page.locator('#ctBulle')).toBeHidden();
+  const vue = await page.evaluate(() => JSON.parse(localStorage.getItem('rt-settings') || '{}').bulleContactVue);
+  expect(vue).toBe(true);
+});
+
+test('la bulle ne se montre pas hors de l\'application', async ({ page }) => {
+  await ouvrir(page);
+  await page.waitForTimeout(2000);
+  await expect(page.locator('#ctBulle')).toBeHidden();
 });
 
 test('le lien du pied de page ouvre la modale sans compte', async ({ page }) => {

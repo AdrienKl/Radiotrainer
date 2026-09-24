@@ -738,15 +738,23 @@ Huit vérifications couvrent la règle, et six d'entre elles rougissent si on re
 
 ## 22. Contact / Feedback — ajouté le 22/09/2026
 
-Une entrée dans le menu (« Contact / Feedback », sans `data-page`) et une dans le
-pied de page (accessible **sans compte** — le signalement le plus utile est
-souvent « l'inscription ne marche pas »). Les deux ouvrent la même modale.
+**Depuis le 24/09/2026 : un bouton flottant en bas à droite** (`.ct-fab`), sur
+toutes les pages — vitrine, connexion et application — et un lien dans le pied
+de page (accessible **sans compte** — le signalement le plus utile est souvent
+« l'inscription ne marche pas »). L'entrée du menu de gauche a été retirée. Les
+deux ouvrent la même modale.
+
+**La bulle de première connexion** (`#ctBulle`, `RTContact.bulle()`) explique le
+bouton une fois, à la première entrée dans l'application. « Déjà vue » vit dans
+les **réglages** (`rt-settings` › `bulleContactVue`), qui suivent le compte
+(§ 21.5) — pas dans une clé de stockage de plus (§ 7.2).
 
 `assets/modules/contact.js` + `assets/css/15-contact.css`. Le module n'emprunte
 **aucun** symbole au moteur ni aux autres modules : il ne lit que le DOM,
-`location.hash` et `window.RTAuth` s'il existe, toujours derrière un test. Sa
-place dans la liste des `<script>` est donc libre — ce qui n'est le cas d'aucun
-de ses voisins.
+`location.hash`, `window.RTAuth` et les réglages du noyau (`rtSettings`,
+`rtSaveSettings`) s'ils existent, toujours derrière un test. Sa place dans la
+liste des `<script>` est donc libre — ce qui n'est le cas d'aucun de ses
+voisins.
 
 ### Les cinq points qui ne se devinent pas
 
@@ -842,6 +850,12 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 22/09/2026 | L'identifiant de formulaire Formspree est **public** par construction, comme la clé anonyme de Supabase. La protection contre les abus est chez le prestataire (quota, piège à robots), pas dans un `if` du navigateur | § 22 |
 | 22/09/2026 | La politique de confidentialité et le pied de page NOMMENT Formspree et disent ce qui part. § 15 : une phrase fausse sur les données de l'utilisateur est une promesse rompue, pas une tournure de style | § 15, § 22 |
 | 22/09/2026 | `.cta:hover` et `.btn.primary:hover` posaient `--violet-dark` EN FOND : en thème sombre, le blanc du libellé tombait à 2,16:1 sur TOUS les boutons pleins du site. Même piège que `.step__n` le 20/09. Corrigé en assombrissant au survol (#5849c9, 6,54:1), comme le fait le thème clair | `assets/css/09-theme-sombre.css` |
+
+| 24/09/2026 | Le code reçu par e-mail fait **huit chiffres** (réglage « Email OTP Length » du projet Supabase) : textes, exemples et contrôle de longueur alignés | `assets/auth.js`, `assets/inscription.js` |
+| 24/09/2026 | Renvoi du code à l'inscription soumis au même garde-fou que la connexion (`attenteRestante('otp')`), et délai porté de 60 à **120 s** partout — les logs montraient un 200 suivi d'une rafale de 429 | `assets/inscription.js` |
+| 24/09/2026 | Contact : bouton flottant à la place de l'entrée du menu, et bulle de première connexion retenue dans les réglages du compte | § 22 |
+| 24/09/2026 | Connexion et inscription prennent le fond de l'accueil (carte OACI + tour) ; questionnaire refondu (pastilles, Piper Cub, question facultative en dernier et discrète) ; œil sur les champs où l'on CHOISIT un mot de passe ; DR400 posé sur un ciel en thème sombre | `06-coquille.css`, `02-vitrine.css` |
+| 24/09/2026 | Administration › Test : « Simuler une première connexion », du questionnaire à la bulle Contact, SANS aucune écriture en base (`RTInscription.simuler`) — les étapes 1 à 3 ne sont pas rejouables, elles enverraient un e-mail et changeraient le mot de passe du compte qui teste | `assets/admin/pages/test.js` |
 
 ### En attente de validation
 

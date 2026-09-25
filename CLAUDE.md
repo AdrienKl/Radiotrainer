@@ -857,9 +857,13 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 24/09/2026 | Connexion et inscription prennent la carte OACI de l'accueil, FIXÉE à l'écran (en `absolute`/`cover`, elle zoomait à chaque réponse du questionnaire) ; la tour, essayée puis retirée, carte centrée. Questionnaire : UNE question à la fois, « Suivant » / « Précédent », compteur recalculé en route ; questionnaire refondu (pastilles, Piper Cub, question facultative en dernier et discrète) ; œil sur les champs où l'on CHOISIT un mot de passe ; DR400 posé sur un ciel en thème sombre | `06-coquille.css`, `02-vitrine.css` |
 | 24/09/2026 | Administration › Test : « Simuler une première connexion », du questionnaire à la bulle Contact, SANS aucune écriture en base (`RTInscription.simuler`) — les étapes 1 à 3 ne sont pas rejouables, elles enverraient un e-mail et changeraient le mot de passe du compte qui teste | `assets/admin/pages/test.js` |
 
+| 25/09/2026 | `sql/004-app-errors-longueurs.sql` : bornes de longueur sur les six colonnes de texte d'`app_errors`, qui accepte les dépôts anonymes. `not valid` (les lignes anciennes ne sont pas relues), aucune politique touchée. Borne la taille d'UNE ligne, PAS le nombre de lignes. Vérifié hors ligne par `tests/verifier-migrations.mjs`, dans les deux sens | `sql/004` |
+
 ### En attente de validation
 
 - **Convention de nommage** (§ 16.2) — proposée, pas appliquée. Aucun renommage de masse avant accord.
 - **Poser `sql/000` et `sql/003` sur la PRODUCTION** (§ 21.4) — ils y seraient sans effet, mais recréent des politiques RLS vivantes. Le no-op de `sql/003` est prouvé ; celui de `sql/000` demande d'abord de lister les politiques d'`app_errors` et `admin_audit_log`, jamais vues. Sans urgence.
+- **Poser `sql/004` sur la PRODUCTION** — par `supabase/poser-sql.sh` (§ 21.2), jeton créé puis révoqué. Sans risque pour les lignes existantes (`not valid`). Tant qu'il n'est pas posé, la production accepte toujours des erreurs de taille arbitraire.
+- **Le volume de dépôts anonymes dans `app_errors`** — `sql/004` borne une ligne, pas leur nombre. Le fermer demande de trancher : dépôt réservé aux comptes connectés (on perd les erreurs d'avant connexion, celles de l'inscription), ou fonction de dépôt limitée en débit. Décision de politique RLS (§ 4, § 8).
 - **Les séances détachées** (§ 21.2) — en compter le nombre avant de décider. Si elles sont peu nombreuses, ne rien faire est la bonne réponse.
 - **`@electric-sql/pglite` et `pngjs` en dépendances de test** — l'application reste un site statique sans aucune dépendance ; seule la suite de tests en gagne deux. À confirmer.

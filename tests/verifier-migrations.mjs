@@ -258,6 +258,42 @@ if (!problemes) {
   } else {
     passe(`une inscription crée un profil « ${profil[0].display_name} », rôle « user », actif`);
   }
+
+  /* 9. Les bornes de taille d'app_errors (sql/004). La table accepte les
+        dépôts anonymes : sans bornes, n'importe qui y dépose des mégaoctets.
+        On vérifie dans les deux sens — une erreur ordinaire PASSE (une borne
+        trop serrée perdrait de vraies erreurs), une trop longue est REFUSÉE. */
+  const deposer = async (champs) => {
+    const cols = Object.keys(champs), vals = cols.map((_, i) => `$${i + 1}`);
+    try {
+      await db.query(`insert into public.app_errors (${cols.join(',')}) values (${vals.join(',')})`,
+                     Object.values(champs));
+      return null;
+    } catch (e) { return e.message; }
+  };
+  const ordinaire = await deposer({
+    message: 'TypeError: Cannot read properties of undefined (reading \'icao\')',
+    stack: 'at f (moteur.js:1:1)\n'.repeat(60), url: 'https://albatrosvfr.fr/#navigation',
+    user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+    app_version: '2026.09', context: JSON.stringify({ page: 'navigation', scenario: 'tour-de-piste' })
+  });
+  if (ordinaire) rate(`une erreur de taille ordinaire est refusée : ${ordinaire}`);
+  else passe('une erreur de taille ordinaire est acceptée');
+
+  const TROP = [
+    ['message',     { message: 'x'.repeat(2001) }],
+    ['stack',       { message: 'm', stack: 'x'.repeat(16001) }],
+    ['url',         { message: 'm', url: 'x'.repeat(2049) }],
+    ['user_agent',  { message: 'm', user_agent: 'x'.repeat(513) }],
+    ['app_version', { message: 'm', app_version: 'x'.repeat(65) }],
+    ['context',     { message: 'm', context: JSON.stringify({ d: 'x'.repeat(16000) }) }]
+  ];
+  const passees = [];
+  for (const [col, champs] of TROP) if (!(await deposer(champs))) passees.push(col);
+  if (passees.length) {
+    rate(`app_errors accepte des valeurs trop longues : ${passees.join(', ')}`);
+    console.log(rouge(`      Dépôt anonyme autorisé : n'importe qui peut y écrire des mégaoctets.`));
+  } else passe(`app_errors refuse les dépôts trop longs, sur ses ${TROP.length} colonnes bornées`);
 }
 
 console.log('');

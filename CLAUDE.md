@@ -348,7 +348,7 @@ Les améliorations UI/UX pertinentes peuvent toutefois être proposées lorsqu'e
   réécrit pas), le dépôt GitHub (§ 13.1), le nom de la branche `renommage-aviero` dans le
   journal ci-dessous (c'est une branche qui existe), et la prose qui *raconte* le passé.
 - **`CGU_VERSION` n'a pas bougé**, et c'est raisonné dans `LEGAL.md § 1`.
-- **Le logo reste l'icône actuelle** : § 10 interdit une refonte graphique spontanée, et il n'existe pas d'autre marque dessinée. Seul le mot a changé.
+- **Le logo a changé le 26/09/2026, à la demande du développeur** : une tête d'albatros dans un cercle (fichier fourni `albatros-vfr-logo.svg`) remplace l'avion en papier. Un seul symbole `#logo-albatros` en tête du `<body>` d'`index.html`, appelé par `<use>` aux cinq emplacements et dans la console d'administration ; `assets/images/favicon.svg` pour l'onglet ; le tracé en direct dans `404.html` (page autonome). **Trait épaissi** (+100, +160 pour l'onglet) : dessiné à 478 px, le trait d'origine tombe sous 0,3 px en icône. La version d'origine, au trait fin, est `assets/images/logo-albatros.svg`. Le reste de la charte ne bouge pas.
 - **Conservé tel quel** : la charte actuelle — violet `#5b4bce`, bandeau noir, jetons de couleur, typographie, mise en page.
 - **Plus tard, étape dédiée** : l'identité visuelle complète.
 

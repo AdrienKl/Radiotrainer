@@ -65,6 +65,7 @@ html.no-anim .adm{ transition:none; }
   background:linear-gradient(135deg,var(--adm-accent),#4d3fbe); color:#fff;
 }
 .adm-rail__logo .ic-svg{ width:17px; height:17px; }
+.adm-rail__logo .ic-svg.logo-albatros{ width:22px; height:22px; }   /* le logo, plus dense que l'ancienne icône */
 .adm-rail__brand{ display:flex; flex-direction:column; min-width:0; line-height:1.2; }
 .adm-rail__brand b{ font-size:15px; font-weight:800; letter-spacing:-.01em; white-space:nowrap; }
 .adm-rail__brand i{

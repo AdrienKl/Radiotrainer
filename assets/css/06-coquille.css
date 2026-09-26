@@ -53,6 +53,24 @@
   .auth-brand{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; color:var(--ink); margin-bottom:20px; }
   .auth-brand .logo{ color:var(--violet); display:inline-flex; }
   .auth-brand .ic-svg{ width:20px; height:20px; }
+  /* LE LOGO ALBATROS (26/09/2026) est une tête dans un cercle, plus dense que
+     l'avion en papier qu'il remplace : à 18-20 px il devenait un rond gris. On
+     lui donne 24 px partout où il est seul, 22 dans la pastille de 32 px. Les
+     sélecteurs portent .logo-albatros en plus de .ic-svg : ils doivent passer
+     devant `.brand .logo .ic-svg{18px}` (03-exercices.css), chargé avant. */
+  .auth-brand .ic-svg.logo-albatros,
+  .side-brand .ic-svg.logo-albatros,
+  .app-topbar .brand .logo .ic-svg.logo-albatros{ width:24px; height:24px; }
+  .topnav .brand .logo .ic-svg.logo-albatros{ width:23px; height:23px; }
+  /* Dans la pastille violette (.brand .logo), le logo est BLANC. L'ancienne
+     icône l'était par `stroke:#fff` (03-exercices.css) ; le logo, lui, se
+     peint en currentColor, et sans cette ligne il prenait le violet de
+     .app-topbar .brand .logo — violet sur violet, invisible sur téléphone. */
+  .brand .logo .ic-svg.logo-albatros{ color:#fff; }
+  /* Thème sombre : le violet plein (#6b5ae0) du logo se perdait sur le fond de
+     la carte. Le violet clair du thème (--violet-dark, #b3a6ff en sombre) est
+     celui des liens — ici c'est une ENCRE, pas un fond, donc il est à sa place. */
+  :root[data-theme="dark"] .auth-brand .logo{ color:var(--violet-dark); }
   .auth-title{ font-family:var(--sans); font-size:23px; font-weight:800; color:var(--ink); margin:0 0 4px; letter-spacing:-.01em; }
   /* --ink-2 EST TROP PÂLE POUR CES DEUX TAILLES. Mesuré sur les pixels réels des
      cartes de connexion et d'inscription : 4,07:1 pour le sous-titre (13,5 px) et

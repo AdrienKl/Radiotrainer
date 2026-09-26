@@ -859,6 +859,8 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 
 | 25/09/2026 | `sql/004-app-errors-longueurs.sql` : bornes de longueur sur les six colonnes de texte d'`app_errors`, qui accepte les dépôts anonymes. `not valid` (les lignes anciennes ne sont pas relues), aucune politique touchée. Borne la taille d'UNE ligne, PAS le nombre de lignes. Vérifié hors ligne par `tests/verifier-migrations.mjs`, dans les deux sens | `sql/004` |
 
+| 27/09/2026 | Début de vol : UNE phrase par échange, identique en Scénario et en Navigation. Mise en route « organisme, indicatif, demande mise en route, information X » (p. 39-40) ; approbation SANS QNH (absent de la p. 39 ; au départ, le QNH ne vient que de « demande paramètres pour le départ », p. 38, ou de l'ATIS) ; roulage = annonce complète p. 45 « indicatif, type, parking, demande consignes de roulage pour vol à destination de … », réponse « roulez et entrez aire d'attente … et rappelez prêt ». « Personnes à bord » RETIRÉ : absent de tout le manuel | `phraseologie-scenarios.js`, `navigation.js` |
+
 ### En attente de validation
 
 - **Convention de nommage** (§ 16.2) — proposée, pas appliquée. Aucun renommage de masse avant accord.

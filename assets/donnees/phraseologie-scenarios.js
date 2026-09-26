@@ -175,23 +175,30 @@ const SCENARIOS = [
     tours:[
       { role:'pilote', stn:'sol',
         situation:"Vous êtes au parking, prêt à demander la mise en route.",
-        consigne:"Contactez le contrôle : station, indicatif, position, demande de mise en route{ATISCONS}.",
-        /* {ATISPART} devient « , information Bravo » quand le terrain diffuse un ATIS,
-           et disparaît sinon : « Mérignac Prévol, Rapidair 3245, en D 8, demande mise
-           en route pour Lyon, information L » (manuel DSNA p. 39). */
-        attendu:"{ADRM} {STN}, {CALL}, bonjour, au parking, demande mise en route{ATISPART}.",  // Manuel DSNA p.39 « Demande mise en route »
+        consigne:"Contactez le contrôle : organisme, indicatif, demande de mise en route{ATISCONS}.",
+        /* L'ordre du manuel : organisme, indicatif, demande, lettre d'information —
+           « Mérignac Prévol, Rapidair 3245, en D 8, demande mise en route pour Lyon,
+           information L » (p. 39) ; sans position : « Saint-Étienne Tour, Rapidair 3245,
+           demande mise en route » (p. 40). {ATISPART} devient « , information Bravo »
+           quand le terrain diffuse un ATIS, et disparaît sinon.
+           24/09 → 27/09/2026 : « bonjour, au parking » retirés, à la demande du
+           développeur — ni l'un ni l'autre n'est dans les deux exemples du manuel ;
+           la position revient dans l'annonce de roulage, où la p. 45 la place. */
+        attendu:"{ADRM} {STN}, {CALL}, demande mise en route{ATISPART}.",  // Manuel DSNA p.39-40 « Demande mise en route »
         atisMot:true,
         // AFIS : l'agent d'information ne délivre pas de clairance ; le pilote annonce ses intentions.
-        afis:{ consigne:"Contactez l'agent AFIS : station, indicatif, position, intentions (mise en route).",
-               attendu:"{ADRM} {STN}, {CALL}, bonjour, au parking, demande mise en route." },
+        afis:{ consigne:"Contactez l'agent AFIS : organisme, indicatif, demande de mise en route.",
+               attendu:"{ADRM} {STN}, {CALL}, demande mise en route." },                // Manuel DSNA p.40
         motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
                    {label:"Votre indicatif",ref:'callsign'},
                    {label:"Demande de mise en route",variantes:["mise en route","demande mise en route","pour la mise en route","demarrage","je demande la mise en route"]} ] },
       { stn:'sol', station:"{ADRM} {STN}",                                            // Manuel DSNA p.39
-        atc:["{CALL}, {ADRM} {STN}, bonjour, mise en route approuvée, QNH {QNH}.",
-             "{CALL}, mise en route approuvée, QNH {QNH}."],
-        consigne:"Collationnez : mise en route approuvée + QNH, puis votre indicatif.",
-        attendu:"Mise en route approuvée, QNH {QNH}, {CALL}.",                        // Manuel DSNA p.39
+        /* PAS de QNH ici (retiré le 27/09/2026) : l'approbation de la p. 39 n'en porte
+           pas. Au départ, le manuel ne donne le QNH qu'en réponse à « demande paramètres
+           pour le départ » (p. 38) — ce que l'ATIS remplace. */
+        atc:["{CALL}, mise en route approuvée."],                                     // Manuel DSNA p.39
+        consigne:"Collationnez : mise en route approuvée, puis votre indicatif.",
+        attendu:"Mise en route approuvée, {CALL}.",                                   // Manuel DSNA p.39
         // AFIS : pas de clairance ; l'agent donne piste en service, vent, QNH (ordre Manuel DSNA p.148).
         afis:{ atc:["{CALL}, {ADRM} {STN}, piste {PISTE} en service, vent {VENT}, QNH {QNH}."],
                consigne:"Accusez réception de l'information (piste, QNH), puis votre indicatif.",
@@ -199,21 +206,30 @@ const SCENARIOS = [
                motsCles:[ {label:"Piste en service",variantes:["piste","en service"]}, {label:"Numéro de piste",ref:'piste'},
                           {label:"QNH",variantes:["qnh"]}, {label:"Valeur QNH",ref:'qnh'}, {label:"Votre indicatif",ref:'callsign'} ] },
         motsCles:[ {label:"Mise en route approuvée",variantes:["mise en route","approuve","approuvee","accordee","autorise","mise en route approuvee"]},
-                   {label:"QNH",variantes:["qnh"]}, {label:"Valeur QNH",ref:'qnh'},
                    {label:"Votre indicatif",ref:'callsign'} ] },
       { role:'pilote', stn:'sol',
-        situation:"Mise en route effectuée. Vous demandez le roulage.",
-        consigne:"Demandez le roulage : station, indicatif, demande roulage.",
-        attendu:"{ADRM} {STN}, {CALL}, demande roulage.",                             // Manuel DSNA p.44 « Demande roulage »
-        motsCles:[ {label:"Station appelée",ref:'station'}, {label:"Votre indicatif",ref:'callsign'},
-                   {label:"Demande de roulage",variantes:["demande roulage","demande le roulage","pour le roulage","pour rouler","je demande le roulage","roulage"]} ] },
-      { stn:'sol', station:"{ADRM} {STN}",                                            // Manuel DSNA p.44 « Roulez point d'attente piste 27 »
-        atc:["{CALL}, roulez point d'attente piste {PISTE}.",
-             "{CALL}, roulez et rappelez au point d'attente piste {PISTE}."],
-        consigne:"Collationnez : roulez point d'attente, piste, puis votre indicatif.",
-        attendu:"Je roule point d'attente piste {PISTE}, {CALL}.",                    // Manuel DSNA p.44 « Je roule point d'attente piste 27 »
-        motsCles:[ {label:"Roulage / point d'attente",variantes:["je roule","roule","roulons","point d attente","point attente","au point d attente","roulage point d attente"]},
-                   {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
+        situation:"Mise en route effectuée, {TYPE} au parking. Vous demandez le roulage pour un vol à destination de {DEST}.",
+        /* L'ANNONCE COMPLÈTE de l'exemple VFR de Chavenay (p. 45) : « F-BGBX, TB10,
+           parking club, demande consignes de roulage pour vol à destination de Guéret,
+           information B ». Même échange, même phrase que la Navigation (27/09/2026) :
+           le scénario attendait jusque-là la forme courte « demande roulage » (p. 44),
+           et les deux modes n'enseignaient pas la même chose.
+           Pas de « personnes à bord » : le manuel ne le donne nulle part. Pas de lettre
+           d'information non plus : elle vient d'être donnée à la mise en route. */
+        consigne:"Annonce complète : indicatif, type d'avion, position, puis votre demande de consignes de roulage pour un vol à destination de {DEST}.",
+        attendu:"{CALL}, {TYPE}, au parking, demande consignes de roulage pour vol à destination de {DEST}.", // Manuel DSNA p.45
+        motsCles:[ {label:"Votre indicatif",ref:'callsign'},
+                   {label:"Type d'avion",ref:'type'},
+                   {label:"Position (parking)",variantes:["parking","au parking","parking club","aire de stationnement"]},
+                   {label:"Demande de roulage",variantes:["consignes de roulage","demande roulage","demande consignes","roulage"]},
+                   {label:"Destination",ref:'dest'} ] },
+      { stn:'sol', station:"{ADRM} {STN}",                                            // Manuel DSNA p.45
+        atc:["{CALL}, roulez et entrez aire d'attente {PISTE} et rappelez prêt."],
+        consigne:"Collationnez : vous roulez et entrez dans l'aire d'attente {PISTE}, et vous rappellerez prêt.",
+        attendu:"Je roule et entre dans l'aire d'attente {PISTE} et rappelle prêt, {CALL}.", // Manuel DSNA p.45
+        motsCles:[ {label:"Je roule",variantes:["je roule","roule"]},
+                   {label:"Aire d'attente",variantes:["aire d attente","point d attente","aire dattente"]},
+                   {label:"Numéro de piste",ref:'piste'},
                    {label:"Votre indicatif",ref:'callsign'} ] }
     ]
   },

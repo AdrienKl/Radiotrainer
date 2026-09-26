@@ -1339,25 +1339,29 @@
       reel:'Appelez '+C.depStn+'.',
       consigne: (C.depNat==='aa')
         ? 'Terrain sans organisme : en auto-information, annoncez-vous à '+C.depStn+' — indicatif et intention de mise en route.'
-        : 'Appelez '+C.depStn+' : votre indicatif, puis demandez la mise en route'+
+        : 'Appelez '+C.depStn+' : organisme, votre indicatif, puis demandez la mise en route'+
           (C.atis?', en terminant par la lettre d\'information reçue à l\'ATIS.':'.'),
       /* La lettre d'information se donne dès la demande de mise en route :
          « Mérignac Prévol, Rapidair 3245, en D 8, demande mise en route pour Lyon,
          information L » (manuel DSNA p. 39). */
-      /* « au parking » : la POSITION fait partie de la demande (manuel DSNA p. 39,
-         « Mérignac Prévol, Rapidair 3245, en D 8, demande mise en route… »). Elle
-         manquait ici alors que le scénario « Mise en route + roulage » la
-         demandait — deux exercices, deux phrases attendues pour le même échange. */
+      /* Organisme, indicatif, demande, lettre d'information : l'ordre du manuel
+         (p. 39 ; sans position, p. 40 « Saint-Étienne Tour, Rapidair 3245, demande
+         mise en route »). « bonjour, au parking » retirés le 27/09/2026 à la demande
+         du développeur : la position revient dans l'annonce de roulage, où la p. 45
+         la place. Même phrase que le scénario « Mise en route + roulage » — deux
+         exercices, UNE phrase attendue pour le même échange. */
       attendu: C.depNat==='aa'
         ? C.depStn+', {CALL}, bonjour, '+C.acShort+' au parking, je mets en route.'
-        : C.depStn+', {CALL}, bonjour, au parking, demande mise en route'+(C.atis?', information {ATIS}.':'.'),
+        : C.depStn+', {CALL}, demande mise en route'+(C.atis?', information {ATIS}.':'.'),
       motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.depStn,C.depF.k)},
                  {label:'Votre indicatif',ref:'callsign'},
                  {label:'Mise en route',variantes:['mise en route','demande mise en route','demande la mise en route','je mets en route']} ]
               .concat(C.atis?[{label:'Lettre d\'information',variantes:atisVars(C.atis)}]:[]),
-      /* Le QNH accompagne l'approbation (manuel DSNA p. 39). Sans lui, il n'y
-         avait rien à collationner — d'où l'étape suivante, absente jusqu'ici. */
-      atcAfter: (C.depNat==='twr') ? '{CALL}, mise en route approuvée, QNH {QNH}.'
+      /* PAS de QNH dans l'approbation (retiré le 27/09/2026) : celle de la p. 39
+         n'en porte pas. Au départ, le manuel ne donne le QNH qu'en réponse à
+         « demande paramètres pour le départ » (p. 38), ce que l'ATIS remplace. Le
+         commentaire qui était ici affirmait le contraire. */
+      atcAfter: (C.depNat==='twr') ? '{CALL}, mise en route approuvée.'
               : (C.depNat==='afis') ? '{CALL}, {DEPSTN}, roger, piste {PISTE} en service, QNH {QNH}.'
               : null });
 
@@ -1370,37 +1374,42 @@
     push({ ph:'Collationnement mise en route', src:'p. 39', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Collationnez.',
       consigne: (C.depNat==='twr')
-        ? 'Collationnez : la mise en route est approuvée, et reprenez le QNH.'
+        ? 'Collationnez : la mise en route est approuvée, puis votre indicatif.'
         : 'Accusez réception : la piste en service et le QNH.',
       attendu: (C.depNat==='twr')
-        ? 'Mise en route approuvée, QNH {QNH}, {CALL}.'
+        ? 'Mise en route approuvée, {CALL}.'
         : 'Piste {PISTE}, QNH {QNH}, {CALL}.',
       motsCles: (C.depNat==='twr')
         ? [ {label:'Mise en route approuvée',variantes:['mise en route','approuve','approuvee','mise en route approuvee']},
-            {label:'QNH',variantes:['qnh']},
-            {label:'Valeur QNH',ref:'qnh'},
             {label:'Votre indicatif',ref:'callsign'} ]
         : [ {label:'Numéro de piste',ref:'piste'},
             {label:'QNH',variantes:['qnh']},
             {label:'Valeur QNH',ref:'qnh'},
             {label:'Votre indicatif',ref:'callsign'} ] });
 
-    // 2 — Demande de roulage (p. 45, exemple VFR Chavenay)
+    /* 2 — Demande de roulage : l'annonce complète de l'exemple VFR de Chavenay
+       (p. 45) — « F-BGBX, TB10, parking club, demande consignes de roulage pour
+       vol à destination de Guéret, information B ».
+       Corrigée le 27/09/2026 : elle exigeait « N personnes à bord », qui n'est
+       NULLE PART dans le manuel, et disait « demande le roulage pour une
+       navigation vers … » au lieu de la formule du manuel. Pas de lettre
+       d'information : elle vient d'être donnée à la mise en route. Sans
+       destination, la phrase s'arrête à « demande consignes de roulage » — « pour
+       un vol local » n'est pas dans le manuel non plus. */
     push({ ph:'Roulage', src:'p. 44-45', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Demandez le roulage à '+C.depStn+'.',
-      consigne:'Annonce complète : indicatif, type d\'avion, nombre de personnes à bord, position, puis '+
-               (C.depNat==='aa'?'votre intention de rouler (personne ne vous autorise ici)':'votre demande de roulage')+
-               (C.arr?' pour une navigation vers '+C.arr.nom:'')+'.',
-      attendu:'{CALL}, '+C.acShort+', '+C.pax+' personne'+(C.pax>1?'s':'')+' à bord, au parking, '+
-              (C.depNat==='aa'?'je roule piste {PISTE}':'demande le roulage')+
-              (C.arr?' pour une navigation vers '+C.arr.nom:' pour un vol local')+'.',
+      consigne:'Annonce complète : indicatif, type d\'avion, position, puis '+
+               (C.depNat==='aa'?'votre intention de rouler (personne ne vous autorise ici)':'votre demande de consignes de roulage')+
+               (C.arr?' pour un vol à destination de '+C.arr.nom:'')+'.',
+      attendu:'{CALL}, '+C.acShort+', au parking, '+
+              (C.depNat==='aa'?'je roule piste {PISTE}':'demande consignes de roulage')+
+              (C.arr?' pour vol à destination de '+C.arr.nom:'')+'.',
       motsCles:[ {label:'Votre indicatif',ref:'callsign'},
                  {label:'Type d\'avion',variantes:acVars(C.acShort)},
-                 {label:'Personnes à bord',variantes:paxVars(C.pax)},
                  {label:'Position (parking)',variantes:['parking','au parking','parking club','aire de stationnement']},
-                 {label:'Roulage',variantes:['roulage','consignes de roulage','demande roulage','demande le roulage','demande consignes','je roule']} ]
+                 {label:'Roulage',variantes:['roulage','consignes de roulage','demande roulage','demande consignes','je roule']} ]
               .concat(C.arr?[{label:'Destination',variantes:destVars(C.arr)}]:[]),
-      atcAfter: C.depNat==='aa' ? null : '{CALL}, roulez et entrez aire d\'attente {PISTE}, rappelez prêt.' });
+      atcAfter: C.depNat==='aa' ? null : '{CALL}, roulez et entrez aire d\'attente {PISTE} et rappelez prêt.' }); // p. 45
 
     // 3 — Collationnement du roulage (p. 45)
     push({ ph:'Collationnement roulage', src:'p. 45', stn:C.depStn, freq:C.depF.f, leg:0,

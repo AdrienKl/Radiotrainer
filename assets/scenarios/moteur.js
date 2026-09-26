@@ -643,7 +643,9 @@ function fillDisplay(raw){
             .replace(/\{ATIS\}/g, state.atis ? state.atis.mot : '')
             .replace(/\{ATISPART\}/g, state.atis ? ', information '+state.atis.mot : '')
             .replace(/\{ATISCONS\}/g, state.atis ? ", puis la lettre d'information reçue à l'ATIS" : '')
-            .replace(/\{DEPSTN\}/g, state.depStn||'');
+            .replace(/\{DEPSTN\}/g, state.depStn||'')
+            .replace(/\{TYPE\}/g, state.scType||'')
+            .replace(/\{DEST\}/g, state.scDest ? state.scDest.nom : '');
 }
 function fillSpeech(raw){
   let t = (raw||"")
@@ -659,7 +661,9 @@ function fillSpeech(raw){
     .replace(/\{ATIS\}/g, state.atis ? state.atis.mot : '')
     .replace(/\{ATISPART\}/g, state.atis ? ', information '+state.atis.mot : '')
     .replace(/\{ATISCONS\}/g, '')
-    .replace(/\{DEPSTN\}/g, state.depStn||'');
+    .replace(/\{DEPSTN\}/g, state.depStn||'')
+    .replace(/\{TYPE\}/g, state.scType||'')
+    .replace(/\{DEST\}/g, state.scDest ? state.scDest.nom : '');
   /* Prononciation d'abord (elle travaille sur des MOTS), nombres ensuite. */
   return spokenDigits(prononciationRadio(t));
 }
@@ -668,6 +672,8 @@ function resolveVariants(mc){
   switch(mc.ref){
     case 'callsign': return callsignVariants(state.call);
     case 'terrain':  return terrainVariants(state.activeAd);
+    case 'dest':     return terrainVariants(state.scDest);
+    case 'type':     return state.scType ? typeVariants(state.scType) : [];
     case 'piste':    return numVariants(state.rwy.id);
     case 'qnh':      return numVariants(String(state.meteo.qnh));
     case 'capdep':   return numVariants(String(state.capDep));
@@ -807,6 +813,31 @@ function drawMeteo(){
   state.ventPhrase      = capVent(state.meteo.windDir) + " degrés, " + state.meteo.windForce + " nœuds";
   state.rwy = runwayInService(state.activeAd, state.meteo.windDir);
   drawTemps();                       // visibilité, temps présent, nuages, température…
+  drawTypeEtDestination();
+}
+
+/* Le type d'avion et la destination de l'annonce de roulage (27/09/2026).
+   La demande de roulage complète du manuel les porte tous deux : « F-BGBX, TB10,
+   parking club, demande consignes de roulage pour vol à destination de Guéret »
+   (p. 45). Le scénario les tire au sort ; la Navigation, elle, reprend ceux que
+   l'élève a choisis dans sa préparation.
+   Les types sont écrits comme l'annonce les attend (les abréviations de la liste
+   des appareils de la Navigation) : TB10 est celui de l'exemple p. 45, PA28 celui
+   de l'exemple p. 149. La destination est le terrain d'arrivée s'il a été choisi,
+   sinon un autre terrain français au hasard — jamais le terrain de départ. */
+const TYPES_SCENARIO = ['DR400','CESSNA 172','PIPER PA28','TB10'];
+function drawTypeEtDestination(){
+  state.scType = TYPES_SCENARIO[Math.floor(Math.random()*TYPES_SCENARIO.length)];
+  const ici = state.activeAd;
+  if (state.arrAd && state.arrAd !== ici) { state.scDest = state.arrAd; return; }
+  const autres = (typeof AERODROMES!=='undefined' ? AERODROMES : [])
+    .filter(a => a && a !== ici && /^LF[A-Z]{2}$/.test(a.icao||''));
+  state.scDest = autres.length ? autres[Math.floor(Math.random()*autres.length)] : null;
+}
+function typeVariants(t){
+  const v=[normalize(t)];
+  normalize(t).split(' ').forEach(w=>{ if(w.length>2) v.push(w); });
+  return v;
 }
 
 /* =========================================================================
@@ -2047,7 +2078,9 @@ const AIDE_REF = {
   qnh:     "Le QNH règle votre altimètre : il se collationne systématiquement.",
   alt:     "Annoncez l'altitude en pieds : elle situe votre appareil dans le plan vertical.",
   num:     "Le numéro dans le circuit vous situe par rapport aux autres appareils.",
-  capdep:  "Le cap se transmet toujours sur trois chiffres (p. 17)."
+  capdep:  "Le cap se transmet toujours sur trois chiffres (p. 17).",
+  type:    "Le type d'avion suit l'indicatif dans l'annonce de roulage (p. 45).",
+  dest:    "La destination termine la demande : « pour vol à destination de … » (p. 45)."
 };
 /* Valeur réellement attendue à cet instant, pour donner un exemple utile
    plutôt qu'une formule générique. */
@@ -2060,6 +2093,8 @@ function exempleAttendu(mc){
     case 'num':      return 'numéro '+state.numCircuit;
     case 'capdep':   return 'cap '+state.capDep;
     case 'terrain':  return state.activeAd ? state.activeAd.nom : '';
+    case 'dest':     return state.scDest ? state.scDest.nom : '';
+    case 'type':     return state.scType || '';
     default:         return (mc.variantes && mc.variantes[0]) || '';
   }
 }

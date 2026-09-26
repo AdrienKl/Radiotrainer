@@ -72,6 +72,16 @@
 </head>
 <body>
 
+  <!-- Sans JavaScript, rien ne s'affiche : toutes les pages sont des <section>
+       que le routeur rend visibles, et aucune ne l'est d'origine. Plutôt qu'une
+       page blanche qui ressemble à une panne, on dit pourquoi. Styles en ligne :
+       ce bloc doit se lire même si une feuille de style manque. -->
+  <noscript>
+    <p style="margin:0;padding:16px 20px;background:#5b4bce;color:#fff;font:600 15px/1.5 system-ui,sans-serif;text-align:center">
+      Albatros VFR a besoin de JavaScript pour fonctionner. Activez-le dans votre navigateur, puis rechargez la page.
+    </p>
+  </noscript>
+
   <nav class="topnav" id="topnav">
     <div class="brand"><span class="logo"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><span>Albatros VFR</span></div>
     <div class="nav-right">
@@ -380,7 +390,7 @@
           <dl class="qa">
             <div class="qa__i reveal">
               <dt>Il me faut quoi&nbsp;?</dt>
-              <dd>Un ordinateur, un micro, et <b>Chrome, Edge ou Safari</b>. Rien à installer, rien à configurer. Firefox ne sait pas faire de reconnaissance vocale dans le navigateur&nbsp;: l'exercice s'ouvre, le contrôleur parle, mais rien de ce que vous dites n'est entendu. Mieux vaut le savoir avant d'y passer une soirée.</dd>
+              <dd>Un ordinateur, un micro, et <b>Chrome, Edge ou Safari</b>. Rien à installer, rien à configurer. Firefox ne sait pas faire de reconnaissance vocale dans le navigateur&nbsp;: l'exercice s'ouvre, le contrôleur parle, mais rien de ce que vous dites n'est entendu. Dans les scénarios et la navigation, vous pouvez taper vos réponses au clavier en secours — mais c'est la radio à voix haute qui s'entraîne ici. Mieux vaut le savoir avant d'y passer une soirée.</dd>
             </div>
             <div class="qa__i reveal">
               <dt>Est-ce que ça remplace mon instructeur&nbsp;?</dt>
@@ -1085,7 +1095,7 @@
                     ce site : la consulter n'appelle personne.</td></tr>
             <tr><td><b>Google LLC</b></td><td>Reconnaissance vocale du navigateur Chrome</td>
                 <td>Voir le § 5 — c'est le point le moins évident de cette page.</td></tr>
-            <tr><td><b>Prestataire d'envoi d'e-mails</b></td><td>Sous-traitant (à venir)</td>
+            <tr><td><b>Resend, Inc.</b></td><td>Sous-traitant : envoi des e-mails du compte</td>
                 <td>Votre adresse e-mail, pour vous transmettre les codes de vérification.</td></tr>
             <tr><td><b>Formspree, Inc.</b></td><td>Sous-traitant : réception des messages de contact,
                 <b>seulement</b> si vous nous écrivez depuis « Contact / Feedback »</td>
@@ -2293,7 +2303,7 @@
             <h3>Données locales</h3>
             <p class="set-note" id="setDataInfo">—</p>
             <div class="set-actions">
-              <button class="btn small" id="setExport" type="button">Exporter mes données</button>
+              <button class="btn small" id="setExport" type="button">Exporter les données de cet appareil</button>
               <button class="btn small" id="setClearHist" type="button">Effacer mes vols et mon historique</button>
               <button class="btn small" id="setReset" type="button">Réinitialiser les paramètres</button>
             </div>
@@ -2357,7 +2367,7 @@
          — et ici elle contredisait la politique de confidentialité. -->
     Les exercices fonctionnent hors-ligne (hors micro et synthèse vocale du navigateur). Trois choses sortent cependant de votre machine : le <strong>fond de carte de la page Navigation</strong>, chargé depuis les serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données ; et les <strong>erreurs techniques</strong>, pour qu'on puisse les corriger. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback ». Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
     <br><button class="auth-link" type="button" data-contact>Contact / Feedback</button> · <button class="auth-link" type="button" data-page="mentions">Mentions légales</button> · <button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
-    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Unsplash — Alito McBean, Arnaud Girault, Cody F., Marcel Eberle, peaky_82 ; Airbus A320 d'Air France (F-GKXE) — découpe fournie. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
+    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
 
   <div class="toast" id="toast"></div>

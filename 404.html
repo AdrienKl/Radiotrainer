@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page introuvable — Albatros VFR</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#5b4bce">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235b4bce'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M25 7 14 18'/%3E%3Cpath d='M25 7l-7 18-4-8-8-4 19-6z'/%3E%3C/g%3E%3C/svg%3E">
+<!-- =============================================================================
+     Albatros VFR — LA PAGE 404
+     -----------------------------------------------------------------------------
+     GitHub Pages sert CE fichier pour toute adresse qui ne correspond à aucun
+     fichier du dépôt. Deux cas, et seul le second est une vraie erreur :
+
+     1. UNE ROUTE DU SITE TAPÉE SANS « # ». Le site est une seule page : ses
+        écrans s'appellent /#login, /#exercices… Quelqu'un qui tape
+        albatrosvfr.fr/login demande un fichier « login » qui n'existe pas.
+        On le renvoie aussitôt vers /#login, qui marche. La liste est celle du
+        tableau PAGES d'assets/modules/routeur.js — À TENIR À JOUR avec lui :
+        une route ajoutée là et oubliée ici tombe sur cette page au lieu de
+        s'ouvrir. Les sous-segments suivent (/admin/users → /#admin/users).
+        location.replace et non location.href : l'adresse fausse n'a pas à
+        rester dans l'historique, sinon « Précédent » y ramènerait en boucle.
+
+     2. TOUT LE RESTE : la page ci-dessous, dans la charte du site.
+
+     CHEMINS ABSOLUS (/assets/…) et non relatifs : ce fichier est servi à
+     n'importe quelle profondeur (/a/b/c), où « assets/… » ne mènerait nulle
+     part. C'est juste parce que le site est à la RACINE de son domaine
+     (fichier CNAME) ; servi sous github.io/Radiotrainer/, ces chemins
+     casseraient — et la redirection aussi.
+     ========================================================================== -->
+<script>
+(function(){
+  var ROUTES = ['accueil','login','signup','cgu','confidentialite','mentions','tableau',
+                'exercices','navigation','carte','epellation','cours','progression',
+                'parametres','compte','admin'];
+  try{
+    var chemin = location.pathname.replace(/^\/+|\/+$/g, '');
+    var tete = chemin.split('/')[0].toLowerCase();
+    if (ROUTES.indexOf(tete) >= 0){
+      location.replace('/#' + chemin);
+      return;
+    }
+  }catch(e){}
+  /* Le thème, posé avant le premier pixel — même règle que le <head>
+     d'index.html, même clé de réglages. */
+  try{
+    var s = JSON.parse(localStorage.getItem('rt-settings') || '{}');
+    var t = s.theme || 'system';
+    var sombre = (t === 'dark') || (t === 'system' &&
+      window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', sombre ? 'dark' : 'light');
+  }catch(e){ document.documentElement.setAttribute('data-theme', 'light'); }
+})();
+</script>
+<!-- Les jetons de couleur viennent des feuilles du site : une seule source de
+     vérité pour le violet, l'encre et le thème sombre. Le reste est ici, court,
+     pour que cette page ne dépende pas de toute la cascade de l'application. -->
+<link rel="stylesheet" href="/assets/css/01-socle.css">
+<link rel="stylesheet" href="/assets/css/09-theme-sombre.css">
+<style>
+  .p404{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 18px;
+    box-sizing:border-box; position:relative; isolation:isolate; background:var(--bg); }
+  /* La carte OACI de l'accueil, fixée à l'écran comme sur la connexion. */
+  .p404::before{ content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:url("/assets/images/carte-oaci-hero.webp") 50% 46%/cover no-repeat; }
+  :root[data-theme="dark"] .p404::before{ filter:brightness(.30) saturate(.72) contrast(1.06); }
+  .p404__carte{ width:100%; max-width:440px; box-sizing:border-box; padding:30px 28px 28px;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow-lg); color:var(--ink); }
+  .p404__marque{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; margin-bottom:22px; }
+  .p404__marque svg{ width:20px; height:20px; fill:none; stroke:var(--violet); stroke-width:2;
+    stroke-linecap:round; stroke-linejoin:round; }
+  .p404__code{ font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-2-fort); margin:0 0 6px; }
+  .p404 h1{ font-size:24px; font-weight:800; letter-spacing:-.01em; margin:0 0 8px; color:var(--ink); }
+  .p404 p{ font-size:14.5px; line-height:1.55; margin:0 0 22px; color:var(--ink-2-fort); }
+  /* Fond --violet, jamais --violet-dark : ce dernier est un jeton de TEXTE qui
+     bascule en violet clair dans le thème sombre (INSCRIPTION.md § 8 ter). */
+  .p404__btn{ display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box;
+    padding:13px 20px; border-radius:999px; background:var(--violet); color:#fff;
+    font-weight:700; font-size:15px; text-decoration:none; }
+  .p404__btn:hover{ background:#5849c9; }
+  .p404__btn:focus-visible{ outline:3px solid var(--violet-soft); outline-offset:3px; }
+</style>
+</head>
+<body>
+  <main class="p404">
+    <div class="p404__carte">
+      <div class="p404__marque">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        <span>Albatros VFR</span>
+      </div>
+      <p class="p404__code">Erreur 404</p>
+      <h1>Cette page n'existe pas.</h1>
+      <p>L'adresse est peut-être mal tapée, ou la page a changé de place. Tout le reste du site vous attend à l'accueil.</p>
+      <a class="p404__btn" href="/">Retour à l'accueil</a>
+    </div>
+  </main>
+</body>
+</html>

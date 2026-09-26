@@ -410,7 +410,7 @@
             </div>
             <div class="qa__i reveal">
               <dt>Mes données&nbsp;?</dt>
-              <dd>Votre voix n'est <b>jamais enregistrée ni envoyée</b> ailleurs que dans le moteur du navigateur. Ce qui est conservé, c'est le texte de vos exercices et votre score. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.</dd>
+              <dd>Votre voix <b>n'est jamais conservée</b>. Pour être transcrite, elle passe par le service de reconnaissance de votre navigateur — chez Google sur Chrome. Ce qui est conservé, c'est le texte de vos exercices et votre score. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.</dd>
             </div>
           </dl>
         </div>
@@ -748,7 +748,7 @@
       <div class="container legal-wrap">
         <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← Albatros VFR</button></p>
         <h1 class="legal-h1">Mentions légales</h1>
-        <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 12 septembre 2026.</p>
+        <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 26 septembre 2026.</p>
 
         <p class="legal-etat"><b>Trois champs manquent, et ils sont obligatoires.</b> L'identité de
           l'éditeur, son adresse et son adresse de contact ne peuvent être renseignées que par lui.
@@ -788,8 +788,8 @@
               <td><b>Supabase, Inc.</b><br>
                   <span class="legal-mono">supabase.com</span><br>
                   Projet <span class="legal-mono">vbziwjeuzcbvrbrihhrg</span></td>
-              <td>Les comptes (adresse e-mail, empreinte du mot de passe), les profils, les séances
-                  d'entraînement et les erreurs techniques. Autrement dit : tout ce qui vous concerne.</td>
+              <td>Les comptes (adresse e-mail, empreinte du mot de passe), les profils et les séances
+                  d'entraînement. Autrement dit : tout ce qui vous concerne.</td>
             </tr>
           </tbody>
         </table>
@@ -845,13 +845,13 @@
       <div class="container legal-wrap">
         <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← Albatros VFR</button></p>
         <h1 class="legal-h1">Conditions d'utilisation</h1>
-        <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 12 septembre 2026.</p>
+        <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 26 septembre 2026.</p>
 
         <p class="legal-etat">Ce texte est complet et vous engage dès que vous cochez la case à
           l'inscription. Une seule chose y manque : l'identité de l'éditeur, qui figurera aux
           <button class="auth-link" type="button" data-page="mentions">mentions légales</button>.
-          La version acceptée est enregistrée avec votre compte ; si le texte change sur le fond, votre
-          accord vous sera redemandé.</p>
+          La version acceptée est enregistrée avec votre compte ; si le texte change sur le fond, nous vous
+          en informerons et vous demanderons à nouveau votre accord.</p>
 
         <h2 class="legal-h2">1. Objet</h2>
         <p class="legal-p">Albatros VFR est un service d'entraînement à la phraséologie radiotéléphonique
@@ -952,9 +952,10 @@
 
         <h2 class="legal-h2">11. Modification de ce texte</h2>
         <p class="legal-p">Ce texte peut évoluer. La version que vous avez acceptée est enregistrée avec
-          votre compte, avec sa date. Toute modification portant sur le fond — ce qui est collecté, ce qui
-          vous est interdit, la responsabilité — donne lieu à une nouvelle demande d'accord à votre
-          prochaine connexion. Les corrections de forme n'en donnent pas.</p>
+          votre compte, avec sa date. Une modification portant sur le fond — ce qui est collecté, ce qui
+          vous est interdit, la responsabilité — vous sera signalée, et votre accord vous sera demandé à
+          nouveau avant qu'elle ne s'applique à vous. Les corrections de forme ne donnent pas lieu à une
+          nouvelle demande.</p>
 
         <h2 class="legal-h2">12. Droit applicable</h2>
         <p class="legal-p">Ce contrat est régi par le droit français. En cas de différend, une solution
@@ -982,7 +983,7 @@
       <div class="container legal-wrap">
         <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← Albatros VFR</button></p>
         <h1 class="legal-h1">Politique de confidentialité</h1>
-        <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 12 septembre 2026.</p>
+        <p class="legal-maj">Version <span class="legal-mono">brouillon-1</span> — dernière modification le 26 septembre 2026.</p>
 
         <p class="legal-etat">Ce document décrit ce que l'application fait <b>réellement</b>, vérifié dans
           son code et dans son schéma de base. Seule l'identité du responsable du traitement manque, et
@@ -1012,8 +1013,7 @@
                 <td>Vous identifier dans l'application et sur vos récapitulatifs.</td>
                 <td>Exécution du contrat</td></tr>
             <tr><td><b>Nom de famille</b></td>
-                <td>Facultatif. <b>Aujourd'hui inutilisé par l'application</b> — voir la note sous ce
-                    tableau.</td>
+                <td>Facultatif. Complète votre nom affiché (barre latérale ; console d'administration).</td>
                 <td>Consentement</td></tr>
             <tr><td><b>Indicatif radio</b> (immatriculation fictive)</td>
                 <td>Être appelé dans les exercices comme vous le seriez en vol.</td>
@@ -1035,11 +1035,12 @@
                     suivants.</td>
                 <td>Exécution du contrat</td>
                 <td>Tant que le compte existe, puis 30 jours.</td></tr>
-            <tr><td><b>Erreurs techniques</b> — message, contexte, page, navigateur</td>
-                <td>Corriger les pannes. C'est ce qui a permis, par exemple, de réparer une voix de
-                    synthèse muette sur Chrome.</td>
-                <td>Intérêt légitime</td>
-                <td><b>12 mois.</b></td></tr>
+            <!-- Une ligne « Erreurs techniques — 12 mois » était ici. Retirée le
+                 26/09/2026 : rien n'est envoyé, le collecteur (assets/admin/data/
+                 error-log.js) garde les erreurs dans le navigateur (rt-admin-errors,
+                 au § 7). La ligne reviendra LE JOUR où l'envoi vers app_errors sera
+                 branché — pas avant (§ 11 : une donnée figure ici avant d'être
+                 collectée, et seulement si elle l'est). -->
             <tr><td><b>Preuve de votre accord</b> — version des conditions acceptée, date, déclaration
                     des 15 ans</td>
                 <td>Pouvoir démontrer que l'accord a bien été recueilli, comme le RGPD l'exige.</td>
@@ -1062,11 +1063,8 @@
           </tbody>
         </table>
         </div>
-        <p class="legal-note"><b>Sur le nom de famille.</b> Il est facultatif et l'application ne s'en sert
-          aujourd'hui pour rien. Collecter une donnée sans usage contrevient au principe de minimisation
-          (article 5.1.c du RGPD). Deux issues seulement : lui donner un usage réel, ou cesser de le
-          demander. En attendant l'une ou l'autre, ne le renseignez pas si vous n'y tenez pas — rien n'en
-          dépend.</p>
+        <p class="legal-note"><b>Sur le nom de famille.</b> Il est facultatif et ne sert qu'à compléter
+          votre nom affiché. Ne le renseignez pas si vous n'y tenez pas — rien d'autre n'en dépend.</p>
 
         <h2 class="legal-h2">3. Ce qui n'est pas fait</h2>
         <ul class="legal-liste">
@@ -1089,12 +1087,16 @@
                 <td>Tout ce du § 2 qui est enregistré sur le compte, et l'empreinte du mot de passe.</td></tr>
             <tr><td><b>GitHub, Inc.</b> (GitHub Pages)</td><td>Sous-traitant : hébergement des fichiers</td>
                 <td>Votre adresse IP et les fichiers que vous chargez. Aucune donnée de compte.</td></tr>
-            <tr><td><b>Fondation OpenStreetMap</b></td><td>Fond de carte, <b>seulement</b> si vous le
-                choisissez dans les Paramètres</td>
+            <tr><td><b>Fondation OpenStreetMap</b></td><td>Fond de carte des pages Navigation et Carte, chargé sous la carte OACI
+                <b>dès que ces pages s'ouvrent</b></td>
                 <td>Votre adresse IP et la zone que vous regardez. La carte OACI, elle, est servie depuis
                     ce site : la consulter n'appelle personne.</td></tr>
             <tr><td><b>Google LLC</b></td><td>Reconnaissance vocale du navigateur Chrome</td>
                 <td>Voir le § 5 — c'est le point le moins évident de cette page.</td></tr>
+            <tr><td><b>Microsoft Corporation</b></td><td>Reconnaissance vocale du navigateur Edge</td>
+                <td>Voir le § 5.</td></tr>
+            <tr><td><b>Apple Inc.</b></td><td>Reconnaissance vocale du navigateur Safari</td>
+                <td>Voir le § 5.</td></tr>
             <tr><td><b>Resend, Inc.</b></td><td>Sous-traitant : envoi des e-mails du compte</td>
                 <td>Votre adresse e-mail, pour vous transmettre les codes de vérification.</td></tr>
             <tr><td><b>Formspree, Inc.</b></td><td>Sous-traitant : réception des messages de contact,
@@ -1109,10 +1111,10 @@
           propres documents juridiques, qui font foi.</p>
 
         <h2 class="legal-h2">5. Le microphone et la voix — ce qu'il faut savoir</h2>
-        <p class="legal-avert"><b>Quand vous parlez dans un exercice, votre voix peut partir chez Google.</b>
+        <p class="legal-avert"><b>Quand vous parlez dans un exercice, votre voix peut partir chez l'éditeur de votre navigateur.</b>
           La reconnaissance vocale n'est pas faite par ce site : elle est fournie par votre navigateur.
-          Sur Chrome et Edge, le son capté par le microphone est <b>envoyé aux serveurs de Google</b> pour
-          y être transcrit, puis le texte revient. Ce site ne maîtrise ni ce transfert, ni sa durée de
+          Sur Chrome, le son capté par le microphone est <b>envoyé aux serveurs de Google</b> ; sur Edge,
+          à ceux de <b>Microsoft</b> ; sur Safari, il peut l'être à ceux d'<b>Apple</b>. Il y est transcrit, puis le texte revient. Ce site ne maîtrise ni ce transfert, ni sa durée de
           conservation. Il n'y a pas d'autre moyen d'obtenir la reconnaissance vocale dans un navigateur,
           mais vous avez le droit de le savoir avant de presser le bouton — et vous pouvez faire tous les
           exercices sans microphone.</p>
@@ -1130,7 +1132,8 @@
         </ul>
 
         <h2 class="legal-h2">6. Transferts hors de l'Union européenne</h2>
-        <p class="legal-p">GitHub et Google sont des sociétés établies aux États-Unis. La région
+        <p class="legal-p">GitHub, Google, Microsoft, Apple, Resend (envoi des e-mails du compte) et
+          Formspree (formulaire de contact) sont des sociétés établies aux États-Unis. La région
           d'hébergement de la base de données doit être confirmée
           (<span class="legal-vide">à compléter — voir mentions légales § 2</span>) : si elle est hors
           d'Europe, vos données de compte y sont transférées. Ces transferts s'appuient sur les
@@ -1154,7 +1157,20 @@
                 <td>Vos vols, la séance en cours, l'historique et vos jours de pratique sur cet appareil.</td></tr>
             <tr><td><span class="legal-mono">rt-menu-replie</span></td><td>Stockage local</td>
                 <td>Se souvenir que vous aviez replié le menu.</td></tr>
-            <tr><td><span class="legal-mono">sb-…-auth-token</span></td><td>Stockage local</td>
+            <tr><td><span class="legal-mono">rt-sync-file</span></td><td>Stockage local</td>
+                <td>Les séances pas encore envoyées à votre compte.</td></tr>
+            <tr><td><span class="legal-mono">rt-push-attente</span></td><td>Stockage local</td>
+                <td>Les réglages ou le vol en cours pas encore envoyés.</td></tr>
+            <tr><td><span class="legal-mono">rt-quota</span></td><td>Stockage local</td>
+                <td>Le compteur de vols du jour.</td></tr>
+            <tr><td><span class="legal-mono">rt-cache-proprio</span></td><td>Stockage local</td>
+                <td>À quel compte appartient ce qui est stocké sur l'appareil.</td></tr>
+            <tr><td><span class="legal-mono">rt-admin-errors</span></td><td>Stockage local</td>
+                <td>Les erreurs techniques, gardées sur cet appareil.</td></tr>
+            <tr><td><span class="legal-mono">rt-admin-dev</span>, <span class="legal-mono">rt-admin-rail</span>,
+                    <span class="legal-mono">rt-admin-periode</span></td><td>Stockage local</td>
+                <td>La console d'administration, pour les administrateurs seulement.</td></tr>
+            <tr><td><span class="legal-mono">rt-auth</span></td><td>Stockage local</td>
                 <td>Votre jeton de session, pour ne pas vous redemander votre mot de passe à chaque page.</td></tr>
             <tr><td><span class="legal-mono">__cf_bm</span></td><td>Cookie tiers, ~30 minutes</td>
                 <td>Déposé par Cloudflare au nom de l'hébergeur de la base, pour distinguer un humain d'un
@@ -1162,9 +1178,9 @@
           </tbody>
         </table>
         </div>
-        <p class="legal-note">Tout ce qui est en stockage local s'efface depuis les Paramètres
-          (« Données locales »), ou en vidant les données du site dans votre navigateur. Attention : cela
-          n'efface rien en base.</p>
+        <p class="legal-note">Le stockage local s'efface en vidant les données du site dans votre
+          navigateur. Pour supprimer vos vols et votre historique <b>de votre compte</b>, sur tous vos
+          appareils et définitivement : Paramètres, « Supprimer tout mon historique d'entraînement ».</p>
 
         <h2 class="legal-h2">8. Comment vos données sont protégées</h2>
         <ul class="legal-liste">
@@ -1211,7 +1227,8 @@
         <h2 class="legal-h2">11. Modifications</h2>
         <p class="legal-p">Cette politique suit l'application. Toute donnée nouvellement collectée doit y
           figurer avant d'être collectée, et non après. La date en tête de page indique la dernière
-          modification ; un changement de fond donne lieu à une nouvelle demande d'accord.</p>
+          modification ; un changement de fond vous sera signalé ; lorsqu'il touche à ce que vous avez
+          accepté, votre accord vous sera demandé à nouveau.</p>
 
         <p class="legal-retour">
           <button class="btn cta" type="button" data-page="signup">Retour à l'inscription</button>
@@ -2304,11 +2321,23 @@
             <p class="set-note" id="setDataInfo">—</p>
             <div class="set-actions">
               <button class="btn small" id="setExport" type="button">Exporter les données de cet appareil</button>
-              <button class="btn small" id="setClearHist" type="button">Effacer mes vols et mon historique</button>
+              <!-- Visible SEULEMENT hors connexion (parametres.js › majEffacementLocal) :
+                   connecté, un effacement local n'a aucun effet durable — tout se
+                   retélécharge — et l'effacement du compte a son propre bouton, plus
+                   explicite, dans la carte suivante (26/09/2026). -->
+              <button class="btn small" id="setClearHist" type="button" hidden>Effacer les données de cet appareil</button>
               <button class="btn small" id="setReset" type="button">Réinitialiser les paramètres</button>
             </div>
-            <p class="set-note">Ces trois actions ne touchent QUE cet appareil : elles n'effacent rien
-              en base. Pour ce qui est enregistré sur votre compte, voyez la carte suivante.</p>
+            <!-- Ce texte disait « ces trois actions ne touchent QUE cet appareil : elles
+                 n'effacent rien en base » — faux dès qu'on est connecté. Depuis le
+                 26/09/2026, l'effacement du compte n'est plus ici : il a sa carte, sa
+                 confirmation par ressaisie du nom, et ce bouton-ci ne touche plus
+                 jamais la base. « Réinitialiser » écrit toujours dans profiles.settings
+                 (rtSaveSettings → donnees.js § 7), et le texte le dit. -->
+            <p class="set-note">L'export ne lit que cet appareil. Connecté, vos vols et votre historique
+              sont ceux de votre compte : pour les supprimer, voyez « Supprimer tout mon historique
+              d'entraînement » dans la carte suivante. Vos réglages suivent aussi votre compte : les
+              réinitialiser ici les réinitialise en base.</p>
           </div>
 
           <div class="set-card set-wide">
@@ -2317,6 +2346,33 @@
             <div class="set-actions">
               <button class="btn small" id="cptExport" type="button">Exporter mes données (JSON)</button>
               <button class="btn small" id="cptDeconnexion" type="button">Se déconnecter</button>
+            </div>
+            <!-- Supprimer l'historique d'entraînement DU COMPTE (26/09/2026). Il vivait
+                 sous « Effacer mes vols et mon historique », dans la carte « Données
+                 locales », derrière un simple OK : un intitulé de ménage d'appareil
+                 pour une suppression irréversible, sur tous les appareils. La
+                 confirmation exige désormais de retaper son nom d'utilisateur — un
+                 geste qu'on ne fait pas par réflexe (compte.js › supprimerHistorique). -->
+            <div class="cpt-danger" id="cptHistBloc">
+              <h4>Supprimer tout mon historique d'entraînement</h4>
+              <p class="set-note">Efface de votre compte tous vos vols, vos séances de scénarios et le
+                détail de chaque échange, ainsi que le vol en cours — sur tous vos appareils, sans retour
+                possible. Vos badges et votre série de jours, calculés à partir de cet historique,
+                repartent de zéro. Votre compte, votre profil et vos réglages restent.
+                <b>Pensez à exporter vos données avant</b> (bouton ci-dessus).</p>
+              <div class="set-actions">
+                <button class="btn small cpt-danger__btn" id="cptHistOuvrir" type="button">Supprimer mon historique…</button>
+              </div>
+              <div class="cpt-danger__confirm" id="cptHistConfirm" hidden>
+                <label for="cptHistSaisie">Pour confirmer, tapez votre <span id="cptHistQuoi">nom d'utilisateur</span> :
+                  <b class="legal-mono" id="cptHistAttendu"></b></label>
+                <input id="cptHistSaisie" type="text" autocomplete="off" spellcheck="false" autocapitalize="off">
+                <div class="set-actions">
+                  <button class="btn small cpt-danger__btn" id="cptHistSupprimer" type="button" disabled>Supprimer définitivement</button>
+                  <button class="btn small" id="cptHistAnnuler" type="button">Annuler</button>
+                </div>
+              </div>
+              <p class="set-note auth-msg hidden" id="cptHistMsg" role="status" aria-live="polite"></p>
             </div>
             <p class="set-note" id="cptSuppression">
               <b>Supprimer le compte.</b> Cette opération ne peut pas se faire depuis le navigateur :
@@ -2365,7 +2421,7 @@
          et la progression sont partis en base. Une affirmation fausse sur la vie
          privée est exactement le genre de détail qui décrédibilise tout le reste
          — et ici elle contredisait la politique de confidentialité. -->
-    Les exercices fonctionnent hors-ligne (hors micro et synthèse vocale du navigateur). Trois choses sortent cependant de votre machine : le <strong>fond de carte de la page Navigation</strong>, chargé depuis les serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données ; et les <strong>erreurs techniques</strong>, pour qu'on puisse les corriger. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback ». Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
+    Une fois la page ouverte, un exercice se poursuit sans connexion : la séance est envoyée dès que la connexion revient. Trois choses sortent de votre machine : le <strong>fond de carte</strong> des pages Navigation et Carte, dont une couche vient des serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>voix</strong>, quand vous parlez au micro, transcrite par le service de reconnaissance de votre navigateur ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback ». Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
     <br><button class="auth-link" type="button" data-contact>Contact / Feedback</button> · <button class="auth-link" type="button" data-page="mentions">Mentions légales</button> · <button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
     <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>

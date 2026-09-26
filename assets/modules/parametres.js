@@ -246,50 +246,44 @@
     if(n) p.push(n+' session'+(n>1?'s':'')+' de scénarios');
     $s('setDataInfo').textContent = p.join(' et ')+' sur cet appareil.';
   }
-  /* ┌─ CE BOUTON A CHANGÉ DE PORTÉE, ET IL FALLAIT QU'IL CHANGE ──────────┐
-     │ Il ne vidait que le navigateur. Depuis que la progression vit en base, │
-     │ effacer le seul cache n'efface plus rien : tout revient à la connexion │
-     │ suivante. Un bouton « Tout effacer » qui ne supprime rien est pire     │
-     │ qu'absent — on croit avoir effacé. Il passe donc par la base, et le    │
-     │ cache n'est vidé qu'APRÈS confirmation que la base a bien répondu.     │
-     │ Si elle ne répond pas, on ne touche à rien et on le dit.               │
+  /* ┌─ CE BOUTON A CHANGÉ DEUX FOIS DE PORTÉE ────────────────────────────┐
+     │ 1. Il ne vidait que le navigateur. Depuis que la progression vit en   │
+     │    base, ça ne suffisait plus : tout revenait à la connexion suivante.│
+     │    Il est donc passé par la base (RTDonnees.effacerTout).             │
+     │ 2. Le 26/09/2026, il en ressort. Un bouton « Effacer mes vols et mon  │
+     │    historique », rangé sous « Données locales », qui supprimait en    │
+     │    réalité tout l'historique DU COMPTE sur un simple OK : l'intitulé  │
+     │    disait ménage d'appareil, l'effet était irréversible partout.      │
+     │    L'effacement du compte a désormais sa propre action, dans la carte │
+     │    « Vos données », confirmée par la ressaisie du nom d'utilisateur   │
+     │    (compte.js › supprimerHistorique).                                 │
+     │                                                                       │
+     │ Ce bouton-ci ne touche donc PLUS JAMAIS la base, et ne s'affiche que  │
+     │ hors connexion : connecté, vider le cache ne ferait rien de durable.  │
+     │ Le test est refait au CLIC, pas seulement à l'affichage — la session  │
+     │ peut revenir entre les deux.                                          │
      └───────────────────────────────────────────────────────────────────────┘ */
+  function connecte(){ return !!(window.RTAuth && RTAuth.utilisateur && RTAuth.utilisateur()); }
+  function majEffacementLocal(){
+    var b=$s('setClearHist'); if(b) b.hidden = connecte();
+  }
   $s('setClearHist').addEventListener('click',function(){
+    if(connecte()){ majEffacementLocal(); return; }
     if(!histCount() && !volCount()){ showToast('Aucune donnée à effacer.'); return; }
-    var enLigne = !!(window.RTAuth && RTAuth.utilisateur && RTAuth.utilisateur());
-    rtConfirm(enLigne
-        ? 'Vos vols, vos sessions de scénarios, vos badges, votre série de jours et le quota '+
-          'du jour seront définitivement effacés de VOTRE COMPTE — donc sur tous vos '+
-          'navigateurs, pas seulement celui-ci. C\'est irréversible.'
-        : 'Vos vols, vos sessions de scénarios, vos badges, votre série de jours et le quota '+
+    rtConfirm('Vos vols, vos sessions de scénarios, vos badges, votre série de jours et le quota '+
           'du jour seront effacés de cet appareil. Vous n\'êtes pas connecté : ce qui est '+
           'enregistré dans votre compte, lui, ne sera pas touché.',
-      {title:'Tout effacer ?',ok:'Effacer'}).then(function(ok){
-        if(!ok) return;
-        function apres(){
-          try{ renderHistory(); renderBadges(); }catch(e){}
-          refreshData();
-        }
-        if(window.RTDonnees && enLigne){
-          RTDonnees.effacerTout().then(function(){
-            apres(); showToast('Données effacées de votre compte.');
-          }, function(){
-            /* La base a refusé : on ne vide SURTOUT pas le cache. Le faire
-               laisserait croire à un effacement, et tout reviendrait à la
-               connexion suivante — le pire des deux mondes. */
-            showToast('Effacement impossible : la base n\'a pas répondu. Rien n\'a été supprimé.');
-          });
-          return;
-        }
-        /* Hors ligne, ou sans compte : on ne peut vider que le cache, et le
-           message de confirmation vient de le dire. */
+      {title:'Effacer cet appareil ?',ok:'Effacer'}).then(function(ok){
+        if(!ok || connecte()) return;
         ['rt-vols','rt-jours','rt-quota','rt-vol-en-cours'].forEach(function(k){
           try{ localStorage.removeItem(k); }catch(e){}
         });
         try{ localStorage.removeItem(LS_KEY); }catch(e){}
-        apres(); showToast('Données effacées de cet appareil.');
+        try{ renderHistory(); renderBadges(); }catch(e){}
+        refreshData(); showToast('Données effacées de cet appareil.');
       });
   });
+  window.addEventListener('rt:auth', majEffacementLocal);
   $s('setReset').addEventListener('click',function(){
     rtConfirm('Tous vos réglages (thème, voix, indicatif, carte…) reviendront à leurs valeurs par défaut. Votre historique de scores n’est pas touché.',
       {title:'Réinitialiser les paramètres ?',ok:'Réinitialiser'}).then(function(ok){
@@ -347,7 +341,7 @@
   });
 
   // Réappliquer aux contrôles métier au démarrage (les voix arrivent en asynchrone).
-  window.addEventListener('rt:page',function(e){ if(e.detail.page==='parametres'){ syncVoices(); refreshData(); } });
+  window.addEventListener('rt:page',function(e){ if(e.detail.page==='parametres'){ syncVoices(); refreshData(); majEffacementLocal(); } });
   setTimeout(function(){
     syncVoices();
     if(S.rate)  drive(document.getElementById('voiceRate'),S.rate);

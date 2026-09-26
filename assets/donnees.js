@@ -739,11 +739,43 @@
      Depuis que la base est la source de vérité, effacer le seul cache ne fait
      rien disparaître : tout revient à la connexion suivante. Il faut donc
      effacer EN BASE, et ne toucher au cache qu'après.
+
+     LA FILE D'ATTENTE (26/09/2026). Les séances jouées hors connexion
+     attendent dans la file de sync.js, qui les renvoie seule à chaque
+     connexion (sync.js, écouteur 'rt:auth'). Sans rien faire, une séance mise
+     de côté AVANT la suppression repartait après, et réapparaissait — ce qui
+     contredisait le « définitivement, sur tous vos appareils » écrit partout.
+     Donc, dans cet ordre :
+       1. on ATTEND la reprise en cours (RTSync.reprise), comme synchroniser()
+          plus bas : une file déjà en route arrive en base AVANT le DELETE, et
+          part avec lui ;
+       2. on supprime, on recompte ;
+       3. SEULEMENT si la base est vide, on oublie la file
+          (RTSync.oublierLaFile — la clé reste connue du seul sync.js).
+     Jamais avant : si le DELETE échoue, le message dit « Rien n'a été
+     supprimé », et ces séances n'existent nulle part ailleurs. Pas davantage
+     dans la branche sans session, pour la même raison. rt-push-attente n'est
+     pas touchée : elle porte les réglages et le vol en cours.
+
+     ┌─ CE QUI RESTE POSSIBLE, ET N'EST PAS CORRIGÉ ICI ─────────────────────┐
+     │ La file vidée est celle de CET appareil. Un AUTRE appareil du même     │
+     │ compte, hors connexion au moment de la suppression, garde sa propre   │
+     │ file ; il la renverra à sa prochaine connexion, et ces séances         │
+     │ réapparaîtront. Même chose, sur cet appareil, pour un envoi relancé   │
+     │ par l'évènement « online » et déjà en vol pendant la suppression       │
+     │ (fenêtre de quelques centaines de millisecondes). Le fermer demande    │
+     │ une protection CÔTÉ SERVEUR — par exemple refuser une séance dont      │
+     │ started_at précède la date d'effacement du compte. Chantier séparé     │
+     │ (schéma et RLS, CLAUDE.md § 4), à ouvrir si le cas se présente.        │
+     └────────────────────────────────────────────────────────────────────────┘
      ====================================================================== */
   function effacerTout(){
     var c = client(), uid = moi();
     if (!c || !uid){ viderCache(); return Promise.resolve({ base:false }); }
-    return c.from('sessions').delete().eq('user_id', uid).then(function(r){
+    var reprise = (window.RTSync && RTSync.reprise) ? RTSync.reprise : Promise.resolve();
+    return Promise.resolve(reprise).catch(function(){}).then(function(){
+      return c.from('sessions').delete().eq('user_id', uid);
+    }).then(function(r){
       if (r.error) throw r.error;
       /* ┌─ POURQUOI ON RECOMPTE ────────────────────────────────────────────┐
          │ Un DELETE que la politique RLS n'autorise pas ne lève AUCUNE      │
@@ -767,6 +799,7 @@
               .then(function(){}, function(){});
     }).then(function(){
       viderCache(); ecrire(K_PROPRIO, uid);
+      if (window.RTSync && RTSync.oublierLaFile) RTSync.oublierLaFile();
       annoncer({ scenarios:0, vols:0, jours:0 });
       return { base:true };
     }, function(err){

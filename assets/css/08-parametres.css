@@ -91,3 +91,26 @@
   .modal-danger{ background:var(--bad); }
   .modal-danger:hover{ background:#c33f3b; }
 
+
+  /* ---------- Supprimer l'historique du compte (26/09/2026) ----------
+     Une zone à part, sous un filet, bordée de rouge à gauche : l'œil doit
+     comprendre qu'on sort des réglages ordinaires avant d'avoir lu un mot.
+     Le bouton est BORDÉ et non plein : une action destructrice ne doit pas
+     être le bouton le plus attirant de la carte. Rouges repris des messages
+     d'erreur (.auth-msg--err) — déjà au-dessus du seuil AA dans les deux thèmes. */
+  .cpt-danger{ margin:16px 0 4px; padding:14px 0 0 14px; border-top:1px solid var(--border);
+    border-left:3px solid #c74a4a; }
+  .cpt-danger h4{ font-family:var(--sans); font-size:14px; font-weight:800; color:#a8342f; margin:0 0 4px; }
+  .cpt-danger__btn{ color:#a8342f; border:1px solid rgba(199,74,74,.55); background:transparent; }
+  .cpt-danger__btn:hover:not(:disabled){ background:rgba(199,74,74,.08); border-color:#a8342f; }
+  .cpt-danger__btn:disabled{ opacity:.55; cursor:not-allowed; }
+  .cpt-danger__confirm{ margin:4px 0 6px; }
+  .cpt-danger__confirm label{ display:block; font-size:13px; color:var(--ink); margin:0 0 7px; }
+  .cpt-danger__confirm label b{ font-family:var(--mono); }
+  .cpt-danger__confirm input{ width:100%; max-width:320px; box-sizing:border-box; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:10px; padding:9px 12px; font-family:var(--mono);
+    font-size:14px; color:var(--ink); }
+  .cpt-danger__confirm input:focus{ outline:none; border-color:#c74a4a; box-shadow:0 0 0 3px rgba(199,74,74,.15); }
+  :root[data-theme="dark"] .cpt-danger h4,
+  :root[data-theme="dark"] .cpt-danger__btn{ color:#ff9d99; }
+  :root[data-theme="dark"] .cpt-danger__btn{ border-color:rgba(255,157,153,.5); }

@@ -539,8 +539,77 @@
   /* --------------------------------------------------------------------------
      Branchements.
      ----------------------------------------------------------------------- */
+  /* -----------------------------------------------------------------------
+     Supprimer tout l'historique d'entraînement DU COMPTE (26/09/2026)
+     -----------------------------------------------------------------------
+     La suppression elle-même est RTDonnees.effacerTout() — la même qu'avant,
+     avec son recomptage après coup (un DELETE refusé par RLS ne lève aucune
+     erreur, voir donnees.js § 11). Ce qui change, c'est le geste qui la
+     déclenche : on retape son nom d'utilisateur, en minuscules comme il est
+     enregistré. Un compte d'avant les pseudos (sql/001) retape son adresse
+     e-mail à la place.
+
+     Ce contrôle est une PROTECTION CONTRE LE RÉFLEXE, pas une sécurité : la
+     page appartient à l'utilisateur, et c'est RLS qui borne l'effacement à
+     ses propres séances. Il empêche un clic machinal, rien de plus — et c'est
+     exactement ce qui manquait. */
+  function attenduHistorique(){
+    var p = profilAffiche || (window.RTAuth && RTAuth.profil()) || {};
+    if (p.pseudo) return { quoi:"nom d'utilisateur", valeur:String(p.pseudo).toLowerCase() };
+    var u = (window.RTAuth && RTAuth.utilisateur()) || {};
+    return { quoi:'adresse e-mail', valeur:String(u.email || '').toLowerCase() };
+  }
+  function saisieConforme(){
+    var a = attenduHistorique(), s = ($('cptHistSaisie').value || '').trim().toLowerCase();
+    return !!a.valeur && s === a.valeur;
+  }
+  function fermerConfirmation(){
+    var c = $('cptHistConfirm'); if (c) c.hidden = true;
+    var s = $('cptHistSaisie'); if (s) s.value = '';
+    var b = $('cptHistSupprimer'); if (b) b.disabled = true;
+  }
+  function ouvrirConfirmation(){
+    msg('cptHistMsg', '');
+    var a = attenduHistorique();
+    if (!a.valeur) return msg('cptHistMsg', "Vous n'êtes pas connecté.");
+    $('cptHistQuoi').textContent = a.quoi;
+    $('cptHistAttendu').textContent = a.valeur;
+    $('cptHistConfirm').hidden = false;
+    try { $('cptHistSaisie').focus(); } catch(e){}
+  }
+  function supprimerHistorique(){
+    if (!saisieConforme()) return;              // le bouton est grisé ; Entrée ne passe pas non plus
+    if (!window.RTDonnees || !RTDonnees.effacerTout)
+      return msg('cptHistMsg', "Suppression impossible : la base n'a pas répondu. Rien n'a été supprimé.");
+    var libre = occuper($('cptHistSupprimer'), 'Suppression…');
+    RTDonnees.effacerTout().then(function(r){
+      libre();
+      /* base:false = aucune session au moment de l'appel : rien n'est parti en
+         base. On ne dit donc PAS « supprimé de votre compte ». */
+      if (!r || !r.base)
+        return msg('cptHistMsg', "Suppression impossible : la base n'a pas répondu. Rien n'a été supprimé.");
+      fermerConfirmation();
+      msg('cptHistMsg', 'Historique supprimé de votre compte.', 'ok');
+      try { if (window.renderHistory) window.renderHistory(); } catch(e){}
+      charger();
+    }, function(){
+      libre();
+      $('cptHistSupprimer').disabled = !saisieConforme();
+      msg('cptHistMsg', "Suppression impossible : la base n'a pas répondu. Rien n'a été supprimé.");
+    });
+  }
+
   function brancher(){
     var e;
+    if ((e = $('cptHistOuvrir')))   e.addEventListener('click', ouvrirConfirmation);
+    if ((e = $('cptHistAnnuler')))  e.addEventListener('click', function(){ fermerConfirmation(); msg('cptHistMsg', ''); });
+    if ((e = $('cptHistSaisie'))){
+      e.addEventListener('input', function(){ $('cptHistSupprimer').disabled = !saisieConforme(); });
+      e.addEventListener('keydown', function(ev){
+        if (ev.key === 'Enter'){ ev.preventDefault(); supprimerHistorique(); }
+      });
+    }
+    if ((e = $('cptHistSupprimer'))) e.addEventListener('click', supprimerHistorique);
     if ((e = $('cptEnregistrer')))  e.addEventListener('click', enregistrerIdentite);
     if ((e = $('cptAnnuler')))      e.addEventListener('click', function(){
       peindreProfil(profilAffiche, (window.RTAuth.utilisateur()||{}).email);
@@ -574,6 +643,9 @@
     window.addEventListener('rt:page', function(ev){
       if (ev.detail && ev.detail.page === 'parametres'){
         msg('cptIdMsg',''); msg('cptMdpMsg',''); msg('cptDonneesMsg',''); msg('cptQcmMsg','');
+        /* Une confirmation à moitié remplie ne survit pas à un départ de la page :
+           en revenant, on repart d'un bouton, pas d'un champ déjà prêt. */
+        fermerConfirmation(); msg('cptHistMsg','');
         charger();
       }
     });

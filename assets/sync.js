@@ -248,6 +248,12 @@
       }, Promise.resolve()).then(function(){ return n; });
     },
 
+    /* Oublier la file SANS l'envoyer. Seul usage : l'effacement de l'historique
+       du compte (donnees.js › effacerTout). Une séance mise de côté avant la
+       suppression repartirait sinon toute seule à la connexion suivante, et
+       réapparaîtrait. La clé reste connue de ce seul fichier. */
+    oublierLaFile: function(){ try{ localStorage.removeItem(FILE); }catch(e){} },
+
     enAttente: function(){ return lireFile().length; },
     dernierEchec: function(){ return dernierEchec; }
   };

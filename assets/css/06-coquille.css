@@ -53,19 +53,18 @@
   .auth-brand{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; color:var(--ink); margin-bottom:20px; }
   .auth-brand .logo{ color:var(--violet); display:inline-flex; }
   .auth-brand .ic-svg{ width:20px; height:20px; }
-  /* LE LOGO ALBATROS (26/09/2026) est une tête dans un cercle, plus dense que
-     l'avion en papier qu'il remplace : à 18-20 px il devenait un rond gris. On
-     lui donne 24 px partout où il est seul, 22 dans la pastille de 32 px. Les
-     sélecteurs portent .logo-albatros en plus de .ic-svg : ils doivent passer
-     devant `.brand .logo .ic-svg{18px}` (03-exercices.css), chargé avant. */
+  /* LE LOGO ALBATROS (26/09/2026) est une tête dans un cercle, en traits fins,
+     plus dense que l'avion en papier qu'il remplace. Une première version à
+     22-24 px a été jugée « pixelisée » — à juste titre : à cette taille, sur un
+     écran de densité 1, un trait fin tombe entre deux pixels. D'où 34-36 px
+     partout où il est seul, et une pastille agrandie à 40 px (01-socle.css garde
+     32 px pour .brand .logo : la règle ci-dessous passe devant). Les sélecteurs
+     portent .logo-albatros en plus de .ic-svg pour passer devant
+     `.brand .logo .ic-svg{18px}` (03-exercices.css), chargé avant. */
+  .brand .logo:has(.logo-albatros){ width:40px; height:40px; border-radius:11px; }
   .auth-brand .ic-svg.logo-albatros,
-  .side-brand .ic-svg.logo-albatros,
-  .app-topbar .brand .logo .ic-svg.logo-albatros{ width:24px; height:24px; }
-  .topnav .brand .logo .ic-svg.logo-albatros{ width:23px; height:23px; }
-  /* Dans la pastille violette (.brand .logo), le logo est BLANC. L'ancienne
-     icône l'était par `stroke:#fff` (03-exercices.css) ; le logo, lui, se
-     peint en currentColor, et sans cette ligne il prenait le violet de
-     .app-topbar .brand .logo — violet sur violet, invisible sur téléphone. */
+  .side-brand .ic-svg.logo-albatros{ width:36px; height:36px; }
+  .brand .logo .ic-svg.logo-albatros{ width:32px; height:32px; }
   .brand .logo .ic-svg.logo-albatros{ color:#fff; }
   /* Thème sombre : le violet plein (#6b5ae0) du logo se perdait sur le fond de
      la carte. Le violet clair du thème (--violet-dark, #b3a6ff en sombre) est

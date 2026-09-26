@@ -76,6 +76,11 @@
     .hero__tour{height:min(74%,500px)}
     .hero__content{max-width:min(460px,46vw)}
   }
+  /* Le logo en grand, au-dessus de l'accroche (26/09/2026). En --ink, comme le
+     titre : il bascule avec le thème. Version « grand » du symbole, au trait
+     presque d'origine — à cette taille, le trait fin se lit. */
+  .hero__logo{display:block; width:clamp(72px,8vw,96px); height:auto; aspect-ratio:369/338;
+    color:var(--ink); margin:0 0 16px}
   .hero__eyebrow{display:inline-block; font-size:12px; font-weight:800; letter-spacing:.15em; text-transform:uppercase;
     /* --violet-tint et non --violet-soft : ce dernier est TRANSLUCIDE
        (rgba .10 en clair, .18 en sombre), donc ce qu'on lit dessus dépend de

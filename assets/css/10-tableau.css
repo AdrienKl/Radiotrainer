@@ -21,6 +21,11 @@
   .tb-entete{display:grid; align-items:center; gap:clamp(16px,3vw,40px);
     grid-template-columns:minmax(0,1fr) minmax(0,clamp(220px,30%,400px)); margin-bottom:24px}
   .tb-entete .section-title, .tb-entete .section-sub{margin-bottom:0}
+  /* Le logo à gauche du bonjour (26/09/2026). La couleur est celle du titre de
+     la scène (--sc-ink), pour suivre le verre dépoli et le thème. */
+  .tb-salut{display:flex; align-items:center; gap:clamp(12px,1.8vw,20px); min-width:0}
+  .tb-logo{flex:none; width:clamp(56px,6vw,76px); height:auto; aspect-ratio:369/338;
+    color:var(--sc-ink, var(--ink))}
   .tb-entete .section-sub{margin-top:8px}
   .tb-avion{display:block; justify-self:end; width:100%; height:auto;
     filter:drop-shadow(0 18px 24px rgba(8,10,20,.38))}

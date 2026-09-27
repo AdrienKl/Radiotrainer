@@ -422,6 +422,35 @@
                note:"Jeu de démonstration en lecture seule. Les actions d'écriture sont désactivées." };
     },
 
+    /* ---- Voix Google : FICTIF, comme le reste de cette source --------------
+       Quelques comptes premium, des voix réelles de Google, des volumes
+       plausibles — dont un gros consommateur, pour qu'on voie la page faire
+       son travail : le repérer. Aucune de ces lignes n'existe en base. */
+    voix:function(){
+      var T = RT.tarifsVoix, r = rng(2718);
+      var auj = T.jourParis(), depuis = T.debutFenetre(auj);
+      var comptes = [
+        { id:'demo-v1', nom:'Camille (démo)', voix:['fr-FR-Chirp3-HD-Charon'],                   base:9000 },
+        { id:'demo-v2', nom:'Léo (démo)',     voix:['fr-FR-Neural2-G', 'fr-FR-Chirp3-HD-Kore'],  base:3500 },
+        { id:'demo-v3', nom:'Inès (démo)',    voix:['fr-FR-Wavenet-F'],                          base:1500 },
+        { id:'demo-v4', nom:'Hugo (démo)',    voix:['fr-FR-Chirp-HD-D'],                         base:900 },
+        { id:'demo-v5', nom:'Manon (démo)',   voix:['fr-FR-Chirp3-HD-Charon', 'fr-FR-Studio-A'], base:60000 }
+      ];
+      var rows = [];
+      for (var j = depuis; j <= auj; j = T.decaler(j, 1)){
+        comptes.forEach(function(c){
+          c.voix.forEach(function(v){
+            if (!r.chance(0.7)) return;
+            var car = Math.round(c.base * (0.4 + r.f()));
+            rows.push({ userId:c.id, userName:c.nom, jour:j, voix:v,
+                        modele:v.replace(/^fr-FR-/, '').replace(/-[A-Za-z0-9]+$/, ''),
+                        caracteres:car, requetes:Math.max(1, Math.round(car / 85)) });
+          });
+        });
+      }
+      return Promise.resolve({ aujourdhui:auj, premiumTotal:7, rows:rows });
+    },
+
     overview:function(opts){
       var M = construire(), f = fenetre(opts);
       var duree = f.to - f.from;

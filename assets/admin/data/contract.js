@@ -46,6 +46,12 @@
                                 → {rows:[ErrorRow], total}
      error(id)                  → ErrorDetail | null
      capabilities()             → {read,write,realtime,users,errors,analytics}
+     voix()                     → {aujourdhui:'AAAA-MM-JJ' (jour de Paris), premiumTotal,
+                                   rows:[{userId,userName,jour,voix,modele,caracteres,requetes}]}
+                                les lignes de voix_historique (sql/006) depuis le plus
+                                ancien de « début du mois » et « il y a 6 jours ». Les
+                                sommes et le coût sont calculés par la page, avec
+                                RTAdmin.tarifsVoix : une source ne fait que lire.
 
    FORMES
      UserRow      {id,name,email,role,status,createdAt,lastSeenAt,sessions,
@@ -157,7 +163,7 @@
 
   var METHODES = ['overview','activity','alerts','users','user','userSessions',
                   'userWeaknesses','flights','flight','analytics','exercises',
-                  'errors','error','capabilities'];
+                  'errors','error','capabilities','voix'];
 
   function enregistrer(src){
     sources[src.id] = src;

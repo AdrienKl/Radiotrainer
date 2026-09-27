@@ -84,6 +84,7 @@
     { route:'admin/analytics', label:'Analytics',       icon:I.chart },
     { route:'admin/exercises', label:'Exercices',       icon:I.book },
     { route:'admin/errors',    label:'Erreurs',         icon:I.bug },
+    { route:'admin/voix',      label:'Voix Google',     icon:I.mic },
     { route:'admin/test',      label:'Test / Controller', icon:I.flask, separe:true }
   ];
 

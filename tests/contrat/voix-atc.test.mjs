@@ -201,7 +201,9 @@ test('« dire » rend du MP3, décompte le texte NORMALISÉ, transmet voix et d�
   assert.deepEqual(new Uint8Array(await r.arrayBuffer()), MP3);
 
   const normalise = 'F-ABCD, rappelez vent arrière.';
-  assert.deepEqual(f.vers('/rpc/voix_consommer')[0].corps, { n: normalise.length });
+  /* La voix part avec le décompte : la base en tire l'historique de la
+     console d'administration (sql/006). Le texte, lui, n'y part PAS. */
+  assert.deepEqual(f.vers('/rpc/voix_consommer')[0].corps, { n: normalise.length, nom_voix: 'fr-FR-Neural2-B' });
   const g = f.vers('text:synthesize')[0].corps;
   assert.equal(g.input.text, normalise);
   assert.deepEqual(g.voice, { languageCode: 'fr-FR', name: 'fr-FR-Neural2-B' });

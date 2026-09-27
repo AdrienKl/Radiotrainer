@@ -233,8 +233,25 @@ var Voix=(function(){
     pauseJusqua: 0,
     cache: new Map(),            // clé → AudioBuffer ; l'ordre d'insertion fait le LRU
     requete: null,               // AbortController de la requête en cours
-    source: null                 // AudioBufferSourceNode en lecture
+    source: null,                // AudioBufferSourceNode en lecture
+    dernier: null,               // 'google' | 'navigateur' : qui a dit le dernier message
+    erreur: null,                // le dernier échec : { cause, statut?, code? }
+    liste: null                  // la promesse de la liste des voix, une fois par page
   };
+
+  /* Les modèles, dans l'ordre où l'écran les présente. Le CODE est celui du
+     nom de voix de Google (fr-FR-<code>-<nom>) ; le libellé est pour l'œil.
+     C'est la seule table : les Paramètres et la console d'administration la
+     lisent ici (Voix.FAMILLES_GOOGLE), et les tarifs s'y rattachent par le
+     code (assets/admin/data/tarifs-voix.js). Aucune VOIX n'y est écrite : la
+     liste vient de voix-atc, action « voix ». */
+  var FAMILLES = [
+    { code:'Chirp3-HD', libelle:'Chirp 3 HD' },
+    { code:'Chirp-HD',  libelle:'Chirp HD' },
+    { code:'Neural2',   libelle:'Neural2' },
+    { code:'Studio',    libelle:'Studio' },
+    { code:'Wavenet',   libelle:'WaveNet' }
+  ];
 
   function tracer(message, detail){
     try{ console.warn('[Albatros VFR] voix Google : ' + message, detail || ''); }catch(e){}
@@ -309,14 +326,17 @@ var Voix=(function(){
     while(G.cache.size > G.CACHE_MAX) G.cache.delete(G.cache.keys().next().value);
   }
 
-  /* La requête à voix-atc, bornée à G.DELAI. Rejette avec { cause, statut? }. */
-  function telecharger(texte, voix, debit, hauteur){
+  /* Un appel à voix-atc, borné à G.DELAI. `lire(reponse)` transforme une
+     réponse 200 ; toute autre rejette avec { cause, statut?, code? }.
+     `suivie` : la requête est celle d'un message, que stop() doit pouvoir
+     interrompre (la liste des voix, elle, ne l'est pas). */
+  function appeler(corps, lire, suivie){
     var cfg = window.RT_SUPABASE, A = window.RTAuth;
     var c = null;
     try{ c = A && A.client && A.client(); }catch(e){}
     if(!cfg || !cfg.url || !c || !c.auth) return Promise.reject({ cause:'session' });
     var ctrl = window.AbortController ? new AbortController() : null;
-    G.requete = ctrl;
+    if(suivie) G.requete = ctrl;
     var minuterie = null;
     var delai = new Promise(function(_, ko){
       minuterie = setTimeout(function(){
@@ -330,11 +350,11 @@ var Voix=(function(){
       return fetch(cfg.url + '/functions/v1/voix-atc', {
         method:'POST',
         headers:{ 'Authorization':'Bearer ' + jeton, 'Content-Type':'application/json' },
-        body: JSON.stringify({ action:'dire', texte:texte, voix:voix, debit:debit, hauteur:hauteur }),
+        body: JSON.stringify(corps),
         signal: ctrl ? ctrl.signal : undefined
       });
     }).then(function(rep){
-      if(rep.status===200) return rep.arrayBuffer();
+      if(rep.status===200) return lire(rep);
       return rep.text().then(function(t){
         var code=null; try{ code = JSON.parse(t).erreur; }catch(e){}
         throw { cause:'http', statut:rep.status, code:code };
@@ -342,7 +362,7 @@ var Voix=(function(){
     }, function(e){
       if(e && e.cause) throw e;
       throw { cause:'reseau', detail: e && e.name };
-    }).then(decoder);
+    });
     return Promise.race([travail, delai]).then(function(b){
       clearTimeout(minuterie); if(G.requete===ctrl) G.requete=null; return b;
     }, function(e){
@@ -350,10 +370,29 @@ var Voix=(function(){
     });
   }
 
+  /* Le son d'un message. */
+  function telecharger(texte, voix, debit, hauteur){
+    return appeler({ action:'dire', texte:texte, voix:voix, debit:debit, hauteur:hauteur },
+                   function(rep){ return rep.arrayBuffer().then(decoder); }, true);
+  }
+
+  /* La liste des voix proposées, telle que voix-atc la renvoie (voices.list de
+     Google, filtrée par famille). Une fois par page : elle ne change pas d'une
+     minute à l'autre, et chaque ouverture des Paramètres la redemanderait.
+     Un échec n'est PAS gardé : la prochaine demande réessaie. */
+  function listerVoix(){
+    if(G.liste) return G.liste;
+    G.liste = appeler({ action:'voix' }, function(rep){
+      return rep.json().then(function(d){ return (d && d.voix) || []; });
+    }, false).then(null, function(e){ G.liste = null; throw e; });
+    return G.liste;
+  }
+
   /* Ce qu'un échec dit de la suite : couper jusqu'au rechargement, faire
      une pause, ou rien (un souci de sortie audio n'est pas la faute de
      Google). */
   function noterEchec(e){
+    G.erreur = e || { cause:'inconnu' };
     var statut = e && e.statut;
     if(e && e.cause==='http' && (statut===400 || statut===401 || statut===403 || statut===429)){
       G.coupe = true;
@@ -398,6 +437,7 @@ var Voix=(function(){
     g.gain.value = m.opts.volume!=null ? m.opts.volume : 1;
     src.connect(g); g.connect(ctx.destination);
     G.source = src;
+    G.dernier = 'google'; G.erreur = null;
     src.onended = function(){
       if(G.source===src) G.source = null;
       try{ src.disconnect(); g.disconnect(); }catch(e){}
@@ -446,6 +486,7 @@ var Voix=(function(){
       if(v){ m.google='essai'; emettreGoogle(m, v); return; }
       m.google='non';
     }
+    if(m.i===0) G.dernier = 'navigateur';
     emettre(m, m.phrases[m.i]);
   }
 
@@ -559,7 +600,22 @@ var Voix=(function(){
     setTimeout(function(){ if(mien===jeton) pompe(); },120);
   }
   function occupe(){ return enCours || file.length>0; }
-  return { parler:parler, empiler:empiler, stop:stop, occupe:occupe };
+
+  /* Ce que le moteur Google sait de lui-même — pour les Paramètres, qui
+     doivent pouvoir dire pourquoi l'essai est sorti avec la voix du
+     navigateur. Pendant un exercice, personne ne le lit : le repli y reste
+     silencieux (décision du 27/09/2026). */
+  function etatGoogle(){
+    return { coupe:G.coupe, enPause:Date.now() < G.pauseJusqua,
+             dernier:G.dernier, erreur:G.erreur };
+  }
+  /* L'élève vient de changer de voix ou de moteur : ce qui avait coupé Google
+     (un 400 sur une voix mal réglée, typiquement) ne vaut plus. */
+  function relancerGoogle(){ G.coupe=false; G.pauseJusqua=0; G.erreur=null; }
+
+  return { parler:parler, empiler:empiler, stop:stop, occupe:occupe,
+           voixGoogle:listerVoix, etatGoogle:etatGoogle, relancerGoogle:relancerGoogle,
+           FAMILLES_GOOGLE:FAMILLES };
 })();
 
 /* Coupe toute parole en cours. Conserve sous son ancien nom : il est appele un

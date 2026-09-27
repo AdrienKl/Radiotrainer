@@ -131,6 +131,29 @@ Reste à faire le jour du domaine : Formspree, Inc. est une société américain
 L'encadrement du transfert (clauses contractuelles types, ou adhésion au
 Data Privacy Framework) est à vérifier et à citer, comme pour Supabase.
 
+**Google Cloud Text-to-Speech est un sous-traitant, nommé comme tel (27/09/2026).**
+Pour les comptes Premium qui choisissent la voix Google, la fonction Edge
+`voix-atc` envoie à Google le texte que prononce le contrôleur, et la voix
+choisie. Ce texte peut contenir l'indicatif de l'élève, l'aérodrome, la piste :
+la politique le dit en toutes lettres, parce que c'est ce qu'un élève ne
+devinerait pas. Ce qui est fait :
+
+- le **§ 2** liste la seule donnée conservée — la consommation par jour et par
+  voix (caractères, requêtes, modèle), **jamais le texte** (`sql/006` n'a pas de
+  colonne pour le recevoir, et `tests/verifier-migrations.mjs` le vérifie) ;
+- le **§ 4** nomme Google LLC (Cloud Text-to-Speech), distinct de la
+  reconnaissance vocale de Chrome, et dit que l'envoi part du SERVEUR : Google
+  ne reçoit ni l'adresse e-mail ni l'adresse IP de l'élève ;
+- le **§ 5** l'explique à côté de la voix du navigateur, et dit comment
+  l'arrêter (revenir à la voix du navigateur) ;
+- le **pied de page** l'ajoute à ce qui sort de la machine.
+
+Pas de nouveau consentement : c'est une modification de la politique de
+confidentialité, pas des CGU (`CGU_VERSION` inchangée), et l'envoi n'a lieu que
+sur un choix explicite de l'élève dans les Paramètres. Reste à faire le jour du
+domaine, comme pour Formspree : citer l'encadrement du transfert vers Google
+(clauses contractuelles types / Data Privacy Framework).
+
 **Les durées de conservation** sont des propositions défendables, pas des
 obligations légales chiffrées : 30 jours après fermeture (le temps des
 sauvegardes), 12 mois pour les erreurs techniques, 5 ans pour la preuve du

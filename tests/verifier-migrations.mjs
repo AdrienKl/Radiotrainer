@@ -141,7 +141,7 @@ if (!problemes) {
   /* 1. Les six tables, toutes sous RLS. Une table née sans RLS est lisible et
         modifiable par quiconque détient la clé publiable — laquelle est dans le
         code source du site, par conception. */
-  const ATTENDUES = ['admin_audit_log','app_errors','exercises','profiles','session_steps','sessions','voix_consommation'];
+  const ATTENDUES = ['admin_audit_log','app_errors','exercises','profiles','session_steps','sessions','voix_consommation','voix_historique'];
   const tables = await q(`
     select c.relname as t, c.relrowsecurity as rls
       from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -357,6 +357,90 @@ if (!problemes) {
   const anonPeut = await q(`select has_function_privilege('anon', 'public.voix_consommer(integer)', 'execute') as p`);
   if (anonPeut[0].p) rate('le rôle anon peut exécuter voix_consommer()');
   else passe('voix_consommer() est fermée au rôle anon');
+
+  /* 11. L'historique de consommation (sql/006). Trois choses comptent : il ne
+         s'écrit QUE quand le quota accepte, il ne peut PAS contenir le texte
+         prononcé, et personne d'autre qu'un administrateur ne le lit. */
+  await db.exec(`select set_config('request.jwt.claim.sub', '', false)`);
+  await db.exec(`update public.profiles set status = 'active' where id = '${premium}'`);
+  await db.exec(`delete from public.voix_consommation`);
+  const consommerAvec = async (qui, n, voix) => {
+    await db.exec(`select set_config('request.jwt.claim.sub', '${qui || ''}', false)`);
+    const [r] = await q(`select public.voix_consommer(${n}, ${voix === null ? 'null' : `'${voix}'`}) as r`);
+    return r.r;
+  };
+  const histo = async () => q(`select voix, modele, caracteres, requetes from public.voix_historique order by voix`);
+  const pb = [];
+  let h;
+  let r = await consommerAvec(premium, 40, 'fr-FR-Chirp3-HD-Charon');
+  if (!r.ok) pb.push(`premium, voix Chirp 3 HD → ${JSON.stringify(r)}`);
+  r = await consommerAvec(premium, 60, 'fr-FR-Chirp3-HD-Charon');
+  r = await consommerAvec(premium, 25, 'fr-FR-Neural2-G');
+  h = await histo();
+  const attendu = [
+    { voix: 'fr-FR-Chirp3-HD-Charon', modele: 'Chirp3-HD', caracteres: 100, requetes: 2 },
+    { voix: 'fr-FR-Neural2-G',        modele: 'Neural2',   caracteres: 25,  requetes: 1 }
+  ];
+  if (JSON.stringify(h) !== JSON.stringify(attendu)) pb.push(`historique inattendu : ${JSON.stringify(h)}`);
+  const [{ total: quotaTotal }] = await q(`select sum(caracteres)::int as total from public.voix_consommation`);
+  if (quotaTotal !== 125) pb.push(`le quota vaut ${quotaTotal} au lieu de 125 : les deux comptes divergent`);
+
+  const refus = [
+    ['compte gratuit',     () => consommerAvec(gratuit, 10, 'fr-FR-Neural2-G'),     'non_premium'],
+    ['sans session',       () => consommerAvec(null, 10, 'fr-FR-Neural2-G'),        'non_connecte'],
+    ['voix Standard',      () => consommerAvec(premium, 10, 'fr-FR-Standard-A'),    'voix'],
+    ['voix mal formée',    () => consommerAvec(premium, 10, "fr-FR-Neural2-G x"),   'voix'],
+    ['autre langue',       () => consommerAvec(premium, 10, 'en-US-Neural2-A'),     'voix'],
+    ['au-delà du plafond', () => consommerAvec(premium, plafond, 'fr-FR-Neural2-G'), 'quota'],
+  ];
+  for (const [nom, f, raison] of refus) {
+    const x = await f();
+    if (x.ok || x.raison !== raison) pb.push(`${nom} → ${JSON.stringify(x)} (attendu « ${raison} »)`);
+  }
+  const h2 = await histo();
+  if (JSON.stringify(h2) !== JSON.stringify(attendu)) pb.push(`un refus a écrit dans l'historique : ${JSON.stringify(h2)}`);
+
+  // L'ancienne signature : le quota compte, l'historique ne bouge pas.
+  r = await consommerAvec(premium, 5, null);
+  const [{ total: t2 }] = await q(`select sum(caracteres)::int as total from public.voix_consommation`);
+  if (!r.ok || t2 !== 130) pb.push(`ancienne signature voix_consommer(n) → ${JSON.stringify(r)}, quota ${t2}`);
+  if (JSON.stringify(await histo()) !== JSON.stringify(attendu)) pb.push('l\'ancienne signature a écrit dans l\'historique');
+  await db.exec(`select set_config('request.jwt.claim.sub', '', false)`);
+
+  if (pb.length) {
+    rate('voix_historique ne se comporte pas comme prévu :');
+    pb.forEach(m => console.log(rouge('      · ' + m)));
+  } else passe('voix_historique : écrit seulement si le quota accepte, additionné par voix, modèle déduit ; l\'ancienne signature marche toujours');
+
+  /* Pas de place pour le texte prononcé : seules ces six colonnes, et les deux
+     colonnes de texte sont bornées à la forme d'un nom de voix. */
+  const cols = (await q(`select column_name as c from information_schema.columns
+                          where table_schema='public' and table_name='voix_historique' order by ordinal_position`)).map(x => x.c);
+  const COLS = ['user_id','jour','voix','modele','caracteres','requetes'];
+  if (JSON.stringify(cols) !== JSON.stringify(COLS)) rate(`colonnes de voix_historique : ${cols.join(', ')} — attendu ${COLS.join(', ')}`);
+  else {
+    let texteRefuse = true;
+    try {
+      await db.exec(`insert into public.voix_historique (user_id, jour, voix, modele) values
+                     ('${premium}', current_date, 'fr-FR-F-ABCD, rappelez vent arrière main droite', 'Neural2')`);
+      texteRefuse = false;
+    } catch { /* refusé : c'est ce qu'on veut */ }
+    if (!texteRefuse) rate('voix_historique accepte une phrase dans la colonne `voix`');
+    else passe('voix_historique n\'a aucune colonne capable de recevoir le texte prononcé');
+  }
+
+  const ecritureH = await q(`select policyname from pg_policies where schemaname='public'
+                              and tablename='voix_historique' and cmd <> 'SELECT'`);
+  const lectureH = await q(`select qual from pg_policies where schemaname='public'
+                             and tablename='voix_historique' and cmd = 'SELECT'`);
+  if (ecritureH.length) rate(`politique(s) d'écriture sur voix_historique : ${ecritureH.map(x => x.policyname).join(', ')}`);
+  else if (lectureH.length !== 1 || !/is_admin\(\)/.test(lectureH[0].qual) || /auth\.uid/.test(lectureH[0].qual))
+    rate(`la lecture de voix_historique n'est pas réservée à l'administration : ${JSON.stringify(lectureH)}`);
+  else passe('voix_historique : lecture réservée à l\'administration, aucune écriture possible hors de la fonction');
+
+  const anonPeut2 = await q(`select has_function_privilege('anon', 'public.voix_consommer(integer, text)', 'execute') as p`);
+  if (anonPeut2[0].p) rate('le rôle anon peut exécuter voix_consommer(n, nom_voix)');
+  else passe('voix_consommer(n, nom_voix) est fermée au rôle anon');
 }
 
 console.log('');

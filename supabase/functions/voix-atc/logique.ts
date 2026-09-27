@@ -156,14 +156,19 @@ async function utilisateur(jeton: string, env: Env, f: Fetch): Promise<boolean> 
 }
 
 /* ---- Supabase : a-t-il DROIT à ce message ? ---------------------------------
-   Tout se décide en base, en une transaction : premium, actif, quota. */
+   Tout se décide en base, en une transaction : premium, actif, quota — et,
+   depuis sql/006, la ligne d'historique de la console d'administration, qui
+   a besoin de savoir QUELLE voix. C'est d'ici qu'elle part, et pas du
+   navigateur : une statistique fournie par le client se falsifie.
+   Le paramètre s'appelle `nom_voix` côté base (voir sql/006 : `voix` y est
+   aussi un nom de colonne). */
 type Decompte = { ok: boolean; raison?: string; restant?: number };
-async function consommer(jeton: string, n: number, env: Env, f: Fetch): Promise<Decompte | null> {
+async function consommer(jeton: string, n: number, voix: string, env: Env, f: Fetch): Promise<Decompte | null> {
   const r = await f(env.supabaseUrl + '/rest/v1/rpc/voix_consommer', {
     method: 'POST',
     headers: { apikey: env.supabaseCle || '', Authorization: 'Bearer ' + jeton,
                'Content-Type': 'application/json' },
-    body: JSON.stringify({ n })
+    body: JSON.stringify({ n, nom_voix: voix })
   });
   // 401/403 : le jeton est refusé par la base elle-même (expiré, falsifié).
   if (r.status === 401 || r.status === 403) return { ok: false, raison: 'non_connecte' };
@@ -270,7 +275,7 @@ export async function traiter(req: Request, env: Env, f: Fetch = fetch): Promise
 
       /* On décompte les caractères de `texte` NORMALISÉ, pas du corps reçu :
          c'est ce qui part chez Google, donc ce qui est facturé. */
-      const d = await consommer(jeton, texte.length, env, f);
+      const d = await consommer(jeton, texte.length, voix as string, env, f);
       if (!d) return erreur('base', 502, cors);
       if (!d.ok) {
         const statut = d.raison === 'non_connecte' ? 401 : d.raison === 'quota' ? 429 : 403;

@@ -62,6 +62,19 @@
   .seg3-opt:hover{ color:var(--ink); }
   .seg3-opt.active{ background:var(--violet); color:#fff; }
 
+  /* Le moteur Google, réservé aux comptes Premium (27/09/2026). Verrouillé,
+     l'option garde la couleur de texte des autres : une opacité réduite
+     ferait tomber son contraste sous le seuil AA, et « Premium » est
+     précisément ce qu'il faut pouvoir lire. Le verrou se dit par le curseur,
+     l'état désactivé et l'aide à gauche. --violet-dark sert ici de TEXTE,
+     jamais de fond (INSCRIPTION.md § 8 ter). */
+  .seg3-opt:disabled{ cursor:not-allowed; }
+  .seg3-opt:disabled:hover{ color:var(--ink-2-fort); }
+  .set-premium{ display:inline-block; margin-left:4px; padding:1px 7px; border-radius:var(--pill);
+    font-size:10.5px; font-weight:700; letter-spacing:.02em; vertical-align:1px;
+    background:var(--violet-soft); color:var(--violet-dark); }
+  .seg3-opt.active .set-premium{ background:rgba(255,255,255,.22); color:#fff; }
+
   /* Interrupteur on/off */
   .switch{ position:relative; width:46px; height:26px; flex:none; cursor:pointer; padding:0;
     border:1px solid var(--border); background:var(--surface-2); border-radius:var(--pill); transition:.18s; }

@@ -80,6 +80,113 @@
   }
   setVoice.addEventListener('change',function(){ S.voice=setVoice.value; save(); drive(srcVoice,S.voice); });
 
+  /* ---------- Moteur : navigateur ou Google (Premium) — 27/09/2026 ----------
+     Deux réglages, lus par assets/noyau/5-voix.js à CHAQUE message : un
+     changement vaut donc dès le message suivant, sans rien relancer.
+       voixMoteur  'navigateur' | 'google'
+       voixGoogle  le nom Google de la voix (fr-FR-Chirp3-HD-Charon…)
+     Ils suivent le compte d'un appareil à l'autre comme les autres réglages
+     (rtSaveSettings → donnees.js § 7) : pas de clé de stockage de plus.
+     Le plan lu ici ne sert qu'à l'affichage. C'est la base qui décide
+     (voix_consommer, sql/005) : un compte gratuit qui forcerait le bouton
+     n'entendrait que la voix du navigateur. */
+  var FAM = (window.Voix && window.Voix.FAMILLES_GOOGLE) || [];
+  var rowNav=$s('setVoixNavRow'), rowG=$s('setVoixGoogleRow'), selG=$s('setVoixGoogle');
+  var aideG=$s('setVoixGoogleAide'), aideM=$s('setMoteurAide');
+  var AIDE_G = aideG ? aideG.textContent : '', AIDE_M = aideM ? aideM.textContent : '';
+  function estConnecte(){ try{ return !!(window.RTAuth && RTAuth.utilisateur && RTAuth.utilisateur()); }catch(e){ return false; } }
+  function estPremium(){
+    try{ var p = window.RTAuth && RTAuth.profil && RTAuth.profil(); return !!(p && p.plan==='premium'); }catch(e){ return false; }
+  }
+  function moteurEffectif(){ return (S.voixMoteur==='google' && estPremium()) ? 'google' : 'navigateur'; }
+  function famille(nom){
+    for(var i=0;i<FAM.length;i++){ if(String(nom).indexOf('fr-FR-'+FAM[i].code+'-')===0) return FAM[i]; }
+    return null;
+  }
+  /* « Charon — Masculine », « Voix G — Masculine » : Google nomme certaines
+     voix d'une seule lettre, qu'on ne laisse pas seule dans une liste. */
+  function libelleVoix(v){
+    var f=famille(v.nom); if(!f) return v.nom;
+    var court=v.nom.slice(('fr-FR-'+f.code+'-').length);
+    var g = v.genre==='F' ? 'Féminine' : v.genre==='M' ? 'Masculine' : '';
+    return (court.length<=2 ? 'Voix '+court : court) + (g ? ' — '+g : '');
+  }
+  /* Pourquoi Google n'a pas parlé, en mots d'élève. */
+  function raisonGoogle(e){
+    if(!e) return 'service indisponible';
+    if(e.cause==='session' || e.statut===401) return 'session expirée, reconnectez-vous';
+    if(e.statut===403) return e.code==='compte_inactif' ? 'compte inactif' : 'réservée aux comptes Premium';
+    if(e.statut===429) return 'quota du jour atteint';
+    if(e.statut===400) return 'voix refusée, choisissez-en une autre';
+    if(e.cause==='delai') return "Google n'a pas répondu à temps";
+    if(e.cause==='reseau') return 'connexion impossible';
+    if(e.cause==='audio') return 'sortie audio bloquée par le navigateur';
+    if(e.cause==='decodage') return 'son illisible';
+    return 'service indisponible';
+  }
+  function remplirVoixGoogle(liste){
+    var html='', noms=[];
+    FAM.forEach(function(f){
+      var du=liste.filter(function(v){ var x=famille(v.nom); return x && x.code===f.code; });
+      if(!du.length) return;
+      html+='<optgroup label="'+f.libelle+'">';
+      du.forEach(function(v){ noms.push(v.nom); html+='<option value="'+v.nom+'">'+libelleVoix(v)+'</option>'; });
+      html+='</optgroup>';
+    });
+    selG.innerHTML = html || '<option value="">Aucune voix disponible</option>';
+    /* Une voix enregistrée qui n'existe plus chez Google, ou pas de voix du
+       tout : la première de la liste, enregistrée — sans quoi le moteur
+       resterait sans voix et se tairait côté Google. */
+    if(noms.length && noms.indexOf(S.voixGoogle)<0){ S.voixGoogle=noms[0]; save(); }
+    if(noms.length) selG.value=S.voixGoogle;
+  }
+  var listeChargee=false, chargement=null;
+  function chargerVoixGoogle(){
+    if(listeChargee || chargement || !window.Voix || !Voix.voixGoogle) return;
+    selG.disabled=true;
+    selG.innerHTML='<option value="">Chargement des voix…</option>';
+    chargement = Voix.voixGoogle().then(function(liste){
+      chargement=null; listeChargee=true;
+      remplirVoixGoogle(liste||[]); selG.disabled=false;
+      if(aideG) aideG.textContent=AIDE_G;
+    }, function(e){
+      chargement=null;
+      selG.innerHTML='<option value="">Voix indisponibles</option>';
+      if(aideG) aideG.textContent='Impossible de charger les voix Google ('+raisonGoogle(e)+'). La voix du navigateur reste utilisée.';
+    });
+  }
+  function peindreMoteur(){
+    var prem=estPremium(), m=moteurEffectif();
+    var bG=sec.querySelector('[data-moteur="google"]');
+    if(bG){ bG.disabled=!prem; bG.title = prem ? '' : 'Réservé aux comptes Premium'; }
+    segSet(null,m,'data-moteur');
+    if(rowNav) rowNav.hidden=(m==='google');
+    if(rowG) rowG.hidden=(m!=='google');
+    if(aideM){
+      aideM.textContent = prem ? AIDE_M
+        : !estConnecte() ? 'La voix Google est réservée aux comptes Premium connectés.'
+        : S.voixMoteur==='google' ? "Votre compte n'est plus Premium : la voix du navigateur est utilisée."
+        : 'La voix Google, plus naturelle, est réservée aux comptes Premium.';
+    }
+    if(m==='google') chargerVoixGoogle();
+  }
+  sec.querySelectorAll('[data-moteur]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var v=b.getAttribute('data-moteur');
+      if(v==='google' && !estPremium()) return;
+      S.voixMoteur=v; save();
+      if(window.Voix && Voix.relancerGoogle) Voix.relancerGoogle();
+      peindreMoteur();
+    });
+  });
+  if(selG) selG.addEventListener('change',function(){
+    if(!selG.value) return;
+    S.voixGoogle=selG.value; S.voixMoteur='google'; save();
+    if(window.Voix && Voix.relancerGoogle) Voix.relancerGoogle();
+  });
+  window.addEventListener('rt:auth', function(){ peindreMoteur(); });
+  peindreMoteur();
+
   /* ---------- Débit ---------- */
   sec.querySelectorAll('[data-rate]').forEach(function(b){
     b.addEventListener('click',function(){
@@ -151,8 +258,14 @@
       msg.classList.remove('hidden','ok');
       if (ok) msg.classList.add('ok');
     }
-    if (!window.speechSynthesis || !window.Voix)
+    /* Avec Google, l'essai passe par le MÊME moteur que les exercices
+       (Voix.parler) ; seul le message change. Ici, et ici seulement, on dit
+       pourquoi Google n'a pas parlé : dans un exercice, le repli reste
+       silencieux (décision du 27/09/2026). */
+    var viaGoogle = moteurEffectif()==='google';
+    if (!window.Voix || (!viaGoogle && !window.speechSynthesis))
       return dire("Ce navigateur n'a pas de synthèse vocale. Les exercices resteront muets : essayez Chrome, Edge ou Safari à jour.", false);
+    if (viaGoogle && window.Voix.relancerGoogle) window.Voix.relancerGoogle();
 
     var voix = window.speechSynthesis.getVoices() || [];
     var fr = voix.filter(function(v){ return /^fr/i.test(v.lang); });
@@ -167,7 +280,14 @@
     window.Voix.parler(
       "Fox-trot Golf Kilo Lima Mike, autorisé décollage piste zéro cinq, vent deux cinq zéro degrés, un zéro nœuds.",
       { rate: parseFloat(S.rate || 1) || 1,
-        onDebut: function(){ parti = true; if (mien === essaiJeton) dire('La voix fonctionne.', true); },
+        onDebut: function(){
+          parti = true;
+          if (mien !== essaiJeton) return;
+          if (!viaGoogle) return dire('La voix fonctionne.', true);
+          var e = window.Voix.etatGoogle ? window.Voix.etatGoogle() : {};
+          if (e.dernier === 'google') dire('Voix Google : ' + (selG && selG.selectedIndex >= 0 ? selG.options[selG.selectedIndex].text : S.voixGoogle) + '.', true);
+          else dire('Voix Google indisponible (' + raisonGoogle(e.erreur) + ') : vous entendez la voix du navigateur.', false);
+        },
         onFin: function(){ if (mien === essaiJeton) fini(); } }
     );
 
@@ -183,7 +303,7 @@
         : "Aucune voix française n'est installée sur cet appareil. Les exercices parleront avec "
           + "un accent étranger, ou pas du tout. Sur Windows : Paramètres → Heure et langue → Voix.",
         false);
-    }, 4000);
+    }, viaGoogle ? 9000 : 4000);   // Google peut prendre 4,5 s avant de se replier
   }
   if ($s('setVoiceTest')) $s('setVoiceTest').addEventListener('click', essayerVoix);
 
@@ -332,7 +452,7 @@
   window.addEventListener('rt:donnees', function(){
     try{
       S = rtSettings();
-      paint(); applyTheme(); applyAnim(); syncVoices();
+      paint(); applyTheme(); applyAnim(); syncVoices(); peindreMoteur();
       if(S.rate)  drive(document.getElementById('voiceRate'),S.rate);
       if(S.diff)  drive(document.getElementById('difficultySelect'),S.diff);
       if(S.call)  drive(document.getElementById('call'),S.call);
@@ -341,7 +461,7 @@
   });
 
   // Réappliquer aux contrôles métier au démarrage (les voix arrivent en asynchrone).
-  window.addEventListener('rt:page',function(e){ if(e.detail.page==='parametres'){ syncVoices(); refreshData(); majEffacementLocal(); } });
+  window.addEventListener('rt:page',function(e){ if(e.detail.page==='parametres'){ syncVoices(); refreshData(); majEffacementLocal(); peindreMoteur(); } });
   setTimeout(function(){
     syncVoices();
     if(S.rate)  drive(document.getElementById('voiceRate'),S.rate);

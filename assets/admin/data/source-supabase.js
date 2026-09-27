@@ -227,6 +227,43 @@
       };
     },
 
+    /* ---- Voix Google (sql/006) ----------------------------------------------
+       voix_historique n'est lisible QUE par un administrateur (RLS) : pour un
+       autre compte, la requête réussit et ne renvoie rien. On lit par pages de
+       mille — la limite par défaut de PostgREST, au-delà de laquelle une
+       lecture unique s'arrêterait sans le dire, et les totaux seraient faux. */
+    voix:function(){
+      var c = connecte(), T = RT.tarifsVoix;
+      var auj = T.jourParis(), depuis = T.debutFenetre(auj), PAGE = 1000;
+      function lire(de, acc){
+        return lignes(c.from('voix_historique')
+            .select('user_id,jour,voix,modele,caracteres,requetes')
+            .gte('jour', depuis).order('jour').order('user_id').order('voix')
+            .range(de, de + PAGE - 1))
+          .then(function(rows){
+            acc = acc.concat(rows);
+            return rows.length === PAGE ? lire(de + PAGE, acc) : acc;
+          });
+      }
+      return Promise.all([
+        lire(0, []),
+        ex(c.from('profiles').select('id', { count:'exact', head:true }).eq('plan', 'premium'))
+      ]).then(function(r){
+        var rows = r[0];
+        return noms(rows.map(function(x){ return x.user_id; })).then(function(mn){
+          return {
+            aujourdhui:auj,
+            premiumTotal:(r[1] && typeof r[1].count === 'number') ? r[1].count : null,
+            rows:rows.map(function(x){
+              return { userId:x.user_id, userName:mn[x.user_id] || String(x.user_id).slice(0, 8),
+                       jour:x.jour, voix:x.voix, modele:x.modele,
+                       caracteres:x.caracteres || 0, requetes:x.requetes || 0 };
+            })
+          };
+        });
+      });
+    },
+
     /* ---- Vue d'ensemble ---------------------------------------------------
        Quatre lectures : les profils (total et nouveaux), et les séances de la
        fenêtre courante puis de la fenêtre précédente — cette dernière sert

@@ -1089,6 +1089,12 @@
                 <td>Intérêt légitime</td>
                 <td>Le temps de traiter la demande, puis dans la boîte de réception du prestataire
                     selon sa propre politique (§ 4).</td></tr>
+            <tr><td><b>Consommation de la voix Google</b> (comptes Premium) — par jour et par voix :
+                    le nombre de caractères synthétisés et de requêtes, la voix et son modèle. <b>Jamais
+                    le texte prononcé.</b></td>
+                <td>Appliquer le quota journalier, et suivre le coût du service.</td>
+                <td>Exécution du contrat</td>
+                <td>Tant que le compte existe.</td></tr>
             <tr><td><b>Journaux techniques des hébergeurs</b> — dont votre adresse IP</td>
                 <td>Servir les pages, sécuriser l'accès, détecter les abus. L'éditeur n'y accède pas
                     directement.</td>
@@ -1131,6 +1137,12 @@
                 <td>Voir le § 5.</td></tr>
             <tr><td><b>Apple Inc.</b></td><td>Reconnaissance vocale du navigateur Safari</td>
                 <td>Voir le § 5.</td></tr>
+            <tr><td><b>Google LLC</b> (Cloud Text-to-Speech)</td><td>Sous-traitant : voix du contrôleur,
+                <b>seulement</b> si votre compte est Premium et que vous avez choisi la voix Google</td>
+                <td>Le texte que prononce le contrôleur, et la voix choisie. Ce texte peut contenir des
+                    éléments de votre séance, comme <b>votre indicatif</b>, l'aérodrome ou la piste. Il
+                    part de notre serveur, pas de votre navigateur : Google ne reçoit ni votre adresse
+                    e-mail, ni votre adresse IP. Ce site ne conserve pas ce texte.</td></tr>
             <tr><td><b>Resend, Inc.</b></td><td>Sous-traitant : envoi des e-mails du compte</td>
                 <td>Votre adresse e-mail, pour vous transmettre les codes de vérification.</td></tr>
             <tr><td><b>Formspree, Inc.</b></td><td>Sous-traitant : réception des messages de contact,
@@ -1159,10 +1171,15 @@
             n'est envoyé, rien n'est conservé.</li>
           <li><b>Ce qui est enregistré en base, c'est du texte.</b> La transcription de votre réponse et
             les éléments manqués — jamais le son.</li>
-          <li><b>La voix du contrôleur</b> est également celle du navigateur. Une voix « locale »
+          <li><b>La voix du contrôleur</b> est, par défaut, celle du navigateur. Une voix « locale »
             (Thomas, Amélie…) ne sort pas de votre appareil ; une voix distante, comme les voix
             « Google » de Chrome, implique l'envoi du texte à prononcer. Le bouton <i>Écouter un
             exemple</i> des Paramètres vous permet de choisir une voix locale.</li>
+          <li><b>La voix Google des comptes Premium</b> est un autre service : si vous la choisissez dans
+            les Paramètres, le texte que prononce le contrôleur — qui peut contenir votre indicatif —
+            est envoyé par notre serveur à Google Cloud Text-to-Speech, qui renvoie le son. Ce texte
+            n'est pas conservé ici ; seuls sont comptés, par jour, les caractères et les requêtes (§ 2).
+            Revenir à la voix du navigateur arrête ces envois.</li>
         </ul>
 
         <h2 class="legal-h2">6. Transferts hors de l'Union européenne</h2>
@@ -2234,9 +2251,28 @@
 
           <div class="set-card">
             <h3>Voix du contrôleur</h3>
+            <!-- Deux moteurs (assets/noyau/5-voix.js) : la voix du navigateur,
+                 gratuite, et la voix Google, réservée aux comptes Premium. Le
+                 verrou de ce bouton n'est qu'un confort : c'est la base qui
+                 décide (sql/005, voix_consommer), et un compte gratuit qui le
+                 forcerait n'obtiendrait que la voix du navigateur. -->
             <div class="set-row">
+              <div class="set-lbl"><b>Moteur</b><span id="setMoteurAide">Voix de votre navigateur, gratuite, ou voix Google, plus naturelle, réservée aux comptes Premium.</span></div>
+              <div class="seg3" role="group" aria-label="Moteur de la voix">
+                <button class="seg3-opt" type="button" data-moteur="navigateur">Navigateur</button>
+                <button class="seg3-opt" type="button" data-moteur="google">Google <span class="set-premium">Premium</span></button>
+              </div>
+            </div>
+            <div class="set-row" id="setVoixNavRow">
               <div class="set-lbl"><b>Voix</b><span>Voix française disponible sur votre navigateur.</span></div>
               <select id="setVoice" class="set-input"></select>
+            </div>
+            <!-- La liste vient de voix-atc (action « voix ») : aucune voix n'est
+                 écrite ici. Rangée par modèle, dans l'ordre de
+                 Voix.FAMILLES_GOOGLE. -->
+            <div class="set-row" id="setVoixGoogleRow" hidden>
+              <div class="set-lbl"><b>Voix Google</b><span id="setVoixGoogleAide">Rangées par modèle. Changer de voix vaut dès le message suivant.</span></div>
+              <select id="setVoixGoogle" class="set-input" aria-describedby="setVoixGoogleAide"></select>
             </div>
             <div class="set-row">
               <div class="set-lbl"><b>Débit</b><span>Vitesse d'élocution de l'ATC.</span></div>
@@ -2458,7 +2494,7 @@
          et la progression sont partis en base. Une affirmation fausse sur la vie
          privée est exactement le genre de détail qui décrédibilise tout le reste
          — et ici elle contredisait la politique de confidentialité. -->
-    Une fois la page ouverte, un exercice se poursuit sans connexion : la séance est envoyée dès que la connexion revient. Trois choses sortent de votre machine : le <strong>fond de carte</strong> des pages Navigation et Carte, dont une couche vient des serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>voix</strong>, quand vous parlez au micro, transcrite par le service de reconnaissance de votre navigateur ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback ». Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
+    Une fois la page ouverte, un exercice se poursuit sans connexion : la séance est envoyée dès que la connexion revient. Trois choses sortent de votre machine : le <strong>fond de carte</strong> des pages Navigation et Carte, dont une couche vient des serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>voix</strong>, quand vous parlez au micro, transcrite par le service de reconnaissance de votre navigateur ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback » ; et, si vous avez choisi la voix Google (comptes Premium), le <strong>texte que prononce le contrôleur</strong>, synthétisé par Google. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
     <br><button class="auth-link" type="button" data-contact>Contact / Feedback</button> · <button class="auth-link" type="button" data-page="mentions">Mentions légales</button> · <button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
     <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
@@ -2715,6 +2751,7 @@
 <script src="assets/inscription.js"></script>
 <script src="assets/admin/data/error-log.js"></script>
 <script src="assets/admin/data/contract.js"></script>
+<script src="assets/admin/data/tarifs-voix.js"></script>
 <script src="assets/admin/ui/kit.js"></script>
 <script src="assets/admin/data/source-mock.js"></script>
 <script src="assets/admin/data/source-local.js"></script>
@@ -2726,6 +2763,7 @@
 <script src="assets/admin/pages/analytics.js"></script>
 <script src="assets/admin/pages/exercises.js"></script>
 <script src="assets/admin/pages/errors.js"></script>
+<script src="assets/admin/pages/voix.js"></script>
 <script src="assets/admin/pages/test.js"></script>
 
 </body>

@@ -1,6 +1,6 @@
 {
   "_lisezmoi": "Genere par tests/contrat/_geler.mjs. Ne pas modifier a la main : regenerer et lire le diff.",
-  "gele_le": "2026-09-22",
+  "gele_le": "2026-09-27",
   "ordre_scripts": [
     "index.html#1",
     "assets/donnees/aerodromes.js",
@@ -36,6 +36,7 @@
     "assets/inscription.js",
     "assets/admin/data/error-log.js",
     "assets/admin/data/contract.js",
+    "assets/admin/data/tarifs-voix.js",
     "assets/admin/ui/kit.js",
     "assets/admin/data/source-mock.js",
     "assets/admin/data/source-local.js",
@@ -47,6 +48,7 @@
     "assets/admin/pages/analytics.js",
     "assets/admin/pages/exercises.js",
     "assets/admin/pages/errors.js",
+    "assets/admin/pages/voix.js",
     "assets/admin/pages/test.js"
   ],
   "ordre_styles": [
@@ -484,17 +486,20 @@
       "declare": "assets/noyau/3-reglages.js",
       "lu_par": [
         "assets/modules/navigation.js",
-        "assets/modules/parametres.js"
+        "assets/modules/parametres.js",
+        "assets/modules/contact.js"
       ]
     },
     {
       "nom": "rtSettings",
       "declare": "assets/noyau/3-reglages.js",
       "lu_par": [
+        "assets/noyau/5-voix.js",
         "assets/noyau/6-micro.js",
         "assets/scenarios/moteur.js",
         "assets/modules/navigation.js",
-        "assets/modules/parametres.js"
+        "assets/modules/parametres.js",
+        "assets/modules/contact.js"
       ]
     },
     {
@@ -656,7 +661,8 @@
       "declare": "assets/noyau/5-voix.js",
       "lu_par": [
         "assets/scenarios/moteur.js",
-        "assets/modules/navigation.js"
+        "assets/modules/navigation.js",
+        "assets/modules/parametres.js"
       ]
     },
     {
@@ -744,7 +750,7 @@
       "id": "roulage",
       "titre": "Mise en route + roulage",
       "attendus": 6,
-      "refs_manuel": 8
+      "refs_manuel": 9
     },
     {
       "id": "decollage",
@@ -816,7 +822,7 @@
       "id": "nombres",
       "titre": "Nombres, sigles et indicatifs",
       "attendus": 0,
-      "refs_manuel": 1
+      "refs_manuel": 2
     }
   ]
 }

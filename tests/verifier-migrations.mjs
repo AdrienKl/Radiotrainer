@@ -141,7 +141,7 @@ if (!problemes) {
   /* 1. Les six tables, toutes sous RLS. Une table née sans RLS est lisible et
         modifiable par quiconque détient la clé publiable — laquelle est dans le
         code source du site, par conception. */
-  const ATTENDUES = ['admin_audit_log','app_errors','exercises','profiles','session_steps','sessions','voix_consommation','voix_historique'];
+  const ATTENDUES = ['admin_audit_log','app_errors','exercises','profiles','session_steps','sessions','voix_consommation','voix_historique','voix_catalogue','voix_reglages'];
   const tables = await q(`
     select c.relname as t, c.relrowsecurity as rls
       from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -181,7 +181,7 @@ if (!problemes) {
   /* 3. Les fonctions. `security definer` sans `search_path` figé est la faille
         classique : qui peut créer un schéma devant `public` fait résoudre
         `profiles` vers SA table. */
-  const FONCTIONS = ['handle_new_user','inscription_jalon','is_admin','profiles_garde','pseudo_libre','voix_consommer','voix_plafond_jour'];
+  const FONCTIONS = ['handle_new_user','inscription_jalon','is_admin','profiles_garde','pseudo_libre','voix_consommer','voix_plafond_jour','est_admin_plein','admin_voix_regler','admin_voix_plafond','admin_definir_plan'];
   const fonctions = await q(`
     select p.proname as f, p.prosecdef as definer,
            coalesce(array_to_string(p.proconfig, ','), '') as config
@@ -441,6 +441,96 @@ if (!problemes) {
   const anonPeut2 = await q(`select has_function_privilege('anon', 'public.voix_consommer(integer, text)', 'execute') as p`);
   if (anonPeut2[0].p) rate('le rôle anon peut exécuter voix_consommer(n, nom_voix)');
   else passe('voix_consommer(n, nom_voix) est fermée au rôle anon');
+
+  /* 12. L'administration de la voix (sql/007). Ce qui compte : seul le rôle
+         « admin » écrit (pas un modérateur, pas un élève), chaque écriture
+         laisse une ligne d'audit, les valeurs sont bornées, et une voix
+         désactivée est refusée PAR LA BASE, sans rien décompter. */
+  await db.exec(`select set_config('request.jwt.claim.sub', '', false)`);
+  await db.exec(`insert into auth.users (email) values ('admin@albatros.test'), ('modo@albatros.test')`);
+  const admin = await idDe('admin@albatros.test'), modo = await idDe('modo@albatros.test');
+  await db.exec(`update public.profiles set role = 'admin' where id = '${admin}'`);
+  await db.exec(`update public.profiles set role = 'moderator' where id = '${modo}'`);
+  await db.exec(`update public.profiles set plan = 'premium', status = 'active' where id = '${premium}'`);
+  await db.exec(`delete from public.voix_consommation`);
+  const pb12 = [];
+  const comme = async (qui, sql) => {
+    await db.exec(`select set_config('request.jwt.claim.sub', '${qui || ''}', false)`);
+    try { const [r] = await q(sql); return { ok: true, r }; }
+    catch (e) { return { ok: false, code: e.code, message: e.message }; }
+  };
+  const audits = async () => (await q(`select action, target_id, meta from public.admin_audit_log order by id`));
+
+  // Refusé à un élève, à un modérateur, sans session.
+  for (const [nom, qui] of [['élève premium', premium], ['modérateur', modo], ['sans session', null]]) {
+    for (const sql of [`select public.admin_voix_plafond(5000)`,
+                       `select public.admin_voix_regler('fr-FR-Neural2-G', false, false)`,
+                       `select public.admin_definir_plan('${gratuit}', 'premium')`]) {
+      const x = await comme(qui, sql);
+      if (x.ok) pb12.push(`${nom} a pu exécuter : ${sql}`);
+    }
+  }
+  if ((await audits()).length) pb12.push('un refus a laissé une ligne d\'audit');
+
+  // Le plafond : borné, audité, appliqué au quota.
+  let x = await comme(admin, `select public.admin_voix_plafond(500)`);
+  if (x.ok) pb12.push('un plafond de 500 (sous 1 000) a été accepté');
+  x = await comme(admin, `select public.admin_voix_plafond(2000)`);
+  if (!x.ok) pb12.push(`plafond 2 000 refusé à l'admin : ${x.message}`);
+  const [{ p: pl }] = await q(`select public.voix_plafond_jour() as p`);
+  if (pl !== 2000) pb12.push(`voix_plafond_jour() vaut ${pl} au lieu de 2 000`);
+  x = await comme(premium, `select public.voix_consommer(2001, 'fr-FR-Neural2-G') as r`);
+  if (!x.ok || x.r.r.raison !== 'longueur') pb12.push(`le nouveau plafond n'est pas appliqué : ${JSON.stringify(x)}`);
+
+  // Une voix désactivée : refusée avant tout décompte.
+  x = await comme(admin, `select public.admin_voix_regler('fr-FR-Neural2-G', false, false)`);
+  if (!x.ok) pb12.push(`désactiver une voix : ${x.message}`);
+  x = await comme(premium, `select public.voix_consommer(10, 'fr-FR-Neural2-G') as r`);
+  if (!x.ok || x.r.r.raison !== 'voix_desactivee') pb12.push(`voix désactivée acceptée : ${JSON.stringify(x)}`);
+  const [{ t: apresRefus }] = await q(`select coalesce(sum(caracteres),0)::int as t from public.voix_consommation`);
+  if (apresRefus !== 0) pb12.push(`le refus d'une voix désactivée a décompté ${apresRefus} caractères`);
+  x = await comme(premium, `select public.voix_consommer(10, 'fr-FR-Chirp3-HD-Charon') as r`);
+  if (!x.ok || !x.r.r.ok) pb12.push(`une voix non réglée (donc active) est refusée : ${JSON.stringify(x)}`);
+
+  // La voix par défaut : une seule, et jamais une voix désactivée.
+  x = await comme(admin, `select public.admin_voix_regler('fr-FR-Neural2-G', false, true)`);
+  if (x.ok) pb12.push('une voix désactivée a pu devenir la voix par défaut');
+  await comme(admin, `select public.admin_voix_regler('fr-FR-Chirp3-HD-Charon', true, true)`);
+  await comme(admin, `select public.admin_voix_regler('fr-FR-Wavenet-F', true, true)`);
+  const defauts = (await q(`select voix from public.voix_catalogue where par_defaut`)).map(r => r.voix);
+  if (JSON.stringify(defauts) !== JSON.stringify(['fr-FR-Wavenet-F'])) pb12.push(`voix par défaut : ${JSON.stringify(defauts)}`);
+
+  // Le plan : free ⇄ premium, rien d'autre.
+  x = await comme(admin, `select public.admin_definir_plan('${gratuit}', 'gold')`);
+  if (x.ok) pb12.push('un plan « gold » a été accepté');
+  x = await comme(admin, `select public.admin_definir_plan('${gratuit}', 'premium')`);
+  const [{ plan: pg }] = await q(`select plan from public.profiles where id = '${gratuit}'`);
+  if (!x.ok || pg !== 'premium') pb12.push(`passer un compte en premium : ${JSON.stringify(x)}, plan ${pg}`);
+  await comme(admin, `select public.admin_definir_plan('${gratuit}', 'free')`);
+
+  // L'audit : une ligne par écriture acceptée, dans l'ordre.
+  const act = (await audits()).map(a => a.action);
+  const attenduAudit = ['voix.plafond', 'voix.regler', 'voix.regler', 'voix.regler', 'compte.plan', 'compte.plan'];   // le refus (voix désactivée par défaut) n'écrit rien
+  if (JSON.stringify(act) !== JSON.stringify(attenduAudit)) pb12.push(`journal d'audit : ${JSON.stringify(act)}`);
+  const plan1 = (await audits()).find(a => a.action === 'compte.plan');
+  if (!plan1 || plan1.meta.avant !== 'free' || plan1.meta.apres !== 'premium') pb12.push(`audit du plan incomplet : ${JSON.stringify(plan1)}`);
+
+  // Remise en état pour ce qui suivrait.
+  await comme(admin, `select public.admin_voix_plafond(100000)`);
+  await db.exec(`select set_config('request.jwt.claim.sub', '', false)`);
+
+  if (pb12.length) { rate('l\'administration de la voix ne se comporte pas comme prévu :'); pb12.forEach(m => console.log(rouge('      · ' + m))); }
+  else passe('administration de la voix : écriture réservée au rôle « admin », bornée, auditée ; voix désactivée refusée sans décompte ; une seule voix par défaut');
+
+  const ecr = await q(`select tablename, policyname from pg_policies where schemaname='public'
+                        and tablename in ('voix_catalogue','voix_reglages') and cmd <> 'SELECT'`);
+  if (ecr.length) rate(`politique(s) d'écriture sur ${ecr.map(r => r.tablename + ' / ' + r.policyname).join(', ')}`);
+  else passe('voix_catalogue et voix_reglages : aucune écriture hors des fonctions d\'administration');
+  const anonAdm = await q(`select bool_or(has_function_privilege('anon', f, 'execute')) as p from unnest(array[
+      'public.admin_voix_regler(text, boolean, boolean)', 'public.admin_voix_plafond(integer)',
+      'public.admin_definir_plan(uuid, text)']) f`);
+  if (anonAdm[0].p) rate('une fonction d\'administration est ouverte au rôle anon');
+  else passe('les fonctions d\'administration sont fermées au rôle anon');
 }
 
 console.log('');

@@ -52,6 +52,16 @@
                                 ancien de « début du mois » et « il y a 6 jours ». Les
                                 sommes et le coût sont calculés par la page, avec
                                 RTAdmin.tarifsVoix : une source ne fait que lire.
+     voixCatalogue()            → [{nom,genre,active,parDefaut,regle}] — la liste de
+                                   voix-atc croisée avec voix_catalogue (sql/007)
+     voixRegler(nom,active,parDefaut) → {ok}   (écriture : rôle « admin », auditée)
+     voixPlafond()              → {plafond, majLe}
+     voixDefinirPlafond(n)      → {ok, plafond} (écriture auditée)
+     comptesPlan({q})           → [{id,name,email,role,status,plan}] — les premium,
+                                   ou la recherche q sur le nom et l'e-mail
+     definirPlan(id, plan)      → {ok, plan}    (écriture auditée, free | premium)
+     voixJournal()              → [{at,adminName,action,cible,meta}] — les 20
+                                   dernières écritures ci-dessus
 
    FORMES
      UserRow      {id,name,email,role,status,createdAt,lastSeenAt,sessions,
@@ -163,7 +173,8 @@
 
   var METHODES = ['overview','activity','alerts','users','user','userSessions',
                   'userWeaknesses','flights','flight','analytics','exercises',
-                  'errors','error','capabilities','voix'];
+                  'errors','error','capabilities','voix','voixCatalogue','voixRegler',
+                  'voixPlafond','voixDefinirPlafond','comptesPlan','definirPlan','voixJournal'];
 
   function enregistrer(src){
     sources[src.id] = src;

@@ -252,6 +252,23 @@ var Voix=(function(){
     { code:'Studio',    libelle:'Studio' },
     { code:'Wavenet',   libelle:'WaveNet' }
   ];
+  function familleDe(nom){
+    for(var i=0;i<FAMILLES.length;i++){ if(String(nom).indexOf('fr-FR-'+FAMILLES[i].code+'-')===0) return FAMILLES[i]; }
+    return null;
+  }
+  /* « Charon — Masculine », « Voix G — Masculine » : Google nomme certaines
+     voix d'une seule lettre, qu'on ne laisse pas seule dans une liste. Écrit
+     ICI parce que les Paramètres et la console d'administration l'affichent
+     tous deux — deux écritures finiraient par dire deux choses. */
+  /* `avecModele` : hors d'une liste rangée par modèle, « Voix G » ne dit pas
+     laquelle — Neural2 et WaveNet en ont chacun une. On préfixe alors le
+     modèle : « Neural2 · Voix G ». */
+  function libelleDe(v, avecModele){
+    var f=familleDe(v.nom); if(!f) return String(v.nom);
+    var court=String(v.nom).slice(('fr-FR-'+f.code+'-').length);
+    var g = v.genre==='F' ? 'Féminine' : v.genre==='M' ? 'Masculine' : '';
+    return (avecModele ? f.libelle+' · ' : '') + (court.length<=2 ? 'Voix '+court : court) + (g ? ' — '+g : '');
+  }
 
   function tracer(message, detail){
     try{ console.warn('[Albatros VFR] voix Google : ' + message, detail || ''); }catch(e){}
@@ -266,13 +283,18 @@ var Voix=(function(){
     if(!m.texte || m.texte.length > G.TEXTE_MAX) return null;
     if(!window.fetch || !(window.AudioContext || window.webkitAudioContext)) return null;
     try{
+      /* opts.voixGoogle : une voix IMPOSÉE pour ce message — l'écoute d'une voix
+         depuis la console d'administration, sans toucher au réglage de
+         l'administrateur. Le compte doit toujours être premium : c'est la base
+         qui décompte, et elle ne fait pas d'exception. */
+      var forcee = m.opts && m.opts.voixGoogle;
       var r = (typeof rtSettings==='function') ? rtSettings() : null;
-      if(!r || r.voixMoteur!=='google' || !r.voixGoogle) return null;
+      if(!forcee && (!r || r.voixMoteur!=='google' || !r.voixGoogle)) return null;
       var A = window.RTAuth;
       if(!A || !A.utilisateur || !A.utilisateur()) return null;
       var p = A.profil && A.profil();
       if(!p || p.plan!=='premium') return null;
-      return String(r.voixGoogle);
+      return String(forcee || r.voixGoogle);
     }catch(e){ return null; }
   }
 
@@ -615,7 +637,7 @@ var Voix=(function(){
 
   return { parler:parler, empiler:empiler, stop:stop, occupe:occupe,
            voixGoogle:listerVoix, etatGoogle:etatGoogle, relancerGoogle:relancerGoogle,
-           FAMILLES_GOOGLE:FAMILLES };
+           FAMILLES_GOOGLE:FAMILLES, familleGoogle:familleDe, libelleGoogle:libelleDe };
 })();
 
 /* Coupe toute parole en cours. Conserve sous son ancien nom : il est appele un

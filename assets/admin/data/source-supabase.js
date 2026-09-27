@@ -264,6 +264,76 @@
       });
     },
 
+    /* ---- Voix Google : l'administration (sql/007) ----------------------------
+       Les écritures passent TOUTES par des fonctions de la base, qui
+       vérifient le rôle « admin » et écrivent le journal d'audit dans la même
+       transaction. Cette page ne décide de rien : si la base refuse, elle
+       affiche le refus. */
+    voixCatalogue:function(){
+      var c = connecte();
+      var liste = (window.Voix && window.Voix.voixGoogle)
+        ? window.Voix.voixGoogle().then(null, function(e){
+            throw new Error('La liste des voix Google est indisponible (' + ((e && (e.code || e.cause)) || 'erreur') + ').'); })
+        : Promise.reject(new Error('Le moteur de voix n\'est pas chargé.'));
+      return Promise.all([liste, lignes(c.from('voix_catalogue').select('voix,active,par_defaut'))])
+        .then(function(r){
+          var reg = {};
+          r[1].forEach(function(x){ reg[x.voix] = x; });
+          return r[0].map(function(v){
+            var x = reg[v.nom];
+            return { nom:v.nom, genre:v.genre, regle:!!x,
+                     active:x ? !!x.active : true, parDefaut:!!(x && x.par_defaut) };
+          });
+        });
+    },
+    voixRegler:function(nom, active, parDefaut){
+      return ex(connecte().rpc('admin_voix_regler', { nom_voix:nom, activer:!!active, defaut:!!parDefaut }))
+        .then(function(r){ return r.data; });
+    },
+    voixPlafond:function(){
+      return ex(connecte().from('voix_reglages').select('valeur,maj_le').eq('cle', 'plafond_jour').maybeSingle())
+        .then(function(r){
+          return r.data ? { plafond:r.data.valeur, majLe:r.data.maj_le } : { plafond:100000, majLe:null };
+        });
+    },
+    voixDefinirPlafond:function(n){
+      return ex(connecte().rpc('admin_voix_plafond', { nouveau:n })).then(function(r){ return r.data; });
+    },
+    comptesPlan:function(opts){
+      opts = opts || {};
+      var q = connecte().from('profiles').select('id,display_name,email,role,status,plan')
+        .order('display_name').limit(50);
+      var t = String(opts.q || '').trim().replace(/[,()*%]/g, ' ').trim();
+      q = t ? q.or('email.ilike.*' + t + '*,display_name.ilike.*' + t + '*') : q.eq('plan', 'premium');
+      return lignes(q).then(function(rows){
+        return rows.map(function(p){
+          return { id:p.id, name:p.display_name || p.email || String(p.id).slice(0, 8),
+                   email:p.email, role:p.role, status:p.status, plan:p.plan || 'free' };
+        });
+      });
+    },
+    definirPlan:function(id, plan){
+      return ex(connecte().rpc('admin_definir_plan', { cible:id, nouveau_plan:plan }))
+        .then(function(r){ return r.data; });
+    },
+    voixJournal:function(){
+      return lignes(connecte().from('admin_audit_log')
+          .select('at,admin_id,action,target_type,target_id,meta')
+          .in('action', ['voix.regler', 'voix.plafond', 'compte.plan'])
+          .order('at', { ascending:false }).limit(20))
+        .then(function(rows){
+          var ids = rows.map(function(x){ return x.admin_id; })
+            .concat(rows.filter(function(x){ return x.target_type === 'profile'; }).map(function(x){ return x.target_id; }));
+          return noms(ids).then(function(mn){
+            return rows.map(function(x){
+              return { at:x.at, adminName:mn[x.admin_id] || String(x.admin_id).slice(0, 8), action:x.action,
+                       cible:x.target_type === 'profile' ? (mn[x.target_id] || String(x.target_id).slice(0, 8)) : x.target_id,
+                       meta:x.meta || {} };
+            });
+          });
+        });
+    },
+
     /* ---- Vue d'ensemble ---------------------------------------------------
        Quatre lectures : les profils (total et nouveaux), et les séances de la
        fenêtre courante puis de la fenêtre précédente — cette dernière sert

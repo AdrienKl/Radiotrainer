@@ -139,7 +139,7 @@ test('l\'essai passe par Google et le dit', async ({ page }) => {
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
   await page.locator('#setVoiceTest').click();
-  await expect(page.locator('#setVoiceMsg')).toContainText('Voix Google : Charon — Masculine.');
+  await expect(page.locator('#setVoiceMsg')).toContainText('Voix Google : Chirp 3 HD · Charon — Masculine.');
   expect(requetes.filter(r => r.action === 'dire')).toHaveLength(1);
 });
 
@@ -225,4 +225,119 @@ test('admin › Voix Google : refusée sans le rôle', async ({ page }) => {
   await entrer(page, 'tableau');
   await page.evaluate(() => { location.hash = '#admin/voix'; });
   await expect(page.locator('#page-admin')).toBeHidden();
+});
+
+/* ---- sql/007 : les voix proposées, la voix par défaut, l'écran des scénarios -- */
+
+async function compteAvecCatalogue(page, catalogue) {
+  await compte(page, { plan: 'premium' });
+  await page.evaluate((catalogue) => {
+    const auth = RTAuth.client().auth;
+    RTAuth.client = () => ({ auth, from: (t) => ({ select: () =>
+      Promise.resolve(t === 'voix_catalogue' ? { data: catalogue, error: null } : { data: [], error: null }) }) });
+  }, catalogue);
+}
+
+test('une voix désactivée par l\'administration n\'est pas proposée ; la voix par défaut est présélectionnée', async ({ page }) => {
+  await ouvrir(page);
+  await fonction(page);
+  await entrer(page, 'parametres');
+  await compteAvecCatalogue(page, [
+    { voix: 'fr-FR-Studio-A', active: false, par_defaut: false },
+    { voix: 'fr-FR-Neural2-G', active: true, par_defaut: true }
+  ]);
+  await page.locator('[data-moteur="google"]').click();
+  await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(4);           // plus de groupe Studio
+  await expect(page.locator('#setVoixGoogle option[value="fr-FR-Studio-A"]')).toHaveCount(0);
+  expect(await reglages(page)).toMatchObject({ voixGoogle: 'fr-FR-Neural2-G' });
+  await expect(page.locator('#setVoixGoogle')).toHaveValue('fr-FR-Neural2-G');
+});
+
+test('voix refusée par la base (désactivée) : l\'essai le dit', async ({ page }) => {
+  await ouvrir(page);
+  await fonction(page, { dire: { status: 403, body: { erreur: 'voix_desactivee' } } });
+  await entrer(page, 'parametres');
+  await compte(page, { plan: 'premium' });
+  await page.locator('[data-moteur="google"]').click();
+  await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
+  await page.locator('#setVoiceTest').click();
+  await expect(page.locator('#setVoiceMsg')).toContainText("voix retirée par l'administration");
+});
+
+test('Google actif : l\'écran des scénarios ne propose plus les voix du navigateur, il dit la voix Google', async ({ page }) => {
+  await ouvrir(page);
+  await fonction(page);
+  await entrer(page, 'parametres');
+  await compte(page, { plan: 'premium' });
+  await page.locator('[data-moteur="google"]').click();
+  await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
+  await page.locator('#setVoixGoogle').selectOption('fr-FR-Chirp3-HD-Kore');
+  const boite = page.locator('#voiceSelect').locator('..');
+  await expect(page.locator('#voiceSelect')).toBeHidden();
+  await expect(boite.locator('.voix-google-note')).toHaveText('Voix Google : Chirp 3 HD · Kore — Féminine — à changer dans les Paramètres');
+  await page.locator('[data-moteur="navigateur"]').click();
+  await expect(boite.locator('.voix-google-note')).toHaveCount(0);
+  await expect(page.locator('#voiceSelect')).not.toHaveCSS('display', 'none');
+});
+
+/* ---- Admin : les trois onglets (source fictive) ------------------------------ */
+
+async function onglet(page, nom) {
+  await page.locator('#page-admin [role="tab"]', { hasText: nom }).click();
+}
+async function confirmer(page) {
+  await expect(page.locator('#confirmModal')).toBeVisible();
+  await page.locator('#confirmYes').click();
+}
+
+test('admin › Voix proposées : désactiver, choisir la voix par défaut, et le journal le garde', async ({ page }) => {
+  await admin(page);
+  await onglet(page, 'Voix proposées');
+  const p = page.locator('#page-admin');
+  const ligne = (nom, modele) => { const l = p.locator('tr', { hasText: nom }); return modele ? l.filter({ hasText: modele }) : l; };
+  await expect(ligne('Charon')).toContainText('par défaut');
+  await expect(ligne('Voix A — Féminine')).toContainText('désactivée');
+  await expect(ligne('Voix A — Féminine').getByRole('button', { name: 'Écouter' })).toBeDisabled();
+  await expect(p).toContainText('Tarif non publié');                 // Chirp HD
+  await ligne('Kore').getByRole('button', { name: 'Désactiver' }).click();
+  await expect(ligne('Kore')).toContainText('désactivée');
+  // Deux « Voix G » (Neural2, WaveNet) : c'est la colonne Modèle qui les distingue.
+  await ligne('Voix G — Masculine', 'Neural2').getByRole('button', { name: 'Par défaut' }).click();
+  await expect(ligne('Voix G — Masculine', 'Neural2')).toContainText('par défaut');
+  await expect(ligne('Charon')).not.toContainText('par défaut');     // une seule voix par défaut
+  await onglet(page, 'Quotas et comptes');
+  await expect(p.locator('tr', { hasText: 'Kore' })).toContainText('désactivée');
+  await expect(p.locator('tr', { hasText: 'Neural2 · Voix G' })).toContainText('par défaut');
+});
+
+test('admin › Quotas et comptes : plafond borné et confirmé, passage free ⇄ premium', async ({ page }) => {
+  await admin(page);
+  await onglet(page, 'Quotas et comptes');
+  const p = page.locator('#page-admin');
+  const champ = p.locator('input[type="number"]');
+  await expect(champ).toHaveValue('100000');
+  await champ.fill('500');
+  await p.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.locator('#confirmModal')).toBeHidden();           // hors bornes : pas même proposé
+  await champ.fill('50000');
+  await p.getByRole('button', { name: 'Enregistrer' }).click();
+  await confirmer(page);
+  await expect(p.locator('input[type="number"]')).toHaveValue('50000');
+  await expect(p.locator('tr', { hasText: 'Plafond' })).toContainText('100 000 → 50 000');
+
+  // Trois comptes Premium dans la démo, plus l'admin ; Nora est gratuite.
+  await expect(p.locator('tr', { hasText: 'Nora' })).toHaveCount(0);
+  await p.locator('input[type="search"]').fill('nora');
+  await expect(p.locator('tr', { hasText: 'Nora' })).toContainText('Gratuit');
+  await p.locator('tr', { hasText: 'Nora' }).getByRole('button', { name: 'Passer en Premium' }).click();
+  await confirmer(page);
+  await p.locator('input[type="search"]').fill('');
+  await expect(p.locator('tr', { hasText: 'Nora (démo)' }).first()).toContainText('Premium');
+  await expect(p.locator('tr', { hasText: 'free → premium' })).toHaveCount(1);
+});
+
+test('admin › Consommation : le graphique jour par jour est là', async ({ page }) => {
+  await admin(page);
+  await expect(page.locator('#page-admin')).toContainText('Jour par jour');
+  await expect(page.locator('#page-admin .adm-bar').first()).toBeVisible();
 });

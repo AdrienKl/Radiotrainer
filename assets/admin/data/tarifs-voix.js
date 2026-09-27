@@ -52,6 +52,10 @@
   function tarif(modele){
     return Object.prototype.hasOwnProperty.call(TARIFS.modeles, modele) ? TARIFS.modeles[modele] : null;
   }
+  /* Le prix au million de caractères d'un modèle, pour l'afficher. null =
+     non publié. Les pages passent par ici plutôt que de lire TARIFS. */
+  function prixAuMillion(modele){ var t = tarif(modele); return t ? t.prixParMillion : null; }
+
   /* Arrondi au centième de cent : les petits montants restent lisibles sans
      que la somme de lignes arrondies diverge du total. */
   function arrondi(x){ return Math.round(x * 10000) / 10000; }
@@ -108,7 +112,7 @@
   }
 
   RT.tarifsVoix = {
-    TARIFS:TARIFS, tarif:tarif, brut:brut, apresGratuite:apresGratuite,
+    TARIFS:TARIFS, tarif:tarif, prixAuMillion:prixAuMillion, brut:brut, apresGratuite:apresGratuite,
     duJour:duJour, somme:somme, jourParis:jourParis, decaler:decaler, debutFenetre:debutFenetre
   };
 })(typeof window !== 'undefined' ? window : globalThis);

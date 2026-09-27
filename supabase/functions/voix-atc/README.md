@@ -21,7 +21,8 @@ autre chose que 200.
 | `{ "action": "dire", "texte", "voix", "debit"?, "hauteur"? }` | `200 audio/mpeg`, en-tête `X-Voix-Restant`. Premium, actif, sous le quota |
 
 Toute autre réponse : `{ erreur: code }` — `non_connecte` (401), `non_premium` /
-`compte_inactif` (403), `quota` (429, avec `restant`), `texte_vide` /
+`compte_inactif` / `voix_desactivee` (403 — une voix retirée par
+l'administration, sql/007), `quota` (429, avec `restant`), `texte_vide` /
 `texte_long` / `voix` / `requete` / `action` (400), `google` / `base` (502),
 `delai` (504), `configuration` / `interne` (500). **Pour l'interface, tout
 code ≠ 200 veut dire : voix du navigateur.**

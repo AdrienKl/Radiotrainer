@@ -26,6 +26,9 @@
   @media(max-width:460px){ .row2{grid-template-columns:1fr} }
   .field-box{display:flex; flex-direction:column; gap:6px; justify-content:flex-start; min-height:76px}
   .field-box label{font-size:12px; font-weight:600; color:var(--ink-2)}
+  /* Voix Google active : le sélecteur des voix du navigateur est remplacé par
+     cette mention (assets/modules/parametres.js, peindreVoixScenarios). */
+  .voix-google-note{font-size:13px; line-height:1.4; color:var(--ink)}
   .field-box .segmented-ui{width:100%; justify-content:flex-start}
   .field-box .seg-opt{flex:1; text-align:center; white-space:nowrap}
   .switch-line{display:inline-flex; align-items:center; gap:9px; align-self:flex-start; background:var(--surface-2);

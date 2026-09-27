@@ -99,23 +99,16 @@
     try{ var p = window.RTAuth && RTAuth.profil && RTAuth.profil(); return !!(p && p.plan==='premium'); }catch(e){ return false; }
   }
   function moteurEffectif(){ return (S.voixMoteur==='google' && estPremium()) ? 'google' : 'navigateur'; }
-  function famille(nom){
-    for(var i=0;i<FAM.length;i++){ if(String(nom).indexOf('fr-FR-'+FAM[i].code+'-')===0) return FAM[i]; }
-    return null;
-  }
-  /* « Charon — Masculine », « Voix G — Masculine » : Google nomme certaines
-     voix d'une seule lettre, qu'on ne laisse pas seule dans une liste. */
-  function libelleVoix(v){
-    var f=famille(v.nom); if(!f) return v.nom;
-    var court=v.nom.slice(('fr-FR-'+f.code+'-').length);
-    var g = v.genre==='F' ? 'Féminine' : v.genre==='M' ? 'Masculine' : '';
-    return (court.length<=2 ? 'Voix '+court : court) + (g ? ' — '+g : '');
-  }
+  // Le libellé et le modèle d'une voix : écrits une fois, dans 5-voix.js.
+  function famille(nom){ return (window.Voix && Voix.familleGoogle) ? Voix.familleGoogle(nom) : null; }
+  function libelleVoix(v, avecModele){ return (window.Voix && Voix.libelleGoogle) ? Voix.libelleGoogle(v, avecModele) : v.nom; }
   /* Pourquoi Google n'a pas parlé, en mots d'élève. */
   function raisonGoogle(e){
     if(!e) return 'service indisponible';
     if(e.cause==='session' || e.statut===401) return 'session expirée, reconnectez-vous';
-    if(e.statut===403) return e.code==='compte_inactif' ? 'compte inactif' : 'réservée aux comptes Premium';
+    if(e.statut===403) return e.code==='compte_inactif' ? 'compte inactif'
+                            : e.code==='voix_desactivee' ? "voix retirée par l'administration, choisissez-en une autre"
+                            : 'réservée aux comptes Premium';
     if(e.statut===429) return 'quota du jour atteint';
     if(e.statut===400) return 'voix refusée, choisissez-en une autre';
     if(e.cause==='delai') return "Google n'a pas répondu à temps";
@@ -124,7 +117,25 @@
     if(e.cause==='decodage') return 'son illisible';
     return 'service indisponible';
   }
-  function remplirVoixGoogle(liste){
+  /* Les voix que l'administration a réglées (sql/007, voix_catalogue) : une
+     voix désactivée n'est pas proposée, et la voix par défaut est celle qu'on
+     présélectionne. La base refuse de toute façon une voix désactivée : ce
+     filtre évite seulement de proposer ce qui serait refusé. Table absente ou
+     illisible : toutes les voix sont proposées, comme avant. */
+  function lireCatalogue(){
+    try{
+      var c = window.RTAuth && RTAuth.client && RTAuth.client();
+      if(!c) return Promise.resolve([]);
+      return Promise.resolve(c.from('voix_catalogue').select('voix,active,par_defaut'))
+        .then(function(r){ return (r && !r.error && r.data) || []; }, function(){ return []; });
+    }catch(e){ return Promise.resolve([]); }
+  }
+  var genres={};   // nom de voix → 'F' | 'M', relevé quand la liste arrive
+  function remplirVoixGoogle(liste, catalogue){
+    liste.forEach(function(v){ genres[v.nom]=v.genre; });
+    var coupees={}, defaut=null;
+    (catalogue||[]).forEach(function(x){ if(!x.active) coupees[x.voix]=1; if(x.par_defaut) defaut=x.voix; });
+    liste=liste.filter(function(v){ return !coupees[v.nom]; });
     var html='', noms=[];
     FAM.forEach(function(f){
       var du=liste.filter(function(v){ var x=famille(v.nom); return x && x.code===f.code; });
@@ -137,7 +148,10 @@
     /* Une voix enregistrée qui n'existe plus chez Google, ou pas de voix du
        tout : la première de la liste, enregistrée — sans quoi le moteur
        resterait sans voix et se tairait côté Google. */
-    if(noms.length && noms.indexOf(S.voixGoogle)<0){ S.voixGoogle=noms[0]; save(); }
+    if(noms.length && noms.indexOf(S.voixGoogle)<0){
+      S.voixGoogle = (defaut && noms.indexOf(defaut)>=0) ? defaut : noms[0]; save();
+      if(window.Voix && Voix.relancerGoogle) Voix.relancerGoogle();
+    }
     if(noms.length) selG.value=S.voixGoogle;
   }
   var listeChargee=false, chargement=null;
@@ -145,9 +159,9 @@
     if(listeChargee || chargement || !window.Voix || !Voix.voixGoogle) return;
     selG.disabled=true;
     selG.innerHTML='<option value="">Chargement des voix…</option>';
-    chargement = Voix.voixGoogle().then(function(liste){
+    chargement = Promise.all([Voix.voixGoogle(), lireCatalogue()]).then(function(r){
       chargement=null; listeChargee=true;
-      remplirVoixGoogle(liste||[]); selG.disabled=false;
+      remplirVoixGoogle(r[0]||[], r[1]); selG.disabled=false;
       if(aideG) aideG.textContent=AIDE_G;
     }, function(e){
       chargement=null;
@@ -169,6 +183,26 @@
         : 'La voix Google, plus naturelle, est réservée aux comptes Premium.';
     }
     if(m==='google') chargerVoixGoogle();
+    peindreVoixScenarios(m);
+  }
+  /* L'écran de configuration des scénarios a son propre sélecteur « Voix ATC »
+     (#voiceSelect) : les voix du NAVIGATEUR. Quand Google parle, il n'a plus
+     aucun effet — et le laisser actif faisait croire qu'on changeait de voix,
+     alors que c'était toujours la même (signalé le 27/09/2026). On le grise, et
+     on dit où se choisit la voix Google. */
+  function peindreVoixScenarios(m){
+    var sv=document.getElementById('voiceSelect'); if(!sv) return;
+    var boite=sv.parentNode, note=boite.querySelector('.voix-google-note');
+    if(m==='google'){
+      /* style et non `hidden` : un `display` posé par la feuille de style
+         l'emporte sur l'attribut — le piège est tombé trois fois ici. */
+      sv.style.display='none';
+      if(!note){ note=document.createElement('span'); note.className='voix-google-note'; boite.appendChild(note); }
+      note.textContent='Voix Google : '+(S.voixGoogle ? libelleVoix({ nom:S.voixGoogle, genre:genres[S.voixGoogle] }, true) : 'à choisir')+' — à changer dans les Paramètres';
+    } else {
+      sv.style.display='';
+      if(note) note.remove();
+    }
   }
   sec.querySelectorAll('[data-moteur]').forEach(function(b){
     b.addEventListener('click',function(){
@@ -183,6 +217,7 @@
     if(!selG.value) return;
     S.voixGoogle=selG.value; S.voixMoteur='google'; save();
     if(window.Voix && Voix.relancerGoogle) Voix.relancerGoogle();
+    peindreVoixScenarios('google');
   });
   window.addEventListener('rt:auth', function(){ peindreMoteur(); });
   peindreMoteur();
@@ -285,7 +320,7 @@
           if (mien !== essaiJeton) return;
           if (!viaGoogle) return dire('La voix fonctionne.', true);
           var e = window.Voix.etatGoogle ? window.Voix.etatGoogle() : {};
-          if (e.dernier === 'google') dire('Voix Google : ' + (selG && selG.selectedIndex >= 0 ? selG.options[selG.selectedIndex].text : S.voixGoogle) + '.', true);
+          if (e.dernier === 'google') dire('Voix Google : ' + libelleVoix({ nom:S.voixGoogle, genre:genres[S.voixGoogle] }, true) + '.', true);
           else dire('Voix Google indisponible (' + raisonGoogle(e.erreur) + ') : vous entendez la voix du navigateur.', false);
         },
         onFin: function(){ if (mien === essaiJeton) fini(); } }

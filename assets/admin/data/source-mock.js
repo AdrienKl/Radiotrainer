@@ -43,6 +43,29 @@
     };
   }
 
+  /* ---------- Voix Google : l'état de démonstration ---------------------------- */
+  var voixDemo = null;
+  function etatVoixDemo(){
+    if (voixDemo) return voixDemo;
+    voixDemo = {
+      plafond:100000, plafondLe:null, journal:[],
+      voix:[ { nom:'fr-FR-Chirp3-HD-Charon', genre:'M' }, { nom:'fr-FR-Chirp3-HD-Kore', genre:'F' },
+             { nom:'fr-FR-Chirp3-HD-Erinome', genre:'F' }, { nom:'fr-FR-Chirp-HD-D', genre:'M' },
+             { nom:'fr-FR-Neural2-F', genre:'F' }, { nom:'fr-FR-Neural2-G', genre:'M' },
+             { nom:'fr-FR-Studio-A', genre:'F' }, { nom:'fr-FR-Studio-D', genre:'M' },
+             { nom:'fr-FR-Wavenet-F', genre:'F' }, { nom:'fr-FR-Wavenet-G', genre:'M' } ],
+      reglages:{ 'fr-FR-Chirp3-HD-Charon':{ active:true, parDefaut:true }, 'fr-FR-Studio-A':{ active:false, parDefaut:false } },
+      comptes:[
+        { id:'demo-v1', name:'Camille (démo)', email:'camille@demo.test', role:'user',  status:'active', plan:'premium' },
+        { id:'demo-v2', name:'Léo (démo)',     email:'leo@demo.test',     role:'user',  status:'active', plan:'premium' },
+        { id:'demo-v5', name:'Manon (démo)',   email:'manon@demo.test',   role:'user',  status:'active', plan:'premium' },
+        { id:'demo-v6', name:'Nora (démo)',    email:'nora@demo.test',    role:'user',  status:'active', plan:'free' },
+        { id:'demo-v7', name:'Paul (démo)',    email:'paul@demo.test',    role:'admin', status:'active', plan:'premium' }
+      ]
+    };
+    return voixDemo;
+  }
+
   /* ---------- Référentiels : les vrais, lus dans index.html ---------------------- */
   function refAerodromes(){
     if (typeof AERODROMES === 'undefined') return [{ icao:'LFPT', nom:'Pontoise' }];
@@ -450,6 +473,50 @@
       }
       return Promise.resolve({ aujourdhui:auj, premiumTotal:7, rows:rows });
     },
+
+    /* L'administration de la voix, FICTIVE : un état en mémoire, perdu au
+       rechargement. Les voix, elles, sont de vrais noms Google. */
+    voixCatalogue:function(){
+      var E = etatVoixDemo();
+      return Promise.resolve(E.voix.map(function(v){
+        var x = E.reglages[v.nom];
+        return { nom:v.nom, genre:v.genre, regle:!!x, active:x ? x.active : true, parDefaut:!!(x && x.parDefaut) };
+      }));
+    },
+    voixRegler:function(nom, active, parDefaut){
+      var E = etatVoixDemo();
+      if (parDefaut && !active) return Promise.reject(new Error('une voix désactivée ne peut pas être la voix par défaut'));
+      if (parDefaut) Object.keys(E.reglages).forEach(function(k){ E.reglages[k].parDefaut = false; });
+      E.reglages[nom] = { active:!!active, parDefaut:!!parDefaut };
+      E.journal.unshift({ at:new Date().toISOString(), adminName:'Vous (démo)', action:'voix.regler', cible:nom,
+                          meta:{ active:!!active, par_defaut:!!parDefaut } });
+      return Promise.resolve({ ok:true });
+    },
+    voixPlafond:function(){ var E = etatVoixDemo(); return Promise.resolve({ plafond:E.plafond, majLe:E.plafondLe }); },
+    voixDefinirPlafond:function(n){
+      var E = etatVoixDemo();
+      if (!(n >= 1000 && n <= 10000000)) return Promise.reject(new Error('plafond hors bornes (1 000 à 10 000 000)'));
+      E.journal.unshift({ at:new Date().toISOString(), adminName:'Vous (démo)', action:'voix.plafond',
+                          cible:'plafond_jour', meta:{ avant:E.plafond, apres:n } });
+      E.plafond = n; E.plafondLe = new Date().toISOString();
+      return Promise.resolve({ ok:true, plafond:n });
+    },
+    comptesPlan:function(opts){
+      var E = etatVoixDemo(), t = String((opts && opts.q) || '').toLowerCase().trim();
+      return Promise.resolve(E.comptes.filter(function(c){
+        return t ? (c.name + ' ' + c.email).toLowerCase().indexOf(t) >= 0 : c.plan === 'premium';
+      }).map(function(c){ return Object.assign({}, c); }));
+    },
+    definirPlan:function(id, plan){
+      var E = etatVoixDemo(), c = E.comptes.filter(function(x){ return x.id === id; })[0];
+      if (plan !== 'free' && plan !== 'premium') return Promise.reject(new Error('plan inconnu (free ou premium)'));
+      if (!c) return Promise.reject(new Error('compte introuvable'));
+      E.journal.unshift({ at:new Date().toISOString(), adminName:'Vous (démo)', action:'compte.plan', cible:c.name,
+                          meta:{ avant:c.plan, apres:plan } });
+      c.plan = plan;
+      return Promise.resolve({ ok:true, plan:plan });
+    },
+    voixJournal:function(){ return Promise.resolve(etatVoixDemo().journal.slice(0, 20)); },
 
     overview:function(opts){
       var M = construire(), f = fenetre(opts);

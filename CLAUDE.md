@@ -863,10 +863,10 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 
 | 27/09/2026 | Voix Google (premium) — étape 1 : une Supabase **Edge Function** `voix-atc` plutôt que Cloud Run. Clé API Google restreinte à Text-to-Speech, dans les secrets Supabase SEULEMENT ; aucune clé Supabase secrète : premium, statut et quota (100 000 caractères/jour) se décident en base par `voix_consommer()` (`sql/005`), appelée avec le jeton de l'utilisateur. Premium = `profiles.plan = 'premium'`, posé à la main par l'admin. Voix navigateur gratuite et repli sur tout code ≠ 200. Frontend PAS encore touché | `supabase/functions/voix-atc/README.md` |
 | 27/09/2026 | Reprise des séances locales : le cache d'un compte (copie de la base écrite par `charger()`) n'est plus jamais remonté — il recréait chaque séance sous un second identifiant (46 doublons mesurés en production, 2 comptes), puis faisait refuser le paquet entier (« ON CONFLICT DO UPDATE command cannot affect row a second time »). Paquet dédoublonné par identifiant ; après une montée ratée, le cache n'est plus écrasé | `assets/donnees.js`, `tests/parcours/migration-cache.spec.js` |
+| 27/09/2026 | Les 46 doublons supprimés en production, après simulation en lecture seule et validation du développeur. Gardée : l'originale (celle qui porte un `user_agent`), sinon l'une de deux copies identiques ; échanges identiques dans les 46 paires, aucune information présente sur la seule copie. Un seul bloc SQL, annulé de lui-même si le compte n'était pas exactement 46 séances / 1 543 échanges / 2 comptes, ou si une séance choisie portait un `user_agent`. Résultat : 221 → 175 séances, 0 doublon, 0 échange orphelin | — |
 
 ### En attente de validation
 
-- **Les 46 séances en double en production** (27/09/2026) — créées par l'ancienne reprise du cache. 24 paires se départagent (l'originale porte un `user_agent`, la copie non) ; 22 paires sont deux copies sans `user_agent`. Suppression = données de production : à valider.
 
 - **Mettre en service `voix-atc`** — clé Google, `sql/005` par `poser-sql.sh`, secret, déploiement, vérification réelle au `curl` : l'ordre est dans `supabase/functions/voix-atc/README.md`. Puis étape 3 (le second moteur dans `assets/noyau/5-voix.js`) et étape 4 (Paramètres).
 

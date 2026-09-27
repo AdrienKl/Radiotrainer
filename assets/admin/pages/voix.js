@@ -70,6 +70,13 @@
     var coutJour = T.somme(Object.keys(duJour).map(function(m){
       return T.duJour(m, avantJour[m] || 0, duJour[m]);
     }));
+    /* Le coût BRUT, sans la part gratuite : ce que ces caractères coûteraient
+       si Google n'offrait rien. Tant que la gratuité couvre tout, le coût à
+       payer vaut 0 — et un « 0,00 $ » seul ressemble à une panne (remarqué le
+       27/09/2026). On affiche donc le brut, marqué d'une astérisque quand la
+       gratuité en couvre une part. */
+    var brutMois = T.somme(codes.map(function(m){ return T.brut(m, parM[m].car); }));
+    var brutJour = T.somme(Object.keys(duJour).map(function(m){ return T.brut(m, duJour[m]); }));
     var nonPublies = codes.filter(function(m){ return !T.tarif(m); })
                           .reduce(function(a, m){ return a + parM[m].car; }, 0);
 
@@ -93,6 +100,7 @@
     return { aujourdhui:auj, jour:g.jour, mois:g.mois,
              actifsMois:utilisateurs.filter(function(u){ return u.mois > 0; }).length,
              premiumTotal:d.premiumTotal, coutJour:coutJour, coutMois:coutMois,
+             brutJour:brutJour, brutMois:brutMois,
              nonPublies:nonPublies, utilisateurs:utilisateurs, modeles:modeles,
              parJour:Object.keys(parJ).sort().map(function(k){ return parJ[k]; }) };
   }
@@ -141,6 +149,17 @@
       box.style.cssText = 'display:flex;flex-direction:column;gap:18px';
       function montant(sm){ return sm.inconnu && !sm.total ? 'Tarif non publié' : esc(dollars(sm.total)); }
       var nonChiffre = 'hors caractères Chirp HD, au tarif non publié';
+      /* Le montant affiché est le coût estimé BRUT. L'astérisque dit que la
+         part gratuite de Google en couvre tout ou partie ; l'indice dit ce
+         qui reste à payer. */
+      function tuileCout(brut, apayer, libelle){
+        var couvert = brut.total > apayer.total;
+        var indices = [];
+        if (couvert) indices.push('* couvert par les crédits gratuits de Google — à payer : ' + dollars(apayer.total));
+        if (brut.inconnu) indices.push(nonChiffre);
+        return UI.tuile({ icon:I.target, value:montant(brut) + (couvert ? '<sup class="adm-asterisque">*</sup>' : ''),
+                          label:libelle, hint:indices.join(' · ') || null });
+      }
       var st = el('div', 'adm-stats adm-stats--3');
       st.appendChild(UI.tuile({ icon:I.mic, value:F.nb(s.jour.car), label:'caractères aujourd\'hui' }));
       st.appendChild(UI.tuile({ icon:I.chart, value:F.nb(s.mois.car), label:'caractères ce mois' }));
@@ -148,11 +167,13 @@
         hint:s.premiumTotal != null ? 'sur ' + F.nb(s.premiumTotal) + ' compte' + (s.premiumTotal > 1 ? 's' : '') + ' Premium' : null }));
       st.appendChild(UI.tuile({ icon:I.play, value:F.nb(s.jour.req), label:'requêtes aujourd\'hui',
         hint:F.nb(s.mois.req) + ' ce mois' }));
-      st.appendChild(UI.tuile({ icon:I.target, value:montant(s.coutJour), label:'coût estimé aujourd\'hui',
-        hint:s.coutJour.inconnu ? nonChiffre : null }));
-      st.appendChild(UI.tuile({ icon:I.target, value:montant(s.coutMois), label:'coût estimé ce mois',
-        hint:s.coutMois.inconnu ? nonChiffre : 'part gratuite mensuelle déduite' }));
+      st.appendChild(tuileCout(s.brutJour, s.coutJour, 'coût estimé aujourd\'hui'));
+      st.appendChild(tuileCout(s.brutMois, s.coutMois, 'coût estimé ce mois'));
       box.appendChild(st);
+      if (s.brutMois.total > s.coutMois.total)
+        box.appendChild(UI.notice('Coût estimé sans les crédits gratuits de Google : 1 million de caractères '
+          + 'offerts chaque mois par modèle (4 millions pour WaveNet), pour tout le compte de facturation. '
+          + 'Tant qu\'ils suffisent, Google ne facture rien.', 'info', '* Couvert par les crédits gratuits'));
       if (s.nonPublies > 0)
         box.appendChild(UI.notice(F.nb(s.nonPublies) + ' caractères ce mois viennent de voix Chirp HD, '
           + 'dont Google ne publie pas le tarif : ils ne sont comptés dans aucun montant.', 'info', 'Tarif non publié'));

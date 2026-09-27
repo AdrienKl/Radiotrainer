@@ -210,6 +210,9 @@ test('admin › Voix Google : les sommes sont justes sur des cas écrits à la m
   expect(s.coutJour).toEqual({ total: 0.3, inconnu: true });      // 10 000 × 30 $ / M ; Chirp HD non chiffré
   expect(s.coutMois).toEqual({ total: 0.3, inconnu: true });
   expect(s.nonPublies).toBe(500);
+  // Le brut, sans gratuité : ce qu'on affiche, marqué d'une astérisque s'il dépasse ce qu'on paie.
+  expect(s.brutJour).toEqual({ total: 0.6, inconnu: true });        // 20 000 × 30 $ / M
+  expect(s.brutMois).toEqual({ total: 30.3, inconnu: true });       // 1 010 000 × 30 $ / M
   const camille = s.utilisateurs.find(u => u.id === 'a'), leo = s.utilisateurs.find(u => u.id === 'b');
   expect(camille).toMatchObject({ jour: 20000, sept: 1010000, mois: 1010000, requetes: 9200,
                                   cout: { total: 30.3, inconnu: false } });   // brut, sans gratuité
@@ -334,6 +337,21 @@ test('admin › Quotas et comptes : plafond borné et confirmé, passage free �
   await p.locator('input[type="search"]').fill('');
   await expect(p.locator('tr', { hasText: 'Nora (démo)' }).first()).toContainText('Premium');
   await expect(p.locator('tr', { hasText: 'free → premium' })).toHaveCount(1);
+});
+
+test('admin › Consommation : sous la gratuité, le coût estimé s\'affiche quand même, avec son astérisque', async ({ page }) => {
+  await admin(page);
+  await page.evaluate(() => {
+    RTAdmin.data.voix = () => Promise.resolve({ aujourdhui: '2026-09-27', premiumTotal: 1, rows: [
+      { userId: 'a', userName: 'Adrien', jour: '2026-09-27', voix: 'fr-FR-Neural2-G', modele: 'Neural2', caracteres: 2154, requetes: 7 } ] });
+    location.hash = '#admin'; location.hash = '#admin/voix';
+  });
+  const p = page.locator('#page-admin');
+  const tuile = p.locator('.adm-stat', { hasText: 'coût estimé aujourd\'hui' });
+  await expect(tuile).toContainText('0,0345');                       // 2 154 × 16 $ / M, brut
+  await expect(tuile.locator('.adm-asterisque')).toHaveText('*');
+  await expect(tuile).toContainText('couvert par les crédits gratuits de Google — à payer : 0,00');
+  await expect(p).toContainText('* Couvert par les crédits gratuits');
 });
 
 test('admin › Consommation : le graphique jour par jour est là', async ({ page }) => {

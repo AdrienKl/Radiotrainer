@@ -620,3 +620,8 @@ html.no-anim .adm-drawer, html.no-anim .adm-drawer__back{ transition:none; }
   .adm-rail__link, .adm-chip, .adm-filter select, .adm-select select{ min-height:44px; }
   .adm-table td{ padding-top:13px; padding-bottom:13px; }
 }
+
+/* Voix Google (27/09/2026) : l'astérisque d'un coût estimé couvert par les
+   crédits gratuits de Google. Même couleur que la valeur : c'est une note,
+   pas une alerte. */
+.adm-asterisque{ font-size:.55em; margin-left:2px; vertical-align:super; }

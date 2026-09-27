@@ -874,8 +874,6 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 ### En attente de validation
 
 
-- **Régénérer la clé Google TTS** — elle est passée dans une conversation le 27/09/2026. Nouvelle clé, puis `npx supabase secrets set GOOGLE_TTS_API_KEY=… --project-ref vbziwjeuzcbvrbrihhrg`, puis l'appel `voix` du README.
-
 - **Convention de nommage** (§ 16.2) — proposée, pas appliquée. Aucun renommage de masse avant accord.
 - **Poser `sql/000` et `sql/003` sur la PRODUCTION** (§ 21.4) — ils y seraient sans effet, mais recréent des politiques RLS vivantes. Le no-op de `sql/003` est prouvé ; celui de `sql/000` demande d'abord de lister les politiques d'`app_errors` et `admin_audit_log`, jamais vues. Sans urgence.
 - **Poser `sql/004` sur la PRODUCTION** — par `supabase/poser-sql.sh` (§ 21.2), jeton créé puis révoqué. Sans risque pour les lignes existantes (`not valid`). Tant qu'il n'est pas posé, la production accepte toujours des erreurs de taille arbitraire.

@@ -130,7 +130,7 @@
   function titreSeance(s){
     if (s.kind === 'flight')
       return (s.dep_icao || '') + (s.arr_icao ? ' → ' + s.arr_icao : ' — vol local');
-    if (s.kind === 'spelling') return 'Épellation';
+    if (s.kind === 'spelling') return 'Alphabet aéro';
     return titreExercice(s.exercise_key) || 'Scénario';
   }
   /* Le titre d'un exercice vient du catalogue en base s'il y est, du code

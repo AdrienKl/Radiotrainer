@@ -530,3 +530,7 @@
     border:1px solid var(--border); border-radius:12px; padding:10px 13px; margin:12px 0 0; }
   .config-note b{ color:var(--ink); }
 
+
+  /* Le logo ramène à la maison (assets/modules/routeur.js) : il doit se voir
+     cliquable. */
+  .brand, .side-brand, .auth-brand{ cursor:pointer; }

@@ -352,7 +352,7 @@ var Voix=(function(){
      réponse 200 ; toute autre rejette avec { cause, statut?, code? }.
      `suivie` : la requête est celle d'un message, que stop() doit pouvoir
      interrompre (la liste des voix, elle, ne l'est pas). */
-  function appeler(corps, lire, suivie){
+  function appeler(corps, lire, suivie, delaiMax){
     var cfg = window.RT_SUPABASE, A = window.RTAuth;
     var c = null;
     try{ c = A && A.client && A.client(); }catch(e){}
@@ -364,7 +364,7 @@ var Voix=(function(){
       minuterie = setTimeout(function(){
         try{ if(ctrl) ctrl.abort(); }catch(e){}
         ko({ cause:'delai' });
-      }, G.DELAI);
+      }, delaiMax || G.DELAI);
     });
     var travail = c.auth.getSession().then(function(r){
       var jeton = r && r.data && r.data.session && r.data.session.access_token;
@@ -393,9 +393,9 @@ var Voix=(function(){
   }
 
   /* Le son d'un message. */
-  function telecharger(texte, voix, debit, hauteur){
+  function telecharger(texte, voix, debit, hauteur, delaiMax){
     return appeler({ action:'dire', texte:texte, voix:voix, debit:debit, hauteur:hauteur },
-                   function(rep){ return rep.arrayBuffer().then(decoder); }, true);
+                   function(rep){ return rep.arrayBuffer().then(decoder); }, true, delaiMax);
   }
 
   /* La liste des voix proposées, telle que voix-atc la renvoie (voices.list de
@@ -436,7 +436,7 @@ var Voix=(function(){
     var cle = voix + '|' + debit + '|' + hauteur + '|' + m.texte;
     var enCache = cacheLire(cle);
     var obtenu = enCache ? Promise.resolve(enCache)
-                         : telecharger(m.texte, voix, debit, hauteur).then(function(b){ cacheEcrire(cle, b); return b; });
+                         : telecharger(m.texte, voix, debit, hauteur, o.delaiGoogle).then(function(b){ cacheEcrire(cle, b); return b; });
     obtenu.then(function(b){
       if(mien!==jeton) return;                 // stop() est passé entre-temps
       return contexteQuiTourne().then(function(ctx){
@@ -635,8 +635,21 @@ var Voix=(function(){
      (un 400 sur une voix mal réglée, typiquement) ne vaut plus. */
   function relancerGoogle(){ G.coupe=false; G.pauseJusqua=0; G.erreur=null; }
 
+  /* À appeler DANS le clic d'une écoute (console d'administration, Paramètres).
+     Panne du 27/09/2026 : « Écouter » ne marchait pas dans Admin › Voix Google.
+     L'AudioContext n'est créé au premier geste que si le RÉGLAGE dit Google ;
+     un administrateur resté sur « Navigateur » n'en avait pas, il naissait
+     après la réponse de voix-atc — hors de tout geste — et Safari le laisse
+     alors suspendu : repli sur la voix du navigateur, elle-même muette hors
+     geste. Le créer et le relancer ici, pendant le clic, suffit. */
+  function preparerAudio(){
+    var ctx = contexteAudio();
+    try{ if(ctx && ctx.state==='suspended') ctx.resume(); }catch(e){}
+  }
+
   return { parler:parler, empiler:empiler, stop:stop, occupe:occupe,
            voixGoogle:listerVoix, etatGoogle:etatGoogle, relancerGoogle:relancerGoogle,
+           preparerAudio:preparerAudio,
            FAMILLES_GOOGLE:FAMILLES, familleGoogle:familleDe, libelleGoogle:libelleDe };
 })();
 

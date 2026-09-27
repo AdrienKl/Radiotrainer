@@ -263,7 +263,7 @@
         var titre = kind === 'flight'
             ? (arr ? dep.icao + ' → ' + (deroute ? deroute.icao : arr.icao)
                    : dep.icao + ' — vol local')
-            : (kind === 'spelling' ? 'Épellation radio' : sc.titre);
+            : (kind === 'spelling' ? 'Alphabet aéro' : sc.titre);
 
         sessions.push({
           id:'s_' + String(nSess).padStart(4,'0'),
@@ -770,7 +770,7 @@
           abandonRate:ses.length ? Math.round(ab / ses.length * 100) : null
         },
         topExercises:Object.keys(ex).map(function(k){
-          return { key:k, title:titreSc[k] || (k === 'epellation' ? 'Épellation radio' : k),
+          return { key:k, title:titreSc[k] || (k === 'epellation' ? 'Alphabet aéro' : k),
                    n:ex[k].runs, runs:ex[k].runs, avgPct:U.pct(ex[k].ok, ex[k].tot) };
         }).sort(function(a,b){ return b.n - a.n; }),
         topAircraft:top(ac, function(k){ return { name:k, n:ac[k] }; }),
@@ -819,7 +819,7 @@
           source:'code'
         };
       }).concat([{
-        key:'epellation', title:'Épellation radio', category:'Fondamentaux', level:'debutant',
+        key:'epellation', title:'Alphabet aéro', category:'Fondamentaux', level:'debutant',
         station:'—', turns:0, dynamic:true, branching:false,
         controllable:false, alea:false, isActive:true,
         sortOrder:0, runs:(stats.epellation || {}).runs || 0,

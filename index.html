@@ -26,6 +26,10 @@
     var t=s.theme||'system';
     var dark = (t==='dark') || (t==='system' &&
       window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    /* La vitrine (accueil + pages légales) reste TOUJOURS claire — décision du
+       27/09/2026 ; même liste que parametres.js › applyTheme. */
+    var r=(location.hash||'#accueil').slice(1).split('/')[0];
+    if(/^(accueil|cgu|confidentialite|mentions)?$/.test(r)) dark=false;
     document.documentElement.setAttribute('data-theme', dark?'dark':'light');
   }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
 })();
@@ -136,7 +140,7 @@
       <button class="sidelink" type="button" data-page="exercices"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg><span>Scénarios</span></button>
       <button class="sidelink" type="button" data-page="navigation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5.5-5.5 2 2-5.5 5.5-2z" fill="currentColor" stroke="none"/></svg><span>Navigation</span></button>
       <button class="sidelink" type="button" data-page="carte"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 3 5.5v15L9 18l6 3 6-2.5v-15L15 6z"/><path d="M9 3v15M15 6v15"/></svg><span>Carte</span></button>
-      <button class="sidelink" type="button" data-page="epellation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6M12 4v16"/></svg><span>Épellation</span></button>
+      <button class="sidelink" type="button" data-page="epellation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6M12 4v16"/></svg><span>Alphabet aéro</span></button>
       <button class="sidelink" type="button" data-page="cours"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg><span>Cours</span></button>
       <button class="sidelink" type="button" data-page="progression"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg><span>Progression</span></button>
       <button class="sidelink" type="button" data-page="parametres"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg><span>Paramètres</span></button>
@@ -313,7 +317,7 @@
           <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></div><h3>387 aérodromes français</h3><p>Leurs vraies pistes et leurs vrais caps, contrôlés comme non contrôlés. La piste en service se déduit du vent, tiré au sort à chaque vol.</p></div>
           <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v8"/><path d="M8.5 10v4M15.5 10v4"/><path d="M5 11.5v1M19 11.5v1"/></svg></div><h3>ATIS à écouter</h3><p>Sur les terrains qui en ont un, l'ATIS se diffuse à la voix sur sa fréquence. Il faut l'écouter avant d'appeler, et le dire.</p></div>
           <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10M7 13h5"/></svg></div><h3>Transpondeur</h3><p>7000 en veille VFR, 7600 sur panne radio, 7700 en détresse. Les codes s'affichent, se collationnent, et sont vérifiés.</p></div>
-          <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6M12 4v16"/></svg></div><h3>Épellation</h3><p>Un exercice à part pour l'alphabet aéronautique : immatriculations et codes OACI, épelés au micro et chronométrés.</p></div>
+          <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6M12 4v16"/></svg></div><h3>Alphabet aéro</h3><p>Un exercice à part pour l'alphabet aéronautique : immatriculations et codes OACI, épelés au micro et chronométrés.</p></div>
           <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2l2.5 5M16 2l-2.5 5"/><circle cx="12" cy="15" r="6"/><path d="M12 12l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2L9.8 15.3 12 15z" fill="currentColor" stroke="none"/></svg></div><h3>Score et historique</h3><p>Un récapitulatif après chaque séance, la trace de tous vos vols échange par échange, et des objectifs à débloquer.</p></div>
           </div>
         </div>
@@ -1947,7 +1951,7 @@
                là où se trouve la vigie. -->
           <header class="spell-hero">
             <span class="sh-tag">Exercice</span>
-            <h2>Épellation radio</h2>
+            <h2>Alphabet aéro</h2>
             <p>Épelez à voix haute l'immatriculation ou le code aéroport affiché, en
                alphabet aéronautique. Parlez au micro (Chrome, Edge ou Safari).</p>
           </header>
@@ -2496,7 +2500,7 @@
          — et ici elle contredisait la politique de confidentialité. -->
     Une fois la page ouverte, un exercice se poursuit sans connexion : la séance est envoyée dès que la connexion revient. Trois choses sortent de votre machine : le <strong>fond de carte</strong> des pages Navigation et Carte, dont une couche vient des serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>voix</strong>, quand vous parlez au micro, transcrite par le service de reconnaissance de votre navigateur ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback » ; et, si vous avez choisi la voix Google (comptes Premium), le <strong>texte que prononce le contrôleur</strong>, synthétisé par Google. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
     <br><button class="auth-link" type="button" data-contact>Contact / Feedback</button> · <button class="auth-link" type="button" data-page="mentions">Mentions légales</button> · <button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
-    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation et de l'Épellation : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
+    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation et de l’Alphabet aéro : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
 
   <div class="toast" id="toast"></div>

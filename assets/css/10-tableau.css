@@ -77,6 +77,16 @@
   .tb-l3.bon{ background:rgba(46,158,91,.14); color:#1f6e40; }
   .tb-l3.moy{ background:rgba(224,145,42,.16); color:#8a5a1d; }
   .tb-l3.bas{ background:rgba(199,74,74,.14); color:#96332f; }
+  /* Thème sombre : le verre des cartes du tableau de bord un cran plus
+     couvrant que celui des autres scènes (.62 → .72, 27/09/2026, demande du
+     développeur). La photo de cockpit de nuit est chargée de reflets, et les
+     chiffres s'y lisaient moins bien que sur les scènes d'exercice. Seules les
+     variables changent : les cartes n'ont rien à apprendre (voir .scene dans
+     04-epellation.css). */
+  :root[data-theme="dark"] #page-tableau .scene{
+    --surface:rgba(11,15,28,.72);
+    --surface-2:rgba(6,9,18,.64);
+  }
   :root[data-theme="dark"] .tb-l3.bon{ background:rgba(69,193,135,.16); color:#8fe3b8; }
   :root[data-theme="dark"] .tb-l3.moy{ background:rgba(232,169,74,.16); color:#f0c99b; }
   :root[data-theme="dark"] .tb-l3.bas{ background:rgba(224,100,95,.16); color:#f3b4b0; }

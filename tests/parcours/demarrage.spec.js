@@ -57,9 +57,11 @@ test('aucun bloc de script n\'est mort au chargement', async ({ page }) => {
 test('le thème sombre est posé avant la première peinture', async ({ page }) => {
   /* Le bloc anti-flash lit rt-settings avant que quoi que ce soit ne s'affiche.
      S'il partait dans un fichier, la page se peindrait en clair puis
-     basculerait — un clignotement blanc à chaque chargement. */
+     basculerait — un clignotement blanc à chaque chargement.
+     Sur la page de CONNEXION : depuis le 27/09/2026, la vitrine reste claire
+     quel que soit le réglage (retouches-interface.spec.js). */
   await page.addInitScript(() => localStorage.setItem('rt-settings', JSON.stringify({ theme: 'dark' })));
-  await ouvrir(page);
+  await ouvrir(page, '#login');
   expect(await page.locator('html').getAttribute('data-theme')).toBe('dark');
 });
 

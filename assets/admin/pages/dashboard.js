@@ -129,7 +129,7 @@
         w.appendChild(UI.graphAire(a.sessionsPerDay, [
           { key:'scenario', label:'Scénarios', color:C.scenario },
           { key:'flight',   label:'Vols',      color:C.flight },
-          { key:'spelling', label:'Épellation',color:C.spelling }
+          { key:'spelling', label:'Alphabet aéro',color:C.spelling }
         ]));
         return w;
       }, 'Agrégation par jour…');

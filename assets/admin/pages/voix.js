@@ -265,7 +265,7 @@
         hote.style.cssText = 'display:inline-flex;gap:6px;flex-wrap:wrap;justify-content:flex-end';
         hote.appendChild(UI.bouton('Écouter', { disabled:!v.active,
           title:v.active ? 'Une phrase de contrôleur avec cette voix' : 'Réactivez-la pour l\'écouter',
-          onClick:function(){ ecouter(v); } }));
+          onClick:function(e){ ecouter(v, e.currentTarget); } }));
         hote.appendChild(UI.bouton(v.active ? 'Désactiver' : 'Activer', { onClick:function(){
           if (v.active && v.parDefaut) return toast('Choisissez d\'abord une autre voix par défaut.');
           regler(v, !v.active, false, v.active ? 'Voix désactivée : ' + libelleVoix(v, true) : 'Voix réactivée : ' + libelleVoix(v, true));
@@ -281,18 +281,44 @@
   /* L'écoute passe par le MÊME moteur que les exercices, avec la voix imposée
      pour ce seul message (opts.voixGoogle). Elle est décomptée sur le quota de
      l'administrateur, qui doit être Premium : la base ne fait pas d'exception. */
-  function ecouter(v){
+  function ecouter(v, bouton){
     if (!window.Voix) return toast('Le moteur de voix n\'est pas chargé.');
     if (window.Voix.relancerGoogle) window.Voix.relancerGoogle();
+    // Pendant le clic, sinon Safari garde la sortie audio suspendue (5-voix.js › preparerAudio).
+    if (window.Voix.preparerAudio) window.Voix.preparerAudio();
+    function rendre(){ if (bouton){ bouton.disabled = false; bouton.querySelector('span').textContent = 'Écouter'; } }
+    if (bouton){ bouton.disabled = true; bouton.querySelector('span').textContent = 'Écoute…'; }
     window.Voix.parler('Fox-trot Alpha Bravo Charlie Delta, autorisé atterrissage piste deux sept, vent deux cinq zéro degrés, dix nœuds.', {
       voixGoogle:v.nom,
+      /* Un aperçu qu'on attend, bouton en main : 12 s plutôt que les 4,5 s des
+         exercices. Chirp 3 HD, fonction à froid, dépassait parfois 4,5 s, et
+         l'écoute retombait sur la voix du navigateur. */
+      delaiGoogle:12000,
       onDebut:function(){
         var e = window.Voix.etatGoogle ? window.Voix.etatGoogle() : {};
-        if (e.dernier !== 'google')
-          toast('Voix du navigateur : ' + (e.erreur && e.erreur.statut === 403
-            ? 'l\'écoute des voix Google demande un compte Premium' : 'Google indisponible pour le moment') + '.');
-      }
+        if (e.dernier !== 'google') toast('Voix du navigateur : ' + raisonEchec(e.erreur) + '.');
+      },
+      onFin:rendre
     });
+    // Filet : si rien ne parle du tout, le bouton ne reste pas bloqué.
+    setTimeout(rendre, 20000);
+  }
+  /* Pourquoi Google n'a pas parlé, en clair — c'est un écran d'administration :
+     on dit la cause, pas « indisponible ». */
+  function raisonEchec(err){
+    if (!err) return 'Google n\'a pas répondu';
+    if (err.cause === 'http'){
+      if (err.statut === 403 && err.code === 'voix_desactivee') return 'cette voix est désactivée';
+      if (err.statut === 403) return 'l\'écoute des voix Google demande un compte Premium';
+      if (err.statut === 429) return 'le quota du jour de ce compte est atteint';
+      if (err.statut === 401) return 'session expirée, reconnectez-vous';
+      return 'voix-atc a répondu ' + err.statut + (err.code ? ' (' + err.code + ')' : '');
+    }
+    if (err.cause === 'delai') return 'Google a mis plus de 12 s à répondre';
+    if (err.cause === 'audio') return 'la sortie audio du navigateur est bloquée';
+    if (err.cause === 'decodage') return 'le son reçu est illisible';
+    if (err.cause === 'session') return 'aucune session ouverte';
+    return 'Google indisponible (' + err.cause + ')';
   }
 
   /* ======================= 3. QUOTAS ET COMPTES ========================= */

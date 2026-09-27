@@ -153,7 +153,7 @@
     status:{ completed:'Terminée', abandoned:'Abandonnée', in_progress:'En cours' },
     userStatus:{ active:'Actif', suspended:'Suspendu', pending:'En attente' },
     role:{ user:'Élève', admin:'Administrateur', moderator:'Modérateur', content_manager:'Contenu' },
-    kind:{ scenario:'Scénario', flight:'Vol', spelling:'Épellation' }
+    kind:{ scenario:'Scénario', flight:'Vol', spelling:'Alphabet aéro' }
   };
 
   /* ---------------------------------------------------------------------------

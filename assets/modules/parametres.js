@@ -50,12 +50,22 @@
 
   /* ---------- Thème ---------- */
   var mq = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  /* La vitrine (accueil et pages légales, body.state-vitrine posé par le
+     routeur) reste TOUJOURS en clair, quel que soit le réglage — décision du
+     27/09/2026 : ses photos et ses aplats n'ont jamais été pensés pour le
+     sombre, et le rendu était jugé « horrible ». Le réglage, lui, n'est pas
+     touché : il reprend effet dès qu'on entre dans l'application. Le script du
+     <head> d'index.html fait le même test sur l'adresse, pour que la vitrine ne
+     s'affiche pas en sombre le temps d'un éclair au chargement. */
   function applyTheme(){
     var t=S.theme||'system';
     var dark=(t==='dark')||(t==='system'&&mq&&mq.matches);
+    if(document.body.classList.contains('state-vitrine')) dark=false;
     document.documentElement.setAttribute('data-theme', dark?'dark':'light');
     segSet(null,t,'data-theme-opt');
   }
+  // Chaque changement de page peut faire entrer dans la vitrine ou en sortir.
+  window.addEventListener('rt:page', applyTheme);
   sec.querySelectorAll('[data-theme-opt]').forEach(function(b){
     b.addEventListener('click',function(){ S.theme=b.getAttribute('data-theme-opt'); save(); applyTheme(); });
   });
@@ -301,6 +311,8 @@
     if (!window.Voix || (!viaGoogle && !window.speechSynthesis))
       return dire("Ce navigateur n'a pas de synthèse vocale. Les exercices resteront muets : essayez Chrome, Edge ou Safari à jour.", false);
     if (viaGoogle && window.Voix.relancerGoogle) window.Voix.relancerGoogle();
+    // Dans le clic : Safari ne relance une sortie audio que pendant un geste (5-voix.js › preparerAudio).
+    if (viaGoogle && window.Voix.preparerAudio) window.Voix.preparerAudio();
 
     var voix = window.speechSynthesis.getVoices() || [];
     var fr = voix.filter(function(v){ return /^fr/i.test(v.lang); });

@@ -165,6 +165,30 @@
   document.querySelectorAll('[data-page]').forEach(function(b){
     b.addEventListener('click',function(e){ e.preventDefault(); showPage(b.dataset.page); });
   });
+  /* Le logo « Albatros VFR » (barre de la vitrine, menu, barre mobile, cartes de
+     connexion) ramène à la maison — demande du développeur, 27/09/2026 :
+       · connecté → le tableau de bord (le « menu pilote »), d'où qu'on vienne,
+         vitrine comprise ;
+       · pas connecté → la vitrine, tout en haut. Déjà dessus, on remonte en
+         douceur plutôt que de repeindre la page.
+     Ce ne sont pas des [data-page] : la destination dépend de la session, pas
+     d'un nom figé dans le HTML. Rôle de lien et Entrée au clavier, sans quoi
+     le logo ne serait cliquable qu'à la souris. */
+  document.querySelectorAll('.brand, .side-brand, .auth-brand').forEach(function(b){
+    b.setAttribute('role','link'); b.setAttribute('tabindex','0');
+    b.setAttribute('aria-label', 'Albatros VFR — retour à l\'accueil');
+    function allerMaison(e){
+      if(e) e.preventDefault();
+      if(authed){ showPage('tableau'); return; }
+      if(routeAffichee==='accueil'){
+        try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(err){ window.scrollTo(0,0); }
+        return;
+      }
+      showPage('accueil');
+    }
+    b.addEventListener('click', allerMaison);
+    b.addEventListener('keydown', function(e){ if(e.key==='Enter') allerMaison(e); });
+  });
   // Boutons d'entrée (hero « Commencer » / « Passer l'examen ») : passent par la connexion,
   // en mémorisant la destination voulue pour y atterrir une fois « connecté ».
   document.querySelectorAll('[data-auth]').forEach(function(b){

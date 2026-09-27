@@ -359,3 +359,28 @@ test('admin › Consommation : le graphique jour par jour est là', async ({ pag
   await expect(page.locator('#page-admin')).toContainText('Jour par jour');
   await expect(page.locator('#page-admin .adm-bar').first()).toBeVisible();
 });
+
+/* Panne du 27/09/2026 : « Écouter » ne faisait rien pour un administrateur
+   resté sur la voix du navigateur — sa sortie audio naissait hors du clic. */
+test('admin › Voix proposées : « Écouter » passe par Google, même réglé sur Navigateur', async ({ page }) => {
+  await admin(page);
+  const requetes = await fonction(page);
+  await compte(page, { plan: 'premium' });
+  await page.evaluate(() => localStorage.setItem('rt-settings', JSON.stringify({ voixMoteur: 'navigateur' })));
+  await onglet(page, 'Voix proposées');
+  const b = page.locator('#page-admin tr', { hasText: 'Kore' }).getByRole('button', { name: 'Écouter' });
+  await b.click();
+  await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => r.voix)).toEqual(['fr-FR-Chirp3-HD-Kore']);
+  await expect.poll(() => page.evaluate(() => Voix.etatGoogle().dernier)).toBe('google');
+  await expect(b).toBeEnabled();                 // rendu une fois la phrase dite
+});
+
+test('admin › « Écouter » refusé : la cause est dite en clair', async ({ page }) => {
+  await admin(page);
+  await fonction(page, { dire: { status: 429, body: { erreur: 'quota' } } });
+  await compte(page, { plan: 'premium' });
+  await page.evaluate(() => { window.__toasts = []; window.showToast = t => window.__toasts.push(t); });
+  await onglet(page, 'Voix proposées');
+  await page.locator('#page-admin tr', { hasText: 'Kore' }).getByRole('button', { name: 'Écouter' }).click();
+  await expect.poll(() => page.evaluate(() => window.__toasts.join(' | '))).toContain('quota du jour');
+});

@@ -82,7 +82,7 @@
     accueil:'Accueil', login:'Connexion', signup:'Inscription',
     cgu:'Conditions d’utilisation', confidentialite:'Politique de confidentialité',
     mentions:'Mentions légales', tableau:'Tableau de bord', exercices:'Scénarios',
-    navigation:'Navigation', carte:'Carte', epellation:'Épellation', cours:'Cours',
+    navigation:'Navigation', carte:'Carte', epellation:'Alphabet aéro', cours:'Cours',
     progression:'Progression', parametres:'Paramètres', compte:'Paramètres',
     admin:'Administration'
   };

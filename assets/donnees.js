@@ -275,8 +275,20 @@
   }
 
   /* La montée se fait par paquets : une requête par séance ferait cinquante
-     allers-retours à la première connexion d'un ancien compte. */
+     allers-retours à la première connexion d'un ancien compte.
+
+     UN IDENTIFIANT, UNE FOIS PAR PAQUET (27/09/2026). L'identifiant est déduit
+     du contenu : deux entrées identiques du cache donnent le même. Envoyées
+     dans le même upsert, PostgreSQL refuse le paquet ENTIER — « ON CONFLICT DO
+     UPDATE command cannot affect row a second time » — et aucune séance ne
+     monte, à chaque connexion. Deux entrées au même identifiant sont la même
+     séance : on n'en garde qu'une. */
   function monterPaquet(c, paquets){
+    var vus = {};
+    paquets = paquets.filter(function(p){
+      if (vus[p.session.id]) return false;
+      vus[p.session.id] = 1; return true;
+    });
     if (!paquets.length) return Promise.resolve(0);
     var seances = paquets.map(function(p){ return p.session; });
     var etapes  = paquets.reduce(function(a,p){ return a.concat(p.steps); }, []);
@@ -302,6 +314,21 @@
   function migrer(){
     var c = client(), uid = moi();
     if (!c || !uid) return Promise.resolve({ montees:0 });
+
+    /* LE CACHE D'UN COMPTE N'EST PAS À MIGRER (27/09/2026). Un cache qui porte
+       déjà un propriétaire a été ÉCRIT PAR charger(), depuis la base : c'en est
+       une copie. Les séances jouées depuis sont parties par sync.js, avec leur
+       propre identifiant, et attendent dans sa file tant qu'elles ne sont pas
+       en base. Rien dans ce cache n'existe donc qu'ici.
+       Le remonter quand même, c'était recréer chaque séance sous un SECOND
+       identifiant — celui qu'on déduit du contenu, puisque la relecture ne
+       garde pas l'identifiant d'origine. Mesuré en production le 27/09/2026 :
+       46 séances en double, sur deux comptes. Puis, à la connexion suivante,
+       les deux copies revenaient dans le cache, donnaient le même
+       identifiant, et le paquet entier était refusé (voir monterPaquet).
+       Ne reste à migrer que le cache SANS propriétaire : celui d'un appareil
+       qui a servi avant les comptes, ou hors connexion. */
+    if (lire(K_PROPRIO, null) === uid) return Promise.resolve({ montees:0 });
 
     var S = lire(K.scenarios, []) || [], V = lire(K.vols, []) || [];
     if (!S.length && !V.length) return Promise.resolve({ montees:0 });
@@ -836,7 +863,18 @@
     enCours = Promise.resolve(reprise)
       .catch(function(){})
       .then(migrer)
-      .then(charger)
+      /* Si la montée a échoué, le cache contient encore des séances qui
+         n'existent NULLE PART ailleurs. charger() l'écraserait avec la base, et
+         poserait le propriétaire : elles seraient perdues, et plus jamais
+         retentées. On garde donc le cache tel quel ; la montée repartira à la
+         prochaine connexion (CLAUDE.md § 7.1 : ne jamais perdre une séance). */
+      .then(function(m){
+        if (m && m.erreur){
+          journaliser('warn', 'Cache local conservé : il contient des séances pas encore en base.', null, 'migration');
+          return null;
+        }
+        return charger();
+      })
       .then(rejouerAttente)
       .catch(function(e){
         journaliser('warn', 'Synchronisation interrompue : ' + ((e && e.message) || e), null, 'sync');

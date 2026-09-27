@@ -660,6 +660,12 @@
           <div class="ins-etape" data-etape="2" hidden>
             <h2 class="auth-title">Confirmez votre adresse</h2>
             <p class="auth-sub">Nous avons envoyé un code à huit chiffres à <b id="insRappelMail"></b>. Il est valable une heure.</p>
+            <!-- Le message arrive SOUVENT dans les indésirables (domaine d'envoi pas
+                 encore vérifié, § 9.1 de CLAUDE.md). La mention discrète du bas de
+                 carte ne suffisait pas : on la lit après avoir attendu, pas avant.
+                 Rouge, en tête, et avant le champ — c'est là qu'on regarde. -->
+            <p class="ins-spam" role="note"><b>Pensez à vérifier vos spams.</b>
+              Le message arrive souvent dans le dossier « Indésirables » ou « Spam ».</p>
             <div class="auth-field">
               <label for="insCode">Code reçu</label>
               <!-- inputmode numeric plutôt que type=number : ce dernier affiche des

@@ -18,6 +18,14 @@
    │ 3 500 lignes ; elle est écrite ici.                                      │
    └──────────────────────────────────────────────────────────────────────────┘
 
+   ┌─ DEUX MOTEURS DEPUIS LE 27/09/2026 ─────────────────────────────────────┐
+   │ La frontière annoncée ci-dessus a servi : la voix Google (premium) est   │
+   │ un SECOND moteur, à l'intérieur de Voix, et rien d'autre ne le sait.     │
+   │ Les appelants — speakATC, speakExtra, les deux boucles ATIS, le bouton   │
+   │ d'essai des Paramètres — n'ont pas changé d'une ligne. Voir « MOTEUR     │
+   │ GOOGLE » plus bas : quand il s'active, comment il se replie, et pourquoi.│
+   └──────────────────────────────────────────────────────────────────────────┘
+
    UNE VERRUE DÉPLACÉE SANS ÊTRE CORRIGÉE : l'écouteur `rt:page` qui retire les
    classes `in-session` / `in-recap` du body n'a rien à voir avec la voix. Le
    remettre à sa place serait un autre travail ; il fonctionne à l'identique
@@ -97,6 +105,16 @@ if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickV
         speechSynthesis.speak(u);
       }catch(e){}
     }
+    /* La voix Google se joue dans l'AudioContext du bruit radio. Safari ne
+       laisse démarrer un AudioContext que DANS un geste : s'il n'existe pas
+       encore quand Google est choisi, on le crée ici, au premier. On ne le
+       crée pas pour les autres — un AudioContext ouvert garde la sortie audio
+       éveillée, pour rien. */
+    try{
+      var r = (typeof rtSettings==='function') ? rtSettings() : {};
+      if(!audioCtx && r && r.voixMoteur==='google')
+        audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    }catch(e){}
     try{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
     EVTS.forEach(function(ev){ document.removeEventListener(ev,amorce,true); });
   }
@@ -164,15 +182,249 @@ var Voix=(function(){
 
   function annulerGarde(){ if(garde){ clearTimeout(garde); garde=null; } }
 
+  /* Le texte tel que decouper() le voit, avant découpe. Recoller les morceaux
+     ne le redonnerait pas : une coupe à la virgule y perd la virgule. */
+  function texteEntier(t){ return String(t==null?'':t).replace(/\s+/g,' ').trim(); }
+
+  /* =======================================================================
+     MOTEUR GOOGLE (premium) — ajouté le 27/09/2026
+     -----------------------------------------------------------------------
+     QUAND IL PARLE. À chaque début de message, et seulement si TOUT est
+     réuni : les réglages disent voixMoteur 'google' avec une voixGoogle, une
+     session est ouverte, le profil est premium, le moteur n'est pas en pause
+     (voir plus bas), et le texte tient dans la limite de voix-atc. Sinon, rien
+     ne change : c'est speechSynthesis, comme avant.
+     Le plan lu dans le profil n'est qu'un raccourci — c'est la base qui
+     décide, par voix_consommer() (sql/005). Un profil trafiqué dans le
+     navigateur n'obtient qu'un 403, et la voix du navigateur.
+
+     LE TEXTE ENTIER, en une requête. Le découpage en morceaux de 140
+     caractères n'existe qu'à cause de Chrome (voir plus haut) ; Google n'en
+     a pas besoin, et la phrase y gagne son intonation.
+
+     LE MÊME SYSTÈME AUDIO. Le MP3 est décodé et joué dans l'AudioContext du
+     bruit radio (4-bruit-radio.js). La file, stop(), onDebut / onFin — donc
+     le grésillement — sont ceux de Voix : un message Google est un message
+     comme un autre, dit d'un coup.
+
+     LE REPLI, SILENCIEUX. Réponse autre que 200, plus de 4,5 s, décodage
+     raté, sortie audio bloquée : le MÊME message repart aussitôt par
+     speechSynthesis. L'élève n'est jamais prévenu pendant un exercice
+     (décision du 27/09/2026) ; la cause part dans le journal de diagnostic.
+
+     NE PAS INSISTER. Un 401, un 403 (compte gratuit, suspendu) ou un 429
+     (quota) ne changeront pas d'ici la fin de la page : Google est coupé
+     jusqu'au rechargement. Un 400 non plus — c'est une voix mal réglée, la
+     même requête échouera pareil. Une panne ou un délai peuvent passer :
+     pause de 5 minutes. Sans cela, chaque message attendrait 4,5 s avant de
+     se replier.
+
+     LE CACHE, en mémoire seulement — PAS une clé de stockage de plus
+     (CLAUDE.md § 7.2). Les 30 derniers sons décodés. Il existe pour l'ATIS :
+     sa boucle redit ~400 caractères toutes les trente secondes environ, et
+     dix minutes d'écoute coûteraient sinon ~8 000 caractères de quota.
+     ==================================================================== */
+  var G = {
+    DELAI: 4500,                 // ms : au-delà, la voix du navigateur prend le relais
+    PAUSE: 5*60*1000,            // ms : pause après une panne ou un délai
+    CACHE_MAX: 30,
+    TEXTE_MAX: 1000,             // la limite de voix-atc (logique.ts, TEXTE_MAX)
+    coupe: false,                // jusqu'au rechargement (401 / 403 / 429 / 400)
+    pauseJusqua: 0,
+    cache: new Map(),            // clé → AudioBuffer ; l'ordre d'insertion fait le LRU
+    requete: null,               // AbortController de la requête en cours
+    source: null                 // AudioBufferSourceNode en lecture
+  };
+
+  function tracer(message, detail){
+    try{ console.warn('[Albatros VFR] voix Google : ' + message, detail || ''); }catch(e){}
+    try{ if(window.RTAdmin && RTAdmin.logError)
+           RTAdmin.logError({ level:'warn', kind:'audio', key:'voix-google',
+                              message:'Voix Google : ' + message, detail: detail || null }); }catch(e){}
+  }
+
+  /* La voix Google à employer pour CE message, ou null. */
+  function voixGoogle(m){
+    if(G.coupe || Date.now() < G.pauseJusqua) return null;
+    if(!m.texte || m.texte.length > G.TEXTE_MAX) return null;
+    if(!window.fetch || !(window.AudioContext || window.webkitAudioContext)) return null;
+    try{
+      var r = (typeof rtSettings==='function') ? rtSettings() : null;
+      if(!r || r.voixMoteur!=='google' || !r.voixGoogle) return null;
+      var A = window.RTAuth;
+      if(!A || !A.utilisateur || !A.utilisateur()) return null;
+      var p = A.profil && A.profil();
+      if(!p || p.plan!=='premium') return null;
+      return String(r.voixGoogle);
+    }catch(e){ return null; }
+  }
+
+  function contexteAudio(){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+      return audioCtx;
+    }catch(e){ return null; }
+  }
+
+  /* Un AudioContext suspendu ne joue rien, et n'émet jamais `onended` : la
+     file resterait bloquée pour toujours. On ne lance donc la lecture que
+     s'il tourne vraiment ; sinon, repli. */
+  function contexteQuiTourne(){
+    var ctx = contexteAudio();
+    if(!ctx) return Promise.reject({ cause:'audio' });
+    if(ctx.state==='running') return Promise.resolve(ctx);
+    return new Promise(function(ok, ko){
+      var fini=false;
+      var t=setTimeout(function(){ if(!fini){ fini=true; ko({ cause:'audio' }); } }, 800);
+      try{
+        Promise.resolve(ctx.resume()).then(function(){
+          if(fini) return; fini=true; clearTimeout(t);
+          if(ctx.state==='running') ok(ctx); else ko({ cause:'audio' });
+        }, function(){ if(!fini){ fini=true; clearTimeout(t); ko({ cause:'audio' }); } });
+      }catch(e){ if(!fini){ fini=true; clearTimeout(t); ko({ cause:'audio' }); } }
+    });
+  }
+
+  /* decodeAudioData à rappels : l'ancien Safari ne connaît pas la forme à
+     promesse. */
+  function decoder(octets){
+    var ctx = contexteAudio();
+    if(!ctx) return Promise.reject({ cause:'audio' });
+    return new Promise(function(ok, ko){
+      try{
+        var p = ctx.decodeAudioData(octets, ok, function(){ ko({ cause:'decodage' }); });
+        if(p && p.catch) p.catch(function(){ ko({ cause:'decodage' }); });
+      }catch(e){ ko({ cause:'decodage' }); }
+    });
+  }
+
+  function cacheLire(cle){
+    if(!G.cache.has(cle)) return null;
+    var b = G.cache.get(cle);
+    G.cache.delete(cle); G.cache.set(cle, b);   // le plus récent passe en dernier
+    return b;
+  }
+  function cacheEcrire(cle, b){
+    G.cache.set(cle, b);
+    while(G.cache.size > G.CACHE_MAX) G.cache.delete(G.cache.keys().next().value);
+  }
+
+  /* La requête à voix-atc, bornée à G.DELAI. Rejette avec { cause, statut? }. */
+  function telecharger(texte, voix, debit, hauteur){
+    var cfg = window.RT_SUPABASE, A = window.RTAuth;
+    var c = null;
+    try{ c = A && A.client && A.client(); }catch(e){}
+    if(!cfg || !cfg.url || !c || !c.auth) return Promise.reject({ cause:'session' });
+    var ctrl = window.AbortController ? new AbortController() : null;
+    G.requete = ctrl;
+    var minuterie = null;
+    var delai = new Promise(function(_, ko){
+      minuterie = setTimeout(function(){
+        try{ if(ctrl) ctrl.abort(); }catch(e){}
+        ko({ cause:'delai' });
+      }, G.DELAI);
+    });
+    var travail = c.auth.getSession().then(function(r){
+      var jeton = r && r.data && r.data.session && r.data.session.access_token;
+      if(!jeton) throw { cause:'session' };
+      return fetch(cfg.url + '/functions/v1/voix-atc', {
+        method:'POST',
+        headers:{ 'Authorization':'Bearer ' + jeton, 'Content-Type':'application/json' },
+        body: JSON.stringify({ action:'dire', texte:texte, voix:voix, debit:debit, hauteur:hauteur }),
+        signal: ctrl ? ctrl.signal : undefined
+      });
+    }).then(function(rep){
+      if(rep.status===200) return rep.arrayBuffer();
+      return rep.text().then(function(t){
+        var code=null; try{ code = JSON.parse(t).erreur; }catch(e){}
+        throw { cause:'http', statut:rep.status, code:code };
+      }, function(){ throw { cause:'http', statut:rep.status }; });
+    }, function(e){
+      if(e && e.cause) throw e;
+      throw { cause:'reseau', detail: e && e.name };
+    }).then(decoder);
+    return Promise.race([travail, delai]).then(function(b){
+      clearTimeout(minuterie); if(G.requete===ctrl) G.requete=null; return b;
+    }, function(e){
+      clearTimeout(minuterie); if(G.requete===ctrl) G.requete=null; throw e;
+    });
+  }
+
+  /* Ce qu'un échec dit de la suite : couper jusqu'au rechargement, faire
+     une pause, ou rien (un souci de sortie audio n'est pas la faute de
+     Google). */
+  function noterEchec(e){
+    var statut = e && e.statut;
+    if(e && e.cause==='http' && (statut===400 || statut===401 || statut===403 || statut===429)){
+      G.coupe = true;
+      tracer('désactivée jusqu\'au rechargement (' + statut + (e.code ? ' ' + e.code : '') + ')');
+    } else if(e && e.cause==='audio'){
+      tracer('sortie audio indisponible, voix du navigateur pour ce message');
+    } else {
+      G.pauseJusqua = Date.now() + G.PAUSE;
+      tracer('en pause 5 minutes (' + ((e && e.cause) || 'inconnu') + (statut ? ' ' + statut : '') + ')');
+    }
+  }
+
+  function emettreGoogle(m, voix){
+    var mien = jeton;
+    var o = m.opts;
+    var debit = o.rate!=null ? Math.round(o.rate*100)/100 : 1;
+    // pitch est un facteur (1,1 en urgence) ; Google attend des demi-tons.
+    var hauteur = (o.pitch!=null && o.pitch>0) ? Math.round(12*Math.log(o.pitch)/Math.LN2*100)/100 : 0;
+    var cle = voix + '|' + debit + '|' + hauteur + '|' + m.texte;
+    var enCache = cacheLire(cle);
+    var obtenu = enCache ? Promise.resolve(enCache)
+                         : telecharger(m.texte, voix, debit, hauteur).then(function(b){ cacheEcrire(cle, b); return b; });
+    obtenu.then(function(b){
+      if(mien!==jeton) return;                 // stop() est passé entre-temps
+      return contexteQuiTourne().then(function(ctx){
+        if(mien!==jeton) return;
+        jouer(m, ctx, b, mien);
+      });
+    }).then(null, function(e){
+      if(mien!==jeton) return;                 // annulé : ni repli, ni pénalité
+      noterEchec(e);
+      m.google = 'echec';                      // le MÊME message, par le navigateur
+      enCours = false;
+      pompe();
+    });
+  }
+
+  function jouer(m, ctx, b, mien){
+    var src = ctx.createBufferSource();
+    src.buffer = b;
+    var g = ctx.createGain();
+    g.gain.value = m.opts.volume!=null ? m.opts.volume : 1;
+    src.connect(g); g.connect(ctx.destination);
+    G.source = src;
+    src.onended = function(){
+      if(G.source===src) G.source = null;
+      try{ src.disconnect(); g.disconnect(); }catch(e){}
+      if(mien!==jeton) return;                 // coupé par stop() : pas de onFin
+      m.i = m.phrases.length;                  // tout le message est dit
+      enCours = false;
+      pompe();                                 // → onFin, puis le message suivant
+    };
+    if(!m.debut && m.opts.onDebut){ m.debut=true; try{ m.opts.onDebut(); }catch(e){} }
+    src.start(0);
+  }
+
   /* Arret franc : plus rien ne parle, plus rien ne reprendra.
      On n'annule QUE s'il y a reellement quelque chose a interrompre : un cancel()
      a vide, repete a chaque changement de page, participe lui aussi au blocage du
      moteur de Chrome. */
   function stop(){
     var avait = enCours;
+    /* Ce qui parlait passait-il par Google ? Alors speechSynthesis n'a rien à
+       annuler — et un cancel() à vide, on l'a vu plus haut, participe au
+       blocage de Chrome. */
+    var viaGoogle = !!(G.source || G.requete);
     jeton++; file.length=0; enCours=false; annulerGarde();
+    if(G.requete){ try{ G.requete.abort(); }catch(e){} G.requete=null; }
+    if(G.source){ try{ G.source.stop(); }catch(e){} G.source=null; }
     if(window.speechSynthesis){
-      try{ if(avait || speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){}
+      try{ if((avait && !viaGoogle) || speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){}
     }
     if(typeof stopRadioNoise==='function') stopRadioNoise();
   }
@@ -186,6 +438,14 @@ var Voix=(function(){
       pompe(); return;
     }
     enCours=true;
+    /* Début d'un message : Google, s'il est actif. Une seule tentative par
+       message — après un échec, m.google vaut 'echec' et on ne revient ici
+       que pour la voix du navigateur. */
+    if(m.i===0 && m.google===undefined){
+      var v = voixGoogle(m);
+      if(v){ m.google='essai'; emettreGoogle(m, v); return; }
+      m.google='non';
+    }
     emettre(m, m.phrases[m.i]);
   }
 
@@ -280,7 +540,7 @@ var Voix=(function(){
     var phrases=decouper(texte);
     stop();
     if(!phrases.length) return;
-    file.push({phrases:phrases,i:0,essais:0,opts:opts||{}});
+    file.push({phrases:phrases,i:0,essais:0,opts:opts||{},texte:texteEntier(texte)});
     var mien=jeton;
     // Chrome avale un speak() emis dans la meme tache qu'un cancel() : on laisse
     // passer une tache avant de commencer.
@@ -290,7 +550,7 @@ var Voix=(function(){
   function empiler(texte, opts){
     var phrases=decouper(texte);
     if(!phrases.length) return;
-    file.push({phrases:phrases,i:0,essais:0,opts:opts||{}});
+    file.push({phrases:phrases,i:0,essais:0,opts:opts||{},texte:texteEntier(texte)});
     if(enCours) return;                        // la chaine en cours la prendra
     /* Rien ne parle : c'est nous qui demarrons. Meme precaution que dans
        parler() — un speak() emis dans la meme tache qu'un cancel() est avale par

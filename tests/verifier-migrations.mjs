@@ -141,7 +141,7 @@ if (!problemes) {
   /* 1. Les six tables, toutes sous RLS. Une table née sans RLS est lisible et
         modifiable par quiconque détient la clé publiable — laquelle est dans le
         code source du site, par conception. */
-  const ATTENDUES = ['admin_audit_log','app_errors','exercises','profiles','session_steps','sessions'];
+  const ATTENDUES = ['admin_audit_log','app_errors','exercises','profiles','session_steps','sessions','voix_consommation'];
   const tables = await q(`
     select c.relname as t, c.relrowsecurity as rls
       from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -181,7 +181,7 @@ if (!problemes) {
   /* 3. Les fonctions. `security definer` sans `search_path` figé est la faille
         classique : qui peut créer un schéma devant `public` fait résoudre
         `profiles` vers SA table. */
-  const FONCTIONS = ['handle_new_user','inscription_jalon','is_admin','profiles_garde','pseudo_libre'];
+  const FONCTIONS = ['handle_new_user','inscription_jalon','is_admin','profiles_garde','pseudo_libre','voix_consommer','voix_plafond_jour'];
   const fonctions = await q(`
     select p.proname as f, p.prosecdef as definer,
            coalesce(array_to_string(p.proconfig, ','), '') as config
@@ -294,6 +294,69 @@ if (!problemes) {
     rate(`app_errors accepte des valeurs trop longues : ${passees.join(', ')}`);
     console.log(rouge(`      Dépôt anonyme autorisé : n'importe qui peut y écrire des mégaoctets.`));
   } else passe(`app_errors refuse les dépôts trop longs, sur ses ${TROP.length} colonnes bornées`);
+
+  /* 10. Le quota de la voix Google (sql/005). Google facture au caractère : ce
+         compteur est la seule chose entre un compte premium et une facture
+         sans fond. On le fait tourner comme le ferait la fonction Edge — avec
+         l'identité de l'utilisateur dans le jeton — et on vérifie chaque refus. */
+  const [{ plafond }] = await q(`select public.voix_plafond_jour() as plafond`);
+  if (plafond !== 100000) rate(`le plafond journalier de la voix est ${plafond}, et non 100 000`);
+  else passe('le plafond journalier de la voix Google est de 100 000 caractères');
+
+  await db.exec(`insert into auth.users (email) values ('gratuit@albatros.test'), ('premium@albatros.test')`);
+  const idDe = async e => (await q(`select id from public.profiles where email = '${e}'`))[0].id;
+  const gratuit = await idDe('gratuit@albatros.test'), premium = await idDe('premium@albatros.test');
+  // Sans session (auth.uid() nul) : le contexte « éditeur SQL », où profiles_garde()
+  // laisse l'administrateur changer le plan. C'est la manœuvre documentée.
+  await db.exec(`update public.profiles set plan = 'premium' where id = '${premium}'`);
+
+  const consommer = async (qui, n) => {
+    await db.exec(`select set_config('request.jwt.claim.sub', '${qui || ''}', false)`);
+    const [r] = await q(`select public.voix_consommer(${n}) as r`);
+    return r.r;
+  };
+  const cas = [
+    ['sans session',             () => consommer(null, 10),          'non_connecte'],
+    ['compte gratuit',           () => consommer(gratuit, 10),       'non_premium'],
+    ['nombre négatif',           () => consommer(premium, -500),     'longueur'],
+    ['nombre nul',               () => consommer(premium, 0),        'longueur'],
+    ['au-delà du plafond seul',  () => consommer(premium, plafond + 1), 'longueur'],
+  ];
+  const ratees = [];
+  for (const [nom, f, attendu] of cas) {
+    const r = await f();
+    if (r.ok || r.raison !== attendu) ratees.push(`${nom} → ${JSON.stringify(r)} (attendu « ${attendu} »)`);
+  }
+  let r1 = await consommer(premium, plafond - 100);
+  let r2 = await consommer(premium, 100);
+  let r3 = await consommer(premium, 1);
+  if (!r1.ok || r1.restant !== 100) ratees.push(`premium, premier décompte → ${JSON.stringify(r1)}`);
+  if (!r2.ok || r2.restant !== 0)   ratees.push(`premium, jusqu'au plafond pile → ${JSON.stringify(r2)}`);
+  if (r3.ok || r3.raison !== 'quota' || r3.restant !== 0) ratees.push(`premium, un caractère de trop → ${JSON.stringify(r3)}`);
+  const [{ total }] = await q(`select sum(caracteres)::int as total from public.voix_consommation`);
+  if (total !== plafond) ratees.push(`le compteur vaut ${total} au lieu de ${plafond} : un refus a quand même décompté`);
+
+  await db.exec(`select set_config('request.jwt.claim.sub', '', false)`);
+  await db.exec(`update public.profiles set status = 'suspended' where id = '${premium}'`);
+  const r4 = await consommer(premium, 1);
+  if (r4.ok || r4.raison !== 'compte_inactif') ratees.push(`compte suspendu → ${JSON.stringify(r4)}`);
+  await db.exec(`select set_config('request.jwt.claim.sub', '', false)`);
+
+  if (ratees.length) {
+    rate(`voix_consommer() laisse passer ou compte faux :`);
+    ratees.forEach(m => console.log(rouge('      · ' + m)));
+  } else passe('voix_consommer() refuse sans session, gratuit, suspendu, hors bornes et au-delà du quota — et un refus ne décompte rien');
+
+  /* La table n'a AUCUNE politique d'écriture : seule la fonction y écrit. Une
+     politique INSERT/UPDATE permettrait à chacun de remettre son compteur à zéro. */
+  const ecriture = await q(`select policyname from pg_policies where schemaname='public'
+                             and tablename='voix_consommation' and cmd <> 'SELECT'`);
+  if (ecriture.length) rate(`politique(s) d'écriture sur voix_consommation : ${ecriture.map(r => r.policyname).join(', ')}`);
+  else passe('voix_consommation n\'a aucune politique d\'écriture — seule la fonction y écrit');
+
+  const anonPeut = await q(`select has_function_privilege('anon', 'public.voix_consommer(integer)', 'execute') as p`);
+  if (anonPeut[0].p) rate('le rôle anon peut exécuter voix_consommer()');
+  else passe('voix_consommer() est fermée au rôle anon');
 }
 
 console.log('');

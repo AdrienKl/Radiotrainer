@@ -861,7 +861,11 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 
 | 27/09/2026 | Début de vol : UNE phrase par échange, identique en Scénario et en Navigation. Mise en route « organisme, indicatif, demande mise en route, information X » (p. 39-40) ; approbation SANS QNH (absent de la p. 39 ; au départ, le QNH ne vient que de « demande paramètres pour le départ », p. 38, ou de l'ATIS) ; roulage = annonce complète p. 45 « indicatif, type, parking, demande consignes de roulage pour vol à destination de … », réponse « roulez et entrez aire d'attente … et rappelez prêt ». « Personnes à bord » RETIRÉ : absent de tout le manuel | `phraseologie-scenarios.js`, `navigation.js` |
 
+| 27/09/2026 | Voix Google (premium) — étape 1 : une Supabase **Edge Function** `voix-atc` plutôt que Cloud Run. Clé API Google restreinte à Text-to-Speech, dans les secrets Supabase SEULEMENT ; aucune clé Supabase secrète : premium, statut et quota (100 000 caractères/jour) se décident en base par `voix_consommer()` (`sql/005`), appelée avec le jeton de l'utilisateur. Premium = `profiles.plan = 'premium'`, posé à la main par l'admin. Voix navigateur gratuite et repli sur tout code ≠ 200. Frontend PAS encore touché | `supabase/functions/voix-atc/README.md` |
+
 ### En attente de validation
+
+- **Mettre en service `voix-atc`** — clé Google, `sql/005` par `poser-sql.sh`, secret, déploiement, vérification réelle au `curl` : l'ordre est dans `supabase/functions/voix-atc/README.md`. Puis étape 3 (le second moteur dans `assets/noyau/5-voix.js`) et étape 4 (Paramètres).
 
 - **Convention de nommage** (§ 16.2) — proposée, pas appliquée. Aucun renommage de masse avant accord.
 - **Poser `sql/000` et `sql/003` sur la PRODUCTION** (§ 21.4) — ils y seraient sans effet, mais recréent des politiques RLS vivantes. Le no-op de `sql/003` est prouvé ; celui de `sql/000` demande d'abord de lister les politiques d'`app_errors` et `admin_audit_log`, jamais vues. Sans urgence.

@@ -32,7 +32,7 @@ function fichiersServis(dir = RACINE, acc = []) {
     if (EXCLUS.has(e)) continue;
     const p = join(dir, e);
     if (statSync(p).isDirectory()) fichiersServis(p, acc);
-    else if (/\.(html|js|css|json|md|sh|sql)$/.test(e)) acc.push(p);
+    else if (/\.(html|js|ts|css|json|md|sh|sql|toml)$/.test(e)) acc.push(p);
   }
   return acc;
 }
@@ -41,7 +41,13 @@ const MOTIFS = [
   { nom: 'jeton d\'accès personnel Supabase (sbp_…)', re: /\bsbp_[A-Za-z0-9]{20,}/ },
   { nom: 'clé secrète Supabase (sb_secret_…)', re: /\bsb_secret_[A-Za-z0-9_-]{10,}/ },
   { nom: 'clé service_role (JWT)', re: /"role"\s*:\s*"service_role"/ },
-  { nom: 'JWT en dur', re: /\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\./ }
+  { nom: 'JWT en dur', re: /\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\./ },
+  /* La voix premium (supabase/functions/voix-atc) appelle Google avec une clé
+     API. Elle vit dans les secrets Supabase, JAMAIS dans un fichier : une clé
+     Google publiée se fait facturer par qui la trouve. Idem pour la clé JSON
+     d'un compte de service, qu'on a choisi de ne pas employer. */
+  { nom: 'clé API Google (AIza…)', re: /\bAIza[0-9A-Za-z_-]{35}\b/ },
+  { nom: 'clé privée de compte de service Google', re: /"private_key"\s*:\s*"-----BEGIN/ }
 ];
 
 test('aucun secret dans les fichiers du dépôt', () => {

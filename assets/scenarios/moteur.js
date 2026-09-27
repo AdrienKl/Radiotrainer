@@ -1536,6 +1536,8 @@ function renderStep(){
 
   if(step.atc){
     el.atcStation.textContent = stationLabel(step)+' : ';
+    // Une voix par contrôleur : c'est cette station qui parle désormais (5-voix.js).
+    if(window.Voix && Voix.station) Voix.station(stationLabel(step));
     /* L'ATIS n'est PAS un message qu'on nous adresse : il tourne en boucle sur sa
        propre fréquence. On ne le joue pas ici, et surtout on n'en ÉCRIT PAS le
        texte — l'afficher d'emblée revenait à lire l'ATIS sans l'avoir affiché sur
@@ -1851,9 +1853,12 @@ function scLancerAtis(texte){
   if(scAtisBoucle) return;                     // déjà en diffusion
   var b={actif:true,t:null}; scAtisBoucle=b;
   if(!window.speechSynthesis) return;
+  // L'ATIS a sa propre voix, comme toute station (5-voix.js › une voix par contrôleur).
+  var nom='ATIS'; try{ nom=stationLabel(currentStep()); }catch(e){}
   function tour(){
     if(!b.actif || scAtisBoucle!==b) return;
     Voix.parler(fillSpeech(texte), {
+      station:nom,
       rate:state.voiceRate, pitch:1.0,
       onDebut:startRadioNoise,
       onFin:function(){

@@ -2255,9 +2255,12 @@
     if(atisBoucle) return;                       // deja en diffusion
     var b={actif:true,t:null}; atisBoucle=b;
     if(!window.speechSynthesis) return;
+    // L'ATIS a sa propre voix, comme toute station (5-voix.js › une voix par contrôleur).
+    var st=F.steps[F.i], nom=(st && st.stn) || 'ATIS';
     function tour(){
       if(!b.actif || !F.running || atisBoucle!==b) return;
       Voix.parler(fillSpeech(texte), {
+        station:nom,
         rate:state.voiceRate, pitch:1.0,
         onDebut:startRadioNoise,
         onFin:function(){
@@ -2325,6 +2328,8 @@
      voix, même bruit de fond, même affichage selon le niveau. */
   function messageATC(stn, brut, urgent, muet){
     F.dernierATC={stn:stn, brut:brut, urgent:urgent};
+    // Une voix par contrôleur : cette station parle désormais (5-voix.js).
+    if(window.Voix && Voix.station) Voix.station(stn || null);
     var texte=fillDisplay(brut), atc=$v('vfAtc');
     if(level!=='reel'){
       atc.innerHTML='<b>'+esc(stn||'ATC')+' :</b> '+esc(texte);

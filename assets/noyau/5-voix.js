@@ -277,6 +277,110 @@ var Voix=(function(){
                               message:'Voix Google : ' + message, detail: detail || null }); }catch(e){}
   }
 
+  /* =======================================================================
+     UNE VOIX PAR CONTRÔLEUR — ajouté le 27/09/2026, demande du développeur
+     -----------------------------------------------------------------------
+     Changer de fréquence, c'est changer d'interlocuteur : la Tour, le Sol,
+     l'Info n'ont pas la même voix. Chaque station reçoit un RANG, dans
+     l'ordre où on l'entend pour la première fois dans la page : la première
+     garde la voix choisie par l'élève, les suivantes prennent les voix
+     d'après. Une station garde donc SA voix jusqu'au rechargement — la Tour
+     qu'on retrouve après le Sol est la même Tour.
+
+     QUI DIT QUOI. Les moteurs posent la station qui parle (Voix.station,
+     depuis moteur.js › renderStep et navigation.js › messageATC) ; speakATC
+     marque ses messages `controleur` ; une boucle ATIS passe sa propre
+     station (opts.station). Les autres messages — l'essai des Paramètres,
+     l'écoute de la console, les autres appareils — n'ont pas de station, et
+     gardent la voix choisie.
+
+     GOOGLE : les voix du MÊME modèle que celle choisie — même qualité, même
+     prix (un Studio est cinq fois plus cher qu'un Chirp 3 HD : passer de
+     l'un à l'autre au détour d'une fréquence changerait la facture sans que
+     personne l'ait décidé). Jamais une voix désactivée par l'administration :
+     la base la refuserait (voix_desactivee), et Google serait coupé jusqu'au
+     rechargement. Genre opposé d'abord, pour que deux stations voisines ne
+     se confondent pas. Tant que la liste n'est pas arrivée : la voix choisie.
+
+     NAVIGATEUR : les autres voix françaises LOCALES (les voix distantes de
+     Chrome démarrent mal, voir pickVoice), fr-FR d'abord. Une seule voix sur
+     la machine : on joue sur la hauteur, pour qu'au moins le timbre change.
+     ==================================================================== */
+  var ST = { courante:null, rangs:{}, n:0 };
+  function station(nom){
+    ST.courante = (nom==null || nom==='') ? null : String(nom);
+    /* La liste des voix se charge dès la PREMIÈRE station : chargée au premier
+       changement, elle arrivait trop tard pour la deuxième, qui gardait la
+       voix choisie. Seulement si Google est réellement en jeu — un compte
+       gratuit n'a rien à demander. */
+    if(ST.courante && !POOL.dispo && googleEnJeu()) chargerPoolGoogle();
+  }
+  function googleEnJeu(){
+    try{
+      var r = (typeof rtSettings==='function') ? rtSettings() : null;
+      var p = window.RTAuth && RTAuth.profil && RTAuth.profil();
+      return !!(r && r.voixMoteur==='google' && p && p.plan==='premium');
+    }catch(e){ return false; }
+  }
+  function rangDe(nom){
+    if(nom==null) return 0;
+    if(!Object.prototype.hasOwnProperty.call(ST.rangs, nom)) ST.rangs[nom] = ST.n++;
+    return ST.rangs[nom];
+  }
+  // Le rang du contrôleur qui dit CE message (0 = la voix choisie).
+  function rangMessage(m){
+    var o = m.opts || {};
+    if(o.station !== undefined) return rangDe(o.station);
+    return o.controleur ? rangDe(ST.courante) : 0;
+  }
+
+  var POOL = { dispo:null, charge:false, essai:0 };   // voix Google proposées : [{nom, genre}]
+  function chargerPoolGoogle(){
+    // Un échec ne se retente pas à chaque message : une fois par minute au plus.
+    if(POOL.charge || Date.now() - POOL.essai < 60000) return;
+    POOL.charge = true; POOL.essai = Date.now();
+    var c = null;
+    try{ c = window.RTAuth && RTAuth.client && RTAuth.client(); }catch(e){}
+    var catalogue = (c && c.from)
+      ? Promise.resolve(c.from('voix_catalogue').select('voix,active'))
+          .then(function(r){ return (r && !r.error && r.data) || []; }, function(){ return []; })
+      : Promise.resolve([]);
+    Promise.all([listerVoix(), catalogue]).then(function(t){
+      var coupees = {};
+      t[1].forEach(function(x){ if(x && !x.active) coupees[x.voix] = 1; });
+      POOL.dispo = (t[0] || []).filter(function(v){ return v && v.nom && !coupees[v.nom]; });
+    }, function(){ POOL.charge = false; });   // échec : on réessaiera au message suivant
+  }
+  function voixGoogleDuRang(choisie, rang){
+    if(!rang) return choisie;
+    if(!POOL.dispo){ chargerPoolGoogle(); return choisie; }   // pas encore arrivée
+    var f = familleDe(choisie); if(!f) return choisie;
+    var genreC = null, autres = [];
+    POOL.dispo.forEach(function(v){
+      if(v.nom===choisie) genreC = v.genre;
+      else if(familleDe(v.nom)===f) autres.push(v);
+    });
+    if(!autres.length) return choisie;
+    var opp = autres.filter(function(v){ return genreC && v.genre && v.genre!==genreC; });
+    var meme = autres.filter(function(v){ return opp.indexOf(v)<0; });
+    var ordre = [choisie];
+    for(var i=0; i<Math.max(opp.length, meme.length); i++){
+      if(opp[i]) ordre.push(opp[i].nom);
+      if(meme[i]) ordre.push(meme[i].nom);
+    }
+    return ordre[rang % ordre.length];
+  }
+  // Voix du navigateur et facteur de hauteur pour un rang donné.
+  var HAUTEURS = [1, 0.86, 1.14, 0.93, 1.07];
+  function voixNavigateurDuRang(rang){
+    if(!rang || !frVoice) return { voix:frVoice, hauteur:1 };
+    var locales = frVoices.filter(function(v){ return v.localService && !/grand(ma|pa)/i.test(v.name); });
+    var franceFr = locales.filter(function(v){ return /^fr[-_]FR/i.test(v.lang); });
+    var pool = franceFr.length >= 2 ? franceFr : locales;
+    var ordre = [frVoice].concat(pool.filter(function(v){ return v !== frVoice; }));
+    return { voix:ordre[rang % ordre.length], hauteur:HAUTEURS[Math.floor(rang / ordre.length) % HAUTEURS.length] };
+  }
+
   /* La voix Google à employer pour CE message, ou null. */
   function voixGoogle(m){
     if(G.coupe || Date.now() < G.pauseJusqua) return null;
@@ -294,7 +398,8 @@ var Voix=(function(){
       if(!A || !A.utilisateur || !A.utilisateur()) return null;
       var p = A.profil && A.profil();
       if(!p || p.plan!=='premium') return null;
-      return String(forcee || r.voixGoogle);
+      if(forcee) return String(forcee);
+      return voixGoogleDuRang(String(r.voixGoogle), rangMessage(m));
     }catch(e){ return null; }
   }
 
@@ -523,9 +628,10 @@ var Voix=(function(){
     u.lang='fr-FR';
     // A la 3e tentative on abandonne la voix choisie : si elle ne demarre jamais
     // (voix distante indisponible), celle par defaut, elle, parlera.
-    if(frVoice && m.essais<2) u.voice=frVoice;
+    var vn = voixNavigateurDuRang(rangMessage(m));   // une voix par contrôleur
+    if(vn.voix && m.essais<2) u.voice=vn.voix;
     u.rate   = m.opts.rate  !=null ? m.opts.rate   : 1;
-    u.pitch  = m.opts.pitch !=null ? m.opts.pitch  : 1;
+    u.pitch  = Math.min(2, (m.opts.pitch !=null ? m.opts.pitch : 1) * vn.hauteur);
     u.volume = m.opts.volume!=null ? m.opts.volume : 1;
     var parti=false, clos=false;
     function avancer(){                        // phrase dite : on passe a la suivante
@@ -649,7 +755,7 @@ var Voix=(function(){
 
   return { parler:parler, empiler:empiler, stop:stop, occupe:occupe,
            voixGoogle:listerVoix, etatGoogle:etatGoogle, relancerGoogle:relancerGoogle,
-           preparerAudio:preparerAudio,
+           preparerAudio:preparerAudio, station:station,
            FAMILLES_GOOGLE:FAMILLES, familleGoogle:familleDe, libelleGoogle:libelleDe };
 })();
 
@@ -682,6 +788,7 @@ function speakATC(rawText, urgent){
   /* Le bruit de fond radio est branche sur le debut et la fin REELS de la parole
      (onDebut/onFin) : il ne gresille donc que pendant que le controleur parle. */
   Voix.parler(fillSpeech(rawText), {
+    controleur: true,   // la voix de la station en ligne (Voix.station)
     // Debit et hauteur augmentes sur un message d'urgence (Mayday / Pan Pan).
     rate   : urgent ? Math.min(state.voiceRate + 0.12, 1.35) : state.voiceRate,
     pitch  : urgent ? 1.1 : 1.0,

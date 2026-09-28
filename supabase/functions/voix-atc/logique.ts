@@ -92,7 +92,10 @@ export const ORIGINES_PAR_DEFAUT = [
   'https://albatrosvfr.fr',
   'https://www.albatrosvfr.fr',
   'http://localhost:8000',
-  'http://127.0.0.1:8000'
+  'http://127.0.0.1:8000',
+  // Adresse de test Cloudflare Workers, TEMPORAIRE (28/09/2026) : tant que les
+  // serveurs de noms ne sont pas passés chez Cloudflare. À retirer ensuite.
+  'https://radiotrainer.kermeladrien24.workers.dev'
 ];
 
 /* ---- La clé PUBLIQUE de Supabase, telle que la plateforme la fournit ------

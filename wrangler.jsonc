@@ -1,0 +1,32 @@
+// =============================================================================
+// Albatros VFR — déploiement sur Cloudflare (Workers + Static Assets)
+// -----------------------------------------------------------------------------
+// Un Worker SANS code : Cloudflare ne fait que servir des fichiers statiques.
+// Supabase (auth, base, voix-atc), Google TTS, Resend et Formspree restent
+// externes et ne sont pas concernés.
+//
+// Tableau de bord Cloudflare › Worker › Settings › Build :
+//   Build command  : node outils/construire-site.mjs
+//   Deploy command : npx wrangler deploy
+//   Root directory : /
+//
+// Ce qui est publié : dist/, fabriqué par outils/construire-site.mjs à partir
+// d'une LISTE BLANCHE — jamais la racine du dépôt (node_modules, docs internes,
+// sql/, tests/…). Voir l'en-tête de ce script.
+// =============================================================================
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Doit rester le nom du Worker créé dans le tableau de bord : Workers Builds
+  // refuse de déployer une configuration qui porte un autre nom.
+  "name": "radiotrainer",
+  "compatibility_date": "2026-09-26",
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./dist",
+    // Une adresse inconnue reçoit 404.html, avec le statut 404 — comme GitHub
+    // Pages. Cette page renvoie albatrosvfr.fr/login vers /#login. PAS
+    // "single-page-application" : un script ou une tuile manquants
+    // répondraient index.html en 200, et la panne deviendrait invisible.
+    "not_found_handling": "404-page"
+  }
+}

@@ -12,6 +12,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.47.0",
-    "pngjs": "^7.0.0"
+    "pngjs": "^7.0.0",
+    "wrangler": "4.143.0"
   }
 }

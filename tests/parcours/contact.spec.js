@@ -180,7 +180,10 @@ test('un bug part avec son type et son contexte, et la confirmation reste dans l
   await expect(page.locator('#ctFin')).toBeVisible();
   await expect(page.locator('#ctForm')).toBeHidden();
   /* Aucune redirection : on est toujours sur le site, et sur la même page. */
-  expect(page.url()).toContain('index.html');
+  /* Le chemin, pas « index.html » : Cloudflare sert la page sous « / » (il
+     redirige /index.html vers /), le serveur Python sous /index.html. */
+  expect(['/', '/index.html']).toContain(new URL(page.url()).pathname);
+  expect(page.url()).not.toContain('formspree');
   expect(await page.evaluate(() => location.hash)).toBe('#navigation');
 
   expect(envois.length).toBe(1);

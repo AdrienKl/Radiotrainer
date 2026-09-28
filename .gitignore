@@ -29,3 +29,11 @@ playwright-report/
 # donnee finissent toujours par diverger — la source reste le JSON.
 Albatros-VFR-phraseologie-DSNA.csv
 Albatros-VFR-phraseologie-DSNA.md
+
+# Le site tel que Cloudflare le publie : refait à chaque construction par
+# outils/construire-site.mjs. Ce n'est pas une source.
+dist/
+# État local de Wrangler (Cloudflare) et de la CLI Supabase : propre à la
+# machine, jamais publié.
+.wrangler/
+supabase/.temp/

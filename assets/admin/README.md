@@ -105,6 +105,15 @@ Six tables. Le raisonnement (et ce qui a été écarté) est dans `ADMIN.md` § 
 > d'`app_errors` et d'`admin_audit_log` que ce README était seul à porter.
 > Ce qui suit reste ici parce que c'est là qu'on l'explique — mais **ce n'est
 > plus ce qu'on exécute**. Voir l'encadré à la fin de la section.
+>
+> **Le Premium payant (sql/008, 29/09/2026)** ajoute `profiles.premium_jusqua`
+> (fin du Premium ; vide = Premium sans fin, offert par l'admin), la table
+> `paiements` (une ligne par session Stripe, `stripe_session_id` unique — c'est
+> l'idempotence du webhook ; lecture de soi et admin plein, aucune écriture
+> client) et `premium_actif(uid)`, **seule** définition du Premium : `plan =
+> 'premium'` ET `premium_jusqua` vide ou future. Aucune tâche planifiée :
+> l'expiration est une comparaison. Le crédit passe par `stripe_crediter()`,
+> ouverte au seul rôle `service_role`.
 
 ```sql
 -- =====================================================================
@@ -396,6 +405,14 @@ create policy "audit : dépôt admin"      on public.admin_audit_log for insert
 create policy "audit : lecture admin"    on public.admin_audit_log for select using (public.is_admin());
 -- Aucune politique DELETE ni UPDATE : un journal d'audit modifiable ne vaut rien.
 ```
+
+> **`profiles_garde()` a changé depuis (sql/008, 29/09/2026).** `is_admin()`
+> vaut aussi pour les modérateurs : avec la version ci-dessus, un modérateur
+> pouvait écrire `plan` et `role` sur n'importe quel compte — se donner le
+> Premium, ou se nommer admin. `role`, `plan` et `premium_jusqua` sont
+> désormais réservés à l'admin plein (`est_admin_plein()`) ; `status` et les
+> jalons restent sous `is_admin()`. La version qui fait foi est celle de
+> `sql/008-premium-paiements.sql`.
 
 **Point capital :** avec ces politiques, la « vue élève » (ADMIN.md § 11, niveau 2)
 est sûre *par construction* — l'admin lit grâce à `admin read all`, et toute

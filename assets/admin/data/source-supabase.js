@@ -247,7 +247,14 @@
       }
       return Promise.all([
         lire(0, []),
-        ex(c.from('profiles').select('id', { count:'exact', head:true }).eq('plan', 'premium'))
+        /* Les Premium ACTIFS (sql/008 › admin_premium_actifs, qui applique
+           premium_actif() : un achat expiré n'y compte plus). Tant que sql/008
+           n'est pas posée, la fonction manque : on retombe sur l'ancien
+           comptage par `plan`, plutôt que d'afficher une erreur. */
+        Promise.resolve(c.rpc('admin_premium_actifs')).then(function(x){
+          if (x && !x.error && typeof x.data === 'number') return { count:x.data };
+          return ex(c.from('profiles').select('id', { count:'exact', head:true }).eq('plan', 'premium'));
+        })
       ]).then(function(r){
         var rows = r[0];
         return noms(rows.map(function(x){ return x.user_id; })).then(function(mn){

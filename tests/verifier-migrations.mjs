@@ -531,6 +531,167 @@ if (!problemes) {
       'public.admin_definir_plan(uuid, text)']) f`);
   if (anonAdm[0].p) rate('une fonction d\'administration est ouverte au rôle anon');
   else passe('les fonctions d\'administration sont fermées au rôle anon');
+
+  /* 13. Le Premium payant (sql/008). Ce qui compte : un Premium expire à sa
+         date sans qu'on bascule rien ; un webhook rejoué ne crédite pas deux
+         fois ; un rachat prolonge, il ne remet jamais à zéro ; plan,
+         premium_jusqua et role ne s'écrivent plus que par l'admin plein —
+         la faille des modérateurs est fermée. */
+  const pb13 = [];
+  const moi13 = async qui => db.exec(`select set_config('request.jwt.claim.sub', '${qui || ''}', false)`);
+  const profil13 = async id => (await q(`select plan, role, premium_jusqua from public.profiles where id = '${id}'`))[0];
+  const actif = async id => (await q(`select public.premium_actif('${id}') as a`))[0].a;
+  const paris = async ts => (await q(`select to_char(timestamptz '${ts}' at time zone 'Europe/Paris', 'YYYY-MM-DD HH24:MI:SS') as t`))[0].t;
+  const finParis = async id => (await q(`select to_char(premium_jusqua at time zone 'Europe/Paris', 'YYYY-MM-DD HH24:MI:SS') as t
+                                          from public.profiles where id = '${id}'`))[0].t;
+  const crediter = async (session, compte, mode = 'live') => {
+    await moi13(null);   // le webhook : clé secrète, aucune session utilisateur
+    return (await q(`select public.stripe_crediter('${session}', '${compte}', 1799, 'paye', null, '${mode}') as r`))[0].r;
+  };
+
+  await moi13(null);
+  await db.exec(`insert into auth.users (email) values ('eleve8@albatros.test'), ('acheteur8@albatros.test')`);
+  const eleve = await idDe('eleve8@albatros.test'), acheteur = await idDe('acheteur8@albatros.test');
+
+  // 13.1 La garde : ni l'élève, ni le modérateur ; l'admin plein, oui.
+  for (const [nom, qui, cible] of [['un élève (sur lui-même)', eleve, eleve], ['un modérateur', modo, eleve], ['un modérateur (sur lui-même)', modo, modo]]) {
+    const avant = await profil13(cible);
+    await moi13(qui);
+    await db.exec(`update public.profiles set plan = 'premium', role = 'admin', premium_jusqua = '2099-01-01' where id = '${cible}'`);
+    await moi13(null);
+    const apres = await profil13(cible);
+    if (apres.plan !== avant.plan || apres.role !== avant.role || String(apres.premium_jusqua) !== String(avant.premium_jusqua))
+      pb13.push(`${nom} a pu écrire plan / role / premium_jusqua : ${JSON.stringify(apres)}`);
+  }
+  await moi13(modo);   // le modérateur garde status
+  await db.exec(`update public.profiles set status = 'suspended' where id = '${eleve}'`);
+  await moi13(null);
+  if ((await q(`select status from public.profiles where id = '${eleve}'`))[0].status !== 'suspended')
+    pb13.push('le modérateur ne peut plus suspendre un compte (status) — il le pouvait avant sql/008');
+  await db.exec(`update public.profiles set status = 'active' where id = '${eleve}'`);
+  await moi13(admin);
+  await db.exec(`update public.profiles set plan = 'premium', premium_jusqua = '2099-01-01' where id = '${eleve}'`);
+  await moi13(null);
+  let p13 = await profil13(eleve);
+  if (p13.plan !== 'premium' || !p13.premium_jusqua) pb13.push(`l'admin plein n'a pas pu écrire plan / premium_jusqua : ${JSON.stringify(p13)}`);
+
+  // 13.2 premium_actif : sans fin, date passée, date future, gratuit.
+  await db.exec(`update public.profiles set plan = 'premium', premium_jusqua = null where id = '${eleve}'`);
+  if (!(await actif(eleve))) pb13.push('Premium sans fin (premium_jusqua NULL) → premium_actif faux');
+  await db.exec(`update public.profiles set premium_jusqua = now() - interval '1 second' where id = '${eleve}'`);
+  if (await actif(eleve)) pb13.push('Premium à date passée → premium_actif vrai');
+  x = await comme(eleve, `select public.voix_consommer(10, null) as r`);
+  if (!x.ok || x.r.r.raison !== 'non_premium') pb13.push(`un Premium expiré garde la voix Google : ${JSON.stringify(x)}`);
+  await moi13(null);   // comme() laisse la session de l'élève : sa garde bloquerait la mise à jour suivante
+  await db.exec(`update public.profiles set premium_jusqua = now() + interval '1 day' where id = '${eleve}'`);
+  if (!(await actif(eleve))) pb13.push('Premium à date future → premium_actif faux');
+  await db.exec(`update public.profiles set plan = 'free', premium_jusqua = null where id = '${eleve}'`);
+  if (await actif(eleve)) pb13.push('compte gratuit → premium_actif vrai');
+
+  // 13.3 La date de fin : 3 mois calendaires, 23:59:59 heure de Paris.
+  for (const [depart, attendu] of [
+    ['2026-09-29 14:00:00+02', '2026-12-29 23:59:59'],
+    ['2026-11-30 12:00:00+01', '2027-02-28 23:59:59'],
+    ['2027-11-30 12:00:00+01', '2028-02-29 23:59:59'],   // 2028 est bissextile
+    ['2026-09-29 23:30:00+00', '2026-12-30 23:59:59']    // 01 h 30 à Paris le 30/09 : le jour de PARIS compte
+  ]) {
+    const [{ f }] = await q(`select public.premium_fin_apres('${depart}') as f`);
+    const vu = await paris(f.toISOString());
+    if (vu !== attendu) pb13.push(`premium_fin_apres(${depart}) → ${vu} au lieu de ${attendu} (Paris)`);
+  }
+
+  // 13.4 Un crédit, puis le même webhook rejoué : un seul crédit, une seule ligne.
+  let r13 = await crediter('cs_live_premierachat0001', acheteur);
+  if (!r13 || !r13.credite) pb13.push(`premier crédit refusé : ${JSON.stringify(r13)}`);
+  const fin1 = await finParis(acheteur);
+  r13 = await crediter('cs_live_premierachat0001', acheteur);
+  if (!r13.ok || r13.credite || r13.raison !== 'deja_traite') pb13.push(`webhook rejoué : ${JSON.stringify(r13)}`);
+  const [{ n: lignes }] = await q(`select count(*)::int as n from public.paiements where stripe_session_id = 'cs_live_premierachat0001'`);
+  if (lignes !== 1) pb13.push(`${lignes} lignes de paiement pour une seule session`);
+  if (await finParis(acheteur) !== fin1) pb13.push('le webhook rejoué a déplacé la date de fin');
+  if (!(await actif(acheteur))) pb13.push('l\'acheteur n\'est pas Premium après paiement');
+
+  // 13.5 Rachat avant expiration : prolongation depuis la fin actuelle, y compris 30/11 → 28/02 et 29/02.
+  for (const [finActuelle, attendu, session] of [
+    ['2026-11-30 23:59:59+01', '2027-02-28 23:59:59', 'cs_live_rachat20261130xx'],
+    ['2027-11-30 23:59:59+01', '2028-02-29 23:59:59', 'cs_live_rachat20271130xx']
+  ]) {
+    await db.exec(`update public.profiles set plan = 'premium', premium_jusqua = '${finActuelle}' where id = '${acheteur}'`);
+    r13 = await crediter(session, acheteur);
+    const vu = await finParis(acheteur);
+    if (!r13.credite || vu !== attendu) pb13.push(`rachat avec fin au ${finActuelle} → ${vu} au lieu de ${attendu} : ${JSON.stringify(r13)}`);
+  }
+  // Premium expiré : repart de maintenant, pas de l'ancienne date.
+  await db.exec(`update public.profiles set plan = 'premium', premium_jusqua = now() - interval '10 days' where id = '${acheteur}'`);
+  await crediter('cs_live_apresexpiration1', acheteur);
+  const [{ ok: depuisMaintenant }] = await q(`select premium_jusqua = public.premium_fin_apres(now()) as ok from public.profiles where id = '${acheteur}'`);
+  if (!depuisMaintenant) pb13.push('un rachat après expiration ne repart pas de maintenant');
+
+  // 13.6 Premium sans fin : le paiement est noté, rien n'est raccourci.
+  await db.exec(`update public.profiles set plan = 'premium', premium_jusqua = null where id = '${acheteur}'`);
+  r13 = await crediter('cs_live_sansfin000000001', acheteur);
+  p13 = await profil13(acheteur);
+  if (r13.raison !== 'sans_fin' || p13.premium_jusqua !== null) pb13.push(`Premium sans fin raccourci : ${JSON.stringify(r13)} ${JSON.stringify(p13)}`);
+  if (!(await q(`select 1 from public.paiements where stripe_session_id = 'cs_live_sansfin000000001'`)).length)
+    pb13.push('le paiement d\'un compte sans fin n\'est pas noté');
+
+  // 13.7 Mode test : refusé pour un non-admin, sans ligne ; accepté pour l'admin plein.
+  r13 = await crediter('cs_test_eleve0000000001', eleve, 'test');
+  if (r13.ok || r13.raison !== 'test_non_admin') pb13.push(`paiement de test crédité à un élève : ${JSON.stringify(r13)}`);
+  if ((await q(`select 1 from public.paiements where stripe_session_id = 'cs_test_eleve0000000001'`)).length)
+    pb13.push('un paiement de test refusé a laissé une ligne');
+  r13 = await crediter('cs_test_modo00000000001', modo, 'test');
+  if (r13.ok) pb13.push('paiement de test crédité à un modérateur');
+  await db.exec(`update public.profiles set plan = 'free', premium_jusqua = null where id = '${admin}'`);
+  r13 = await crediter('cs_test_admin0000000001', admin, 'test');
+  if (!r13.credite) pb13.push(`paiement de test refusé à l'admin plein : ${JSON.stringify(r13)}`);
+
+  // 13.8 Données invalides : refus, rien d'écrit.
+  const avantInvalide = (await q(`select count(*)::int as n from public.paiements`))[0].n;
+  for (const sql of [`select public.stripe_crediter('cs_live_statutfaux00001', '${acheteur}', 1799, 'rembourse', null, 'live')`,
+                     `select public.stripe_crediter('cs_live_modefaux000001', '${acheteur}', 1799, 'paye', null, 'prod')`,
+                     `select public.stripe_crediter('cs_test_melange0000001', '${acheteur}', 1799, 'paye', null, 'live')`,
+                     `select public.stripe_crediter('pas-une-session', '${acheteur}', 1799, 'paye', null, 'live')`]) {
+    try { await db.exec(sql); pb13.push('accepté : ' + sql); } catch (e) {}
+  }
+  if ((await q(`select count(*)::int as n from public.paiements`))[0].n !== avantInvalide) pb13.push('un paiement invalide a laissé une ligne');
+  r13 = await crediter('cs_live_inconnu000000001', '00000000-0000-0000-0000-000000000000');
+  if (r13.ok || r13.raison !== 'compte_inconnu') pb13.push(`compte inconnu : ${JSON.stringify(r13)}`);
+
+  // 13.9 admin_definir_plan : Premium offert = sans fin, même sur un achat expiré.
+  await db.exec(`update public.profiles set plan = 'premium', premium_jusqua = now() - interval '1 day' where id = '${acheteur}'`);
+  x = await comme(admin, `select public.admin_definir_plan('${acheteur}', 'premium')`);
+  if (!x.ok || !(await actif(acheteur)) || (await profil13(acheteur)).premium_jusqua !== null)
+    pb13.push(`redonner le Premium à un achat expiré ne l'a pas rendu actif : ${JSON.stringify(x)}`);
+
+  // 13.10 Le compteur de la console : les expirés n'y sont pas.
+  await moi13(null);
+  await db.exec(`update public.profiles set plan = 'free', premium_jusqua = null`);
+  await db.exec(`update public.profiles set plan = 'premium', premium_jusqua = null where id = '${eleve}'`);
+  await db.exec(`update public.profiles set plan = 'premium', premium_jusqua = now() + interval '5 days' where id = '${acheteur}'`);
+  await db.exec(`update public.profiles set plan = 'premium', premium_jusqua = now() - interval '5 days' where id = '${premium}'`);
+  x = await comme(admin, `select public.admin_premium_actifs() as n`);
+  if (!x.ok || x.r.n !== 2) pb13.push(`admin_premium_actifs → ${JSON.stringify(x)} au lieu de 2 (l'expiré ne compte pas)`);
+  x = await comme(eleve, `select public.admin_premium_actifs() as n`);
+  if (x.ok) pb13.push('un élève lit le compteur de la console');
+  await moi13(null);
+
+  if (pb13.length) { rate('le Premium payant ne se comporte pas comme prévu :'); pb13.forEach(m => console.log(rouge('      · ' + m))); }
+  else passe('Premium payant : expiration par date, crédit unique par session, prolongation sans perte, 30/11 → 28/02 / 29/02 à 23:59:59 Paris, test réservé à l\'admin ; plan / premium_jusqua / role au seul admin plein');
+
+  // 13.11 Les droits : stripe_crediter au seul service_role ; paiements sans écriture client.
+  const droits = await q(`select r, f, has_function_privilege(r, f, 'execute') as p from
+      unnest(array['anon','authenticated','service_role']) r,
+      unnest(array['public.stripe_crediter(text, uuid, integer, text, text, text)',
+                   'public.premium_actif(uuid)', 'public.premium_fin_apres(timestamptz)']) f`);
+  const fautifs = droits.filter(d => (d.r === 'service_role') !== d.p);
+  if (fautifs.length) rate('droits d\'exécution : ' + fautifs.map(d => `${d.r} ${d.p ? 'PEUT' : 'ne peut pas'} ${d.f}`).join(' ; '));
+  else passe('stripe_crediter, premium_actif, premium_fin_apres : service_role seul — anon et authenticated refusés');
+  const polP = await q(`select policyname, cmd from pg_policies where schemaname='public' and tablename='paiements'`);
+  const [{ rls }] = await q(`select relrowsecurity as rls from pg_class where oid = 'public.paiements'::regclass`);
+  if (!rls || polP.some(pp => pp.cmd !== 'SELECT') || polP.length !== 2)
+    rate(`paiements : RLS ${rls} ; politiques ${JSON.stringify(polP)}`);
+  else passe('paiements : RLS active, lecture de soi et admin plein, aucune écriture côté client');
 }
 
 console.log('');

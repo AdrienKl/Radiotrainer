@@ -137,6 +137,33 @@ test('délai dépassé (4,5 s) : repli sur la voix du navigateur', async ({ page
   expect(ecoule).toBeLessThan(6500);
 });
 
+/* Panne du 29/09/2026 : la voix réaliste marchait dans l'administration
+   (phrase courte, délai de 12 s) et plus en Navigation ni en Scénario, où les
+   messages font 250 à 450 caractères. Google répondait après 4,5 s ; le
+   message était facturé et dit par le navigateur, puis Google était mis en
+   pause 5 minutes. */
+test('message long (ATIS) : le délai s\'allonge, et la réponse à 6 s est jouée', async ({ page }) => {
+  const requetes = await fonction(page, () => ({ attente: 6000, body: wav(0.2) }));
+  await preparer(page);
+  const atis = 'Ici Bordeaux Mérignac, information Alpha. '.repeat(10);   // ~420 caractères
+  await page.evaluate((t) => __dire(t), atis);
+  await page.waitForTimeout(7500);
+  expect(requetes).toHaveLength(1);
+  expect(await ditParLeNavigateur(page)).toEqual([]);
+});
+
+test('un seul retard ne coupe plus la voix réaliste : le message suivant la redemande', async ({ page }) => {
+  let n = 0;
+  const requetes = await fonction(page, () => (++n === 1 ? { attente: 7000 } : { body: wav(0.2) }));
+  await preparer(page);
+  await page.evaluate(() => __dire('Rappelez prêt.'));
+  await expect.poll(() => ditParLeNavigateur(page), { timeout: 8000 }).toEqual(['Rappelez prêt.']);
+  await page.evaluate(() => __dire('Alignez-vous piste deux trois.'));
+  await expect.poll(() => requetes.length, { timeout: 4000 }).toBe(2);
+  await page.waitForTimeout(800);
+  expect(await ditParLeNavigateur(page)).toEqual(['Rappelez prêt.']);      // le second est dit par Google
+});
+
 test('après un 429, Google est coupé jusqu\'au rechargement : plus aucune requête', async ({ page }) => {
   const requetes = await fonction(page, () => ({ status: 429, body: '{"erreur":"quota"}' }));
   await preparer(page);

@@ -228,7 +228,9 @@ var Voix=(function(){
      dix minutes d'écoute coûteraient sinon ~8 000 caractères de quota.
      ==================================================================== */
   var G = {
-    DELAI: 4500,                 // ms : au-delà, la voix du navigateur prend le relais
+    DELAI: 4500,                 // ms : au-delà, la voix du navigateur prend le relais (phrase courte)
+    DELAI_MAX: 10000,            // ms : plafond du délai, même pour un ATIS
+    retards: 0,                  // délais dépassés d'affilée ; la pause ne vient qu'au deuxième
     PAUSE: 5*60*1000,            // ms : pause après une panne ou un délai
     CACHE_MAX: 30,
     TEXTE_MAX: 1000,             // la limite de voix-atc (logique.ts, TEXTE_MAX)
@@ -552,9 +554,27 @@ var Voix=(function(){
   /* Ce qu'un échec dit de la suite : couper jusqu'au rechargement, faire
      une pause, ou rien (un souci de sortie audio n'est pas la faute de
      Google). */
+  /* Le délai d'un message, selon sa LONGUEUR. Panne du 29/09/2026 : la voix
+     réaliste ne parlait plus en Navigation ni en Scénario, mais parlait dans
+     l'administration. La base comptait bien les messages (250 à 450
+     caractères) : Google répondait, trop tard. Un délai fixe de 4,5 s tenait
+     pour la phrase d'essai (113 caractères) ; un message de contrôleur ou un
+     ATIS en Chirp 3 HD le dépassait, le navigateur prenait le relais — et le
+     message était facturé sans être entendu. */
+  function delaiPour(texte){
+    var n = String(texte||'').length;
+    return Math.min(G.DELAI_MAX, G.DELAI + Math.max(0, n - 120) * 14);
+  }
   function noterEchec(e){
     G.erreur = e || { cause:'inconnu' };
     var statut = e && e.statut;
+    /* UN retard ne coupe plus rien : c'est souvent le premier message, qui
+       réveille la fonction. Il fallait sinon attendre 5 minutes pour réentendre
+       la voix réaliste. La pause ne vient qu'au deuxième retard d'affilée. */
+    if(e && e.cause==='delai' && ++G.retards < 2){
+      tracer('trop lente pour ce message, voix du navigateur pour celui-ci');
+      return;
+    }
     if(e && e.cause==='http' && (statut===400 || statut===401 || statut===403 || statut===429)){
       G.coupe = true;
       tracer('désactivée jusqu\'au rechargement (' + statut + (e.code ? ' ' + e.code : '') + ')');
@@ -575,7 +595,7 @@ var Voix=(function(){
     var cle = voix + '|' + debit + '|' + hauteur + '|' + m.texte;
     var enCache = cacheLire(cle);
     var obtenu = enCache ? Promise.resolve(enCache)
-                         : telecharger(m.texte, voix, debit, hauteur, o.delaiGoogle).then(function(b){ cacheEcrire(cle, b); return b; });
+                         : telecharger(m.texte, voix, debit, hauteur, o.delaiGoogle || delaiPour(m.texte)).then(function(b){ G.retards = 0; cacheEcrire(cle, b); return b; });
     obtenu.then(function(b){
       if(mien!==jeton) return;                 // stop() est passé entre-temps
       return contexteQuiTourne().then(function(ctx){

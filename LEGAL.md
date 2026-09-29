@@ -198,8 +198,8 @@ remplirez les champs : il cessera simplement d'exiger le bandeau d'état.
 ## Avis des élèves (29/09/2026)
 
 Obligations suivies (Code de la consommation, art. L111-7-2 et D111-16 à
-D111-19) : la page `#avis` dit comment les avis sont collectés (compte inscrit,
-2 séances terminées, un par compte), qu'ils sont **vérifiés à la main avant
+D111-19) : la page `#avis` dit comment les avis sont collectés (compte inscrit et
+connecté, un par compte — le seuil de 2 séances a été retiré par `sql/011`), qu'ils sont **vérifiés à la main avant
 publication**, le **délai (3 jours au plus)**, les motifs de refus, l'absence de
 contrepartie, l'ordre d'affichage (date, ou note au choix) et que les trois avis
 de l'accueil sont choisis par l'équipe. Chaque avis affiche sa date. Un avis

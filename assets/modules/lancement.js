@@ -174,6 +174,11 @@
      voix, `relancer` est rappelé au clic, et la séance part alors. */
   var passe = {};
   function autoriser(kind, relancer){
+    /* Appelé DANS le clic de lancement : c'est le moment d'ouvrir la sortie
+       audio. Safari la laisse suspendue hors d'un geste, et la voix réaliste
+       retombait alors sur celle du navigateur, message après message (panne du
+       29/09/2026 — l'administration, elle, l'ouvrait déjà dans son clic). */
+    try{ if(window.Voix && Voix.preparerAudio) Voix.preparerAudio(); }catch(e){}
     if(passe[kind]){ passe[kind] = false; return true; }   // relancée après le message : déjà comptée
     var e = etat(kind);
     if(kind === 'qcm' || e === 'libre'){ contexte = null; return true; }

@@ -91,7 +91,8 @@ test('page #avis : publiés seuls, tri récents / mieux notés, mention sur la m
   await expect(page.locator('#avListe')).toContainText('Déposé le');
   const mention = page.locator('#avMention');
   await expect(mention).toContainText('3 jours au plus');
-  await expect(mention).toContainText('au moins deux séances');
+  await expect(mention).toContainText('inscrits et connectés');
+  await expect(mention).not.toContainText('séances');
   await expect(mention).toContainText('vérifié manuellement');
 });
 
@@ -103,7 +104,7 @@ test('widget : hors connexion, pas d\'option « Laisser un avis »', async ({ pa
   await expect(page.locator('#ctOptAvis')).toBeHidden();
 });
 
-test('widget : un avis déjà laissé → plus d\'option ; une seule séance → option inerte qui dit pourquoi', async ({ page }) => {
+test('widget : un avis déjà laissé → plus d\'option ; sans aucune séance → option ouverte (sql/011)', async ({ page }) => {
   await ouvrir(page);
   await doublure(page, { connecte: true, monAvis: { connecte: true, seances: 4, avis: { statut: 'en_attente' }, peut: false } });
   await page.evaluate(() => window.rtContactOuvrir());
@@ -111,11 +112,12 @@ test('widget : un avis déjà laissé → plus d\'option ; une seule séance →
   await expect(page.locator('#ctOptAvis')).toBeHidden();
   await page.evaluate(() => RTContact.fermer());
 
-  await doublure(page, { connecte: true, monAvis: { connecte: true, seances: 1, avis: null, peut: false } });
+  await doublure(page, { connecte: true, monAvis: { connecte: true, seances: 0, avis: null, peut: true } });
   await page.evaluate(() => window.rtContactOuvrir());
   await expect(page.locator('#ctOptAvis')).toBeVisible();
-  await expect(page.locator('#ctOptAvis')).toBeDisabled();
-  await expect(page.locator('#ctOptAvisTxt')).toContainText('vous en avez 1');
+  await expect(page.locator('#ctOptAvis')).toBeEnabled();
+  await page.locator('#ctOptAvis').click();
+  await expect(page.locator('#ctAvisVue')).toBeVisible();
 });
 
 test('widget : la note est obligatoire, et seules la note et le commentaire partent', async ({ page }) => {
@@ -154,7 +156,7 @@ test('rappel : après la 2e séance, discret ; « Plus tard » le repousse de tr
   await ouvrir(page);
   await entrer(page, 'tableau');
   const seance = async (n, avis = null) => {
-    await doublure(page, { connecte: true, monAvis: { connecte: true, seances: n, avis, peut: n >= 2 && !avis } });
+    await doublure(page, { connecte: true, monAvis: { connecte: true, seances: n, avis, peut: !avis } });
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('rt:seance-terminee', { detail: { kind: 'flight' } })));
     await page.waitForTimeout(150);
   };

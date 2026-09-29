@@ -212,6 +212,9 @@ function bindPushToTalk(btn, onStart, onStop){
                      if(finTimer){            // ré-appui pendant la traîne : la capture n'a jamais cessé
                        clearTimeout(finTimer); finTimer=null; held=true; visuel(true); return; }
                      if(held) return; held=true;
+                     /* L'alternat est un geste : on en profite pour garder la sortie
+                        audio ouverte (Safari), pour la réponse du contrôleur qui suit. */
+                     try{ if(window.Voix && Voix.preparerAudio) Voix.preparerAudio(); }catch(_){}
                      /* On ne recoit pas pendant qu'on emet : presser l'alternat coupe
                         la parole en cours ET les diffusions en boucle. C'est le
                         comportement d'un vrai poste — et cela supprime au passage un

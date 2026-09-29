@@ -14,8 +14,9 @@
    contente de ne pas PROPOSER ce qui serait refusé. Un navigateur trafiqué
    n'obtient rien de plus que des refus.
 
-   OÙ ON LIT « A-T-IL DÉJÀ UN AVIS ? » : mon_avis() (sql/010), qui compte aussi
-   les séances TERMINÉES en base — la même règle que le dépôt. Pas de compteur
+   OÙ ON LIT « A-T-IL DÉJÀ UN AVIS ? » : mon_avis() (sql/010, puis sql/011),
+   qui compte aussi les séances TERMINÉES en base. Déposer est ouvert dès la
+   connexion (sql/011) ; le RAPPEL, lui, attend la 2e séance. Pas de compteur
    parallèle ici : le rappel suit ce que dit la base.
 
    OÙ VIT « PLUS TARD » : dans les réglages du compte (`avisRappel`, le nombre
@@ -31,7 +32,7 @@
   var $ = function(id){ return document.getElementById(id); };
 
   var RAPPEL_ECART = 3;      // séances entre deux rappels, après un « Plus tard »
-  var SEUIL = 2;             // séances terminées pour pouvoir déposer (sql/010)
+  var SEUIL = 2;             // séances terminées avant le RAPPEL (déposer, lui, est libre : sql/011)
 
   function client(){ try{ return window.RTAuth && RTAuth.client && RTAuth.client(); }catch(e){ return null; } }
   function connecte(){ try{ return !!(window.RTAuth && RTAuth.utilisateur && RTAuth.utilisateur()); }catch(e){ return false; } }
@@ -81,17 +82,11 @@
   }
   function peindreOption(){
     if(!opt) return;
-    /* Montrée à un compte connecté SANS avis. Avant la 2e séance, elle reste
-       visible mais inerte, et dit pourquoi : la cacher laisserait chercher. */
+    /* Montrée à tout compte connecté qui n'a pas encore d'avis — dès la
+       connexion (décision du 29/09/2026, sql/011 : plus de nombre de séances). */
     var e = etat;
-    opt.hidden = !(e && e.connecte && !e.avis);
-    if(opt.hidden) return;
-    var pret = !!e.peut;
-    opt.disabled = !pret;
-    opt.setAttribute('aria-disabled', pret ? 'false' : 'true');
-    if(optTxt) optTxt.textContent = pret
-      ? 'Votre note et quelques mots sur Albatros VFR.'
-      : 'Possible après ' + SEUIL + ' séances terminées (vol ou scénario) — vous en avez ' + (e.seances||0) + '.';
+    opt.hidden = !(e && e.connecte && !e.avis && e.peut !== false);
+    if(optTxt) optTxt.textContent = 'Votre note et quelques mots sur Albatros VFR.';
   }
   function noteChoisie(){
     var r = vue && vue.querySelector('input[name="note"]:checked');
@@ -115,7 +110,6 @@
   }
   function raison(err){
     var m = String((err && (err.message || err.details)) || '');
-    if(/avis_trop_tot/.test(m)) return 'Il faut avoir terminé ' + SEUIL + ' séances (vol ou scénario) pour laisser un avis.';
     if(err && err.code === '23505' || /duplicate|unique/i.test(m)) return 'Vous avez déjà laissé un avis — merci !';
     if(/avis_compte_inactif/.test(m)) return 'Votre compte n\'est pas actif.';
     return 'L\'envoi n\'a pas abouti. Réessayez dans un instant.';
@@ -150,7 +144,7 @@
       direMsg(raison(err), 'error');
     });
   }
-  if(opt) opt.addEventListener('click', function(){ if(!opt.disabled) ouvrirVue(); });
+  if(opt) opt.addEventListener('click', ouvrirVue);
   if(vue){
     vue.addEventListener('submit', envoyer);
     vue.addEventListener('change', function(){ peindreEtoiles(noteChoisie()); });
@@ -198,8 +192,10 @@
     }
     rappel.hidden = false;
   }
+  /* Le rappel, lui, attend la 2e séance terminée : avant, on n'a pas grand-chose
+     à dire de l'application. */
   function peutRappeler(e){
-    if(!e || !e.connecte || e.avis || !e.peut) return false;
+    if(!e || !e.connecte || e.avis || !e.peut || (e.seances || 0) < SEUIL) return false;
     var plusTard = parseInt(reglages().avisRappel, 10);
     return !(plusTard && (e.seances || 0) < plusTard + RAPPEL_ECART);
   }

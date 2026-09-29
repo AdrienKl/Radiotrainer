@@ -126,8 +126,8 @@ Six tables. Le raisonnement (et ce qui a été écarté) est dans `ADMIN.md` § 
 > retire à `anon` le droit SELECT sur `paiements`, resté par défaut.
 >
 > **Les avis (sql/010, 29/09/2026)** : table `avis`, un par compte. Dépôt par
-> l'élève (note + commentaire seulement, droits par colonne) après 2 séances
-> terminées ; statut, vedette, pseudo et date imposés par le déclencheur
+> l'élève (note + commentaire seulement, droits par colonne), dès la
+> connexion (`sql/011` a retiré le seuil de 2 séances) ; statut, vedette, pseudo et date imposés par le déclencheur
 > `avis_avant_depot`. Lecture publique des seuls publiés, sans `user_id`.
 > Aucune politique UPDATE / DELETE : modération par `admin_avis_moderer`,
 > `admin_avis_vedette`, `admin_avis_supprimer`, `admin_avis_liste` (admin

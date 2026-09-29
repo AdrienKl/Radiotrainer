@@ -788,9 +788,18 @@ if (!problemes) {
   // 15.2 Un seul avis par compte.
   x15 = await enTant('authenticated', aA, `insert into public.avis (note) values (1)`);
   if (x15.ok) pb15.push('un second avis a été accepté');
-  // 15.3 Deux séances TERMINÉES, vol ou scénario (l'épellation et l'abandon ne comptent pas).
+  // 15.3 Depuis sql/011 : un avis dès la connexion, sans nombre de séances.
+  //      Le compteur `seances` de mon_avis() ne compte que les vols et scénarios TERMINÉS.
+  x15 = await enTant('authenticated', aB, `select public.mon_avis() as m`);
+  if (!x15.ok || x15.r.m.seances !== 1 || !x15.r.m.peut) pb15.push(`mon_avis() avant dépôt, une séance : ${JSON.stringify(x15)}`);
   x15 = await enTant('authenticated', aB, `insert into public.avis (note) values (4)`);
-  if (x15.ok || !/avis_trop_tot/.test(x15.message)) pb15.push(`dépôt avec une seule séance terminée : ${JSON.stringify(x15)}`);
+  if (!x15.ok) pb15.push(`dépôt refusé à un compte connecté avec une seule séance : ${x15.message}`);
+  // Un compte suspendu, lui, ne dépose pas.
+  await db.exec(`insert into auth.users (email) values ('avisD@albatros.test')`);
+  const aD = await idDe('avisD@albatros.test');
+  await db.exec(`update public.profiles set status = 'suspended' where id = '${aD}'`);
+  x15 = await enTant('authenticated', aD, `insert into public.avis (note) values (5)`);
+  if (x15.ok) pb15.push('un compte suspendu a déposé un avis');
   // Anonyme : aucun dépôt.
   x15 = await enTant('anon', null, `insert into public.avis (note) values (5)`);
   if (x15.ok) pb15.push('un visiteur anonyme a déposé un avis');
@@ -843,7 +852,7 @@ if (!problemes) {
   if (!x15.ok || x15.r.m.avis.statut !== 'rejete' || x15.r.m.avis.motif_rejet !== 'Hors sujet' || x15.r.m.peut)
     pb15.push(`mon_avis() : ${JSON.stringify(x15)}`);
   x15 = await enTant('authenticated', aB, `select public.mon_avis() as m`);
-  if (!x15.ok || x15.r.m.peut || x15.r.m.seances !== 1) pb15.push(`mon_avis(), une séance : ${JSON.stringify(x15)}`);
+  if (!x15.ok || x15.r.m.peut || !x15.r.m.avis) pb15.push(`mon_avis() après dépôt : ${JSON.stringify(x15)}`);
 
   // 15.7 Trois vedettes au plus : un rang pris remplace l'ancien titulaire.
   await enTant('authenticated', aC, `insert into public.avis (note) values (4)`);
@@ -868,7 +877,7 @@ if (!problemes) {
   await moi13(null);
 
   if (pb15.length) { rate('les avis ne se comportent pas comme prévu :'); pb15.forEach(m => console.log(rouge('      · ' + m))); }
-  else passe('avis : un par compte, pour soi, 2 séances terminées ; en attente jusqu\'à modération ; ni modifiable ni supprimable par l\'auteur, même par l\'API ; public = publiés seuls, sans user_id ; 3 vedettes publiées au plus ; admin plein seul, journalisé');
+  else passe('avis : un par compte, pour soi, dès la connexion (sql/011) ; en attente jusqu\'à modération ; ni modifiable ni supprimable par l\'auteur, même par l\'API ; public = publiés seuls, sans user_id ; 3 vedettes publiées au plus ; admin plein seul, journalisé');
 }
 
 console.log('');

@@ -193,7 +193,7 @@
               <button class="btn cta" type="button" data-page="signup">Commencer l'essai gratuit</button>
               <button class="btn cta-ghost" type="button" data-page="login">Se connecter</button>
             </div>
-            <p class="hero__note">Gratuit pour l'instant, sans carte bancaire. Micro requis — <b>Chrome, Edge ou Safari</b>. Outil pédagogique&nbsp;: il ne remplace pas la formation avec un instructeur.</p>
+            <p class="hero__note"><b>Phase de lancement&nbsp;: gratuit</b>, sans carte bancaire. Micro requis — <b>Chrome, Edge ou Safari</b>. Outil pédagogique&nbsp;: il ne remplace pas la formation avec un instructeur.</p>
           </div>
         </div>
 
@@ -378,7 +378,7 @@
       <section class="offre">
         <div class="container">
           <span class="sec-tag">L'offre</span>
-          <h2 class="sec-h">Essayez d'abord, vous payerez après avoir testé.</h2>
+          <h2 class="sec-h">Gratuit pendant la phase de lancement.</h2>
           <p class="sec-lede">On ne vous demande pas de croire sur parole qu'un simulateur de phraséologie sert à quelque chose. Ouvrez un compte, faites un vol complet, déclenchez une panne moteur en montée initiale, et voyez ce que ça donne. <b>C'est au bout du premier MAYDAY qu'on sait.</b></p>
 
           <div class="strip reveal">
@@ -387,11 +387,23 @@
               <span class="strip__kind" data-offre="kind">Essai</span>
             </div>
             <dl class="strip__fields">
-              <div class="strip__f"><dt>Durée</dt><dd data-offre="duree">Sans limite<small>pendant la phase d'essai</small></dd></div>
+              <div class="strip__f"><dt>Prix</dt><dd data-offre="duree">Gratuit<small>pendant la phase de lancement</small></dd></div>
               <div class="strip__f"><dt>Accès</dt><dd>Tout<small>aucun exercice réservé</small></dd></div>
               <div class="strip__f"><dt>Carte bancaire</dt><dd data-offre="carte">Non<small>rien à saisir aujourd'hui</small></dd></div>
               <div class="strip__f"><dt>Ensuite</dt><dd data-offre="prix">Abonnement<small>tarif annoncé ici</small></dd></div>
             </dl>
+            <!-- Les limites de la phase de lancement (29/09/2026). Les nombres sont
+                 ceux de assets/modules/lancement.js (LIMITES) : les changer là-bas
+                 sans les changer ici ferait mentir la vitrine. -->
+            <div class="strip__jour">
+              <span class="strip__jour-t">Chaque jour, pendant le lancement</span>
+              <ul>
+                <li><b>3 vols et 5 scénarios</b> avec la voix réaliste du contrôleur</li>
+                <li>ensuite, <b>jusqu'à 10 vols et 15 scénarios</b> avec la voix de votre navigateur</li>
+                <li><b>QCM illimités</b> — ils ne sont pas comptés</li>
+              </ul>
+              <span class="strip__jour-n">Compteurs remis à zéro à minuit. Vous les suivez sur votre tableau de bord.</span>
+            </div>
             <div class="strip__body">
               <ul class="strip__list">
                 <li><b>13 scénarios</b> — du parking au parking, plus les quiz de vocabulaire et de nombres</li>
@@ -1093,7 +1105,8 @@
                 <td>Intérêt légitime</td>
                 <td>Le temps de traiter la demande, puis dans la boîte de réception du prestataire
                     selon sa propre politique (§ 4).</td></tr>
-            <tr><td><b>Consommation de la voix Google</b> (comptes Premium) — par jour et par voix :
+            <tr><td><b>Consommation de la voix réaliste du contrôleur</b> (synthèse Google ; comptes Premium, et tous les comptes pendant la
+                    phase de lancement) — par jour et par voix :
                     le nombre de caractères synthétisés et de requêtes, la voix et son modèle. <b>Jamais
                     le texte prononcé.</b></td>
                 <td>Appliquer le quota journalier, et suivre le coût du service.</td>
@@ -1142,7 +1155,9 @@
             <tr><td><b>Apple Inc.</b></td><td>Reconnaissance vocale du navigateur Safari</td>
                 <td>Voir le § 5.</td></tr>
             <tr><td><b>Google LLC</b> (Cloud Text-to-Speech)</td><td>Sous-traitant : voix du contrôleur,
-                <b>seulement</b> si votre compte est Premium et que vous avez choisi la voix Google</td>
+                <b>seulement</b> quand la voix réaliste du contrôleur parle : comptes Premium, et, pendant la phase de
+                lancement, tous les comptes pour leurs 3 premiers vols et 5 premiers scénarios du jour —
+                sauf si vous choisissez la voix du navigateur dans les Paramètres</td>
                 <td>Le texte que prononce le contrôleur, et la voix choisie. Ce texte peut contenir des
                     éléments de votre séance, comme <b>votre indicatif</b>, l'aérodrome ou la piste. Il
                     part de notre serveur, pas de votre navigateur : Google ne reçoit ni votre adresse
@@ -1179,11 +1194,11 @@
             (Thomas, Amélie…) ne sort pas de votre appareil ; une voix distante, comme les voix
             « Google » de Chrome, implique l'envoi du texte à prononcer. Le bouton <i>Écouter un
             exemple</i> des Paramètres vous permet de choisir une voix locale.</li>
-          <li><b>La voix Google des comptes Premium</b> est un autre service : si vous la choisissez dans
-            les Paramètres, le texte que prononce le contrôleur — qui peut contenir votre indicatif —
+          <li><b>La voix réaliste du contrôleur</b> est un autre service, fourni par Google Cloud Text-to-Speech. Elle est utilisée <b>par défaut</b> pendant la
+            phase de lancement (3 vols et 5 scénarios par jour), et pour les comptes Premium : le texte que prononce le contrôleur — qui peut contenir votre indicatif —
             est envoyé par notre serveur à Google Cloud Text-to-Speech, qui renvoie le son. Ce texte
             n'est pas conservé ici ; seuls sont comptés, par jour, les caractères et les requêtes (§ 2).
-            Revenir à la voix du navigateur arrête ces envois.</li>
+            Choisir « Navigateur » dans Paramètres › Voix et micro arrête ces envois.</li>
         </ul>
 
         <h2 class="legal-h2">6. Transferts hors de l'Union européenne</h2>
@@ -1217,7 +1232,7 @@
             <tr><td><span class="legal-mono">rt-push-attente</span></td><td>Stockage local</td>
                 <td>Les réglages ou le vol en cours pas encore envoyés.</td></tr>
             <tr><td><span class="legal-mono">rt-quota</span></td><td>Stockage local</td>
-                <td>Le compteur de vols du jour.</td></tr>
+                <td>Les compteurs de vols et de scénarios du jour (phase de lancement).</td></tr>
             <tr><td><span class="legal-mono">rt-cache-proprio</span></td><td>Stockage local</td>
                 <td>À quel compte appartient ce qui est stocké sur l'appareil.</td></tr>
             <tr><td><span class="legal-mono">rt-admin-errors</span></td><td>Stockage local</td>
@@ -1319,7 +1334,10 @@
 
         <div class="tb-grid">
           <div class="tb-card">
-            <h3>Quota du jour</h3>
+            <!-- Phase de lancement (29/09/2026) : les compteurs du jour, et ce
+                 qu'il reste en voix Google. assets/modules/lancement.js les
+                 tient, tableau-de-bord.js les peint. -->
+            <h3>Aujourd'hui <span class="tb-lancement">Phase de lancement · gratuit</span></h3>
             <div class="tb-quota" id="tbQuota"></div>
             <p class="tb-note" id="tbQuotaNote"></p>
           </div>
@@ -2116,6 +2134,20 @@
             Vos réglages d'apparence et d'entraînement, eux, restent modifiables.</span>
         </div>
 
+        <!-- Les onglets (29/09/2026, demande du développeur : « c'est un peu le
+             bazar »). Une catégorie à la fois ; l'onglet se lit dans l'adresse
+             (#parametres/voix), pour qu'un lien puisse y mener. Les cartes ont été
+             déplacées telles quelles : mêmes identifiants, même logique
+             (parametres.js, compte.js). -->
+        <div class="set-tabs" role="tablist" aria-label="Catégories de paramètres">
+          <button class="set-tab" type="button" role="tab" id="setTab-compte" aria-controls="setPanel-compte" data-onglet="compte">Compte</button>
+          <button class="set-tab" type="button" role="tab" id="setTab-voix" aria-controls="setPanel-voix" data-onglet="voix">Voix et micro</button>
+          <button class="set-tab" type="button" role="tab" id="setTab-entrainement" aria-controls="setPanel-entrainement" data-onglet="entrainement">Entraînement</button>
+          <button class="set-tab" type="button" role="tab" id="setTab-apparence" aria-controls="setPanel-apparence" data-onglet="apparence">Apparence</button>
+          <button class="set-tab" type="button" role="tab" id="setTab-donnees" aria-controls="setPanel-donnees" data-onglet="donnees">Données</button>
+        </div>
+
+        <div class="set-panel" id="setPanel-compte" role="tabpanel" aria-labelledby="setTab-compte" data-onglet="compte">
         <div class="set-grid">
 
           <div class="set-card">
@@ -2237,21 +2269,11 @@
             <p class="set-note auth-msg hidden" id="cptMdpMsg"></p>
           </div>
 
-          <div class="set-card">
-            <h3>Apparence</h3>
-            <div class="set-row">
-              <div class="set-lbl"><b>Thème</b><span>Sombre suit votre système si vous choisissez « Système ».</span></div>
-              <div class="seg3" role="group" aria-label="Thème">
-                <button class="seg3-opt" type="button" data-theme-opt="system">Système</button>
-                <button class="seg3-opt" type="button" data-theme-opt="light">Clair</button>
-                <button class="seg3-opt" type="button" data-theme-opt="dark">Sombre</button>
-              </div>
-            </div>
-            <div class="set-row">
-              <div class="set-lbl"><b>Animations</b><span>Désactive les transitions et apparitions progressives.</span></div>
-              <button class="switch" id="setAnim" type="button" role="switch" aria-checked="true"><span></span></button>
-            </div>
-          </div>
+        </div>
+        </div>
+
+        <div class="set-panel" id="setPanel-voix" role="tabpanel" aria-labelledby="setTab-voix" data-onglet="voix">
+        <div class="set-grid">
 
           <div class="set-card">
             <h3>Voix du contrôleur</h3>
@@ -2261,10 +2283,10 @@
                  décide (sql/005, voix_consommer), et un compte gratuit qui le
                  forcerait n'obtiendrait que la voix du navigateur. -->
             <div class="set-row">
-              <div class="set-lbl"><b>Moteur</b><span id="setMoteurAide">Voix de votre navigateur, gratuite, ou voix Google, plus naturelle, réservée aux comptes Premium.</span></div>
+              <div class="set-lbl"><b>Moteur</b><span id="setMoteurAide">Voix de votre navigateur, gratuite, ou voix réaliste du contrôleur, réservée aux comptes Premium.</span></div>
               <div class="seg3" role="group" aria-label="Moteur de la voix">
                 <button class="seg3-opt" type="button" data-moteur="navigateur">Navigateur</button>
-                <button class="seg3-opt" type="button" data-moteur="google">Google <span class="set-premium">Premium</span></button>
+                <button class="seg3-opt" type="button" data-moteur="google">Réaliste <span class="set-premium">Premium</span></button>
               </div>
             </div>
             <div class="set-row" id="setVoixNavRow">
@@ -2275,7 +2297,7 @@
                  écrite ici. Rangée par modèle, dans l'ordre de
                  Voix.FAMILLES_GOOGLE. -->
             <div class="set-row" id="setVoixGoogleRow" hidden>
-              <div class="set-lbl"><b>Voix Google</b><span id="setVoixGoogleAide">Rangées par modèle. Changer de voix vaut dès le message suivant.</span></div>
+              <div class="set-lbl"><b>Voix réaliste</b><span id="setVoixGoogleAide">Rangées par modèle. Changer de voix vaut dès le message suivant.</span></div>
               <select id="setVoixGoogle" class="set-input" aria-describedby="setVoixGoogleAide"></select>
             </div>
             <div class="set-row">
@@ -2286,9 +2308,17 @@
                 <button class="seg3-opt" type="button" data-rate="1.15">Rapide</button>
               </div>
             </div>
+            <!-- Intensité plutôt qu'interrupteur (29/09/2026). « Aucun » écrit
+                 noise=false, comme l'ancien interrupteur ; les trois autres
+                 écrivent noise=true et `bruit` (4-bruit-radio.js › niveau). -->
             <div class="set-row">
               <div class="set-lbl"><b>Bruit de fond radio</b><span>Souffle pendant que le contrôleur parle.</span></div>
-              <button class="switch" id="setNoise" type="button" role="switch" aria-checked="false"><span></span></button>
+              <div class="seg3 seg4" role="group" aria-label="Bruit de fond radio">
+                <button class="seg3-opt" type="button" data-bruit="aucun">Aucun</button>
+                <button class="seg3-opt" type="button" data-bruit="faible">Faible</button>
+                <button class="seg3-opt" type="button" data-bruit="moyen">Moyen</button>
+                <button class="seg3-opt" type="button" data-bruit="fort">Fort</button>
+              </div>
             </div>
             <!-- Un bouton d'essai, parce que le réglage le plus important de cette
                  carte est celui qu'on ne peut pas juger sans entendre. Et surtout :
@@ -2304,6 +2334,30 @@
           </div>
 
           <div class="set-card">
+            <h3>Micro</h3>
+            <div class="set-row">
+              <div class="set-lbl"><b>Silence avant fin d'écoute</b><span>Durée de blanc qui coupe le micro après votre message.</span></div>
+              <div class="seg3" role="group" aria-label="Silence">
+                <button class="seg3-opt" type="button" data-sil="1500">1,5 s</button>
+                <button class="seg3-opt" type="button" data-sil="2500">2,5 s</button>
+                <button class="seg3-opt" type="button" data-sil="4000">4 s</button>
+              </div>
+            </div>
+            <!-- Les bips d'alternat (29/09/2026) : 6-micro.js › bipMicro, joués
+                 dans l'AudioContext du bruit radio. -->
+            <div class="set-row">
+              <div class="set-lbl"><b>Bips du micro</b><span>Un bip quand le micro s'ouvre, un autre quand il se ferme.</span></div>
+              <button class="switch" id="setBips" type="button" role="switch" aria-checked="true"><span></span></button>
+            </div>
+          </div>
+
+        </div>
+        </div>
+
+        <div class="set-panel" id="setPanel-entrainement" role="tabpanel" aria-labelledby="setTab-entrainement" data-onglet="entrainement">
+        <div class="set-grid">
+
+          <div class="set-card">
             <h3>Entraînement</h3>
             <div class="set-row">
               <div class="set-lbl"><b>Indicatif par défaut</b><span>Immatriculation fictive utilisée au démarrage.</span></div>
@@ -2314,14 +2368,6 @@
               <div class="seg3 seg2" role="group" aria-label="Difficulté">
                 <button class="seg3-opt" type="button" data-diffset="debutant">Débutant</button>
                 <button class="seg3-opt" type="button" data-diffset="reel">Réel</button>
-              </div>
-            </div>
-            <div class="set-row">
-              <div class="set-lbl"><b>Silence avant fin d'écoute</b><span>Durée de blanc qui coupe le micro après votre message.</span></div>
-              <div class="seg3" role="group" aria-label="Silence">
-                <button class="seg3-opt" type="button" data-sil="1500">1,5 s</button>
-                <button class="seg3-opt" type="button" data-sil="2500">2,5 s</button>
-                <button class="seg3-opt" type="button" data-sil="4000">4 s</button>
               </div>
             </div>
           </div>
@@ -2376,6 +2422,44 @@
                `profiles.role`, lu en base. Un interrupteur qui n'ouvre plus rien
                n'aurait servi qu'a faire croire le contraire. -->
 
+
+        </div>
+        </div>
+
+        <div class="set-panel" id="setPanel-apparence" role="tabpanel" aria-labelledby="setTab-apparence" data-onglet="apparence">
+        <div class="set-grid">
+
+          <div class="set-card">
+            <h3>Apparence</h3>
+            <div class="set-row">
+              <div class="set-lbl"><b>Thème</b><span>Sombre suit votre système si vous choisissez « Système ».</span></div>
+              <div class="seg3" role="group" aria-label="Thème">
+                <button class="seg3-opt" type="button" data-theme-opt="system">Système</button>
+                <button class="seg3-opt" type="button" data-theme-opt="light">Clair</button>
+                <button class="seg3-opt" type="button" data-theme-opt="dark">Sombre</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <div class="set-lbl"><b>Animations</b><span>Désactive les transitions et apparitions progressives.</span></div>
+              <button class="switch" id="setAnim" type="button" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <!-- Taille du texte (29/09/2026) : agrandit ce qu'on lit pendant un
+                 exercice — message du contrôleur, consigne, transcription,
+                 journal. html.txt-grand, posé par parametres.js. -->
+            <div class="set-row">
+              <div class="set-lbl"><b>Taille du texte</b><span>Pendant les scénarios et les vols : message du contrôleur, consigne, transcription.</span></div>
+              <div class="seg3 seg2" role="group" aria-label="Taille du texte">
+                <button class="seg3-opt" type="button" data-texte="normal">Normal</button>
+                <button class="seg3-opt" type="button" data-texte="grand">Grand</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        </div>
+
+        <div class="set-panel" id="setPanel-donnees" role="tabpanel" aria-labelledby="setTab-donnees" data-onglet="donnees">
+        <div class="set-grid">
 
           <div class="set-card set-wide">
             <h3>Votre pratique</h3>
@@ -2460,6 +2544,8 @@
           </div>
 
         </div>
+        </div>
+
       </div>
     </section>
 
@@ -2498,7 +2584,7 @@
          et la progression sont partis en base. Une affirmation fausse sur la vie
          privée est exactement le genre de détail qui décrédibilise tout le reste
          — et ici elle contredisait la politique de confidentialité. -->
-    Une fois la page ouverte, un exercice se poursuit sans connexion : la séance est envoyée dès que la connexion revient. Trois choses sortent de votre machine : le <strong>fond de carte</strong> des pages Navigation et Carte, dont une couche vient des serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>voix</strong>, quand vous parlez au micro, transcrite par le service de reconnaissance de votre navigateur ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback » ; et, si vous avez choisi la voix Google (comptes Premium), le <strong>texte que prononce le contrôleur</strong>, synthétisé par Google. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
+    Une fois la page ouverte, un exercice se poursuit sans connexion : la séance est envoyée dès que la connexion revient. Trois choses sortent de votre machine : le <strong>fond de carte</strong> des pages Navigation et Carte, dont une couche vient des serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>voix</strong>, quand vous parlez au micro, transcrite par le service de reconnaissance de votre navigateur ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback » ; et, quand la voix réaliste du contrôleur parle (par défaut pendant la phase de lancement, désactivable dans les Paramètres), le <strong>texte que prononce le contrôleur</strong>, synthétisé par Google. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
     <br><button class="auth-link" type="button" data-contact>Contact / Feedback</button> · <button class="auth-link" type="button" data-page="mentions">Mentions légales</button> · <button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
     <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation et de l’Alphabet aéro : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
@@ -2728,6 +2814,10 @@
      son markup (#contactModal, plus haut dans la page), puisqu'il va chercher
      ses éléments dès son chargement et renonce en silence s'ils manquent. -->
 <script src="assets/modules/contact.js"></script>
+<!-- La phase de lancement (29/09/2026) : compteurs du jour, voix Google offerte
+     puis voix du navigateur, limite du jour. Rien n'est lu au chargement : sa
+     place est libre, comme celle de contact.js. -->
+<script src="assets/modules/lancement.js"></script>
 
 <!-- ==================== CONSOLE D'ADMINISTRATION ====================
      Scripts classiques (pas de modules ES) et namespace global window.RTAdmin :

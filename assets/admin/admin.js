@@ -129,6 +129,21 @@
     tete.innerHTML =
       '<span class="adm-rail__logo">' + I.spark + '</span>' +
       '<span class="adm-rail__brand"><b>Albatros VFR</b><i>Console d\'administration</i></span>';
+    /* Le logo ramène au tableau de bord, comme partout ailleurs (routeur.js,
+       demande du 29/09/2026 : « quel que soit l'endroit »). La console n'est
+       ouverte qu'à un compte connecté : la destination est toujours le menu
+       pilote. Par l'adresse, parce que showPage n'est pas sur window — le
+       hashchange du routeur fait le reste. Le bouton « Réduire » n'est pas
+       dans cette zone : il garde son propre clic. */
+    tete.classList.add('adm-rail__maison');
+    tete.setAttribute('role', 'link'); tete.setAttribute('tabindex', '0');
+    tete.setAttribute('aria-label', 'Albatros VFR — retour au tableau de bord');
+    function allerMaison(e){
+      if (e && e.target && e.target.closest && e.target.closest('.adm-rail__toggle')) return;
+      location.hash = 'tableau';
+    }
+    tete.addEventListener('click', allerMaison);
+    tete.addEventListener('keydown', function(e){ if (e.key === 'Enter') allerMaison(e); });
     var replier = el('button', 'adm-iconbtn adm-rail__toggle',
       '<svg class="ic-svg" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>');
     replier.type = 'button';

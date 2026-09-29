@@ -114,6 +114,16 @@ Six tables. Le raisonnement (et ce qui a été écarté) est dans `ADMIN.md` § 
 > 'premium'` ET `premium_jusqua` vide ou future. Aucune tâche planifiée :
 > l'expiration est une comparaison. Le crédit passe par `stripe_crediter()`,
 > ouverte au seul rôle `service_role`.
+>
+> **La phase de lancement (sql/009, 29/09/2026)** ouvre la voix Google aux
+> comptes gratuits, sous un plafond à eux : `voix_reglages` gagne
+> `plafond_gratuit` (20 000 caractères par jour) et `lancement_gratuit` (1 =
+> ouverte, 0 = fermée). `voix_consommer()` : Premium actif ou admin plein →
+> plafond du Premium ; sinon phase ouverte → plafond gratuit ; sinon
+> `non_premium`, comme avant. Fermer la phase, en base, sans redéployer :
+> `update voix_reglages set valeur = 0 where cle = 'lancement_gratuit'` — et
+> passer `ACTIF` à `false` dans `assets/modules/lancement.js`. Le même fichier
+> retire à `anon` le droit SELECT sur `paiements`, resté par défaut.
 
 ```sql
 -- =====================================================================

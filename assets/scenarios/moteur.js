@@ -1313,6 +1313,11 @@ function launchScenario(i){
   const sc=SCENARIOS[i];
   // Navigation / panne radio ne nécessitent pas d'aérodrome ; les autres si.
   if(!sc.noTerrain && !state.depAd && !state.arrAd){ showToast("Choisissez d'abord un aérodrome de départ."); return; }
+  /* Phase de lancement (assets/modules/lancement.js, 29/09/2026) : compté ici,
+     au lancement, et non dans startWithTerrain, qui rejoue le même scénario à
+     chaque changement de terrain. Les QCM (sc.quiz) ne comptent pas. Après un
+     message de bascule de voix, le scénario repart au clic sur le message. */
+  if(window.RTLancement && !RTLancement.autoriser(sc.quiz ? 'qcm' : 'scenario', ()=>launchScenario(i))) return;
   state.scenarioIndex=i;
   state.activeSide = (sc.defaultTerrain==='arr' && state.arrAd) ? 'arr' : 'dep';
   startWithTerrain();

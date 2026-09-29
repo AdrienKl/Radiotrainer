@@ -112,7 +112,9 @@ if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickV
        éveillée, pour rien. */
     try{
       var r = (typeof rtSettings==='function') ? rtSettings() : {};
-      if(!audioCtx && r && r.voixMoteur==='google')
+      /* Google est le moteur par défaut depuis la phase de lancement
+         (29/09/2026) : sans choix explicite « Navigateur », on prépare. */
+      if(!audioCtx && r && r.voixMoteur!=='navigateur')
         audioCtx = new (window.AudioContext||window.webkitAudioContext)();
     }catch(e){}
     try{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
@@ -190,8 +192,9 @@ var Voix=(function(){
      MOTEUR GOOGLE (premium) — ajouté le 27/09/2026
      -----------------------------------------------------------------------
      QUAND IL PARLE. À chaque début de message, et seulement si TOUT est
-     réuni : les réglages disent voixMoteur 'google' avec une voixGoogle, une
-     session est ouverte, le profil est premium, le moteur n'est pas en pause
+     réuni : les réglages disent voixMoteur 'google' (ou rien : c'est le défaut
+     depuis le 29/09/2026), une voix est choisie (ou celle par défaut), une
+     session est ouverte, le compte y a droit (accesGoogle), le moteur n'est pas en pause
      (voir plus bas), et le texte tient dans la limite de voix-atc. Sinon, rien
      ne change : c'est speechSynthesis, comme avant.
      Le plan lu dans le profil n'est qu'un raccourci — c'est la base qui
@@ -315,11 +318,27 @@ var Voix=(function(){
        gratuit n'a rien à demander. */
     if(ST.courante && !POOL.dispo && googleEnJeu()) chargerPoolGoogle();
   }
+  /* QUI A DROIT À GOOGLE, du point de vue de la page — la base redécide à
+     chaque message (voix_consommer, sql/009). Premium actif (date de fin
+     comprise, comme premium_actif en base), administrateur, ou voix offerte
+     par la phase de lancement (assets/modules/lancement.js : 3 vols et
+     5 scénarios par jour). */
+  function accesGoogle(p){
+    if(!p) return false;
+    if(p.role==='admin') return true;
+    if(p.plan==='premium' && (!p.premium_jusqua || new Date(p.premium_jusqua) > new Date())) return true;
+    try{ return !!(window.RTLancement && RTLancement.googleOffert()); }catch(e){ return false; }
+  }
+  /* Le moteur voulu. Un élève qui n'a jamais choisi a Google par défaut s'il y
+     a droit (phase de lancement, 29/09/2026) : c'est la voix qu'on lui offre,
+     et la lui cacher derrière un réglage revenait à ne pas l'offrir. Un choix
+     explicite « Navigateur » est respecté. */
+  function moteurVoulu(r){ return (r && r.voixMoteur) || 'google'; }
   function googleEnJeu(){
     try{
       var r = (typeof rtSettings==='function') ? rtSettings() : null;
       var p = window.RTAuth && RTAuth.profil && RTAuth.profil();
-      return !!(r && r.voixMoteur==='google' && p && p.plan==='premium');
+      return !!(r && moteurVoulu(r)==='google' && accesGoogle(p));
     }catch(e){ return false; }
   }
   function rangDe(nom){
@@ -334,7 +353,7 @@ var Voix=(function(){
     return o.controleur ? rangDe(ST.courante) : 0;
   }
 
-  var POOL = { dispo:null, charge:false, essai:0 };   // voix Google proposées : [{nom, genre}]
+  var POOL = { dispo:null, charge:false, essai:0, defaut:null };   // voix Google proposées : [{nom, genre}]
   function chargerPoolGoogle(){
     // Un échec ne se retente pas à chaque message : une fois par minute au plus.
     if(POOL.charge || Date.now() - POOL.essai < 60000) return;
@@ -342,15 +361,28 @@ var Voix=(function(){
     var c = null;
     try{ c = window.RTAuth && RTAuth.client && RTAuth.client(); }catch(e){}
     var catalogue = (c && c.from)
-      ? Promise.resolve(c.from('voix_catalogue').select('voix,active'))
+      ? Promise.resolve(c.from('voix_catalogue').select('voix,active,par_defaut'))
           .then(function(r){ return (r && !r.error && r.data) || []; }, function(){ return []; })
       : Promise.resolve([]);
     Promise.all([listerVoix(), catalogue]).then(function(t){
-      var coupees = {};
-      t[1].forEach(function(x){ if(x && !x.active) coupees[x.voix] = 1; });
+      var coupees = {}, parDefaut = null;
+      t[1].forEach(function(x){ if(x && !x.active) coupees[x.voix] = 1; if(x && x.par_defaut) parDefaut = x.voix; });
       POOL.dispo = (t[0] || []).filter(function(v){ return v && v.nom && !coupees[v.nom]; });
+      /* La voix de qui n'en a pas choisi : celle que l'administration a mise
+         par défaut, sinon la première du premier modèle — la même règle que
+         la liste des Paramètres (parametres.js › remplirVoixGoogle). */
+      var noms = [];
+      FAMILLES.forEach(function(f){ POOL.dispo.forEach(function(v){ if(familleDe(v.nom)===f) noms.push(v.nom); }); });
+      POOL.defaut = (parDefaut && noms.indexOf(parDefaut)>=0) ? parDefaut : (noms[0] || null);
     }, function(){ POOL.charge = false; });   // échec : on réessaiera au message suivant
   }
+  /* Sans voix choisie, le premier message d'un vol attend la liste : on la
+     demande dès l'entrée sur une page qui parle, pas au premier message —
+     sinon la Tour de départ parlerait toujours avec la voix du navigateur. */
+  window.addEventListener('rt:page', function(e){
+    var p = e && e.detail && e.detail.page;
+    if((p==='navigation' || p==='exercices') && !POOL.dispo && googleEnJeu()) chargerPoolGoogle();
+  });
   function voixGoogleDuRang(choisie, rang){
     if(!rang) return choisie;
     if(!POOL.dispo){ chargerPoolGoogle(); return choisie; }   // pas encore arrivée
@@ -393,13 +425,15 @@ var Voix=(function(){
          qui décompte, et elle ne fait pas d'exception. */
       var forcee = m.opts && m.opts.voixGoogle;
       var r = (typeof rtSettings==='function') ? rtSettings() : null;
-      if(!forcee && (!r || r.voixMoteur!=='google' || !r.voixGoogle)) return null;
+      if(!forcee && (!r || moteurVoulu(r)!=='google')) return null;
       var A = window.RTAuth;
       if(!A || !A.utilisateur || !A.utilisateur()) return null;
       var p = A.profil && A.profil();
-      if(!p || p.plan!=='premium') return null;
-      if(forcee) return String(forcee);
-      return voixGoogleDuRang(String(r.voixGoogle), rangMessage(m));
+      if(forcee) return (p && (p.plan==='premium' || p.role==='admin')) ? String(forcee) : null;
+      if(!accesGoogle(p)) return null;
+      var choisie = r.voixGoogle || POOL.defaut;
+      if(!choisie){ chargerPoolGoogle(); return null; }   // la liste arrive : ce message-ci part au navigateur
+      return voixGoogleDuRang(String(choisie), rangMessage(m));
     }catch(e){ return null; }
   }
 

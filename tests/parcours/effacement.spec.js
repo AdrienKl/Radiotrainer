@@ -37,7 +37,7 @@ async function compterEffacements(page) {
 test('connecté, « Effacer les données de cet appareil » n\'est pas proposé', async ({ page }) => {
   await ouvrir(page);
   await simulerConnexion(page);
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/donnees');
   await expect(page.locator('#setClearHist')).toBeHidden();
   await expect(page.locator('#cptHistOuvrir')).toBeVisible();
 });
@@ -46,7 +46,7 @@ test('hors connexion, l\'action locale vide l\'appareil et ne touche jamais la b
   await ouvrir(page);
   await compterEffacements(page);
   await page.evaluate(() => localStorage.setItem('rt-vols', JSON.stringify([{ id: 'v1' }])));
-  await entrer(page, 'parametres');               // interface ouverte, mais aucune session Supabase
+  await entrer(page, 'parametres/donnees');               // interface ouverte, mais aucune session Supabase
 
   await expect(page.locator('#setClearHist')).toBeVisible();
   await page.locator('#setClearHist').click();
@@ -62,7 +62,7 @@ test('supprimer l\'historique du compte exige de retaper son nom d\'utilisateur'
   await ouvrir(page);
   await simulerConnexion(page);
   await compterEffacements(page);
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/donnees');
 
   await page.locator('#cptHistOuvrir').click();
   await expect(page.locator('#cptHistConfirm')).toBeVisible();
@@ -92,7 +92,7 @@ test('si la base refuse, on le dit et rien n\'est annoncé comme supprimé', asy
     window.RTDonnees = window.RTDonnees || {};
     RTDonnees.effacerTout = () => Promise.reject(new Error('refusé'));
   });
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/donnees');
   await page.locator('#cptHistOuvrir').click();
   await page.locator('#cptHistSaisie').fill('pilote28');
   await page.locator('#cptHistSupprimer').click();

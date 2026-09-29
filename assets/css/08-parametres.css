@@ -29,6 +29,22 @@
   /* min(…,100%) : sans cela, une colonne à minimum fixe (340 px) reste plus large que
      l'écran sur un petit mobile et fait déborder toute la page horizontalement. */
   .set-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr)); gap:16px; align-items:start; }
+
+  /* Les onglets (29/09/2026). Une barre qui défile sur le côté plutôt que de
+     passer à la ligne : sur téléphone, cinq onglets sur deux lignes ne se
+     lisent plus comme un seul groupe. `[hidden]` forcé : un display posé par
+     une feuille l'emporte sur l'attribut — le piège est déjà tombé trois fois
+     dans ce projet. */
+  .set-tabs{ display:flex; gap:4px; margin:0 0 18px; padding:4px; overflow-x:auto; scrollbar-width:none;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:var(--pill); width:max-content; max-width:100%; }
+  .set-tabs::-webkit-scrollbar{ display:none; }
+  .set-tab{ flex:none; cursor:pointer; border:none; background:transparent; border-radius:var(--pill);
+    padding:9px 16px; font-family:var(--sans); font-size:13.5px; font-weight:650; color:var(--ink-2-fort);
+    white-space:nowrap; transition:.15s; }
+  .set-tab:hover{ color:var(--ink); }
+  .set-tab.active{ background:var(--violet); color:#fff; }
+  .set-tab:focus-visible{ outline:2px solid var(--violet); outline-offset:2px; }
+  .set-panel[hidden]{ display:none !important; }
   .set-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     padding:20px 22px; box-shadow:var(--shadow-sm); }
   .set-card.set-wide{ grid-column:1/-1; }
@@ -61,6 +77,8 @@
     color:var(--ink-2-fort); transition:.15s; white-space:nowrap; }
   .seg3-opt:hover{ color:var(--ink); }
   .seg3-opt.active{ background:var(--violet); color:#fff; }
+  /* Quatre options (bruit radio) : un peu plus serrées, pour tenir à côté du libellé. */
+  .seg4 .seg3-opt{ padding:7px 10px; }
 
   /* Le moteur Google, réservé aux comptes Premium (27/09/2026). Verrouillé,
      l'option garde la couleur de texte des autres : une opacité réduite

@@ -406,8 +406,18 @@
     var quota = c.from('sessions').select('id', { count:'exact', head:true })
                  .eq('user_id', uid).eq('kind', 'flight')
                  .gte('started_at', debutJour.toISOString());
+    /* Phase de lancement (29/09/2026, assets/modules/lancement.js) : les
+       scénarios COMMENCÉS aujourd'hui, même règle que les vols. Les QCM ne
+       comptent pas : ce sont les scénarios `quiz` du catalogue du code, lus
+       ici plutôt que recopiés — un QCM ajouté demain en sera exclu d'office. */
+    var qcm = (typeof SCENARIOS !== 'undefined' ? SCENARIOS : [])
+                .filter(function(sc){ return sc && sc.quiz; }).map(function(sc){ return sc.id; });
+    var quotaScen = c.from('sessions').select('id', { count:'exact', head:true })
+                 .eq('user_id', uid).eq('kind', 'scenario')
+                 .gte('started_at', debutJour.toISOString());
+    if (qcm.length) quotaScen = quotaScen.not('exercise_key', 'in', '(' + qcm.join(',') + ')');
 
-    return Promise.all([seances, jours, profil, quota]).then(function(r){
+    return Promise.all([seances, jours, profil, quota, quotaScen]).then(function(r){
       if (r[0].error) throw r[0].error;
       var lignes = r[0].data || [];
 
@@ -429,7 +439,20 @@
 
         ecrire(K.scenarios, scen.slice(0, 50));
         ecrire(K.vols,      vols.slice(0, 40));
-        ecrire(K.quota,     { date:auj, n: quotaJour === null ? quotaRepli : quotaJour });
+        /* Les drapeaux « message déjà montré » de lancement.js survivent au
+           recomptage : sans eux, le message de bascule reviendrait à chaque
+           rechargement. Et un compte local plus haut que celui de la base
+           (séance lancée hors ligne) n'est pas rabaissé. */
+        var qAvant = lire(K.quota, null);
+        var qMeme = (qAvant && qAvant.date === auj) ? qAvant : {};
+        var scenJour = (r[4] && !r[4].error && typeof r[4].count === 'number') ? r[4].count : null;
+        ecrire(K.quota, {
+          date: auj,
+          n: Math.max(quotaJour === null ? quotaRepli : quotaJour, qMeme.n || 0),
+          s: Math.max(scenJour === null ? 0 : scenJour, qMeme.s || 0),
+          averti_n: !!qMeme.averti_n, averti_s: !!qMeme.averti_s
+        });
+        try { window.dispatchEvent(new CustomEvent('rt:lancement')); } catch (e) {}
 
         /* Jours de pratique. La vue peut échouer (elle n'existe pas encore sur
            une base non migrée) : on retombe alors sur les dates des séances

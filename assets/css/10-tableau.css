@@ -64,6 +64,19 @@
   .tb-jauge i.plein{ background:var(--warn); }
   .tb-qn{ font-family:var(--mono); font-size:15px; font-weight:700; color:var(--ink); flex:none; }
   .tb-qn small{ font-size:12px; color:var(--ink-2); font-weight:400; }
+  /* Phase de lancement (29/09/2026) : une ligne par type de séance. La
+     graduation (--g) marque où s'arrête la voix Google ; au-delà, la jauge
+     passe au gris-bleu (voix du navigateur), puis à l'orange (limite). */
+  .tb-quota{ flex-direction:column; align-items:stretch; gap:10px; }
+  .tb-qligne{ display:grid; grid-template-columns:78px auto 1fr; align-items:center; gap:4px 12px; }
+  .tb-qlib{ font-size:13px; font-weight:600; color:var(--ink); }
+  .tb-qreste{ grid-column:2 / -1; font-size:12px; color:var(--ink-2); }
+  .tb-jauge{ position:relative; }
+  .tb-jauge::after{ content:''; position:absolute; top:-2px; bottom:-2px; left:var(--g,100%); width:2px;
+    background:var(--ink-2); opacity:.45; }
+  .tb-jauge i.nav{ background:#5f7a99; }
+  .tb-lancement{ margin-left:8px; font-size:11px; font-weight:700; letter-spacing:.02em; vertical-align:middle;
+    padding:2px 8px; border-radius:var(--pill); background:rgba(91,75,206,.12); color:var(--violet-dark); }   /* --violet-dark en TEXTE, jamais en fond (INSCRIPTION.md § 8 ter) */
 
   .tb-vide{ font-size:13px; color:var(--ink-2); }
   .tb-ligne{ display:flex; align-items:center; gap:12px; padding:10px 0;

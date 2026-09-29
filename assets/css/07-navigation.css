@@ -442,3 +442,12 @@
   /* Champ obligatoire non renseigné. */
   .champ-requis{ border-color:var(--bad) !important; box-shadow:0 0 0 3px rgba(217,83,79,.16) !important; }
 
+
+/* Taille du texte « Grand » (Paramètres › Apparence, 29/09/2026) : ce qu'on lit
+   PENDANT un exercice — message du contrôleur, consigne, transcription,
+   journal. `html.txt-grand` l'emporte aussi sur les tailles réduites du
+   téléphone (plus haut), par sa spécificité. */
+html.txt-grand .vf-atc{ font-size:19px; }
+html.txt-grand .vf-consigne{ font-size:20px; }
+html.txt-grand .vf-log{ font-size:15.5px; }
+html.txt-grand #transText, html.txt-grand #vfTransText{ font-size:17px; }

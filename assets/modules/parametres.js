@@ -106,9 +106,20 @@
   var AIDE_G = aideG ? aideG.textContent : '', AIDE_M = aideM ? aideM.textContent : '';
   function estConnecte(){ try{ return !!(window.RTAuth && RTAuth.utilisateur && RTAuth.utilisateur()); }catch(e){ return false; } }
   function estPremium(){
-    try{ var p = window.RTAuth && RTAuth.profil && RTAuth.profil(); return !!(p && p.plan==='premium'); }catch(e){ return false; }
+    try{
+      var p = window.RTAuth && RTAuth.profil && RTAuth.profil();
+      if(!p) return false;
+      if(window.RTLancement) return RTLancement.premiumActif(p) || p.role==='admin';
+      return p.plan==='premium' || p.role==='admin';
+    }catch(e){ return false; }
   }
-  function moteurEffectif(){ return (S.voixMoteur==='google' && estPremium()) ? 'google' : 'navigateur'; }
+  /* Phase de lancement (29/09/2026) : la voix Google est offerte à tout compte
+     connecté — 3 vols et 5 scénarios par jour, assets/modules/lancement.js.
+     Le choix reste donc ouvert ; c'est la séance qui décide si Google parle. */
+  function enLancement(){ return !!(window.RTLancement && RTLancement.actif() && estConnecte()); }
+  function peutChoisirGoogle(){ return estPremium() || enLancement(); }
+  // Sans choix explicite, Google : c'est le défaut de 5-voix.js (moteurVoulu).
+  function moteurEffectif(){ return ((S.voixMoteur||'google')==='google' && peutChoisirGoogle()) ? 'google' : 'navigateur'; }
   // Le libellé et le modèle d'une voix : écrits une fois, dans 5-voix.js.
   function famille(nom){ return (window.Voix && Voix.familleGoogle) ? Voix.familleGoogle(nom) : null; }
   function libelleVoix(v, avecModele){ return (window.Voix && Voix.libelleGoogle) ? Voix.libelleGoogle(v, avecModele) : v.nom; }
@@ -176,21 +187,30 @@
     }, function(e){
       chargement=null;
       selG.innerHTML='<option value="">Voix indisponibles</option>';
-      if(aideG) aideG.textContent='Impossible de charger les voix Google ('+raisonGoogle(e)+'). La voix du navigateur reste utilisée.';
+      if(aideG) aideG.textContent='Impossible de charger les voix réalistes ('+raisonGoogle(e)+'). La voix du navigateur reste utilisée.';
     });
   }
+  function aideLancement(){
+    var R=window.RTLancement, c=R.compteurs(), L=R.LIMITES;
+    var rv=Math.max(0, L.vol.google-c.vols), rs=Math.max(0, L.scenario.google-c.scenarios);
+    return 'Voix réaliste du contrôleur offerte pendant la phase de lancement : les '+L.vol.google+' premiers vols et les '+
+      L.scenario.google+' premiers scénarios du jour, puis la voix du navigateur. Aujourd\'hui, il vous reste '+
+      rv+' vol'+(rv>1?'s':'')+' et '+rs+' scénario'+(rs>1?'s':'')+' avec la voix réaliste.';
+  }
   function peindreMoteur(){
-    var prem=estPremium(), m=moteurEffectif();
+    var prem=estPremium(), ouvert=peutChoisirGoogle(), m=moteurEffectif();
     var bG=sec.querySelector('[data-moteur="google"]');
-    if(bG){ bG.disabled=!prem; bG.title = prem ? '' : 'Réservé aux comptes Premium'; }
+    if(bG){ bG.disabled=!ouvert; bG.title = ouvert ? '' : 'Réservé aux comptes Premium';
+            var chip=bG.querySelector('.set-premium'); if(chip) chip.textContent = (!prem && enLancement()) ? 'Offerte' : 'Premium'; }
     segSet(null,m,'data-moteur');
     if(rowNav) rowNav.hidden=(m==='google');
     if(rowG) rowG.hidden=(m!=='google');
     if(aideM){
       aideM.textContent = prem ? AIDE_M
-        : !estConnecte() ? 'La voix Google est réservée aux comptes Premium connectés.'
+        : enLancement() ? aideLancement()
+        : !estConnecte() ? 'La voix réaliste du contrôleur est réservée aux comptes Premium connectés.'
         : S.voixMoteur==='google' ? "Votre compte n'est plus Premium : la voix du navigateur est utilisée."
-        : 'La voix Google, plus naturelle, est réservée aux comptes Premium.';
+        : 'La voix réaliste du contrôleur est réservée aux comptes Premium.';
     }
     if(m==='google') chargerVoixGoogle();
     peindreVoixScenarios(m);
@@ -208,7 +228,7 @@
          l'emporte sur l'attribut — le piège est tombé trois fois ici. */
       sv.style.display='none';
       if(!note){ note=document.createElement('span'); note.className='voix-google-note'; boite.appendChild(note); }
-      note.textContent='Voix Google : '+(S.voixGoogle ? libelleVoix({ nom:S.voixGoogle, genre:genres[S.voixGoogle] }, true) : 'à choisir')+' — à changer dans les Paramètres';
+      note.textContent='Voix réaliste du contrôleur : '+(S.voixGoogle ? libelleVoix({ nom:S.voixGoogle, genre:genres[S.voixGoogle] }, true) : 'voix par défaut')+' — à changer dans les Paramètres';
     } else {
       sv.style.display='';
       if(note) note.remove();
@@ -217,7 +237,7 @@
   sec.querySelectorAll('[data-moteur]').forEach(function(b){
     b.addEventListener('click',function(){
       var v=b.getAttribute('data-moteur');
-      if(v==='google' && !estPremium()) return;
+      if(v==='google' && !peutChoisirGoogle()) return;
       S.voixMoteur=v; save();
       if(window.Voix && Voix.relancerGoogle) Voix.relancerGoogle();
       peindreMoteur();
@@ -230,6 +250,7 @@
     peindreVoixScenarios('google');
   });
   window.addEventListener('rt:auth', function(){ peindreMoteur(); });
+  window.addEventListener('rt:lancement', function(){ peindreMoteur(); });
   peindreMoteur();
 
   /* ---------- Débit ---------- */
@@ -240,14 +261,67 @@
     });
   });
 
-  /* ---------- Bruit radio ---------- */
+  /* ---------- Bruit radio : intensité (29/09/2026) ----------
+     L'interrupteur est devenu Aucun / Faible / Moyen / Fort. `noise` garde son
+     sens (absent = actif, false = coupé) et continue de piloter #noiseToggle ;
+     `bruit` porte le niveau, lu par 4-bruit-radio.js à chaque message.
+     Absent = « moyen », le niveau d'avant : personne n'entend de différence
+     sans l'avoir choisie. */
   var srcNoise=document.getElementById('noiseToggle');
-  $s('setNoise').addEventListener('click',function(){
-    /* Absent du stockage = ACTIVÉ (même convention que radioManuelle) : on
-       bascule donc depuis la valeur EFFECTIVE, sinon le premier appui ne
-       faisait rien — il écrivait `true` sur un réglage déjà vrai. */
-    S.noise=(S.noise===false); save(); drive(srcNoise,S.noise); sw($s('setNoise'),S.noise);
+  function niveauBruit(){ return S.noise===false ? 'aucun' : (S.bruit||'moyen'); }
+  sec.querySelectorAll('[data-bruit]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var v=b.getAttribute('data-bruit');
+      if(v==='aucun') S.noise=false; else { S.noise=true; S.bruit=v; }
+      save(); drive(srcNoise,S.noise); segSet(null,niveauBruit(),'data-bruit');
+    });
   });
+
+  /* ---------- Bips du micro (29/09/2026) ---------- absent = actifs. */
+  $s('setBips').addEventListener('click',function(){
+    S.bipsMicro=(S.bipsMicro===false); save(); sw($s('setBips'),S.bipsMicro!==false);
+  });
+
+  /* ---------- Taille du texte (29/09/2026) ----------
+     html.txt-grand agrandit ce qu'on lit PENDANT un exercice (07-navigation.css).
+     Posé au chargement de ce fichier : bien avant qu'on ouvre un exercice. */
+  function applyTexte(){
+    document.documentElement.classList.toggle('txt-grand', S.texte==='grand');
+    segSet(null,S.texte==='grand'?'grand':'normal','data-texte');
+  }
+  sec.querySelectorAll('[data-texte]').forEach(function(b){
+    b.addEventListener('click',function(){ S.texte=b.getAttribute('data-texte'); save(); applyTexte(); });
+  });
+
+  /* ---------- Onglets (29/09/2026) ----------
+     Une catégorie à la fois. L'onglet se lit dans l'adresse (#parametres/voix)
+     et s'y écrit par replaceState : changer d'onglet n'ajoute pas une entrée
+     d'historique par clic — « précédent » ramène à la page d'avant, pas à
+     l'onglet d'avant. Onglet inconnu ou absent : Compte. */
+  var ONGLETS=['compte','voix','entrainement','apparence','donnees'];
+  function ouvrirOnglet(o, ecrireAdresse){
+    if(ONGLETS.indexOf(o)<0) o='compte';
+    sec.querySelectorAll('.set-tab').forEach(function(t){
+      var on=t.getAttribute('data-onglet')===o;
+      t.classList.toggle('active',on); t.setAttribute('aria-selected',on?'true':'false');
+      t.tabIndex = on ? 0 : -1;
+    });
+    sec.querySelectorAll('.set-panel').forEach(function(p){ p.hidden = p.getAttribute('data-onglet')!==o; });
+    if(ecrireAdresse){ try{ history.replaceState({p:'parametres/'+o},'','#parametres/'+o); }catch(e){} }
+  }
+  sec.querySelectorAll('.set-tab').forEach(function(t){
+    t.addEventListener('click',function(){ ouvrirOnglet(t.getAttribute('data-onglet'), true); });
+    // Flèches gauche / droite, comme tout groupe d'onglets (WAI-ARIA).
+    t.addEventListener('keydown',function(e){
+      if(e.key!=='ArrowRight' && e.key!=='ArrowLeft') return;
+      var i=ONGLETS.indexOf(t.getAttribute('data-onglet'));
+      var o=ONGLETS[(i+(e.key==='ArrowRight'?1:ONGLETS.length-1))%ONGLETS.length];
+      ouvrirOnglet(o, true);
+      var n=sec.querySelector('.set-tab[data-onglet="'+o+'"]'); if(n) n.focus();
+      e.preventDefault();
+    });
+  });
+  ouvrirOnglet((location.hash.split('/')[1]||'').toLowerCase(), false);
 
   /* ---------- Indicatif ---------- */
   $s('setCall').addEventListener('change',function(){
@@ -332,8 +406,8 @@
           if (mien !== essaiJeton) return;
           if (!viaGoogle) return dire('La voix fonctionne.', true);
           var e = window.Voix.etatGoogle ? window.Voix.etatGoogle() : {};
-          if (e.dernier === 'google') dire('Voix Google : ' + libelleVoix({ nom:S.voixGoogle, genre:genres[S.voixGoogle] }, true) + '.', true);
-          else dire('Voix Google indisponible (' + raisonGoogle(e.erreur) + ') : vous entendez la voix du navigateur.', false);
+          if (e.dernier === 'google') dire('Voix réaliste : ' + libelleVoix({ nom:S.voixGoogle, genre:genres[S.voixGoogle] }, true) + '.', true);
+          else dire('Voix réaliste indisponible (' + raisonGoogle(e.erreur) + ') : vous entendez la voix du navigateur.', false);
         },
         onFin: function(){ if (mien === essaiJeton) fini(); } }
     );
@@ -481,7 +555,9 @@
     segSet(null,S.basemap||'oaci','data-base');
     var L=S.layers||{ctr:true,tma:true,rpd:false};
     sec.querySelectorAll('[data-lay]').forEach(function(b){ b.classList.toggle('on',!!L[b.getAttribute('data-lay')]); });
-    sw($s('setNoise'),S.noise!==false);   // absent = bruit radio actif
+    segSet(null,niveauBruit(),'data-bruit');   // absent = bruit radio actif, moyen
+    sw($s('setBips'),S.bipsMicro!==false);    // absent = bips actifs
+    applyTexte();
     sw($s('setRadio'), S.radioManuelle!==false);   // absent = radio manuelle active
     $s('setCall').value=S.call||'F-ABCD';
     majLienAdmin();
@@ -508,7 +584,9 @@
   });
 
   // Réappliquer aux contrôles métier au démarrage (les voix arrivent en asynchrone).
-  window.addEventListener('rt:page',function(e){ if(e.detail.page==='parametres'){ syncVoices(); refreshData(); majEffacementLocal(); peindreMoteur(); } });
+  window.addEventListener('rt:page',function(e){ if(e.detail.page==='parametres'){
+    ouvrirOnglet(String(e.detail.route||'').split('/')[1]||'', false);
+    syncVoices(); refreshData(); majEffacementLocal(); peindreMoteur(); } });
   setTimeout(function(){
     syncVoices();
     if(S.rate)  drive(document.getElementById('voiceRate'),S.rate);

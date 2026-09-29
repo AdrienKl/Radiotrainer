@@ -2921,8 +2921,9 @@
     recap.classList.add('hidden');
     $v('navFlight').classList.remove('hidden');
     $v('vfMapSlot').appendChild(sec.querySelector('.nav-mapwrap'));   // la carte suit le vol
-    // Décompte du quota du jour (affiché sur l'accueil ; non bloquant pour l'instant).
-    if(window.rtQuotaIncr) window.rtQuotaIncr();
+    /* Le décompte du jour ne se fait plus ici mais au LANCEMENT (lancerVol,
+       plus bas) : startFlight sert aussi à la reprise d'un vol interrompu,
+       déjà compté à son départ (phase de lancement, 29/09/2026). */
     document.body.classList.add('in-flight');   // carte réduite + libellés de config masqués
     var br=$v('navResume'); if(br) br.classList.add('hidden');   // un vol tourne : plus de proposition de reprise
     // Au départ, la radio est déjà réglée sur le terrain : on ne commence pas un vol
@@ -3051,6 +3052,7 @@
     if(v.fl)  $v('navFl').value=v.fl;
     if(v.pax) $v('navPax').value=v.pax;
     if(v.call) state.call=v.call;
+    if(window.RTLancement) RTLancement.reprise('vol');   // pas de nouveau décompte
     startFlight();
     // Restaurer la météo tirée au sort et la position dans le déroulé.
     if(v.meteo) state.meteo=v.meteo;
@@ -3252,6 +3254,14 @@
     if(map) setTimeout(function(){ map.invalidateSize(); },30);
   }
 
+  /* Un vol LANCÉ (et non repris) passe par la phase de lancement
+     (assets/modules/lancement.js) : compté, et peut-être précédé d'un message —
+     bascule vers la voix du navigateur, ou limite du jour. Dans le premier cas,
+     le vol part au clic sur le message ; la configuration est déjà posée. */
+  function lancerVol(){
+    if(window.RTLancement && !RTLancement.autoriser('vol', lancerVol)) return;
+    startFlight();
+  }
   $v('navStart').addEventListener('click',function(){
     if(!sel.dep){ setTarget('dep'); IN.dep.focus(); return; }
     if(mode==='voyage'&&!sel.arr){ setTarget('arr'); IN.arr.focus(); return; }
@@ -3263,7 +3273,7 @@
       showToast('Choisissez d’abord un type d’avion.');
       return;
     }
-    startFlight();
+    lancerVol();
   });
 
   /* ==========================================================================
@@ -3541,7 +3551,7 @@
     if(v.alt) $v('navFl').value=v.alt;
     if(v.pax) $v('navPax').value=v.pax;
     redraw();
-    startFlight();
+    lancerVol();
   });
 
   $v('navResumeGo').addEventListener('click',function(){

@@ -157,16 +157,57 @@ test('après une panne, Google fait une pause : le message suivant ne le rappell
   expect(requetes).toHaveLength(1);
 });
 
-for (const [nom, decor] of [['compte gratuit', { plan: 'free' }],
-                            ['moteur non choisi', { moteur: null }]]) {
-  test(`${nom} : aucune requête, la voix du navigateur comme avant`, async ({ page }) => {
+/* Phase de lancement (29/09/2026, assets/modules/lancement.js). Le compteur
+   du jour se pose dans rt-quota, à la date LOCALE, comme le fait le module. */
+async function compteurDuJour(page, n, sc) {
+  await page.evaluate(([n, sc]) => {
+    const d = new Date(), j = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    localStorage.setItem('rt-quota', JSON.stringify({ date: j, n, s: sc }));
+  }, [n, sc]);
+}
+
+test('compte gratuit, phase de lancement : la voix Google est offerte', async ({ page }) => {
+  const requetes = await fonction(page, () => ({ body: wav(0.2) }));
+  await preparer(page, { plan: 'free' });
+  await compteurDuJour(page, 0, 0);
+  await page.evaluate(() => __dire('Rappelez vent arrière.'));
+  await expect.poll(() => requetes.length).toBe(1);
+  expect(await ditParLeNavigateur(page)).toEqual([]);
+});
+
+for (const [nom, decor, n, sc] of [
+  ['compte gratuit, 3 vols et 5 scénarios Google déjà faits', { plan: 'free' }, 3, 5],
+  ['moteur « Navigateur » choisi', { moteur: 'navigateur' }, 0, 0]]) {
+  test(`${nom} : aucune requête, la voix du navigateur`, async ({ page }) => {
     const requetes = await fonction(page, () => ({}));
     await preparer(page, decor);
+    await compteurDuJour(page, n, sc);
     await page.evaluate(() => __dire('Rappelez vent arrière.'));
     await expect.poll(() => ditParLeNavigateur(page)).toEqual(['Rappelez vent arrière.']);
     expect(requetes).toHaveLength(0);
   });
 }
+
+test('un vol lancé au-delà de la voix offerte garde la voix du navigateur jusqu\'au bout', async ({ page }) => {
+  const requetes = await fonction(page, () => ({ body: wav(0.2) }));
+  await preparer(page, { plan: 'free' });
+  await compteurDuJour(page, 3, 0);
+  // Lancé sans message (pas de relance) : c'est le décompte qui compte ici.
+  expect(await page.evaluate(() => RTLancement.autoriser('vol'))).toBe(true);
+  await page.evaluate(() => __dire('Rappelez vent arrière.'));
+  await expect.poll(() => ditParLeNavigateur(page)).toEqual(['Rappelez vent arrière.']);
+  /* La LISTE des voix a pu partir avant (Paramètres, à la connexion) ; aucun
+     message, lui, ne doit être parti vers Google. */
+  expect(requetes.filter(r => r.corps.action !== 'voix')).toHaveLength(0);
+});
+
+test('moteur jamais choisi : Google par défaut, avec la voix choisie', async ({ page }) => {
+  const requetes = await fonction(page, () => ({ body: wav(0.2) }));
+  await preparer(page, { moteur: null });
+  await page.evaluate(() => { const s = rtSettings(); s.voixGoogle = 'fr-FR-Neural2-G'; localStorage.setItem('rt-settings', JSON.stringify(s)); });
+  await page.evaluate(() => __dire('Rappelez vent arrière.'));
+  await expect.poll(() => requetes.length).toBe(1);
+});
 
 test('stop() pendant la requête : silence, ni onDebut, ni repli', async ({ page }) => {
   await fonction(page, () => ({ attente: 1500 }));

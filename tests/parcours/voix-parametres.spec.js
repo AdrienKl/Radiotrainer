@@ -49,32 +49,58 @@ async function fonction(page, { dire = { status: 200 } } = {}) {
   return requetes;
 }
 
-async function compte(page, { plan }) {
-  await page.evaluate((plan) => {
+async function compte(page, { plan, catalogue = null }) {
+  await page.evaluate(([plan, catalogue]) => {
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
       speaking: false, pending: false, paused: false, getVoices: () => [], cancel() {}, pause() {}, resume() {},
       speak(u) { setTimeout(() => { u.onstart && u.onstart(); setTimeout(() => u.onend && u.onend(), 10); }, 5); }
     } });
     RTAuth.utilisateur = () => ({ id: 'u1', email: 'pilote@exemple.fr' });
     RTAuth.profil = () => ({ id: 'u1', plan, pseudo: 'pilote' });
-    RTAuth.client = () => ({ auth: { getSession: () => Promise.resolve({ data: { session: { access_token: 'jeton' } } }) } });
+    const auth = { getSession: () => Promise.resolve({ data: { session: { access_token: 'jeton' } } }) };
+    /* Le catalogue de l'administration est posé AVANT l'événement : Google
+       étant le moteur par défaut (29/09/2026), la liste se charge dès la
+       connexion, et un catalogue posé après arriverait trop tard. */
+    RTAuth.client = catalogue
+      ? () => ({ auth, from: (t) => ({ select: () =>
+          Promise.resolve(t === 'voix_catalogue' ? { data: catalogue, error: null } : { data: [], error: null }) }) })
+      : () => ({ auth });
     window.dispatchEvent(new CustomEvent('rt:auth', { detail: { connecte: true } }));
-  }, plan);
+  }, [plan, catalogue]);
   await page.mouse.click(5, 5);   // le geste qui débloque l'audio
 }
 const reglages = page => page.evaluate(() => JSON.parse(localStorage.getItem('rt-settings') || '{}'));
 
-test('compte gratuit : Google verrouillé, et rien ne part vers voix-atc', async ({ page }) => {
+/* Phase de lancement (29/09/2026, assets/modules/lancement.js) : un compte
+   gratuit a la voix Google offerte — 3 vols et 5 scénarios par jour. Le
+   bouton est ouvert, dit « Offerte », et l'aide dit ce qu'il reste. */
+test('compte gratuit, phase de lancement : Google offert, et ce qu\'il reste aujourd\'hui est dit', async ({ page }) => {
+  await ouvrir(page);
+  await fonction(page);
+  await entrer(page, 'parametres/voix');
+  await page.evaluate(() => localStorage.removeItem('rt-quota'));
+  await compte(page, { plan: 'free' });
+  const bG = page.locator('[data-moteur="google"]');
+  await expect(bG).toBeEnabled();
+  await expect(bG).toContainText('Offerte');
+  await expect(page.locator('[data-moteur="google"]')).toHaveClass(/active/);   // Google par défaut
+  await expect(page.locator('#setMoteurAide')).toContainText('phase de lancement');
+  await expect(page.locator('#setMoteurAide')).toContainText('il vous reste 3 vols et 5 scénarios');
+});
+
+test('hors connexion : Google verrouillé, rien ne part vers voix-atc', async ({ page }) => {
   await ouvrir(page);
   const requetes = await fonction(page);
-  await entrer(page, 'parametres');
-  await compte(page, { plan: 'free' });
+  await entrer(page, 'parametres/voix');
+  await page.evaluate(() => {
+    RTAuth.utilisateur = () => null; RTAuth.profil = () => null;
+    window.dispatchEvent(new CustomEvent('rt:auth', { detail: { connecte: false } }));
+  });
   const bG = page.locator('[data-moteur="google"]');
   await expect(bG).toBeDisabled();
   await expect(bG).toContainText('Premium');
   await expect(page.locator('[data-moteur="navigateur"]')).toHaveClass(/active/);
   await expect(page.locator('#setVoixGoogleRow')).toBeHidden();
-  await expect(page.locator('#setMoteurAide')).toContainText('réservée aux comptes Premium');
   await bG.click({ force: true });
   expect((await reglages(page)).voixMoteur).not.toBe('google');
   expect(requetes).toHaveLength(0);
@@ -83,7 +109,7 @@ test('compte gratuit : Google verrouillé, et rien ne part vers voix-atc', async
 test('Premium : la liste de voix-atc, rangée par modèle, avec le genre', async ({ page }) => {
   await ouvrir(page);
   const requetes = await fonction(page);
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/voix');
   await compte(page, { plan: 'premium' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogleRow')).toBeVisible();
@@ -106,7 +132,7 @@ test('Premium : la liste de voix-atc, rangée par modèle, avec le genre', async
 test('changer de voix : enregistré, et le message SUIVANT part avec elle', async ({ page }) => {
   await ouvrir(page);
   const requetes = await fonction(page);
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/voix');
   await compte(page, { plan: 'premium' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
@@ -119,7 +145,7 @@ test('changer de voix : enregistré, et le message SUIVANT part avec elle', asyn
 test('revenir au navigateur : plus aucune requête', async ({ page }) => {
   await ouvrir(page);
   const requetes = await fonction(page);
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/voix');
   await compte(page, { plan: 'premium' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
@@ -134,19 +160,19 @@ test('revenir au navigateur : plus aucune requête', async ({ page }) => {
 test('l\'essai passe par Google et le dit', async ({ page }) => {
   await ouvrir(page);
   const requetes = await fonction(page);
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/voix');
   await compte(page, { plan: 'premium' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
   await page.locator('#setVoiceTest').click();
-  await expect(page.locator('#setVoiceMsg')).toContainText('Voix Google : Chirp 3 HD · Charon — Masculine.');
+  await expect(page.locator('#setVoiceMsg')).toContainText('Voix réaliste : Chirp 3 HD · Charon — Masculine.');
   expect(requetes.filter(r => r.action === 'dire')).toHaveLength(1);
 });
 
 test('l\'essai refusé par la base dit POURQUOI, et la voix du navigateur prend le relais', async ({ page }) => {
   await ouvrir(page);
   await fonction(page, { dire: { status: 429, body: { erreur: 'quota', restant: 0 } } });
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/voix');
   await compte(page, { plan: 'premium' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
@@ -158,10 +184,10 @@ test('l\'essai refusé par la base dit POURQUOI, et la voix du navigateur prend 
 test('la liste des voix indisponible : on le dit, rien ne casse', async ({ page }) => {
   await ouvrir(page);
   await page.route(FONCTION, r => r.fulfill({ status: 502, contentType: 'application/json', body: '{"erreur":"google"}' }));
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/voix');
   await compte(page, { plan: 'premium' });
   await page.locator('[data-moteur="google"]').click();
-  await expect(page.locator('#setVoixGoogleAide')).toContainText('Impossible de charger les voix Google');
+  await expect(page.locator('#setVoixGoogleAide')).toContainText('Impossible de charger les voix réalistes');
 });
 
 /* ---- La page d'administration ------------------------------------------------ */
@@ -233,18 +259,13 @@ test('admin › Voix Google : refusée sans le rôle', async ({ page }) => {
 /* ---- sql/007 : les voix proposées, la voix par défaut, l'écran des scénarios -- */
 
 async function compteAvecCatalogue(page, catalogue) {
-  await compte(page, { plan: 'premium' });
-  await page.evaluate((catalogue) => {
-    const auth = RTAuth.client().auth;
-    RTAuth.client = () => ({ auth, from: (t) => ({ select: () =>
-      Promise.resolve(t === 'voix_catalogue' ? { data: catalogue, error: null } : { data: [], error: null }) }) });
-  }, catalogue);
+  await compte(page, { plan: 'premium', catalogue });
 }
 
 test('une voix désactivée par l\'administration n\'est pas proposée ; la voix par défaut est présélectionnée', async ({ page }) => {
   await ouvrir(page);
   await fonction(page);
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/voix');
   await compteAvecCatalogue(page, [
     { voix: 'fr-FR-Studio-A', active: false, par_defaut: false },
     { voix: 'fr-FR-Neural2-G', active: true, par_defaut: true }
@@ -259,7 +280,7 @@ test('une voix désactivée par l\'administration n\'est pas proposée ; la voix
 test('voix refusée par la base (désactivée) : l\'essai le dit', async ({ page }) => {
   await ouvrir(page);
   await fonction(page, { dire: { status: 403, body: { erreur: 'voix_desactivee' } } });
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/voix');
   await compte(page, { plan: 'premium' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
@@ -270,14 +291,14 @@ test('voix refusée par la base (désactivée) : l\'essai le dit', async ({ page
 test('Google actif : l\'écran des scénarios ne propose plus les voix du navigateur, il dit la voix Google', async ({ page }) => {
   await ouvrir(page);
   await fonction(page);
-  await entrer(page, 'parametres');
+  await entrer(page, 'parametres/voix');
   await compte(page, { plan: 'premium' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
   await page.locator('#setVoixGoogle').selectOption('fr-FR-Chirp3-HD-Kore');
   const boite = page.locator('#voiceSelect').locator('..');
   await expect(page.locator('#voiceSelect')).toBeHidden();
-  await expect(boite.locator('.voix-google-note')).toHaveText('Voix Google : Chirp 3 HD · Kore — Féminine — à changer dans les Paramètres');
+  await expect(boite.locator('.voix-google-note')).toHaveText('Voix réaliste du contrôleur : Chirp 3 HD · Kore — Féminine — à changer dans les Paramètres');
   await page.locator('[data-moteur="navigateur"]').click();
   await expect(boite.locator('.voix-google-note')).toHaveCount(0);
   await expect(page.locator('#voiceSelect')).not.toHaveCSS('display', 'none');

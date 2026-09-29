@@ -105,7 +105,7 @@ if(RECO_OK){
   // qu'au premier onresult, puis est ré-armé à chaque onresult. Tant que l'élève
   // parle (ou fait une pause < 2,5 s), l'écoute continue ; seul un silence de 2,5 s
   // APRÈS le dernier mot capté déclenche l'arrêt.
-  recognition.onstart = ()=>{ listening=true; pttUI(true); };
+  recognition.onstart = ()=>{ listening=true; pttUI(true); bipMicro(true); };   // bip d'ouverture (4-bruit-radio.js)
   recognition.onresult = (e)=>{
     let interim="";
     for(let i=e.resultIndex; i<e.results.length; i++){
@@ -133,6 +133,7 @@ if(RECO_OK){
   };
   recognition.onend = ()=>{
     listening=false; pttUI(false); clearTimeout(silenceTimer);
+    bipMicro(false);                                // bip de fermeture
     const _fin = sessionFinal.replace(/\s+/g,' ').trim();
     // Erreur micro sans un mot capté : ne rien noter, l'erreur est déjà affichée.
     if(lastRecoError && !_fin){ if(recoSink) return; el.validerBtn.disabled=false; return; }

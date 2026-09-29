@@ -309,6 +309,10 @@ if (!problemes) {
   // Sans session (auth.uid() nul) : le contexte « éditeur SQL », où profiles_garde()
   // laisse l'administrateur changer le plan. C'est la manœuvre documentée.
   await db.exec(`update public.profiles set plan = 'premium' where id = '${premium}'`);
+  /* Les § 10 à 13 décrivent le Premium HORS phase de lancement : sql/009 la
+     laisse ouverte par défaut, et un compte gratuit y reçoit la voix. On la
+     ferme ici ; le § 14 la rouvre et vérifie ce qu'elle change. */
+  await db.exec(`update public.voix_reglages set valeur = 0 where cle = 'lancement_gratuit'`);
 
   const consommer = async (qui, n) => {
     await db.exec(`select set_config('request.jwt.claim.sub', '${qui || ''}', false)`);
@@ -692,6 +696,52 @@ if (!problemes) {
   if (!rls || polP.some(pp => pp.cmd !== 'SELECT') || polP.length !== 2)
     rate(`paiements : RLS ${rls} ; politiques ${JSON.stringify(polP)}`);
   else passe('paiements : RLS active, lecture de soi et admin plein, aucune écriture côté client');
+
+  /* 14. La phase de lancement (sql/009). Ce qui compte : un compte gratuit
+         reçoit la voix Google tant que la phase est ouverte, mais sous SON
+         plafond (plafond_gratuit), pas celui du Premium ; la phase se ferme
+         par un réglage, et le refus redevient « non_premium » ; l'admin plein
+         n'est pas soumis au plafond gratuit ; anon ne lit plus paiements. */
+  const pb14 = [];
+  await moi13(null);
+  await db.exec(`insert into auth.users (email) values ('lancement9@albatros.test')`);
+  const libre = await idDe('lancement9@albatros.test');
+  await db.exec(`delete from public.voix_consommation`);
+  await db.exec(`update public.profiles set plan = 'free', premium_jusqua = null, role = 'user' where id in ('${libre}', '${admin}')`);
+  await db.exec(`update public.profiles set role = 'admin' where id = '${admin}'`);
+  await comme(admin, `select public.admin_voix_plafond(100000)`);
+  await moi13(null);
+  await db.exec(`update public.voix_reglages set valeur = 1 where cle = 'lancement_gratuit'`);
+  const [{ pg14 }] = await q(`select public.voix_plafond_gratuit() as pg14`);
+  if (pg14 !== 20000) pb14.push(`plafond gratuit ${pg14} au lieu de 20 000`);
+  const conso14 = async (qui, n) => { const x = await comme(qui, `select public.voix_consommer(${n}, 'fr-FR-Chirp3-HD-Charon') as r`); return x.ok ? x.r.r : x; };
+  let r14 = await conso14(libre, 100);
+  if (!r14.ok || r14.restant !== 19900) pb14.push(`gratuit, phase ouverte : ${JSON.stringify(r14)} au lieu de ok, restant 19 900`);
+  r14 = await conso14(libre, 20001);
+  if (r14.ok || r14.raison !== 'longueur') pb14.push(`gratuit, message plus long que son plafond : ${JSON.stringify(r14)}`);
+  r14 = await conso14(libre, 19900);
+  if (!r14.ok || r14.restant !== 0) pb14.push(`gratuit, jusqu'au plafond : ${JSON.stringify(r14)}`);
+  r14 = await conso14(libre, 1);
+  if (r14.ok || r14.raison !== 'quota') pb14.push(`gratuit, au-delà du plafond : ${JSON.stringify(r14)}`);
+  r14 = await conso14(admin, 30000);
+  if (!r14.ok) pb14.push(`l'admin plein (plan free) est tenu au plafond gratuit : ${JSON.stringify(r14)}`);
+  r14 = await conso14(modo, 30000);
+  if (r14.ok || r14.raison !== 'longueur') pb14.push(`un modérateur échappe au plafond gratuit : ${JSON.stringify(r14)}`);
+  await moi13(null);
+  await db.exec(`update public.voix_reglages set valeur = 0 where cle = 'lancement_gratuit'`);
+  r14 = await conso14(libre, 10);
+  if (r14.ok || r14.raison !== 'non_premium') pb14.push(`gratuit, phase fermée : ${JSON.stringify(r14)}`);
+  r14 = await conso14(admin, 10);
+  if (!r14.ok) pb14.push(`l'admin plein perd la voix quand la phase ferme : ${JSON.stringify(r14)}`);
+  await moi13(null);
+  try { await db.exec(`insert into public.voix_reglages (cle, valeur) values ('faute_de_frappe', 1)`); pb14.push('une clé de réglage inconnue est acceptée'); } catch (e) {}
+  const [{ anonP }] = await q(`select has_table_privilege('anon', 'public.paiements', 'select') as "anonP"`);
+  if (anonP) pb14.push('anon garde le droit SELECT sur paiements');
+  const [{ lg }] = await q(`select has_function_privilege('anon', 'public.lancement_gratuit()', 'execute') as lg`);
+  if (lg) pb14.push('anon peut exécuter lancement_gratuit()');
+
+  if (pb14.length) { rate('la phase de lancement ne se comporte pas comme prévu :'); pb14.forEach(m => console.log(rouge('      · ' + m))); }
+  else passe('phase de lancement : voix Google aux comptes gratuits sous leur plafond (20 000), refus « non_premium » dès la fermeture, admin plein hors plafond gratuit ; anon ne lit plus paiements');
 }
 
 console.log('');

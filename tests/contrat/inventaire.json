@@ -1,6 +1,6 @@
 {
   "_lisezmoi": "Genere par tests/contrat/_geler.mjs. Ne pas modifier a la main : regenerer et lire le diff.",
-  "gele_le": "2026-09-27",
+  "gele_le": "2026-09-29",
   "ordre_scripts": [
     "index.html#1",
     "assets/donnees/aerodromes.js",
@@ -27,6 +27,7 @@
     "assets/modules/tableau-de-bord.js",
     "assets/modules/parametres.js",
     "assets/modules/contact.js",
+    "assets/modules/lancement.js",
     "assets/supabase-config.js",
     "assets/vendor/supabase.js",
     "assets/auth.js",
@@ -137,6 +138,13 @@
         "assets/scenarios/moteur.js",
         "assets/modules/epellation-cours.js",
         "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "bipMicro",
+      "declare": "assets/noyau/4-bruit-radio.js",
+      "lu_par": [
+        "assets/noyau/6-micro.js"
       ]
     },
     {
@@ -494,12 +502,14 @@
       "nom": "rtSettings",
       "declare": "assets/noyau/3-reglages.js",
       "lu_par": [
+        "assets/noyau/4-bruit-radio.js",
         "assets/noyau/5-voix.js",
         "assets/noyau/6-micro.js",
         "assets/scenarios/moteur.js",
         "assets/modules/navigation.js",
         "assets/modules/parametres.js",
-        "assets/modules/contact.js"
+        "assets/modules/contact.js",
+        "assets/modules/lancement.js"
       ]
     },
     {
@@ -522,6 +532,7 @@
       "lu_par": [
         "assets/noyau/5-voix.js",
         "assets/scenarios/moteur.js",
+        "assets/donnees.js",
         "assets/admin/data/source-mock.js",
         "assets/admin/data/source-local.js",
         "assets/admin/data/source-supabase.js",

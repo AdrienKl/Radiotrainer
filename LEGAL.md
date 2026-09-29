@@ -148,6 +148,15 @@ devinerait pas. Ce qui est fait :
   l'arrêter (revenir à la voix du navigateur) ;
 - le **pied de page** l'ajoute à ce qui sort de la machine.
 
+**Phase de lancement (29/09/2026) : la voix Google devient le moteur PAR
+DÉFAUT**, pour tous les comptes connectés, sur leurs 3 premiers vols et 5
+premiers scénarios du jour (`assets/modules/lancement.js`, borné en base par
+`sql/009`). Ce n'est plus un choix actif de l'élève : les quatre passages
+ci-dessus disent désormais « par défaut », et le moyen de l'arrêter
+(Paramètres › Voix et micro › « Navigateur »), qui reste respecté partout. La
+base juridique ne change pas — c'est le service lui-même qui parle — mais la
+phrase « si vous la choisissez » serait devenue fausse (CLAUDE.md § 15).
+
 Pas de nouveau consentement : c'est une modification de la politique de
 confidentialité, pas des CGU (`CGU_VERSION` inchangée), et l'envoi n'a lieu que
 sur un choix explicite de l'élève dans les Paramètres. Reste à faire le jour du

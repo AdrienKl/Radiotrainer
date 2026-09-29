@@ -33,9 +33,7 @@
   if(!sec) return;
   var $t=function(id){ return document.getElementById(id); };
 
-  var QUOTA_MAX=4;                      // vols par jour
   var JOURS_KEY='rt-jours';             // dates de connexion, pour la série
-  var QUOTA_KEY='rt-quota';
 
   function jourISO(d){ return (d||new Date()).toISOString().slice(0,10); }
   function lire(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch(e){ return d; } }
@@ -60,17 +58,47 @@
     return n;
   }
 
-  /* ---- Quota : compté et affiché, mais NON bloquant pour l'instant ----
-     `quotaAtteint()` est prêt à servir de garde le jour où on l'activera. */
-  function quotaDuJour(){
-    var q=lire(QUOTA_KEY,{});
-    return (q.date===jourISO()) ? (q.n||0) : 0;
-  }
-  window.rtQuotaIncr=function(){
-    var a=jourISO(), q=lire(QUOTA_KEY,{});
-    ecrire(QUOTA_KEY, {date:a, n:(q.date===a?(q.n||0):0)+1});
+  /* ---- Quota : depuis le 29/09/2026, tenu par assets/modules/lancement.js ----
+     (compteur des vols ET des scénarios, limites appliquées). Ces deux noms
+     restent sur window pour qui les appelait ; ils ne comptent plus rien
+     eux-mêmes — deux compteurs finiraient par dire deux choses. Le compte se
+     fait au lancement d'un vol (navigation.js › lancerVol). */
+  window.rtQuotaIncr=function(){ /* sans effet : voir lancement.js */ };
+  window.rtQuotaAtteint=function(){
+    return !!(window.RTLancement && RTLancement.etat('vol')==='bloque');
   };
-  window.rtQuotaAtteint=function(){ return quotaDuJour()>=QUOTA_MAX; };
+
+  /* ---- Aujourd'hui : la phase de lancement (29/09/2026) ----
+     Deux jauges, vols et scénarios. La part violette est celle de la voix
+     Google offerte ; au-delà, voix du navigateur, jusqu'à la limite du jour.
+     Les chiffres viennent de assets/modules/lancement.js, seul à les tenir. */
+  function jauge(lib, n, L){
+    var pc=Math.min(100, Math.round(n/L.max*100)), g=Math.round(L.google/L.max*100);
+    var reste = n<L.google ? (L.google-n)+' avec la voix réaliste du contrôleur'
+              : n<L.max ? (L.max-n)+' avec la voix du navigateur' : 'limite du jour atteinte';
+    return '<div class="tb-qligne"><span class="tb-qlib">'+lib+'</span>'+
+      '<span class="tb-qn">'+n+'<small> / '+L.max+'</small></span>'+
+      '<span class="tb-jauge" style="--g:'+g+'%"><i class="'+(n>=L.max?'plein':(n>=L.google?'nav':''))+'" style="width:'+pc+'%"></i></span>'+
+      '<span class="tb-qreste">'+reste+'</span></div>';
+  }
+  function peindreJour(){
+    var box=$t('tbQuota'), note=$t('tbQuotaNote'); if(!box) return;
+    var R=window.RTLancement;
+    if(!R){ box.innerHTML=''; note.textContent=''; return; }
+    if(R.exempt()){
+      box.innerHTML='<div class="tb-qligne"><span class="tb-qlib">Vols et scénarios</span><span class="tb-qn">Illimités</span></div>';
+      note.textContent='Votre compte n\'a pas de limite : voix réaliste du contrôleur sur toutes vos séances.';
+      return;
+    }
+    var c=R.compteurs();
+    box.innerHTML = jauge('Vols', c.vols, R.LIMITES.vol) + jauge('Scénarios', c.scenarios, R.LIMITES.scenario);
+    note.textContent='Albatros VFR est gratuit pendant la phase de lancement. Voix réaliste du contrôleur offerte pour les '+
+      R.LIMITES.vol.google+' premiers vols et les '+R.LIMITES.scenario.google+' premiers scénarios du jour, '+
+      'puis voix de votre navigateur, jusqu\'à '+R.LIMITES.vol.max+' vols et '+R.LIMITES.scenario.max+
+      ' scénarios. Les QCM ne comptent pas. Remise à zéro chaque jour à minuit.';
+  }
+  window.addEventListener('rt:lancement', peindreJour);
+  window.addEventListener('rt:auth', function(){ setTimeout(peindreJour, 0); });
 
   function vols(){ try{ return JSON.parse(localStorage.getItem('rt-vols')||'[]'); }catch(e){ return []; } }
   function sessions(){ try{ return JSON.parse(localStorage.getItem('radiotrainer_history_v2')||'[]'); }catch(e){ return []; } }
@@ -121,14 +149,7 @@
       stat(IC.feu, serie?serie:'—', rien?'aucune pratique enregistrée'
             :('jour'+(serie>1?'s':'')+' d\'affilée'));
 
-    // Quota
-    var n=quotaDuJour(), pc=Math.min(100, Math.round(n/QUOTA_MAX*100));
-    $t('tbQuota').innerHTML =
-      '<span class="tb-qn">'+n+'<small> / '+QUOTA_MAX+'</small></span>'+
-      '<span class="tb-jauge"><i class="'+(n>=QUOTA_MAX?'plein':'')+'" style="width:'+pc+'%"></i></span>';
-    $t('tbQuotaNote').textContent = n>=QUOTA_MAX
-      ? 'Quota du jour atteint — la limite n\'est pas encore appliquée, vous pouvez continuer.'
-      : 'Vols décomptés aujourd\'hui. La limite est affichée mais pas encore appliquée.';
+    peindreJour();
 
     // Reprendre : vol interrompu, ou dernier vol à refaire
     var enCours=null;

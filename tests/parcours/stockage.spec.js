@@ -59,19 +59,32 @@ test('la série de jours ne compte que les jours où l\'on a pratiqué', async (
 });
 
 test('le quota du jour se compte, et se remet à zéro le lendemain', async ({ page }) => {
+  /* Phase de lancement (29/09/2026, assets/modules/lancement.js) : 3 vols avec
+     la voix Google, puis la voix du navigateur, puis la limite à 10. Le
+     compteur vit toujours dans rt-quota. */
   await ouvrir(page);
   await entrer(page, 'tableau');
   await page.evaluate(() => localStorage.removeItem('rt-quota'));
 
   expect(await page.evaluate(() => window.rtQuotaAtteint())).toBe(false);
-  for (let i = 0; i < 4; i++) await page.evaluate(() => window.rtQuotaIncr());
+  const etats = await page.evaluate(() => {
+    const vus = [];
+    for (let i = 0; i < 10; i++) { vus.push(RTLancement.etat('vol')); RTLancement.autoriser('vol'); }
+    return vus;
+  });
+  expect(etats, 'Les trois premiers vols ont la voix Google, les sept suivants celle du navigateur.')
+    .toEqual(['google', 'google', 'google', 'navigateur', 'navigateur', 'navigateur', 'navigateur', 'navigateur', 'navigateur', 'navigateur']);
   expect(await page.evaluate(() => window.rtQuotaAtteint()),
-    'Le quota de quatre vols par jour ne se déclenche plus.').toBe(true);
+    'La limite de dix vols par jour ne se déclenche plus.').toBe(true);
+  expect(await page.evaluate(() => RTLancement.autoriser('vol')), 'Un onzième vol est parti.').toBe(false);
+  expect((await lireCle(page, 'rt-quota')).n).toBe(10);
+  await page.locator('#lancementOk').click();   // le message de limite se referme
 
   /* Un compteur daté d'hier ne doit pas bloquer aujourd'hui. */
-  await ecrireCle(page, 'rt-quota', { date: '2020-01-01', n: 99 });
+  await ecrireCle(page, 'rt-quota', { date: '2020-01-01', n: 99, s: 99 });
   expect(await page.evaluate(() => window.rtQuotaAtteint()),
     'Un quota d\'un autre jour bloque encore.').toBe(false);
+  expect(await page.evaluate(() => RTLancement.etat('scenario'))).toBe('google');
 });
 
 test('l\'historique des scénarios est relu au chargement', async ({ page }) => {

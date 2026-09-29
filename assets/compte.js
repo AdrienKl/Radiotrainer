@@ -104,7 +104,10 @@
     if ($('cptIndicatif'))  $('cptIndicatif').value  = (p && p.callsign) || '';
     if ($('cptMail'))       $('cptMail').value       = email || (p && p.email) || '';
     if ($('cptDepuis'))     $('cptDepuis').textContent = dateFr(p && p.created_at);
-    if ($('cptPlan'))       $('cptPlan').textContent = LABEL_PLAN[p && p.plan] || (p && p.plan) || '—';
+    /* Phase de lancement (29/09/2026) : un compte gratuit le lit en clair. */
+    var libPlan = LABEL_PLAN[p && p.plan] || (p && p.plan) || '—';
+    if (p && p.plan === 'free' && window.RTLancement && RTLancement.actif()) libPlan = 'Gratuit · phase de lancement';
+    if ($('cptPlan'))       $('cptPlan').textContent = libPlan;
     /* Le rôle ne se montre qu'à qui en a un autre que celui de tout le monde.
        Afficher « Rôle : Élève » à un élève, avec la mention qu'un administrateur
        seul peut le changer, c'était lui décrire une porte qui ne s'ouvre pas —

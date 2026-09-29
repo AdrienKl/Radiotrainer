@@ -345,15 +345,16 @@
     prix:       null,    // ex. '14,90' — montant affiché, sans le symbole
     periode:    'mois',  // ce qui suit la barre : 'mois', 'an'…
     essaiJours: null,    // ex. 14 — null = essai ouvert, sans échéance annoncée
-    carte:      false    // une carte bancaire est-elle demandée à l'inscription ?
+    carte:      false,   // une carte bancaire est-elle demandée à l'inscription ?
+    lancement:  true     // phase de lancement : gratuit (assets/modules/lancement.js)
   };
   (function(){
     var poser = function(cle, html){
       var e=document.querySelector('[data-offre="'+cle+'"]'); if(e) e.innerHTML=html;
     };
     var o = RT_OFFRE;
-    poser('kind', o.prix ? 'Essai puis abonnement' : 'Essai');
-    poser('duree', o.essaiJours
+    poser('kind', o.lancement ? 'Phase de lancement' : o.prix ? 'Essai puis abonnement' : 'Essai');
+    poser('duree', o.lancement ? 'Gratuit<small>pendant la phase de lancement</small>' : o.essaiJours
       ? o.essaiJours + ' jours<small>à compter de l\'inscription</small>'
       : "Sans limite<small>pendant la phase d'essai</small>");
     poser('carte', o.carte

@@ -47,11 +47,42 @@ function startRadioNoise(){
     noiseSrc.buffer = buffer; noiseSrc.loop = true;
     const bp = audioCtx.createBiquadFilter();
     bp.type='bandpass'; bp.frequency.value=1600; bp.Q.value=0.6;
-    noiseGain = audioCtx.createGain(); noiseGain.gain.value=0.035;
+    noiseGain = audioCtx.createGain(); noiseGain.gain.value=niveauBruitRadio();
     noiseSrc.connect(bp); bp.connect(noiseGain); noiseGain.connect(audioCtx.destination);
     noiseSrc.start(0);
   }catch(e){ /* Web Audio indisponible */ }
 }
+/* Le niveau du souffle (Paramètres › Voix et micro, 29/09/2026). « moyen »
+   est l'ancienne valeur fixe, 0,035 : un réglage absent ne change rien. */
+function niveauBruitRadio(){
+  let b='moyen';
+  try{ b=(typeof rtSettings==='function' && rtSettings().bruit) || 'moyen'; }catch(e){}
+  return b==='faible' ? 0.016 : b==='fort' ? 0.07 : 0.035;
+}
+
+/* Les bips du micro (29/09/2026) : un bip montant quand le micro s'ouvre, un
+   descendant quand il se ferme — le repère qu'on a en vol en relâchant
+   l'alternat. Joués dans le MÊME AudioContext que le souffle : en créer un
+   second garderait deux sorties audio ouvertes. Courts (90 ms) et discrets,
+   pour ne pas être pris par la reconnaissance vocale pour une parole.
+   Réglage `bipsMicro` : absent = actifs. */
+function bipMicro(ouvert){
+  try{
+    if(typeof rtSettings==='function' && rtSettings().bipsMicro===false) return;
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    const t=audioCtx.currentTime, o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type='sine';
+    o.frequency.setValueAtTime(ouvert?880:1175, t);
+    o.frequency.linearRampToValueAtTime(ouvert?1175:880, t+0.08);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.08, t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+0.09);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t); o.stop(t+0.1);
+  }catch(e){ /* Web Audio indisponible : pas de bip, rien d'autre ne change */ }
+}
+
 /* Coupe le grésillement. Appelé à la FIN (ou à l'erreur) de la parole ATC, ou quand
    l'utilisateur décoche la case en plein milieu. */
 function stopRadioNoise(){

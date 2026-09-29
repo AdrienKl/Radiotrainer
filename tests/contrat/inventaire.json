@@ -28,6 +28,7 @@
     "assets/modules/parametres.js",
     "assets/modules/contact.js",
     "assets/modules/lancement.js",
+    "assets/modules/avis.js",
     "assets/supabase-config.js",
     "assets/vendor/supabase.js",
     "assets/auth.js",
@@ -50,6 +51,7 @@
     "assets/admin/pages/exercises.js",
     "assets/admin/pages/errors.js",
     "assets/admin/pages/voix.js",
+    "assets/admin/pages/avis.js",
     "assets/admin/pages/test.js"
   ],
   "ordre_styles": [
@@ -69,6 +71,7 @@
     "assets/css/13-mobile.css",
     "assets/css/14-carte.css",
     "assets/css/15-contact.css",
+    "assets/css/16-avis.css",
     "assets/admin/admin.css"
   ],
   "symboles_partages": [
@@ -495,7 +498,8 @@
       "lu_par": [
         "assets/modules/navigation.js",
         "assets/modules/parametres.js",
-        "assets/modules/contact.js"
+        "assets/modules/contact.js",
+        "assets/modules/avis.js"
       ]
     },
     {
@@ -509,7 +513,8 @@
         "assets/modules/navigation.js",
         "assets/modules/parametres.js",
         "assets/modules/contact.js",
-        "assets/modules/lancement.js"
+        "assets/modules/lancement.js",
+        "assets/modules/avis.js"
       ]
     },
     {
@@ -734,6 +739,7 @@
     "cgu",
     "confidentialite",
     "mentions",
+    "avis",
     "tableau",
     "exercices",
     "navigation",

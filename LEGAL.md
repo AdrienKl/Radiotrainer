@@ -193,3 +193,23 @@ remplirez les champs : il cessera simplement d'exiger le bandeau d'état.
   rendrait service.
 - Le jour où une colonne est ajoutée à `profiles`, elle doit figurer au § 2 de la
   confidentialité **avant** d'être collectée, pas après.
+
+
+## Avis des élèves (29/09/2026)
+
+Obligations suivies (Code de la consommation, art. L111-7-2 et D111-16 à
+D111-19) : la page `#avis` dit comment les avis sont collectés (compte inscrit,
+2 séances terminées, un par compte), qu'ils sont **vérifiés à la main avant
+publication**, le **délai (3 jours au plus)**, les motifs de refus, l'absence de
+contrepartie, l'ordre d'affichage (date, ou note au choix) et que les trois avis
+de l'accueil sont choisis par l'équipe. Chaque avis affiche sa date. Un avis
+refusé : l'auteur en voit le motif (`mon_avis()`, sql/010).
+
+Données : pseudo figé à l'envoi, note, commentaire, date ; base
+**consentement** (rien ne part sans « Envoyer mon avis ») ; retrait sur demande
+par le bouton Contact — l'auteur ne peut pas le modifier lui-même, et la
+politique le dit. Ligne ajoutée au § 2 de la politique de confidentialité.
+
+À ne jamais faire : publier un avis inventé, ou n'importer que les bons (la
+sélection de l'accueil est annoncée comme telle) — pratique commerciale
+trompeuse.

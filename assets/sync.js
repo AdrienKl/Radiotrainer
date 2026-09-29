@@ -222,7 +222,16 @@
                  missed: e.missed || [],
                  score_ok: e.score_ok||0, score_total: e.score_total||0 };
       });
-      return tenter({session:s, steps:et});
+      var envoi = tenter({session:s, steps:et});
+      /* Une séance terminée est annoncée APRÈS son écriture : le rappel des
+         avis (assets/modules/avis.js, 29/09/2026) recompte alors en base, et
+         doit y trouver celle-ci. Vols et scénarios seulement. */
+      if (s.status === 'completed' && (s.kind === 'flight' || s.kind === 'scenario')){
+        Promise.resolve(envoi).then(function(){
+          try { window.dispatchEvent(new CustomEvent('rt:seance-terminee', { detail:{ kind:s.kind } })); } catch (e) {}
+        }, function(){});
+      }
+      return envoi;
     },
 
     /* Au démarrage : tout ce qui est resté « en cours » d'une session

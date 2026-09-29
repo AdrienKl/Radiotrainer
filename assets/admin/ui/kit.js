@@ -51,6 +51,7 @@
     clock:'<svg class="ic-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/></svg>',
     target:'<svg class="ic-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".9" fill="currentColor" stroke="none"/></svg>',
     mic:'<svg class="ic-svg" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg>',
+    star:'<svg class="ic-svg" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>',
     /* Le logo de la console : le symbole #logo-albatros posé une fois dans
        index.html (la console vit dans la même page). */
     spark:'<svg class="ic-svg logo-albatros" viewBox="0 0 369 338" aria-hidden="true"><use href="#logo-albatros"/></svg>',

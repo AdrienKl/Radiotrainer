@@ -38,6 +38,11 @@
    └─────────────────────────────────────────────────────────────────────────┘ */
 const BRUIT_ATTENDU = [
   /supabase\.co/i,                    // coupé exprès par les tests (voir ci-dessus)
+  /* Depuis les avis (29/09/2026), l'accueil lit la base SANS compte. Coupée
+     par page.route(…abort), la requête laisse « net::ERR_FAILED » — sans
+     l'adresse, d'où ce motif à part. Seul Supabase est coupé ainsi : un
+     fichier du site manquant répond 404, pas ERR_FAILED, et `absents` le voit. */
+  /Failed to load resource: net::ERR_FAILED/i,
   /AudioContext/i,                    // Chrome râle tant qu'aucun geste n'a eu lieu
   /speechSynthesis|SpeechRecognition/i,
   /favicon/i

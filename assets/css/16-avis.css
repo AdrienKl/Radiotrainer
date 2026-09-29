@@ -1,0 +1,61 @@
+/* =============================================================================
+   Albatros VFR — LES AVIS (29/09/2026)
+   -----------------------------------------------------------------------------
+   Le formulaire dans la modale de contact, le rappel après la 2e séance, les
+   trois avis de l'accueil et la page #avis. assets/modules/avis.js.
+   Après 15-contact.css : la vue « avis » vit dans sa modale et reprend ses
+   champs (.auth-field textarea, .ct-facultatif).
+   ========================================================================== */
+
+/* Texte lu par les lecteurs d'écran seulement (« 4 étoiles sur 5 »). */
+.sr-only{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+
+/* ---------- L'étoile, une seule forme partout ---------- */
+.av-etoile{ display:inline-block; width:18px; height:18px; background:var(--border); flex:none;
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%); }
+.av-etoile.on{ background:#e0a21b; }
+.av-note{ display:inline-flex; gap:2px; vertical-align:middle; }
+
+/* ---------- Le sélecteur de la modale ----------
+   De vrais boutons radio (clavier, lecteurs d'écran), habillés en étoiles. */
+.av-etoiles{ border:none; margin:0 0 16px; padding:0; }
+.av-etoiles legend{ width:100%; padding:0; margin-bottom:8px; font-size:13px; font-weight:600; color:var(--ink); }
+.av-etoiles__rang{ display:flex; gap:6px; }
+.av-etoiles__rang label{ position:relative; cursor:pointer; padding:3px; border-radius:8px; }
+.av-etoiles__rang input{ position:absolute; opacity:0; width:1px; height:1px; }
+.av-etoiles__rang .av-etoile{ width:32px; height:32px; transition:transform .12s, background .12s; }
+.av-etoiles__rang label:hover .av-etoile{ transform:scale(1.08); }
+.av-etoiles__rang input:focus-visible + .av-etoile{ outline:2px solid var(--violet); outline-offset:3px; }
+
+/* ---------- Le rappel, discret, au-dessus de la bulle de contact ---------- */
+.av-rappel{ position:fixed; right:clamp(14px,2.2vw,26px); bottom:calc(clamp(14px,2.2vw,26px) + 66px); z-index:299;
+  max-width:min(330px, calc(100vw - 32px)); background:var(--surface); color:var(--ink);
+  border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow-md, 0 10px 30px rgba(0,0,0,.18));
+  padding:14px 16px; font-size:13.5px; line-height:1.45; }
+.av-rappel[hidden]{ display:none !important; }
+.av-rappel b{ display:block; margin-bottom:3px; font-size:14px; }
+.av-rappel__act{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+
+/* ---------- Une carte d'avis (accueil et page #avis) ---------- */
+.av-carte{ background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 20px; }
+.av-carte__tete{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.av-carte__qui{ font-weight:700; font-size:14.5px; color:var(--ink); }
+.av-carte__txt{ margin:10px 0 0; font-size:14.5px; line-height:1.6; color:var(--ink); white-space:pre-line; }
+.av-carte__date{ margin-top:10px; font-size:12px; color:var(--ink-2-fort); }
+
+.av-accueil[hidden]{ display:none !important; }
+.av-grille{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr)); gap:16px; margin-top:22px; }
+.av-accueil__pied{ margin:22px 0 0; }
+
+/* ---------- La page #avis ---------- */
+.av-outils{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:6px 0 18px; }
+.av-resume{ margin:0; font-size:14px; color:var(--ink-2-fort); }
+.av-resume b{ color:var(--ink); }
+.av-tri{ font-size:13.5px; color:var(--ink-2-fort); display:flex; align-items:center; gap:8px; }
+.av-tri select{ background:var(--surface-2); border:1px solid var(--border); border-radius:10px;
+  padding:7px 10px; font-family:var(--sans); font-size:13.5px; color:var(--ink); }
+.av-liste{ display:grid; gap:12px; }
+.av-vide{ padding:22px; border:1px dashed var(--border); border-radius:14px; text-align:center;
+  font-size:14px; color:var(--ink-2-fort); }
+.av-mention{ font-size:13.5px; line-height:1.65; color:var(--ink-2-fort); }

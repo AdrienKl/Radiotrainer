@@ -29,7 +29,7 @@
     /* La vitrine (accueil + pages légales) reste TOUJOURS claire — décision du
        27/09/2026 ; même liste que parametres.js › applyTheme. */
     var r=(location.hash||'#accueil').slice(1).split('/')[0];
-    if(/^(accueil|cgu|confidentialite|mentions)?$/.test(r)) dark=false;
+    if(/^(accueil|cgu|confidentialite|mentions|avis)?$/.test(r)) dark=false;
     document.documentElement.setAttribute('data-theme', dark?'dark':'light');
   }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
 })();
@@ -69,6 +69,7 @@
 <link rel="stylesheet" href="assets/css/13-mobile.css">
 <link rel="stylesheet" href="assets/css/14-carte.css">
 <link rel="stylesheet" href="assets/css/15-contact.css">
+<link rel="stylesheet" href="assets/css/16-avis.css">
 
 <!-- Console d'administration : styles isolés dans leur propre fichier (préfixe
      .adm-, portés par #page-admin). Chargés après le <style> du site pour que les
@@ -379,6 +380,18 @@
           <span class="sec-tag">À propos</span>
           <h2 class="sec-h">Créé par un élève pilote, pour les élèves pilotes.</h2>
           <p class="sec-lede">Albatros VFR est né d'un constat simple&nbsp;: à la radio, on progresse en parlant, et on ne parle pas assez. Ici, vous répétez chaque échange autant de fois qu'il le faut — du roulage à l'atterrissage, jusqu'à la panne moteur ou radio.</p>
+        </div>
+      </section>
+
+      <!-- ---- Les avis mis en avant (29/09/2026, assets/modules/avis.js) ----
+           Masquée tant qu'aucun avis n'est publié : une section vide, ou des avis
+           inventés pour la remplir, seraient pires que pas de section. -->
+      <section class="sec av-accueil" id="avAccueil" hidden>
+        <div class="container">
+          <span class="sec-tag">Avis</span>
+          <h2 class="sec-h">Ce qu'en disent les élèves.</h2>
+          <div class="av-grille" id="avAccueilListe"></div>
+          <p class="av-accueil__pied"><button class="btn" type="button" data-page="avis">Voir tous les avis</button></p>
         </div>
       </section>
 
@@ -807,6 +820,38 @@
          laissés VISIBLEMENT vides — écrire un nom ou une adresse plausible
          serait pire que de ne rien écrire, puisque la page aurait alors l'air
          conforme. -->
+    <!-- ==================== AVIS (29/09/2026) ====================
+         Page publique, sans compte, comme les pages légales. La mention sur la
+         collecte et la modération est une obligation (Code de la consommation,
+         art. L111-7-2 et D111-16 à D111-19) : elle dit la vérité sur ce que
+         fait sql/010, rien de plus. -->
+    <section id="page-avis" class="page">
+      <div class="container legal-wrap">
+        <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← Albatros VFR</button></p>
+        <h1 class="legal-h1">Les avis des élèves</h1>
+        <div class="av-outils">
+          <p class="av-resume" id="avResume" aria-live="polite"></p>
+          <label class="av-tri">Trier :
+            <select id="avTri">
+              <option value="recents">Plus récents</option>
+              <option value="notes">Mieux notés</option>
+            </select>
+          </label>
+        </div>
+        <div class="av-liste" id="avListe"></div>
+        <h2 class="legal-h2">Comment les avis sont collectés et modérés</h2>
+        <p class="av-mention" id="avMention">Les avis sont déposés depuis l'application par des utilisateurs
+          inscrits ayant terminé au moins deux séances (vol ou scénario) ; chaque compte ne peut en laisser
+          qu'un. Chaque avis est vérifié manuellement avant publication, dans un délai de <b>3 jours au
+          plus</b>. Un avis est refusé s'il est injurieux, hors sujet, s'il contient des données personnelles
+          ou de la publicité ; son auteur voit alors le motif du refus dans l'application. Aucun avis ne
+          donne lieu à une contrepartie. Les avis sont affichés par date de dépôt, du plus récent au plus
+          ancien, ou par note si vous le choisissez ; les trois avis de la page d'accueil sont choisis par
+          l'équipe parmi les avis publiés. Un avis n'est pas modifiable par son auteur une fois envoyé ;
+          pour le faire retirer, écrivez-nous depuis le bouton Contact.</p>
+      </div>
+    </section>
+
     <section id="page-mentions" class="page">
       <div class="container legal-wrap">
         <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← Albatros VFR</button></p>
@@ -1125,6 +1170,13 @@
                 <td>Appliquer le quota journalier, et suivre le coût du service.</td>
                 <td>Exécution du contrat</td>
                 <td>Tant que le compte existe.</td></tr>
+            <tr><td><b>Avis</b> — votre note, votre commentaire, la date, et votre <b>pseudo</b>
+                    tel qu'il était à l'envoi ; votre compte y est rattaché, mais n'est jamais montré</td>
+                <td>Publier votre avis sur le site après vérification (page « Avis », et parfois
+                    l'accueil). Rien n'est envoyé tant que vous n'appuyez pas sur « Envoyer mon avis ».</td>
+                <td>Consentement</td>
+                <td>Tant qu'il est publié, ou jusqu'à la fermeture du compte. Retrait sur simple
+                    demande, par le bouton Contact.</td></tr>
             <tr><td><b>Journaux techniques des hébergeurs</b> — dont votre adresse IP</td>
                 <td>Servir les pages, sécuriser l'accès, détecter les abus. L'éditeur n'y accède pas
                     directement.</td>
@@ -2649,6 +2701,13 @@
             <svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .9 1.6h5.2c.1-.6.4-1.2.9-1.6A6 6 0 0 0 12 3z"/></svg>
             <span><b>Proposer une amélioration</b><span>Une idée, un manque, une phraséologie à ajouter.</span></span>
           </button>
+          <!-- Les avis (29/09/2026, assets/modules/avis.js). PAS de data-ct-nature :
+               contact.js y brancherait son formulaire Formspree. Montré seulement
+               à un compte connecté qui n'a pas encore laissé d'avis. -->
+          <button class="ct-opt" type="button" id="ctOptAvis" hidden>
+            <svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>
+            <span><b>Laisser un avis</b><span id="ctOptAvisTxt">Votre note et quelques mots sur Albatros VFR.</span></span>
+          </button>
         </div>
         <div class="modal-actions" style="margin-top:16px">
           <button class="btn ghost" type="button" data-ct-fermer>Fermer</button>
@@ -2714,6 +2773,37 @@
         <p class="ct-avis">Votre message et votre adresse e-mail sont transmis à Formspree, notre
           prestataire de formulaires, pour nous être remis. Détail dans la
           <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.</p>
+      </form>
+
+      <!-- ---------- Vue « avis » (29/09/2026, assets/modules/avis.js) ----------
+           Part dans la table `avis` de Supabase, PAS chez Formspree. La base
+           impose le reste (sql/010) : en attente, pseudo figé, un seul par
+           compte, deux séances terminées. -->
+      <form id="ctAvisVue" novalidate hidden>
+        <fieldset class="av-etoiles" id="avEtoiles">
+          <legend>Votre note <span class="ct-facultatif">obligatoire</span></legend>
+          <div class="av-etoiles__rang">
+            <label><input type="radio" name="note" value="1"><span class="av-etoile" aria-hidden="true"></span><span class="sr-only">1 étoile sur 5</span></label>
+            <label><input type="radio" name="note" value="2"><span class="av-etoile" aria-hidden="true"></span><span class="sr-only">2 étoiles sur 5</span></label>
+            <label><input type="radio" name="note" value="3"><span class="av-etoile" aria-hidden="true"></span><span class="sr-only">3 étoiles sur 5</span></label>
+            <label><input type="radio" name="note" value="4"><span class="av-etoile" aria-hidden="true"></span><span class="sr-only">4 étoiles sur 5</span></label>
+            <label><input type="radio" name="note" value="5"><span class="av-etoile" aria-hidden="true"></span><span class="sr-only">5 étoiles sur 5</span></label>
+          </div>
+        </fieldset>
+        <div class="auth-field">
+          <label for="avCommentaire">Votre commentaire <span class="ct-facultatif">facultatif</span></label>
+          <textarea id="avCommentaire" maxlength="1000"
+                    placeholder="Ce qui vous a aidé, ce qui vous a manqué."></textarea>
+        </div>
+        <div class="auth-msg hidden" id="avMsg" role="alert"></div>
+        <div class="modal-actions">
+          <button class="btn ghost" type="button" id="avRetour">Retour</button>
+          <button class="btn cta" type="submit" id="avEnvoyer">Envoyer mon avis</button>
+        </div>
+        <p class="ct-avis">Votre <b>pseudo</b>, votre note, votre commentaire et la date seront publiés sur
+          le site après vérification, sous 3 jours au plus. Un avis ne peut plus être modifié une fois
+          envoyé ; pour le faire retirer, écrivez-nous. Détail dans la
+          <button class="auth-link" type="button" data-page="avis">page des avis</button>.</p>
       </form>
 
       <!-- ---------- Vue 3 : la confirmation, DANS la modale ---------- -->
@@ -2831,6 +2921,9 @@
      puis voix du navigateur, limite du jour. Rien n'est lu au chargement : sa
      place est libre, comme celle de contact.js. -->
 <script src="assets/modules/lancement.js"></script>
+<!-- Les avis (29/09/2026) : widget, rappel, accueil, page #avis. Lu à la demande :
+     place libre, APRÈS le markup de la modale de contact et de la vitrine. -->
+<script src="assets/modules/avis.js"></script>
 
 <!-- ==================== CONSOLE D'ADMINISTRATION ====================
      Scripts classiques (pas de modules ES) et namespace global window.RTAdmin :
@@ -2871,6 +2964,7 @@
 <script src="assets/admin/pages/exercises.js"></script>
 <script src="assets/admin/pages/errors.js"></script>
 <script src="assets/admin/pages/voix.js"></script>
+<script src="assets/admin/pages/avis.js"></script>
 <script src="assets/admin/pages/test.js"></script>
 
 </body>

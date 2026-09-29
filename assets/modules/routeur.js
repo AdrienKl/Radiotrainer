@@ -30,7 +30,7 @@
   /* « cgu » et « confidentialite » sont des pages de vitrine : accessibles sans
      compte, puisqu'il faut pouvoir les lire AVANT de s'inscrire. C'est une
      obligation, pas un choix de confort (RGPD art. 13). */
-  var PAGES=['accueil','login','signup','cgu','confidentialite','mentions','tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte','admin'];
+  var PAGES=['accueil','login','signup','cgu','confidentialite','mentions','avis','tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte','admin'];
   var APP_PAGES=['tableau','exercices','navigation','carte','epellation','cours','progression','parametres','compte'];
   /* Les trois pages qui se jouent devant une photo. Cette liste est la seule
      source de vérité : le CSS a une règle body.on-<page> pour chacune, et rien

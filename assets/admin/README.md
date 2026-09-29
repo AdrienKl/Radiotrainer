@@ -124,6 +124,14 @@ Six tables. Le raisonnement (et ce qui a été écarté) est dans `ADMIN.md` § 
 > `update voix_reglages set valeur = 0 where cle = 'lancement_gratuit'` — et
 > passer `ACTIF` à `false` dans `assets/modules/lancement.js`. Le même fichier
 > retire à `anon` le droit SELECT sur `paiements`, resté par défaut.
+>
+> **Les avis (sql/010, 29/09/2026)** : table `avis`, un par compte. Dépôt par
+> l'élève (note + commentaire seulement, droits par colonne) après 2 séances
+> terminées ; statut, vedette, pseudo et date imposés par le déclencheur
+> `avis_avant_depot`. Lecture publique des seuls publiés, sans `user_id`.
+> Aucune politique UPDATE / DELETE : modération par `admin_avis_moderer`,
+> `admin_avis_vedette`, `admin_avis_supprimer`, `admin_avis_liste` (admin
+> plein, journal d'audit). L'auteur lit le sien par `mon_avis()`.
 
 ```sql
 -- =====================================================================

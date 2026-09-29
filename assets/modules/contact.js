@@ -53,6 +53,7 @@
   var vueChoix = $('ctChoix'),
       form     = $('ctForm'),
       vueFin   = $('ctFin'),
+      vueAvis  = $('ctAvisVue'),           // la vue des avis (assets/modules/avis.js, 29/09/2026)
       sousTitre= $('ctSub'),
       titre    = $('ctTitre'),
       msg      = $('ctMsg'),
@@ -152,6 +153,7 @@
     vueChoix.hidden = (vue !== 'choix');
     form.hidden     = (vue !== 'form');
     vueFin.hidden   = (vue !== 'fin');
+    if(vueAvis) vueAvis.hidden = (vue !== 'avis');
     /* La confirmation porte son PROPRE titre, centré sous la coche. Laisser en
        plus l'en-tête de la modale affichait « Message envoyé » deux fois, l'un
        au-dessus de l'autre — vu sur la capture du thème sombre. L'en-tête reste
@@ -222,8 +224,14 @@
     direMsg('');
     modale.hidden = false;
 
+    /* Chaque ouverture est annoncée : avis.js y décide s'il propose
+       « Laisser un avis » (compte connecté, pas encore d'avis). */
+    try{ window.dispatchEvent(new CustomEvent('rt:contact-ouvert', { detail:{ nature:natureDemandee || null } })); }catch(e){}
+
     if(natureDemandee === 'bug' || natureDemandee === 'amelioration'){
       choisir(natureDemandee);
+    }else if(natureDemandee === 'avis' && vueAvis){
+      montrer('avis');   // titre et sous-titre posés par avis.js
     }else{
       nature = null;
       titre.textContent = 'Contact / Feedback';
@@ -507,5 +515,8 @@
     if (bulle && bulle.hidden) montrerBulle(false);
   });
 
-  window.RTContact = { bulle: function(force){ montrerBulle(!!force); } };
+  /* `vue` et `fermer` : pour avis.js, qui a sa vue dans cette modale mais pas
+     ses propres règles d'ouverture et de fermeture (focus, anti-double-envoi). */
+  window.RTContact = { bulle: function(force){ montrerBulle(!!force); },
+                       vue: function(v){ montrer(v); }, fermer: function(){ fermer(); } };
 })();

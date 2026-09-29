@@ -742,6 +742,133 @@ if (!problemes) {
 
   if (pb14.length) { rate('la phase de lancement ne se comporte pas comme prévu :'); pb14.forEach(m => console.log(rouge('      · ' + m))); }
   else passe('phase de lancement : voix Google aux comptes gratuits sous leur plafond (20 000), refus « non_premium » dès la fermeture, admin plein hors plafond gratuit ; anon ne lit plus paiements');
+
+  /* 15. Les avis (sql/010). Ici on JOUE les rôles anon et authenticated
+         (set local role) : c'est la seule façon de vérifier des politiques
+         et des droits par colonne, que le superutilisateur ignore. Chaque
+         essai tourne dans sa transaction, annulée s'il échoue. */
+  const pb15 = [];
+  await db.exec(`grant usage on schema auth to anon, authenticated`);
+  const enTant = async (role, qui, sql) => {
+    await db.exec('begin');
+    try {
+      await db.exec(`set local role ${role}`);
+      await db.exec(`select set_config('request.jwt.claim.sub', '${qui || ''}', true)`);
+      const [r] = await q(sql);
+      await db.exec('commit');
+      return { ok: true, r };
+    } catch (e) { await db.exec('rollback'); return { ok: false, message: e.message }; }
+  };
+  await moi13(null);
+  await db.exec(`insert into auth.users (email) values ('avisA@albatros.test'), ('avisB@albatros.test'), ('avisC@albatros.test')`);
+  const aA = await idDe('avisA@albatros.test'), aB = await idDe('avisB@albatros.test'), aC = await idDe('avisC@albatros.test');
+  await db.exec(`update public.profiles set pseudo = 'pilote-a', status = 'active' where id = '${aA}'`);
+  await db.exec(`update public.profiles set pseudo = 'pilote-b', status = 'active' where id = '${aB}'`);
+  await db.exec(`update public.profiles set pseudo = 'pilote-c', status = 'active' where id = '${aC}'`);
+  await db.exec(`update public.profiles set status = 'active', role = 'admin' where id = '${admin}'`);
+  await db.exec(`insert into public.sessions (user_id, kind, status) values
+    ('${aA}', 'flight', 'completed'), ('${aA}', 'scenario', 'completed'),
+    ('${aB}', 'flight', 'completed'), ('${aB}', 'scenario', 'abandoned'), ('${aB}', 'spelling', 'completed'),
+    ('${aC}', 'scenario', 'completed'), ('${aC}', 'scenario', 'completed')`);
+
+  // 15.1 Dépôt : pour soi, en attente, pseudo figé — quoi qu'on envoie.
+  let x15 = await enTant('authenticated', aA, `insert into public.avis (note, commentaire) values (5, '  Très utile.  ')`);
+  if (!x15.ok) pb15.push(`dépôt légitime refusé : ${x15.message}`);
+  let [av] = await q(`select * from public.avis where user_id = '${aA}'`);
+  if (!av || av.statut !== 'en_attente' || av.pseudo !== 'pilote-a' || av.commentaire !== 'Très utile.' || av.mis_en_avant)
+    pb15.push(`avis déposé : ${JSON.stringify(av)}`);
+  // Forcer le statut, la vedette, l'auteur ou le pseudo : refusé (droits par colonne).
+  for (const sql of [`insert into public.avis (note, statut) values (5, 'publie')`,
+                     `insert into public.avis (note, mis_en_avant, ordre_mise_en_avant) values (5, true, 1)`,
+                     `insert into public.avis (note, user_id) values (5, '${aB}')`,
+                     `insert into public.avis (note, pseudo) values (5, 'admin')`]) {
+    x15 = await enTant('authenticated', aC, sql);
+    if (x15.ok) pb15.push('accepté : ' + sql);
+  }
+  // 15.2 Un seul avis par compte.
+  x15 = await enTant('authenticated', aA, `insert into public.avis (note) values (1)`);
+  if (x15.ok) pb15.push('un second avis a été accepté');
+  // 15.3 Deux séances TERMINÉES, vol ou scénario (l'épellation et l'abandon ne comptent pas).
+  x15 = await enTant('authenticated', aB, `insert into public.avis (note) values (4)`);
+  if (x15.ok || !/avis_trop_tot/.test(x15.message)) pb15.push(`dépôt avec une seule séance terminée : ${JSON.stringify(x15)}`);
+  // Anonyme : aucun dépôt.
+  x15 = await enTant('anon', null, `insert into public.avis (note) values (5)`);
+  if (x15.ok) pb15.push('un visiteur anonyme a déposé un avis');
+
+  // 15.4 Ni l'auteur, ni un autre élève ne modifient ou suppriment — même en forçant l'API.
+  for (const sql of [`update public.avis set statut = 'publie' where user_id = '${aA}'`,
+                     `update public.avis set note = 1`,
+                     `update public.avis set mis_en_avant = true, ordre_mise_en_avant = 1`,
+                     `delete from public.avis`]) {
+    x15 = await enTant('authenticated', aA, sql);
+    if (x15.ok) pb15.push('l\'auteur a pu : ' + sql);
+  }
+  [av] = await q(`select statut, note from public.avis where user_id = '${aA}'`);
+  if (av.statut !== 'en_attente' || av.note !== 5) pb15.push(`l'avis a changé sans l'administration : ${JSON.stringify(av)}`);
+  // Les fonctions d'administration : refusées à l'élève et au modérateur.
+  const idA = (await q(`select id from public.avis where user_id = '${aA}'`))[0].id;
+  for (const [nom, qui] of [['l\'auteur', aA], ['un modérateur', modo]]) {
+    for (const sql of [`select public.admin_avis_moderer('${idA}', 'publie')`, `select public.admin_avis_vedette('${idA}', 1)`,
+                       `select public.admin_avis_supprimer('${idA}')`, `select public.admin_avis_liste()`]) {
+      x15 = await enTant('authenticated', qui, sql);
+      if (x15.ok) pb15.push(`${nom} a pu exécuter : ${sql}`);
+    }
+  }
+
+  // 15.5 En attente : invisible du public, et user_id jamais lisible.
+  x15 = await enTant('anon', null, `select count(*)::int as n from public.avis`);
+  if (!x15.ok || x15.r.n !== 0) pb15.push(`le public voit un avis en attente : ${JSON.stringify(x15)}`);
+  x15 = await enTant('anon', null, `select user_id from public.avis`);
+  if (x15.ok) pb15.push('le public peut lire user_id');
+  // Vedette d'un avis non publié : refusée par la fonction ET par la base.
+  x15 = await enTant('authenticated', admin, `select public.admin_avis_vedette('${idA}', 1)`);
+  if (x15.ok) pb15.push('un avis en attente a été mis en avant');
+  try { await db.exec(`update public.avis set mis_en_avant = true, ordre_mise_en_avant = 1 where id = '${idA}'`); pb15.push('la base accepte une vedette non publiée'); } catch (e) {}
+
+  // 15.6 L'admin publie : visible ; rejette : invisible ; la vedette suit.
+  x15 = await enTant('authenticated', admin, `select public.admin_avis_moderer('${idA}', 'publie')`);
+  if (!x15.ok) pb15.push(`l'admin ne peut pas publier : ${x15.message}`);
+  x15 = await enTant('anon', null, `select pseudo, note from public.avis`);
+  if (!x15.ok || x15.r.pseudo !== 'pilote-a') pb15.push(`avis publié invisible du public : ${JSON.stringify(x15)}`);
+  x15 = await enTant('authenticated', admin, `select public.admin_avis_vedette('${idA}', 1)`);
+  if (!x15.ok) pb15.push(`mise en avant refusée : ${x15.message}`);
+  x15 = await enTant('authenticated', admin, `select public.admin_avis_moderer('${idA}', 'rejete', 'Hors sujet')`);
+  [av] = await q(`select statut, mis_en_avant, ordre_mise_en_avant, motif_rejet from public.avis where id = '${idA}'`);
+  if (av.statut !== 'rejete' || av.mis_en_avant || av.ordre_mise_en_avant !== null || av.motif_rejet !== 'Hors sujet')
+    pb15.push(`rejet d'une vedette : ${JSON.stringify(av)}`);
+  x15 = await enTant('anon', null, `select count(*)::int as n from public.avis`);
+  if (x15.r.n !== 0) pb15.push('un avis rejeté reste visible du public');
+  // L'auteur lit son avis et le motif par mon_avis().
+  x15 = await enTant('authenticated', aA, `select public.mon_avis() as m`);
+  if (!x15.ok || x15.r.m.avis.statut !== 'rejete' || x15.r.m.avis.motif_rejet !== 'Hors sujet' || x15.r.m.peut)
+    pb15.push(`mon_avis() : ${JSON.stringify(x15)}`);
+  x15 = await enTant('authenticated', aB, `select public.mon_avis() as m`);
+  if (!x15.ok || x15.r.m.peut || x15.r.m.seances !== 1) pb15.push(`mon_avis(), une séance : ${JSON.stringify(x15)}`);
+
+  // 15.7 Trois vedettes au plus : un rang pris remplace l'ancien titulaire.
+  await enTant('authenticated', aC, `insert into public.avis (note) values (4)`);
+  const idC = (await q(`select id from public.avis where user_id = '${aC}'`))[0].id;
+  await enTant('authenticated', admin, `select public.admin_avis_moderer('${idA}', 'publie')`);
+  await enTant('authenticated', admin, `select public.admin_avis_moderer('${idC}', 'publie')`);
+  await enTant('authenticated', admin, `select public.admin_avis_vedette('${idA}', 2)`);
+  await enTant('authenticated', admin, `select public.admin_avis_vedette('${idC}', 2)`);
+  const ved = await q(`select id, ordre_mise_en_avant from public.avis where mis_en_avant`);
+  if (ved.length !== 1 || ved[0].id !== idC) pb15.push(`le rang 2 a deux titulaires, ou aucun : ${JSON.stringify(ved)}`);
+  x15 = await enTant('authenticated', admin, `select public.admin_avis_vedette('${idA}', 4)`);
+  if (x15.ok) pb15.push('rang 4 accepté');
+
+  // 15.8 Suppression : par l'admin seul, journalisée.
+  x15 = await enTant('authenticated', admin, `select public.admin_avis_supprimer('${idA}')`);
+  if (!x15.ok || (await q(`select 1 from public.avis where id = '${idA}'`)).length) pb15.push(`suppression par l'admin : ${JSON.stringify(x15)}`);
+  const jA = await q(`select action from public.admin_audit_log where target_type = 'avis' order by id`);
+  if (!jA.some(j => j.action === 'avis.supprime') || !jA.some(j => j.action === 'avis.vedette') || !jA.some(j => j.action === 'avis.statut'))
+    pb15.push(`journal d'audit incomplet : ${JSON.stringify(jA)}`);
+  const polA = await q(`select cmd from pg_policies where schemaname = 'public' and tablename = 'avis'`);
+  if (polA.some(pp => pp.cmd === 'UPDATE' || pp.cmd === 'DELETE' || pp.cmd === 'ALL')) pb15.push('une politique UPDATE / DELETE existe sur avis');
+  await moi13(null);
+
+  if (pb15.length) { rate('les avis ne se comportent pas comme prévu :'); pb15.forEach(m => console.log(rouge('      · ' + m))); }
+  else passe('avis : un par compte, pour soi, 2 séances terminées ; en attente jusqu\'à modération ; ni modifiable ni supprimable par l\'auteur, même par l\'API ; public = publiés seuls, sans user_id ; 3 vedettes publiées au plus ; admin plein seul, journalisé');
 }
 
 console.log('');

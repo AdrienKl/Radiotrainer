@@ -313,3 +313,50 @@ test('le bruit radio suit la voix Google (speakATC)', async ({ page }) => {
     return on >= 0 && b.lastIndexOf('off') > on;
   }, { timeout: 5000, message: 'le bruit n\'a pas démarré puis cessé avec la voix Google' }).toBe(true);
 });
+
+/* Safari (30/09/2026) : le son de Google passe par un <audio> déverrouillé au
+   premier geste, pas par l'AudioContext — muet sous Safari alors qu'il
+   affichait l'icône de son. RT_LECTEUR_ELEMENT force ce chemin sous Chromium. */
+test.describe('Safari : la voix réaliste par un élément <audio>', () => {
+  test.beforeEach(async ({ page }) => { await page.evaluate(() => { window.RT_LECTEUR_ELEMENT = true; }); });
+
+  test('le message est joué par le <audio> : onDebut puis onFin, rien par le navigateur', async ({ page }) => {
+    await fonction(page, () => ({}));
+    await preparer(page);
+    await page.evaluate(() => {
+      window.__lu = [];
+      const orig = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () { window.__lu.push(this.src.slice(0, 5)); return orig.call(this); };
+    });
+    await page.evaluate(() => __dire('Piste 27, autorisé atterrissage.'));
+    await expect.poll(() => evenements(page)).toEqual(['debut:Piste 27, autorisé atterrissage.', 'fin:Piste 27, autorisé atterrissage.']);
+    expect(await page.evaluate(() => window.__lu)).toContain('blob:');
+    expect(await page.evaluate(() => Voix.etatGoogle().dernier)).toBe('google');
+    expect(await ditParLeNavigateur(page)).toEqual([]);
+  });
+
+  test('lecture refusée par le navigateur : le MÊME message repart par la voix du navigateur', async ({ page }) => {
+    await fonction(page, () => ({}));
+    await preparer(page);
+    await page.evaluate(() => {
+      const orig = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () {
+        return this.src.startsWith('blob:') ? Promise.reject(new DOMException('refus', 'NotAllowedError')) : orig.call(this);
+      };
+    });
+    await page.evaluate(() => __dire('Rappelez vent arrière.'));
+    await expect.poll(() => ditParLeNavigateur(page)).toContain('Rappelez vent arrière.');
+    await expect.poll(() => evenements(page)).toEqual(['debut:Rappelez vent arrière.', 'fin:Rappelez vent arrière.']);
+  });
+
+  test('stop() pendant la lecture : silence, aucun onFin en retard', async ({ page }) => {
+    await fonction(page, () => ({ body: wav(1.5) }));
+    await preparer(page);
+    await page.evaluate(() => __dire('Maintenez position.'));
+    await expect.poll(() => evenements(page)).toEqual(['debut:Maintenez position.']);
+    await page.evaluate(() => Voix.stop());
+    await page.waitForTimeout(2000);
+    expect(await evenements(page)).toEqual(['debut:Maintenez position.']);
+    expect(await ditParLeNavigateur(page)).toEqual([]);
+  });
+});

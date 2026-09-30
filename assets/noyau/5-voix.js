@@ -118,6 +118,8 @@ if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickV
         audioCtx = new (window.AudioContext||window.webkitAudioContext)();
     }catch(e){}
     try{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
+    // Safari : le lecteur <audio> de la voix réaliste, déverrouillé dans ce même geste.
+    try{ if(window.Voix && Voix.deverrouillerLecteur) Voix.deverrouillerLecteur(); }catch(e){}
     EVTS.forEach(function(ev){ document.removeEventListener(ev,amorce,true); });
   }
   EVTS.forEach(function(ev){ document.addEventListener(ev,amorce,true); });
@@ -241,7 +243,10 @@ var Voix=(function(){
     source: null,                // AudioBufferSourceNode en lecture
     dernier: null,               // 'google' | 'navigateur' : qui a dit le dernier message
     erreur: null,                // le dernier échec : { cause, statut?, code? }
-    liste: null                  // la promesse de la liste des voix, une fois par page
+    liste: null,                 // la promesse de la liste des voix, une fois par page
+    element: null,               // <audio> en lecture (Safari, voir parElement)
+    lecteur: null,               // le <audio> réutilisé, déverrouillé dans un geste
+    lecteurOk: false
   };
 
   /* Les modèles, dans l'ordre où l'écran les présente. Le CODE est celui du
@@ -478,6 +483,51 @@ var Voix=(function(){
     });
   }
 
+  /* =======================================================================
+     SAFARI : LE SON PASSE PAR UN <audio>, PAS PAR WEB AUDIO (30/09/2026)
+     -----------------------------------------------------------------------
+     Panne relevée par le développeur : sur Safari, l'essai affichait « Voix
+     réaliste : Chirp 3 HD · Achernar », l'onglet montrait l'icône de son,
+     la base comptait bien les caractères — et on n'entendait RIEN. Chrome,
+     avec le même code, parlait. Le son décodé et joué par l'AudioContext
+     sortait muet sous Safari.
+     Sur Safari (et tout navigateur d'iPhone/iPad, tous WebKit), le MP3 de
+     Google est donc joué par UN élément <audio>, toujours le même, que l'on
+     « déverrouille » dans un geste (preparerAudio, l'amorce du premier
+     clic) en lui faisant jouer un silence : Safari laisse ensuite cet
+     élément-là jouer hors geste. Chrome et les autres gardent Web Audio, qui
+     y marche.
+     window.RT_LECTEUR_ELEMENT = true force ce chemin (les tests, qui tournent
+     sous Chromium). */
+  var SILENCE = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+  function parElement(){
+    if(window.RT_LECTEUR_ELEMENT === true) return true;
+    var ua = (navigator && navigator.userAgent) || '';
+    if(/iPad|iPhone|iPod/.test(ua)) return true;
+    return /Safari\//.test(ua) && !/Chrome\/|Chromium|CriOS|FxiOS|Edg\/|OPR\//.test(ua);
+  }
+  function lecteur(){
+    if(!G.lecteur){
+      try{ G.lecteur = new Audio(); G.lecteur.preload = 'auto'; }catch(e){ G.lecteur = null; }
+    }
+    return G.lecteur;
+  }
+  // DANS un geste : fait jouer un silence au lecteur, qui peut ensuite jouer seul.
+  function deverrouillerLecteur(){
+    if(!parElement() || G.lecteurOk) return;
+    var a = lecteur(); if(!a) return;
+    try{
+      a.src = SILENCE;
+      var p = a.play();
+      if(p && p.then) p.then(function(){ G.lecteurOk = true; }, function(){});
+      else G.lecteurOk = true;
+    }catch(e){}
+  }
+  function urlDe(octets){
+    try{ return URL.createObjectURL(new Blob([octets], { type:'audio/mpeg' })); }
+    catch(e){ throw { cause:'decodage' }; }
+  }
+
   function cacheLire(cle){
     if(!G.cache.has(cle)) return null;
     var b = G.cache.get(cle);
@@ -486,7 +536,14 @@ var Voix=(function(){
   }
   function cacheEcrire(cle, b){
     G.cache.set(cle, b);
-    while(G.cache.size > G.CACHE_MAX) G.cache.delete(G.cache.keys().next().value);
+    while(G.cache.size > G.CACHE_MAX){
+      var vieille = G.cache.keys().next().value, v = G.cache.get(vieille);
+      G.cache.delete(vieille);
+      // Une adresse blob: retient le son en mémoire tant qu'on ne la libère pas.
+      if(typeof v === 'string' && v.indexOf('blob:') === 0 && !(G.element && G.element.src === v)){
+        try{ URL.revokeObjectURL(v); }catch(e){}
+      }
+    }
   }
 
   /* Un appel à voix-atc, borné à G.DELAI. `lire(reponse)` transforme une
@@ -536,7 +593,8 @@ var Voix=(function(){
   /* Le son d'un message. */
   function telecharger(texte, voix, debit, hauteur, delaiMax){
     return appeler({ action:'dire', texte:texte, voix:voix, debit:debit, hauteur:hauteur },
-                   function(rep){ return rep.arrayBuffer().then(decoder); }, true, delaiMax);
+                   function(rep){ return rep.arrayBuffer().then(function(o){ return parElement() ? urlDe(o) : decoder(o); }); },
+                   true, delaiMax);
   }
 
   /* La liste des voix proposées, telle que voix-atc la renvoie (voices.list de
@@ -598,6 +656,7 @@ var Voix=(function(){
                          : telecharger(m.texte, voix, debit, hauteur, o.delaiGoogle || delaiPour(m.texte)).then(function(b){ G.retards = 0; cacheEcrire(cle, b); return b; });
     obtenu.then(function(b){
       if(mien!==jeton) return;                 // stop() est passé entre-temps
+      if(typeof b === 'string') return jouerElement(m, b, mien);   // Safari : un <audio>
       return contexteQuiTourne().then(function(ctx){
         if(mien!==jeton) return;
         jouer(m, ctx, b, mien);
@@ -608,6 +667,44 @@ var Voix=(function(){
       m.google = 'echec';                      // le MÊME message, par le navigateur
       enCours = false;
       pompe();
+    });
+  }
+
+  /* Le même contrat que jouer(), par le <audio> de Safari. Un play() refusé
+     (lecteur jamais déverrouillé) ou une erreur de lecture rejette : le
+     message repart par la voix du navigateur, comme toute panne audio. */
+  function jouerElement(m, url, mien){
+    var a = lecteur();
+    if(!a) return Promise.reject({ cause:'audio' });
+    return new Promise(function(ok, ko){
+      var fini = false;
+      function finir(){
+        if(fini) return; fini = true;
+        a.onended = null; a.onerror = null;
+        if(G.element === a) G.element = null;
+      }
+      a.onended = function(){
+        finir();
+        if(mien!==jeton) return;
+        m.i = m.phrases.length;
+        enCours = false;
+        pompe();
+      };
+      a.onerror = function(){ finir(); if(mien===jeton) ko({ cause:'audio' }); };
+      try{
+        a.src = url;
+        a.volume = m.opts.volume!=null ? Math.max(0, Math.min(1, m.opts.volume)) : 1;
+        G.element = a;
+        var p = a.play();
+        var parti = function(){
+          if(mien!==jeton){ try{ a.pause(); }catch(e){} finir(); return ok(); }
+          G.dernier = 'google'; G.erreur = null; G.lecteurOk = true;
+          if(!m.debut && m.opts.onDebut){ m.debut=true; try{ m.opts.onDebut(); }catch(e){} }
+          ok();
+        };
+        if(p && p.then) p.then(parti, function(){ finir(); ko({ cause:'audio' }); });
+        else parti();
+      }catch(e){ finir(); ko({ cause:'audio' }); }
     });
   }
 
@@ -640,10 +737,11 @@ var Voix=(function(){
     /* Ce qui parlait passait-il par Google ? Alors speechSynthesis n'a rien à
        annuler — et un cancel() à vide, on l'a vu plus haut, participe au
        blocage de Chrome. */
-    var viaGoogle = !!(G.source || G.requete);
+    var viaGoogle = !!(G.source || G.requete || G.element);
     jeton++; file.length=0; enCours=false; annulerGarde();
     if(G.requete){ try{ G.requete.abort(); }catch(e){} G.requete=null; }
     if(G.source){ try{ G.source.stop(); }catch(e){} G.source=null; }
+    if(G.element){ var el = G.element; G.element = null; el.onended = null; el.onerror = null; try{ el.pause(); }catch(e){} }
     if(window.speechSynthesis){
       try{ if((avait && !viaGoogle) || speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){}
     }
@@ -817,6 +915,7 @@ var Voix=(function(){
   function preparerAudio(){
     var ctx = contexteAudio();
     try{ if(ctx && ctx.state==='suspended') ctx.resume(); }catch(e){}
+    deverrouillerLecteur();                    // Safari : le <audio> de la voix réaliste
   }
 
   /* Les graphies réglées depuis l'administration (sql/013, table
@@ -840,6 +939,7 @@ var Voix=(function(){
 
   return { parler:parler, empiler:empiler, stop:stop, occupe:occupe,
            rechargerPrononciations:function(){ return chargerPrononciations(true); },
+           deverrouillerLecteur:deverrouillerLecteur,
            voixGoogle:listerVoix, etatGoogle:etatGoogle, relancerGoogle:relancerGoogle,
            preparerAudio:preparerAudio, station:station,
            FAMILLES_GOOGLE:FAMILLES, familleGoogle:familleDe, libelleGoogle:libelleDe };

@@ -263,3 +263,33 @@ test('ordinateur : à la souris, appuyer puis tirer TOUT DE SUITE fait suivre la
   await page.mouse.up();
   await expect(page.locator('#page-carte')).toBeVisible();
 });
+
+test('téléphone : la pastille du menu suit le doigt même quand le navigateur annule le pointeur (iPhone)', async ({ page, browserName }) => {
+  /* Safari envoie pointercancel en plein glissement ; après lui, plus aucun
+     pointermove. La pastille restait figée au milieu du menu (30/09/2026).
+     On rejoue ce pointercancel dans Chromium, et le doigt par le protocole de
+     Chrome — Playwright ne sait pas faire glisser un doigt. */
+  test.skip(!etroit(page) || browserName !== 'chromium', 'téléphone Chromium seulement');
+  await ouvrir(page);
+  await entrer(page, 'parametres');
+  await page.evaluate(() => { const s = rtSettings(); s.bulleContactVue = true; rtSaveSettings(s); });
+  await page.locator('#hamburger').tap();
+  await page.waitForTimeout(700);
+  const cdp = await page.context().newCDPSession(page);
+  const d = await page.locator('.sidelink.current').boundingBox();
+  const a = await page.locator('.sidelink[data-page="exercices"]').boundingBox();
+  const x = d.x + 60, y0 = d.y + d.height / 2, y1 = a.y + a.height / 2;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: y0 }] });
+  await page.waitForTimeout(600);                                   // l'appui long
+  for (let i = 1; i <= 10; i++) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y0 + (y1 - y0) * i / 10 }] });
+    if (i === 3) await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointercancel', { pointerType: 'touch' })));
+  }
+  await page.waitForTimeout(60);
+  const centre = await page.evaluate(() => {
+    const r = document.querySelector('.side-nav > .glisseur').getBoundingClientRect(); return r.top + r.height / 2;
+  });
+  expect(Math.abs(centre - y1), 'la pastille s\'est figée').toBeLessThan(30);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(page.locator('#page-exercices')).toBeVisible();
+});

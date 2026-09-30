@@ -8,8 +8,16 @@
 <!-- Favicon : le logo Albatros sur pastille blanche (26/09/2026). Un fichier et
      non plus un data URI : le tracé fait 4 Ko, le recopier dans chaque page
      serait deux copies à tenir. file:// n'est plus une contrainte (CLAUDE.md § 6.1). -->
+<!-- Icônes PNG (30/09/2026). Le SVG seul ne suffisait pas : Chrome sur
+     Android n'affiche pas d'icône SVG dans la liste des onglets (on y voyait le
+     globe « site web »), et iOS ignore un apple-touch-icon SVG. Les PNG sont
+     tirés du même favicon.svg ; le SVG reste pour les navigateurs d'ordinateur
+     qui le prennent. L'icône d'écran d'accueil iOS est PLEINE (sans coins
+     transparents) : iOS arrondit lui-même, et peint la transparence en noir. -->
+<link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon-192.png">
 <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-<link rel="apple-touch-icon" href="assets/images/favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
 
 <meta name="description" content="Albatros VFR — simulateur de phraséologie radio VFR en français. Entraînez-vous au micro sur des scénarios réels, de la mise en route à l'atterrissage, avec un contrôleur qui vous répond et un retour immédiat sur votre phraséologie.">
 <meta name="theme-color" content="#5b4bce">

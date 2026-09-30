@@ -233,8 +233,30 @@
       suivre(e.clientX, e.clientY);
     });
     window.addEventListener('pointerup', function(){ finir(false); });
-    window.addEventListener('pointercancel', function(){ finir(true); });
-    boite.addEventListener('touchmove', function(e){ if(appui && appui.tire) e.preventDefault(); }, { passive:false });
+    /* Au doigt, une fois la pastille attrapée, on IGNORE pointercancel et on
+       suit le doigt par les événements tactiles (plus bas). Safari — et donc
+       tout navigateur d'iPhone, Chrome compris — envoie pointercancel dès
+       qu'il croit reconnaître un défilement, même quand le touchmove est
+       annulé ; après lui, plus un seul pointermove : la pastille restait figée
+       au milieu du menu (retour du développeur, 30/09/2026 — « sur téléphone
+       c'est encore buggé »). Les touch*, eux, continuent d'arriver. */
+    window.addEventListener('pointercancel', function(){
+      if(appui && appui.tire && !appui.souris) return;
+      finir(true);
+    });
+    boite.addEventListener('touchmove', function(e){
+      if(!appui || appui.souris) return;
+      var t = e.touches && e.touches[0]; if(!t) return;
+      if(!appui.tire){
+        if(Math.hypot(t.clientX - appui.x0, t.clientY - appui.y0) > 8) finir(true);   // il défile
+        return;
+      }
+      e.preventDefault();                  // pas de défilement pendant qu'on tire
+      appui.x = t.clientX; appui.y = t.clientY;
+      suivre(t.clientX, t.clientY);
+    }, { passive:false });
+    boite.addEventListener('touchend', function(){ if(appui && !appui.souris) finir(false); });
+    boite.addEventListener('touchcancel', function(){ if(appui && !appui.souris) finir(true); });
     boite.addEventListener('contextmenu', function(e){ if(appui) e.preventDefault(); });
     boite.addEventListener('click', function(e){
       if(avaler && e.isTrusted){ e.stopPropagation(); e.preventDefault(); avaler = false; }

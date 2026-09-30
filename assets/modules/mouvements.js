@@ -210,15 +210,25 @@
       if(e.button > 0 || reduit) return;
       var en = e.target.closest ? e.target.closest(selEntree) : null;
       if(!en || en.parentNode !== boite || !en.classList.contains(classe)) return;
-      appui = { x:e.clientX, y:e.clientY, x0:e.clientX, y0:e.clientY, depart:en, tire:false, survol:null };
+      appui = { x:e.clientX, y:e.clientY, x0:e.clientX, y0:e.clientY, depart:en, tire:false, survol:null,
+                souris: e.pointerType === 'mouse' || e.pointerType === 'pen' };
       appui.minuterie = setTimeout(attraper, LONG);
     });
     window.addEventListener('pointermove', function(e){
       if(!appui) return;
       appui.x = e.clientX; appui.y = e.clientY;
       if(!appui.tire){
-        if(Math.hypot(e.clientX - appui.x0, e.clientY - appui.y0) > 8) finir(true);
-        return;
+        var d = Math.hypot(e.clientX - appui.x0, e.clientY - appui.y0);
+        /* À LA SOURIS, on attrape dès que ça bouge : appuyer puis tirer tout de
+           suite est le geste naturel, et une souris ne fait pas défiler la page
+           en glissant. La première version imposait l'attente du doigt à la
+           souris aussi — le moindre mouvement avant 0,38 s annulait tout, et
+           la pastille « ne suivait pas la souris » (retour du développeur,
+           30/09/2026). AU DOIGT, bouger avant la fin de l'attente veut dire
+           défiler : on abandonne. */
+        if(appui.souris && d > 4) attraper();
+        else { if(d > 8) finir(true); return; }
+        if(!appui) return;
       }
       suivre(e.clientX, e.clientY);
     });

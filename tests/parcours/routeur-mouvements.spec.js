@@ -203,3 +203,28 @@ test('ordinateur : un vol ne demande jamais de tourner l\'écran', async ({ page
   await expect(page.locator('body')).not.toHaveClass(/tourner-demande/);
   await expect(page.locator('.tourner')).toBeHidden();
 });
+
+test('ordinateur : à la souris, appuyer puis tirer TOUT DE SUITE fait suivre la pastille', async ({ page }) => {
+  /* Le bug du 30/09/2026 : l'attente de l'appui long valait aussi pour la
+     souris, et le moindre mouvement avant elle annulait tout — la pastille
+     restait sur place pendant que la souris montait. */
+  test.skip(etroit(page), 'ordinateur seulement');
+  await ouvrir(page);
+  await entrer(page, 'parametres');
+  await page.waitForTimeout(700);
+  const dep = await page.locator('.sidelink.current').boundingBox();
+  const arr = await page.locator('.sidelink[data-page="carte"]').boundingBox();
+  const centre = () => page.evaluate(() => {
+    const r = document.querySelector('.side-nav > .glisseur').getBoundingClientRect();
+    return r.top + r.height / 2;
+  });
+  await page.mouse.move(dep.x + 40, dep.y + dep.height / 2);
+  await page.mouse.down();
+  const milieu = dep.y + dep.height / 2 + (arr.y - dep.y) / 2;
+  for (let i = 1; i <= 5; i++) await page.mouse.move(dep.x + 40, dep.y + dep.height / 2 + (milieu - dep.y - dep.height / 2) * i / 5);
+  await page.waitForTimeout(60);
+  expect(Math.abs(await centre() - milieu), 'la pastille ne suit pas la souris').toBeLessThan(24);
+  await page.mouse.move(dep.x + 40, arr.y + arr.height / 2);
+  await page.mouse.up();
+  await expect(page.locator('#page-carte')).toBeVisible();
+});

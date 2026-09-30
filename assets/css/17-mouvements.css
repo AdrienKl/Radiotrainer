@@ -107,8 +107,10 @@
      sinon elle traînerait derrière lui. L'entrée survolée prend le texte clair ;
      l'entrée de départ, que la pastille a quittée, reprend l'encre normale. */
   .a-glisseur > :not(.glisseur){ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+  /* Le déplacement n'a AUCUNE transition : la pastille est collée au pointeur.
+     Un .12 s de retard suffisait à la faire traîner derrière la souris. */
   .tire > .glisseur{ opacity:1; scale:1.07; animation:none;
-    transition:transform .12s ease-out, width .2s ease, height .2s ease, scale .35s var(--ressort-vif);
+    transition:width .2s ease, height .2s ease, scale .35s var(--ressort-vif);
     box-shadow:0 12px 30px rgba(91,75,206,.45), inset 0 1px 0 rgba(255,255,255,.35); }
   .tire > .set-tab.active:not([data-survol]), .tire > .seg3-opt.active:not([data-survol]),
   .tire > .seg-opt.active:not([data-survol]), .tire > .nav-mode-opt.active:not([data-survol]),
@@ -119,6 +121,11 @@
   .tire > :not(.glisseur){ transition-delay:0s; transition-duration:.08s; }
   .side-nav.tire > .sidelink.current:not([data-survol]){ color:var(--sb-ink-2); }
   .side-nav.tire > .sidelink.current::before{ opacity:0; }
+  /* Pendant qu'on tire, le survol d'une entrée allumait SON fond à côté de la
+     pastille : deux pastilles à l'écran. */
+  .side-nav.tire > .sidelink:hover{ background:transparent; border-color:transparent; box-shadow:none; }
+  .a-glisseur.tire{ cursor:grabbing; }
+  .a-glisseur.tire > *{ cursor:grabbing; }
 
   /* =========================================================================
      3. Au toucher, ça s'enfonce ; en entrant, ça arrive

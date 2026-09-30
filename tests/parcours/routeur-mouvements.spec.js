@@ -103,7 +103,9 @@ async function lancerVol(page) {
    message doit s'afficher. Chromium, lui, accepterait — on le fait refuser. */
 async function commeUnIphone(page) {
   await page.addInitScript(() => {
-    Element.prototype.requestFullscreen = function () { return Promise.reject(new Error('iPhone')); };
+    /* Compte les demandes : le site ne doit plus en faire aucune. */
+    window.__pleinEcranDemande = 0;
+    Element.prototype.requestFullscreen = function () { window.__pleinEcranDemande++; return Promise.reject(new Error('iPhone')); };
   });
 }
 
@@ -174,6 +176,8 @@ test('téléphone : aucun message « tournez » ; à l\'horizontale, trois colon
   await expect(page.locator('body')).toHaveClass(/en-session/);
   /* Retiré le 30/09/2026, à la demande : le vertical tient bien. */
   expect(await page.locator('.tourner').count()).toBe(0);
+  /* Et plus aucun passage forcé en paysage, Android compris. */
+  expect(await page.evaluate(() => window.__pleinEcranDemande)).toBe(0);
   await expect(page.locator('#vfAvion')).toBeHidden();       // la photo d'avion quitte le téléphone
 
   const vp = page.viewportSize();

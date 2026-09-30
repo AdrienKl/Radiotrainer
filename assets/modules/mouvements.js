@@ -6,11 +6,10 @@
 
    Trois choses, et rien d'autre :
      1. LA PASTILLE QUI GLISSE. Dans chaque groupe où une seule entrée est
-        choisie (menu, barre du bas, onglets des Paramètres, boutons segmentés),
+        choisie (menu, onglets des Paramètres, boutons segmentés),
         une pastille part de l'ancienne entrée et va se poser sous la nouvelle,
         avec un léger rebond, au lieu que le fond saute d'un coup.
-     2. L'ONGLET COURANT DE LA BARRE DU BAS (téléphone), posé sur « rt:page ».
-     3. L'ENCADRÉ « Chrome, Edge ou Safari » des écrans de connexion et
+     2. L'ENCADRÉ « Chrome, Edge ou Safari » des écrans de connexion et
         d'inscription : une ligne de plus quand ce navigateur-ci n'a pas de
         reconnaissance vocale.
 
@@ -26,9 +25,8 @@
    └───────────────────────────────────────────────────────────────────────┘
 
    Ce module n'emprunte RIEN au moteur ni aux autres modules : il lit le DOM,
-   écoute « rt:page » (routeur.js) et clique #hamburger pour « Plus ». Il ne
-   pose aucune classe que d'autres lisent, sauf .courant sur la barre du bas,
-   qui est la sienne. Il observe les classes au lieu d'être appelé : les onglets
+   écoute « rt:page » (routeur.js). Il ne pose aucune classe que d'autres
+   lisent. Il observe les classes au lieu d'être appelé : les onglets
    des Paramètres, les segmentés de la Navigation et le menu changent leur
    entrée active chacun à sa façon, et aucun n'a eu à être touché.
    ========================================================================== */
@@ -41,7 +39,6 @@
   /* [conteneur, entrée, classe de l'entrée choisie] */
   var GROUPES = [
     ['.side-nav',  '.sidelink',     'current'],
-    ['.tabbar',    '.tabbar__item', 'courant'],
     ['.set-tabs',  '.set-tab',      'active'],
     ['.seg3',      '.seg3-opt',     'active'],
     ['.segmented', '.seg-opt',      'active'],
@@ -125,38 +122,6 @@
   /* Des segmentés sont fabriqués après coup (console, modales) : on repasse
      à chaque page, ce qui ne coûte rien — brancher() ne double jamais. */
   window.addEventListener('rt:page', function(){ setTimeout(brancherTout, 0); });
-
-  /* ---------- La barre du bas (téléphone) ---------- */
-  var barre = document.getElementById('tabbar');
-  if(barre){
-    var items = [].slice.call(barre.querySelectorAll('.tabbar__item[data-page]'));
-    var plus = document.getElementById('tabPlus');
-    function marquer(page){
-      var trouve = false;
-      items.forEach(function(b){
-        var on = b.getAttribute('data-page') === page;
-        b.classList.toggle('courant', on);
-        if(on){ b.setAttribute('aria-current', 'page'); trouve = true; }
-        else b.removeAttribute('aria-current');
-      });
-      /* Une page qui n'a pas d'onglet (Carte, Cours, Progression, Paramètres)
-         allume « Plus » : c'est par là qu'on y est allé, et par là qu'on en
-         trouve les voisines. */
-      if(plus) plus.classList.toggle('courant', !trouve);
-    }
-    window.addEventListener('rt:page', function(e){ marquer(e && e.detail && e.detail.page); });
-    /* Le routeur a déjà peint la première page avant que ce fichier ne charge :
-       son « rt:page » est parti sans nous. On relit donc la page active. */
-    var active = document.querySelector('section.page.active');
-    if(active) marquer(active.id.replace(/^page-/, ''));
-    /* « Plus » ouvre le menu complet — le même tiroir que le hamburger. On
-       passe par lui plutôt que de dupliquer setDrawer() : routeur.js reste le
-       seul à savoir ouvrir et fermer ce tiroir. */
-    if(plus) plus.addEventListener('click', function(){
-      var h = document.getElementById('hamburger');
-      if(h) h.click();
-    });
-  }
 
   /* ---------- « Chrome, Edge ou Safari » ---------- */
   var reco = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);

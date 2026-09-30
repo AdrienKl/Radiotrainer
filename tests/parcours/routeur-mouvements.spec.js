@@ -6,10 +6,9 @@
    étroit, l'ordinateur, ou les deux.
 
    Ce qui est surveillé, et pourquoi :
-     · la barre du bas mène où elle dit, et « Plus » ouvre le menu complet —
-       c'est la seule façon d'atteindre Carte, Cours, Progression, Paramètres ;
-     · sur ordinateur, rien de tout ça ne se montre, et la tour de l'accueil
-       reste ;
+     · sur téléphone, plus de barre du bas (retirée le 30/09/2026) : le menu
+       est le tiroir de gauche, et le bouton Contact ne le recouvre pas ;
+     · sur ordinateur, la tour de l'accueil reste ;
      · l'encadré « Chrome, Edge ou Safari » est là où l'on tape son adresse, et
        il le dit plus fort quand le navigateur n'a pas de reconnaissance ;
      · AU REPOS, l'onglet choisi garde son propre fond violet : la pastille qui
@@ -21,37 +20,19 @@ import { ouvrir, entrer } from './_aide.js';
 
 const etroit = page => (page.viewportSize()?.width || 1280) <= 860;
 
-test('téléphone : la barre du bas mène à sa page et marque l\'onglet courant', async ({ page }) => {
+test('téléphone : pas de barre du bas, le menu est le tiroir de gauche, le bouton Contact s\'efface', async ({ page }) => {
   test.skip(!etroit(page), 'écran étroit seulement');
   await ouvrir(page);
   await entrer(page, 'tableau');
-  const barre = page.locator('#tabbar');
-  await expect(barre).toBeVisible();
-  await expect(barre.locator('.tabbar__item[data-page="tableau"]')).toHaveClass(/courant/);
-
-  for (const cible of ['exercices', 'navigation', 'epellation', 'tableau']) {
-    await barre.locator(`.tabbar__item[data-page="${cible}"]`).click();
-    await expect(page.locator(`#page-${cible}`)).toBeVisible();
-    await expect(barre.locator(`.tabbar__item[data-page="${cible}"]`)).toHaveAttribute('aria-current', 'page');
-  }
-  /* Rien ne doit finir sous la barre : le bas de la page a sa marge. */
-  const marge = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('main')).paddingBottom));
-  expect(marge).toBeGreaterThanOrEqual(80);
-});
-
-test('téléphone : « Plus » ouvre le menu complet, et le bouton Contact s\'efface', async ({ page }) => {
-  test.skip(!etroit(page), 'écran étroit seulement');
-  await ouvrir(page);
-  await entrer(page, 'tableau');
-  await page.locator('#tabPlus').click();
+  /* Barre d'onglets retirée le 30/09/2026 : elle prenait trop de place. */
+  expect(await page.locator('#tabbar').count()).toBe(0);
+  await page.locator('#hamburger').click();
   await expect(page.locator('#sidebar')).toHaveClass(/open/);
   await expect(page.locator('.ct-fab')).toBeHidden();
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(600);
   await page.locator('.sidelink[data-page="progression"]').click();
   await expect(page.locator('#page-progression')).toBeVisible();
   await expect(page.locator('#sidebar')).not.toHaveClass(/open/);
-  /* Une page sans onglet allume « Plus ». */
-  await expect(page.locator('#tabPlus')).toHaveClass(/courant/);
 });
 
 test('téléphone : la tour de contrôle n\'est plus sur l\'accueil', async ({ page }) => {
@@ -61,12 +42,11 @@ test('téléphone : la tour de contrôle n\'est plus sur l\'accueil', async ({ p
   await expect(page.locator('.hero__tour')).toBeHidden();
 });
 
-test('ordinateur : ni barre du bas, et la tour reste', async ({ page }) => {
+test('ordinateur : la tour reste, le menu est à gauche', async ({ page }) => {
   test.skip(etroit(page), 'ordinateur seulement');
   await ouvrir(page);
   await expect(page.locator('.hero__tour')).toBeVisible();
   await entrer(page, 'tableau');
-  await expect(page.locator('#tabbar')).toBeHidden();
   await expect(page.locator('#sidebar')).toBeVisible();
 });
 

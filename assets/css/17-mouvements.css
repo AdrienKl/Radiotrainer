@@ -8,9 +8,9 @@
        l'autre (menu, onglets des Paramètres, boutons segmentés), un léger
        rebond, un enfoncement au toucher, des panneaux qui entrent au lieu
        d'apparaître ;
-     · une version téléphone refaite : barre d'onglets en verre en bas, menu
-       complet en feuille qui monte du bas, barre du haut en verre, cartes plus
-       rondes, champs à 16 px ;
+     · une version téléphone refaite : barre du haut en verre, cartes plus
+       rondes, champs à 16 px (la barre d'onglets du bas, essayée le même jour,
+       a été retirée — voir la section 4) ;
      · la tour de contrôle retirée de l'accueil sur téléphone.
 
    Ce fichier est le n° 17, le DERNIER du site : il corrige ce qui précède, sans
@@ -70,7 +70,7 @@
   /* =========================================================================
      2. La pastille qui glisse (assets/modules/mouvements.js)
      ========================================================================= */
-  .a-glisseur:not(.tabbar){ position:relative; }
+  .a-glisseur{ position:relative; }
   .a-glisseur > :not(.glisseur){ position:relative; z-index:1; }
   .glisseur{ position:absolute; left:0; top:0; z-index:0; pointer-events:none;
     border-radius:var(--pill); background:var(--violet); opacity:0;
@@ -106,7 +106,7 @@
      3. Au toucher, ça s'enfonce ; en entrant, ça arrive
      ========================================================================= */
   .btn, .sidelink, .side-logout, .set-tab, .seg3-opt, .seg-opt, .nav-mode-opt,
-  .nav-diff-opt, .tabbar__item, .hamburger, .ct-fab{ -webkit-tap-highlight-color:transparent; }
+  .nav-diff-opt, .hamburger, .ct-fab{ -webkit-tap-highlight-color:transparent; }
   .btn:active:not(:disabled), .side-logout:active, .hamburger:active{
     transform:scale(.965); transition:transform .12s ease; }
   .sidelink:active{ transform:scale(.97); }
@@ -139,13 +139,12 @@
 
   /* =========================================================================
      4. TÉLÉPHONE ET TABLETTE ÉTROITE — l'application (≤ 860 px)
-     Même seuil que le tiroir de 06-coquille.css, exprès : les deux doivent
-     basculer ensemble, sinon on aurait un menu d'ordinateur ET une barre du bas.
+     La barre d'onglets du bas a été RETIRÉE le 30/09/2026, à la demande du
+     développeur : elle prenait trop de place. Le menu redevient le tiroir de
+     gauche, comme sur ordinateur (06-coquille.css), ouvert par le bouton du
+     haut ; seul le bouton Contact reste flottant.
      ========================================================================= */
-  .tabbar{ display:none; }
   @media (max-width:860px){
-
-    /* --- La barre du haut : du verre, la marque à gauche, le menu à droite --- */
     body.state-app .app-topbar{ padding:10px 16px; padding-top:max(10px, env(safe-area-inset-top));
       background:var(--verre); border-bottom:1px solid var(--verre-bord);
       -webkit-backdrop-filter:saturate(180%) blur(22px); backdrop-filter:saturate(180%) blur(22px); }
@@ -154,68 +153,14 @@
       align-items:center; justify-content:center; border-radius:50%;
       background:var(--verre); border:1px solid var(--border);
       box-shadow:0 2px 10px rgba(36,40,56,.08); }
-
-    /* --- La barre d'onglets, en bas, en verre --- */
-    body.state-app .tabbar{ display:grid; grid-template-columns:repeat(5,1fr); gap:2px;
-      position:fixed; z-index:110; left:12px; right:12px;
-      bottom:calc(10px + env(safe-area-inset-bottom, 0px));
-      padding:6px; border-radius:30px;
-      background:var(--verre); border:1px solid var(--verre-bord); box-shadow:var(--verre-ombre);
-      -webkit-backdrop-filter:saturate(180%) blur(24px); backdrop-filter:saturate(180%) blur(24px);
-      animation:barreIn .6s var(--ressort) both; }
-    @keyframes barreIn{ from{ transform:translateY(120%); opacity:0; } to{ transform:none; opacity:1; } }
-    .tabbar__item{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-      min-height:52px; padding:6px 2px; border:none; background:transparent; cursor:pointer;
-      border-radius:24px; font-family:var(--sans); font-size:10.5px; font-weight:650; letter-spacing:.01em;
-      color:var(--ink-2-fort); transition:color .25s ease, transform .4s var(--ressort-vif); }
-    .tabbar__item .ic-svg{ width:23px; height:23px; transition:transform .45s var(--ressort-vif); }
-    .tabbar__item:active{ transform:scale(.9); }
-    .tabbar__item.courant{ color:var(--violet-dark); }
-    .tabbar__item.courant .ic-svg{ transform:translateY(-1px) scale(1.08); }
-    /* Ici, la pastille reste visible au repos : la barre est à nous, aucun
-       fond d'origine à rendre. */
-    .tabbar > .glisseur{ opacity:1; border-radius:24px; background:var(--violet-soft);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 1px rgba(91,75,206,.12); }
-    :root[data-theme="dark"] .tabbar > .glisseur{ box-shadow:inset 0 1px 0 rgba(255,255,255,.10), 0 0 0 1px rgba(179,166,255,.18); }
-
-    /* Rien ne doit finir sous la barre : ni le bas des pages, ni le bouton
-       Contact, ni sa bulle, ni le rappel d'avis, ni les messages. */
-    body.state-app main{ padding-bottom:calc(92px + env(safe-area-inset-bottom, 0px)); }
-    body.state-app .ct-fab{ bottom:calc(88px + env(safe-area-inset-bottom, 0px)); right:16px; }
-    body.state-app .ct-bulle, body.state-app .av-rappel{ bottom:calc(154px + env(safe-area-inset-bottom, 0px)); }
-    body.state-app .toast{ bottom:calc(94px + env(safe-area-inset-bottom, 0px)); }
-
-    /* --- Le menu complet : une FEUILLE qui monte du bas ---
-       Même tiroir, même bouton, même routeur (setDrawer, 06-coquille.css) :
-       seule la géométrie change. Il garde sa console noire. */
-    body.state-app .sidebar{ top:auto; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom, 0px));
-      width:auto; max-height:min(86vh, 680px); overflow-y:auto; overscroll-behavior:contain;
-      border-radius:32px; padding:8px 16px 16px; z-index:130;
-      transform:translateY(calc(100% + 40px));
-      transition:transform .55s var(--ressort);
-      box-shadow:0 -10px 60px rgba(4,6,14,.45), inset 0 1px 0 rgba(255,255,255,.08); }
-    body.state-app .sidebar.open{ transform:none; }
-    body.state-app .sidebar::after{ display:none; }
-    /* La poignée : on sait que ça se referme. */
-    body.state-app .sidebar::before{ content:""; display:block; flex:none; width:40px; height:5px;
-      margin:4px auto 10px; border-radius:3px; background:rgba(255,255,255,.26); }
-    body.state-app .side-head{ padding:2px 4px 12px; }
-    /* Deux colonnes de tuiles : huit entrées tiennent en quatre rangs, sans
-       défiler, à portée de pouce. */
-    body.state-app .side-nav{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    body.state-app .sidelink{ flex-direction:column; align-items:flex-start; gap:8px; min-height:74px;
-      padding:13px 14px; border-radius:18px; font-size:14px;
-      background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.07); }
-    body.state-app .sidelink .ic-svg{ width:22px; height:22px; }
-    body.state-app .sidelink.current::before{ display:none; }
-    body.state-app .side-nav > .glisseur{ border-radius:18px; }
-    body.state-app .side-logout{ margin-top:12px; justify-content:center; border-radius:16px; min-height:48px; }
+    /* Le tiroir de 06-coquille, avec le ressort. */
+    body.state-app .sidebar{ transition:transform .5s var(--ressort); }
     .side-overlay{ background:rgba(10,8,24,.34);
       -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); }
     body.state-app.drawer-open .side-overlay{ animation:voileIn .3s ease both; }
     @keyframes voileIn{ from{ opacity:0; } to{ opacity:1; } }
-    /* Menu ouvert : le bouton Contact, sa bulle et le rappel d'avis (z-index
-       300) passaient PAR-DESSUS la feuille et masquaient deux entrées. */
+    /* Menu ouvert : le bouton Contact et sa bulle (z-index 300) passaient
+       PAR-DESSUS le tiroir. */
     body.state-app.drawer-open .ct-fab, body.state-app.drawer-open .ct-bulle,
     body.state-app.drawer-open .av-rappel{ visibility:hidden; }
   }
@@ -274,8 +219,7 @@
      7. Mouvement réduit : tout ce qui précède, à l'arrêt
      ========================================================================= */
   @media (prefers-reduced-motion:reduce){
-    .glisseur, .page.active, .set-panel:not([hidden]), body.state-app .tabbar,
-    body.state-app .sidebar, .tabbar__item, .tabbar__item .ic-svg{ animation:none; transition:none; }
+    .glisseur, .page.active, .set-panel:not([hidden]), body.state-app .sidebar{ animation:none; transition:none; }
     .btn:active:not(:disabled), .sidelink:active, .set-tab:active, .seg3-opt:active,
-    .seg-opt:active, .tabbar__item:active{ transform:none; }
+    .seg-opt:active{ transform:none; }
   }

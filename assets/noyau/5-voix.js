@@ -759,7 +759,18 @@ var Voix=(function(){
   }
 
   /* Parole principale : remplace ce qui est en cours. */
+  /* La prononciation OACI (1-alphabet-nombres.js › prononciationRadio), ICI et
+     non chez chaque appelant : avant le 30/09/2026, seuls les exercices
+     l'appliquaient — l'essai des Paramètres et l'écoute de l'administration
+     disaient « Whiskey » à la française, et on jugeait une voix sur autre
+     chose que ce qu'entend l'élève. opts.brut : la phrase telle quelle
+     (l'onglet Prononciation de l'administration, pour comparer). */
+  function prononcer(texte, opts){
+    if(opts && opts.brut) return texte;
+    try{ return (typeof prononciationRadio==='function') ? prononciationRadio(texte) : texte; }catch(e){ return texte; }
+  }
   function parler(texte, opts){
+    texte=prononcer(texte, opts);
     var phrases=decouper(texte);
     stop();
     if(!phrases.length) return;
@@ -771,6 +782,7 @@ var Voix=(function(){
   }
   /* Parole d'ambiance : s'empile derriere, sans rien couper. */
   function empiler(texte, opts){
+    texte=prononcer(texte, opts);
     var phrases=decouper(texte);
     if(!phrases.length) return;
     file.push({phrases:phrases,i:0,essais:0,opts:opts||{},texte:texteEntier(texte)});

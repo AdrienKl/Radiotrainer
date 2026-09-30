@@ -405,3 +405,46 @@ test('admin › « Écouter » refusé : la cause est dite en clair', async ({ p
   await page.locator('#page-admin tr', { hasText: 'Kore' }).getByRole('button', { name: 'Écouter' }).click();
   await expect.poll(() => page.evaluate(() => window.__toasts.join(' | '))).toContain('quota du jour');
 });
+
+/* Prononciation (30/09/2026) : l'administrateur écoute chaque lettre de
+   l'alphabet aéro, les chiffres et les mots de l'aviation, voix par voix — et
+   ce qui part vers Google est la graphie réécrite, celle qu'entend l'élève. */
+test('admin › Prononciation : les 26 lettres, la graphie envoyée, et le résultat reste affiché', async ({ page }) => {
+  await admin(page);
+  const requetes = await fonction(page);
+  await compte(page, { plan: 'premium' });
+  await onglet(page, 'Prononciation');
+  const p = page.locator('#page-admin');
+  await expect(p.locator('.adm-pron-mot')).not.toHaveCount(0);
+  for (const m of ['Alpha', 'Juliett', 'Whiskey', 'X-ray', 'Zulu'])
+    await expect(p.locator(`.adm-pron-mot[data-mot="${m}"]`)).toBeVisible();
+  await expect(p.locator('.adm-pron-mot[data-mot="Juliett"]')).toContainText('djouliette');
+  await expect(p.locator('.adm-pron-voix')).toHaveValue('fr-FR-Chirp3-HD-Charon');   // la voix par défaut
+  await p.locator('.adm-pron-mot[data-mot="Whiskey"]').click();
+  await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => [r.voix, r.texte]))
+    .toEqual([['fr-FR-Chirp3-HD-Charon', 'ouiski']]);
+  await expect(p.locator('.adm-pron-etat')).toContainText('Dit par Google');
+  // Les nombres passent par la lecture radio, comme en exercice.
+  await expect(p.locator('.adm-pron-mot[data-mot="QNH 1013"]')).toContainText('unité zéro unité trois');
+});
+
+test('admin › Prononciation : un refus est écrit en clair, et reste à l\'écran', async ({ page }) => {
+  await admin(page);
+  await fonction(page, { dire: { status: 429, body: { erreur: 'quota' } } });
+  await compte(page, { plan: 'premium' });
+  await onglet(page, 'Prononciation');
+  await page.locator('#page-admin .adm-pron-mot[data-mot="Mike"]').click();
+  await expect(page.locator('#page-admin .adm-pron-etat')).toContainText('quota du jour');
+});
+
+/* La table s'applique DANS le moteur : l'essai des Paramètres et l'écoute de
+   l'administration disaient « Whiskey » à la française jusqu'au 30/09/2026. */
+test('toute parole passe par la prononciation OACI, sauf demande « brut »', async ({ page }) => {
+  await admin(page);
+  const requetes = await fonction(page);
+  await compte(page, { plan: 'premium' });
+  await page.evaluate(() => Voix.parler('Juliett Whiskey Echo', { voixGoogle: 'fr-FR-Neural2-F' }));
+  await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => r.texte)).toEqual(['djouliette ouiski èkko']);
+  await page.evaluate(() => Voix.parler('Juliett Whiskey', { voixGoogle: 'fr-FR-Neural2-F', brut: true }));
+  await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => r.texte).slice(1)).toEqual(['Juliett Whiskey']);
+});

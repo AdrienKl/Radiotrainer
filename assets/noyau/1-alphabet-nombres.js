@@ -170,10 +170,39 @@ function spokenDigits(text){
 
 /* ---- Prononciation des mots de l'alphabet OACI par une voix FRANÇAISE ----
    La voix lit du français : « Echo » lui donne « écho » (é-ko) alors que le mot
-   se prononce « ÈK-o ». On ne corrige QUE ce que la voix rate réellement — les
-   autres mots (Bravo, Charlie, Quebec, Zulu…) sortent déjà juste. Cette table
-   n'agit que sur la PAROLE : le texte affiché et la notation gardent « Echo ». */
-const PRONONCIATION_RADIO = { 'echo':'èkko' };
+   se prononce « ÈK-o ». Cette table n'agit que sur la PAROLE : le texte affiché
+   et la notation gardent « Echo ».
+
+   Élargie le 30/09/2026, à la demande du développeur (« que toutes les lettres
+   de l'alphabet aéro soient bien prononcées »), et pour TOUTES les voix : elle
+   est désormais appliquée dans le moteur (5-voix.js › parler / empiler), donc
+   aussi aux voix Google, aux Paramètres et à la console d'administration.
+   Référence : la prononciation OACI (Annexe 10, vol. II, § 5.2.1.3 — le manuel
+   DSNA ne donne pas la table). On ne réécrit que ce qu'une voix française lit
+   à la française : Juliett (« ju-li-ette »), Mike (« mik »), November
+   (« no-vambre »), Uniform (« uniforme »), X-ray, Yankee, Whiskey, Quebec,
+   Zulu, India (« in » nasal). Les autres (Alpha, Bravo, Charlie, Delta,
+   Foxtrot, Golf, Hotel, Kilo, Lima, Oscar, Papa, Sierra, Tango, Victor)
+   sortent déjà juste et ne sont pas touchés.
+   Chaque graphie s'écoute dans Admin › Voix Google › Prononciation : c'est là
+   qu'on juge, voix par voix, et qu'on corrige cette table.
+   Les réécritures ne doivent JAMAIS contenir une clé de la table : le moteur
+   peut passer deux fois sur le même texte (moteur.js › fillSpeech, puis
+   Voix.parler), et doit retomber sur le même résultat. */
+const PRONONCIATION_RADIO = {
+  'echo':'èkko',
+  'india':'inndia',
+  'juliett':'djouliette', 'juliet':'djouliette',
+  'mike':'maïk',
+  'november':'novèmbeur',
+  'quebec':'kébèk',
+  'romeo':'roméo',
+  'uniform':'youniform',
+  'whiskey':'ouiski', 'whisky':'ouiski',
+  'x-ray':'èks-rè', 'xray':'èks-rè',
+  'yankee':'yann-ki',
+  'zulu':'zoulou'
+};
 const RE_PRONONCIATION = new RegExp('\\b('+Object.keys(PRONONCIATION_RADIO).join('|')+')\\b','gi');
 function prononciationRadio(t){
   return String(t==null?'':t).replace(RE_PRONONCIATION, function(m){

@@ -1,12 +1,15 @@
 /* =============================================================================
    Albatros VFR — Admin · /admin/voix — LA VOIX GOOGLE : CONSOMMATION ET COÛT
    -----------------------------------------------------------------------------
-   Ajoutée le 27/09/2026. Trois onglets :
+   Ajoutée le 27/09/2026. Quatre onglets :
      · Consommation      — combien, qui, avec quelles voix, et à quel coût ;
      · Voix proposées    — quelles voix les élèves peuvent choisir, laquelle
                            par défaut ; les écouter ;
      · Quotas et comptes — le plafond journalier, qui est Premium, et le
-                           journal de ces changements.
+                           journal de ces changements ;
+     · Prononciation     — (30/09/2026) écouter, voix par voix, chaque lettre
+                           de l'alphabet aéro, les chiffres et les mots de
+                           l'aviation, tels que l'élève les entend.
    Les deux derniers ÉCRIVENT, et ce sont les seules pages de la console à le
    faire : toutes leurs écritures passent par des fonctions de la base
    (sql/007) qui exigent le rôle « admin » et laissent une ligne d'audit.
@@ -282,26 +285,52 @@
      pour ce seul message (opts.voixGoogle). Elle est décomptée sur le quota de
      l'administrateur, qui doit être Premium : la base ne fait pas d'exception. */
   function ecouter(v, bouton){
+    direTexte('Fox-trot Alpha Bravo Charlie Delta, autorisé atterrissage piste deux sept, vent deux cinq zéro degrés, dix nœuds.',
+              v.nom, bouton, false, null);
+  }
+  /* Une écoute par Google avec une voix IMPOSÉE (opts.voixGoogle), le même
+     moteur que les exercices — donc la même table de prononciation, sauf
+     `brut`. `etat` (facultatif) : un élément où écrire le résultat EN CLAIR et
+     qui RESTE à l'écran — un toast passe, et « la voix ne marche plus » sans
+     la cause ne se répare pas. */
+  function direTexte(texte, nomVoix, bouton, brut, etat){
     if (!window.Voix) return toast('Le moteur de voix n\'est pas chargé.');
     if (window.Voix.relancerGoogle) window.Voix.relancerGoogle();
     // Pendant le clic, sinon Safari garde la sortie audio suspendue (5-voix.js › preparerAudio).
     if (window.Voix.preparerAudio) window.Voix.preparerAudio();
-    function rendre(){ if (bouton){ bouton.disabled = false; bouton.querySelector('span').textContent = 'Écouter'; } }
-    if (bouton){ bouton.disabled = true; bouton.querySelector('span').textContent = 'Écoute…'; }
-    window.Voix.parler('Fox-trot Alpha Bravo Charlie Delta, autorisé atterrissage piste deux sept, vent deux cinq zéro degrés, dix nœuds.', {
-      voixGoogle:v.nom,
-      /* Un aperçu qu'on attend, bouton en main : 12 s plutôt que les 4,5 s des
+    var span = bouton && bouton.querySelector('span');
+    var libelle = span ? span.textContent : '';
+    function rendre(){ if (bouton){ bouton.disabled = false; if (span) span.textContent = libelle; } }
+    function ecrire(msg, ok){
+      if (!etat) return;
+      etat.textContent = msg;
+      etat.style.color = ok ? 'var(--adm-ok,#1f8a4c)' : 'var(--adm-bad,#c0392b)';
+    }
+    if (bouton){ bouton.disabled = true; if (span) span.textContent = 'Écoute…'; }
+    ecrire('Envoi à Google…', true);
+    window.Voix.parler(texte, {
+      voixGoogle:nomVoix,
+      brut:!!brut,
+      /* Un aperçu qu'on attend, bouton en main : 12 s plutôt que le délai des
          exercices. Chirp 3 HD, fonction à froid, dépassait parfois 4,5 s, et
          l'écoute retombait sur la voix du navigateur. */
       delaiGoogle:12000,
       onDebut:function(){
         var e = window.Voix.etatGoogle ? window.Voix.etatGoogle() : {};
-        if (e.dernier !== 'google') toast('Voix du navigateur : ' + raisonEchec(e.erreur) + '.');
+        if (e.dernier === 'google') ecrire('Dit par Google (' + nomVoix + ').', true);
+        else {
+          var msg = 'Voix du navigateur : ' + raisonEchec(e.erreur) + '.';
+          ecrire(msg, false);
+          if (!etat) toast(msg);
+        }
       },
       onFin:rendre
     });
     // Filet : si rien ne parle du tout, le bouton ne reste pas bloqué.
-    setTimeout(rendre, 20000);
+    setTimeout(function(){
+      rendre();
+      if (etat && /Envoi/.test(etat.textContent)) ecrire('Rien n\'a parlé en 20 s. ' + raisonEchec((window.Voix.etatGoogle ? window.Voix.etatGoogle() : {}).erreur) + '.', false);
+    }, 20000);
   }
   /* Pourquoi Google n'a pas parlé, en clair — c'est un écran d'administration :
      on dit la cause, pas « indisponible ». */
@@ -432,10 +461,123 @@
   }
 
   /* ======================= LA PAGE ===================================== */
+  /* ---- Prononciation (30/09/2026) ---------------------------------------
+     Demande du développeur : « écouter toutes les lettres de l'alphabet aéro
+     et tous les mots spécifiques à l'aviation pour voir s'ils sont bien
+     prononcés ». Chaque bouton passe par le moteur des exercices, avec la
+     voix choisie ici : on entend exactement ce qu'entend l'élève — table de
+     prononciation (1-alphabet-nombres.js › PRONONCIATION_RADIO) et lecture
+     des nombres (spokenDigits) comprises. Sous chaque mot réécrit, la graphie
+     réellement envoyée : c'est elle qu'on corrige si le son est faux.
+     Chaque écoute compte sur le quota de l'administrateur ; le moteur garde
+     les 30 derniers sons, un mot réécouté ne recoûte rien.
+     Ces listes sont des MOTS à écouter, pas de la phraséologie : aucune
+     phrase n'est enseignée d'ici (CLAUDE.md § 2). */
+  var GROUPES = [
+    { titre:'Alphabet aéro', mots:['Alpha','Bravo','Charlie','Delta','Echo','Foxtrot','Golf','Hotel','India',
+        'Juliett','Kilo','Lima','Mike','November','Oscar','Papa','Quebec','Romeo','Sierra','Tango',
+        'Uniform','Victor','Whiskey','X-ray','Yankee','Zulu'] },
+    { titre:'Chiffres', mots:['zéro','unité','deux','trois','quatre','cinq','six','sept','huit','neuf','décimale'] },
+    { titre:'Sigles', mots:['VFR','IFR','QNH','QFE','QFU','ATIS','AFIS','ATC','CTR','CTA','TMA','SIV','ULM',
+        'VOR','NDB','DME','ILS','GPS','SIGMET','METAR','TAF','NOTAM'] },
+    { titre:'Mots de l\'aviation', mots:['Mayday','Pan Pan','transpondeur','affichez','ident','collationnez',
+        'vent arrière','étape de base','finale','point d\'attente','remise de gaz','hectopascals','nœuds',
+        'pieds','niveau de vol','Tour','Sol','Info','Approche'] },
+    { titre:'Avions', mots:['Cessna','Piper','Robin','Jodel','Tecnam','Rallye','DR400','PA-28','TB10','DA40'] },
+    { titre:'Nombres lus comme à la radio', mots:['QNH 1013','piste 27','3500 pieds','vent 250 degrés 15 nœuds',
+        'fréquence 118.5','transpondeur 7000','niveau de vol 65'] }
+  ];
+  // Ce que le moteur enverra pour ce mot : prononciation, puis nombres — l'ordre de moteur.js › fillSpeech.
+  function texteParle(t){
+    try{ if (typeof prononciationRadio === 'function') t = prononciationRadio(t); }catch(e){}
+    try{ if (typeof spokenDigits === 'function') t = spokenDigits(t); }catch(e){}
+    return t;
+  }
+  function ongletPrononciation(zone){
+    var c = UI.carte('Prononciation', { wide:true, sub:'Chaque mot passe par Google avec la voix choisie, exactement '
+      + 'comme pendant un exercice. Sous un mot réécrit, en violet, la graphie envoyée à la voix. '
+      + 'Chaque écoute compte sur votre quota ; un mot réécouté ne recoûte rien tant que la page reste ouverte.' });
+    zone.appendChild(c);
+    UI.charger(c.body, RT.data.voixCatalogue(), function(liste){
+      var z = el('div');
+      var actives = liste.filter(function(v){ return v.active; });
+      if (!actives.length) return UI.etatVide('Aucune voix active', 'Activez une voix dans « Voix proposées ».', I.mic);
+      var ordre = familles().map(function(f){ return f.code; });
+      actives.sort(function(a, b){
+        var ia = ordre.indexOf(modeleDe(a.nom)), ib = ordre.indexOf(modeleDe(b.nom));
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.nom.localeCompare(b.nom);
+      });
+      var barre = el('div');
+      barre.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px';
+      var sel = el('select');
+      sel.setAttribute('aria-label', 'Voix à écouter');
+      sel.className = 'adm-pron-voix';
+      sel.style.cssText = 'padding:8px 10px;border-radius:10px;border:1px solid var(--adm-border,#ccc);font:inherit;max-width:100%';
+      actives.forEach(function(v){
+        var o = el('option', null, esc(libelleVoix(v, true) + (v.parDefaut ? ' — par défaut' : '')));
+        o.value = v.nom; if (v.parDefaut) o.selected = true;
+        sel.appendChild(o);
+      });
+      barre.appendChild(sel);
+      var etat = el('span', 'adm-pron-etat');
+      etat.setAttribute('role', 'status');
+      etat.style.cssText = 'font-size:13px;font-weight:600';
+      barre.appendChild(etat);
+      z.appendChild(barre);
+
+      // Une phrase libre, avec ou sans la table.
+      var libre = el('div');
+      libre.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px';
+      var champ = el('input');
+      champ.type = 'text'; champ.maxLength = 300; champ.className = 'adm-pron-libre';
+      champ.placeholder = 'Un mot ou une phrase à écouter…';
+      champ.setAttribute('aria-label', 'Texte libre à écouter');
+      champ.style.cssText = 'flex:1 1 260px;min-width:0;padding:9px 11px;border-radius:10px;border:1px solid var(--adm-border,#ccc);font:inherit';
+      libre.appendChild(champ);
+      var brutLbl = el('label', null, '<input type="checkbox" class="adm-pron-brut"> sans la table');
+      brutLbl.style.cssText = 'font-size:13px;display:inline-flex;gap:6px;align-items:center';
+      libre.appendChild(brutLbl);
+      libre.appendChild(UI.bouton('Écouter', { cls:'cta', onClick:function(e){
+        var t = champ.value.trim(); if (!t) return champ.focus();
+        var brut = brutLbl.querySelector('input').checked;
+        direTexte(brut ? t : texteParle(t), sel.value, e.currentTarget, brut, etat);
+      } }));
+      z.appendChild(libre);
+
+      GROUPES.forEach(function(g){
+        var tete = el('div');
+        tete.style.cssText = 'display:flex;gap:10px;align-items:center;justify-content:space-between;margin:14px 0 8px';
+        tete.appendChild(el('h3', null, esc(g.titre)));
+        tete.firstChild.style.cssText = 'margin:0;font-size:14px';
+        tete.appendChild(UI.bouton('Tout écouter', { title:'Le groupe en un seul message', onClick:function(e){
+          direTexte(g.mots.map(texteParle).join(', '), sel.value, e.currentTarget, true, etat);
+        } }));
+        z.appendChild(tete);
+        var grille = el('div', 'adm-pron-grille');
+        grille.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px';
+        g.mots.forEach(function(m){
+          var dit = texteParle(m);
+          var b = el('button', 'adm-pron-mot');
+          b.type = 'button';
+          b.setAttribute('data-mot', m);
+          b.style.cssText = 'text-align:left;padding:8px 10px;border-radius:10px;border:1px solid var(--adm-border,#ccc);'
+            + 'background:var(--adm-surface,transparent);color:inherit;font:inherit;cursor:pointer;min-height:44px';
+          b.innerHTML = '<span>' + esc(m) + '</span>'
+            + (dit !== m ? '<small style="display:block;color:var(--violet,#5b4bce);font-size:11.5px">' + esc(dit) + '</small>' : '');
+          b.addEventListener('click', function(){ direTexte(dit, sel.value, b, true, etat); });
+          grille.appendChild(b);
+        });
+        z.appendChild(grille);
+      });
+      return z;
+    }, 'Lecture des voix…');
+  }
+
   var ONGLETS = [
     { id:'conso',    libelle:'Consommation',      rendre:ongletConsommation },
     { id:'voix',     libelle:'Voix proposées',    rendre:ongletCatalogue },
-    { id:'quotas',   libelle:'Quotas et comptes', rendre:ongletQuotas }
+    { id:'quotas',   libelle:'Quotas et comptes', rendre:ongletQuotas },
+    { id:'prononciation', libelle:'Prononciation', rendre:ongletPrononciation }
   ];
   var ongletCourant = 'conso';
 

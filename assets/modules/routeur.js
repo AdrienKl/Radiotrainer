@@ -354,21 +354,21 @@
     };
     var o = RT_OFFRE;
     poser('kind', o.lancement ? 'Phase de lancement' : o.prix ? 'Essai puis abonnement' : 'Essai');
-    poser('duree', o.lancement ? 'Gratuit<small>pendant la phase de lancement</small>' : o.essaiJours
+    poser('duree', o.lancement ? 'Gratuit<small>pendant le lancement</small>' : o.essaiJours
       ? o.essaiJours + ' jours<small>à compter de l\'inscription</small>'
       : "Sans limite<small>pendant la phase d'essai</small>");
     poser('carte', o.carte
       ? "Oui<small>demandée à l'inscription</small>"
-      : "Non<small>rien à saisir aujourd'hui</small>");
+      : "Non<small>rien à saisir</small>");
     poser('prix', o.prix
       ? o.prix + ' €<small>par ' + o.periode + ', résiliable à tout moment</small>'
-      : "Abonnement<small>tarif annoncé ici</small>");
+      : "Abonnement<small>prix annoncé ici</small>");
     /* Le bas de la bande promet qu'aucune carte n'est enregistrée. Le jour où
        elle l'est, cette phrase deviendrait un mensonge : elle change avec le
        réglage, elle ne se contente pas de l'accompagner. */
     poser('foot', o.carte
       ? "<b>Votre carte n'est débitée qu'à la fin de l'essai.</b> Vous êtes prévenu avant, et vous pouvez arrêter d'ici là sans rien payer."
-      : "<b>Rien ne peut vous être prélevé sans que vous l'ayez choisi.</b> Aucune carte n'est enregistrée à l'inscription, et le passage à l'abonnement se fera par un acte de votre part — jamais par reconduction silencieuse d'un essai.");
+      : "Aucune carte demandée, aucun prélèvement automatique.");
   })();
 
   // Indicateur de scroll du hero : défilement fluide vers la 1re section de contenu.

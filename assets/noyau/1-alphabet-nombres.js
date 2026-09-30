@@ -100,9 +100,18 @@ const AVANT_CARDINAL = { numero:1, numeros:1, temperature:1, rosee:1,
                          cessna:1, robin:1, piper:1, socata:1, diamond:1, cirrus:1,
                          tecnam:1, mooney:1, beechcraft:1, grumman:1, aquila:1,
                          pitts:1, extra:1, jodel:1, sling:1, elixir:1, bristell:1,
-                         dr:1, pa:1, tb:1, da:1 };
+                         dr:1, pa:1, tb:1, da:1,
+  /* Zones réglementées, dangereuses, interdites : « R cent soixante-deux », pas
+     « R unité six deux » (30/09/2026, même règle de la vie courante, p. 17). */
+                         r:1, d:1, p:1, zone:1 };
 /* Mots qui, placés avant, imposent l'épellation — même si une unité suit. */
-const AVANT_EPELE = { qnh:1, qfe:1, piste:1, cap:1, caps:1, transpondeur:1, squawk:1,
+/* « piste » n'y est PLUS (30/09/2026, demande du développeur) : « piste
+   vingt-deux », comme dans la vie courante — le manuel l'admet (p. 17 : « un
+   nombre peut être transmis comme il s'énonce dans la vie courante ou comme
+   une suite de chiffres »). Un zéro de tête reste dit : « piste zéro sept ».
+   Voir AVANT_PISTE. */
+const AVANT_PISTE = { piste:1, pistes:1 };
+const AVANT_EPELE = { qnh:1, qfe:1, cap:1, caps:1, transpondeur:1, squawk:1,
                       code:1, niveau:1, frequence:1, information:1, atis:1, rvr:1,
                       contactez:1, affichez:1, affiche:1 };
 
@@ -130,6 +139,14 @@ function uniteApres(droite){
   var w = motApres(droite);
   return UNITES_CARDINALES[w] ? w : null;
 }
+/* Un nombre « de la vie courante », zéros de tête dits un à un : « 07 » →
+   « zéro sept », « 530 » → « cinq cent trente », « 05 » → « zéro cinq ». */
+function nombreCourant(num){
+  var zeros = String(num).match(/^0*/)[0], reste = String(num).slice(zeros.length);
+  var mots = zeros.split('').map(function(){ return 'zéro'; });
+  if(reste) mots.push(frenchCardinal(parseInt(reste,10)));
+  return mots.join(' ');
+}
 function nombreCardinalIci(gauche, droite){
   var av = motAvant(gauche);
   if(AVANT_EPELE[av]) return false;          // « piste 26 », « cap 270 », « QNH 1015 »
@@ -155,13 +172,21 @@ function spokenDigits(text){
      réellement énoncée ici (108,000 à 136,975) : une fréquence s'épelle toujours
      chiffre par chiffre, des deux côtés de la décimale. */
   var t = String(text==null?'':text);
+  /* 30/09/2026 : la forme du MANUEL (p. 17) — « 120,775 MHz : doit être énoncé
+     cent vingt décimale sept cent soixante-quinze ». On l'épelait chiffre par
+     chiffre (« unité trois cinq décimale cinq trois zéro »), ce que le manuel
+     réserve à la réception médiocre. */
   t = t.replace(/(\d{3})[.,](\d{1,3})/g, function(_,ent,dec){
-        return epelerChiffres(ent)+' décimale '+epelerChiffres(dec); });
+        return nombreCourant(ent)+' décimale '+nombreCourant(dec); });
   // Toute autre virgule décimale : on sépare, chaque moitié est traitée seule.
   t = t.replace(/(\d)[.,](\d)/g, '$1 $2');
+  /* Lettres et chiffres collés : « 27L » se lisait « vingt-septL », « DR400 »
+     « DRquatre cents ». Séparés, chacun se lit à sa façon. */
+  t = t.replace(/(\d)([A-Za-zÀ-ÿ])/g, '$1 $2').replace(/([A-Za-zÀ-ÿ])(\d)/g, '$1 $2');
   // Chaque nombre restant : le CONTEXTE décide de la forme.
   t = t.replace(/\d+/g, function(num, pos, tout){
         var droite = tout.slice(pos+num.length);
+        if(AVANT_PISTE[motAvant(tout.slice(0,pos))]) return nombreCourant(num);
         return nombreCardinalIci(tout.slice(0,pos), droite)
                ? cardinalParle(num, uniteApres(droite))
                : epelerChiffres(num); });
@@ -189,24 +214,74 @@ function spokenDigits(text){
    Les réécritures ne doivent JAMAIS contenir une clé de la table : le moteur
    peut passer deux fois sur le même texte (moteur.js › fillSpeech, puis
    Voix.parler), et doit retomber sur le même résultat. */
-const PRONONCIATION_RADIO = {
+const PRONONCIATION_BASE = {
   'echo':'èkko',
   'india':'inndia',
-  'juliett':'djouliette', 'juliet':'djouliette',
-  'mike':'maïk',
-  'november':'novèmbeur',
-  'quebec':'kébèk',
+  /* 30/09/2026, après écoute du développeur : « djouliette », « maïk »,
+     « novèmbeur », « kébèk » et « èks-rè » sonnaient faux. Mike retrouve son
+     orthographe anglaise, que les voix connaissent. Toutes ces graphies se
+     corrigent à l'oreille dans Admin › Voix Google › Prononciation, sans
+     toucher à ce fichier (sql/013, table `prononciations`). */
+  'juliett':'djouliètt', 'juliet':'djouliètt',
+  'november':'novèmmbeur',
+  'quebec':'québec',
   'romeo':'roméo',
   'uniform':'youniform',
   'whiskey':'ouiski', 'whisky':'ouiski',
-  'x-ray':'èks-rè', 'xray':'èks-rè',
+  'x-ray':'ex-ré', 'xray':'ex-ré',
   'yankee':'yann-ki',
-  'zulu':'zoulou'
+  'zulu':'zoulou',
+  /* « Pan Pan » se lisait comme deux coups de feu : c'est le mot français
+     « panne », d'où vient le signal (manuel p. 238). */
+  'pan':'panne',
+  /* Le T d'« ident » se prononce (demande du développeur). */
+  'ident':'idènte',
+  /* Sigles dits comme des MOTS — manuel p. 11-12 : « VOR », « NOTAM », « A_TIS »,
+     « A_FIS », « CAV_O_Kay ». Les autres sigles (VFR, QNH, CTR…) s'épellent,
+     ce que la voix fait d'elle-même sur des majuscules. SIGMET n'est pas dans
+     la table du manuel ; il se dit comme un mot, à la demande du développeur. */
+  'vor':'vor', 'notam':'notame', 'sigmet':'sigmète', 'atis':'atisse', 'afis':'afisse',
+  'cavok':'cavoké'
 };
-const RE_PRONONCIATION = new RegExp('\\b('+Object.keys(PRONONCIATION_RADIO).join('|')+')\\b','gi');
+/* La table en vigueur : la base, complétée ou corrigée par l'administration
+   (definirPrononciations, appelée au chargement par 5-voix.js). */
+const PRONONCIATION_RADIO = Object.assign({}, PRONONCIATION_BASE);
+/* Les formes CHERCHÉES dans le texte. La table est indexée sans accents (la
+   recherche passe par sansAccent), mais un mot réglé par l'administration peut
+   en porter (« étape de base ») : on cherche alors la forme écrite telle
+   quelle, en plus de la clé. */
+var FORMES_PRONONCIATION = [];
+function reConstruirePrononciation(){
+  var vues = {};
+  var cles = Object.keys(PRONONCIATION_RADIO).concat(FORMES_PRONONCIATION)
+    .filter(function(k){ if(vues[k]) return false; vues[k]=1; return true; })
+    .sort(function(a,b){ return b.length-a.length; })
+    .map(function(k){ return k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); });
+  /* Frontières UNICODE, pas \\b : pour \\b, « é » n'est pas une lettre, et
+     « cavoké » se relisait « cavok » + « é » → « cavokéé » au second passage.
+     Pas de lookbehind non plus : un Safari d'avant 16.4 refuserait tout le
+     fichier au chargement. Le séparateur de tête est capturé et rendu. */
+  return new RegExp('(^|[^\\p{L}\\p{N}])('+cles.join('|')+')(?=[^\\p{L}\\p{N}]|$)','giu');
+}
+var RE_PRONONCIATION = reConstruirePrononciation();
+/* Les graphies réglées depuis l'administration (table `prononciations`) : elles
+   s'ajoutent à la base, et la remplacent mot pour mot. Rappelée avec [] : on
+   revient à la base seule. */
+function definirPrononciations(lignes){
+  Object.keys(PRONONCIATION_RADIO).forEach(function(k){ delete PRONONCIATION_RADIO[k]; });
+  Object.assign(PRONONCIATION_RADIO, PRONONCIATION_BASE);
+  FORMES_PRONONCIATION = [];
+  (lignes||[]).forEach(function(l){
+    if(!l || !l.mot || !l.dit) return;
+    var forme = String(l.mot).toLowerCase().trim();
+    PRONONCIATION_RADIO[sansAccent(forme)] = String(l.dit);
+    FORMES_PRONONCIATION.push(forme);
+  });
+  RE_PRONONCIATION = reConstruirePrononciation();
+}
 function prononciationRadio(t){
-  return String(t==null?'':t).replace(RE_PRONONCIATION, function(m){
-    return PRONONCIATION_RADIO[sansAccent(m)] || m;
+  return String(t==null?'':t).replace(RE_PRONONCIATION, function(_, avant, m){
+    return avant + (PRONONCIATION_RADIO[sansAccent(m)] || m);
   });
 }
 

@@ -958,6 +958,36 @@ if (!problemes) {
 
   if (pb16.length) { rate('la suppression de comptes ne se comporte pas comme prévu :'); pb16.forEach(m => console.log(rouge('      · ' + m))); }
   else passe('suppression de compte : admin plein seul, confirmation par l\'adresse, jamais soi ni un rôle ; cascade complète, historique de voix gardé sans nom ; blocage par empreinte (« +… » compris), refusé par le hook avec un message neutre, 3 ans, déblocage journalisé');
+
+  /* 17. La prononciation réglée depuis l'administration (sql/013). */
+  const pb17 = [];
+  let x17 = await enTant('authenticated', admin, `select public.admin_prononciation_definir(' Juliett ', 'djouliètt') as r`);
+  if (!x17.ok) pb17.push(`l'admin ne peut pas définir : ${x17.message}`);
+  x17 = await enTant('anon', null, `select mot, dit from public.prononciations`);
+  if (!x17.ok || x17.r.mot !== 'juliett' || x17.r.dit !== 'djouliètt') pb17.push(`lecture publique : ${JSON.stringify(x17)}`);
+  for (const [qui, nom] of [[sC, 'un élève'], [modo, 'un modérateur']]) {
+    x17 = await enTant('authenticated', qui, `select public.admin_prononciation_definir('mike', 'maïk')`);
+    if (x17.ok) pb17.push(`${nom} a pu définir une prononciation`);
+    x17 = await enTant('authenticated', qui, `insert into public.prononciations (mot, dit) values ('mike', 'maïk')`);
+    if (x17.ok) pb17.push(`${nom} a pu écrire dans la table`);
+  }
+  for (const [cle, g] of [['mot!', 'x'], ['ok', ''], ['pan', 'panne pan'], ['a'.repeat(41), 'x']]) {
+    x17 = await enTant('authenticated', admin, `select public.admin_prononciation_definir('${cle}', '${g}')`);
+    if (x17.ok) pb17.push(`accepté : « ${cle} » → « ${g} »`);
+  }
+  x17 = await enTant('authenticated', admin, `select public.admin_prononciation_definir('Étape de base', 'étappe de baze')`);
+  if (!x17.ok) pb17.push(`mot accentué refusé : ${x17.message}`);
+  x17 = await enTant('authenticated', admin, `select public.admin_prononciation_definir('point d''attente', 'poin datante')`);
+  if (!x17.ok) pb17.push(`mot avec apostrophe refusé : ${x17.message}`);
+  await enTant('authenticated', admin, `select public.admin_prononciation_retirer('étape de base')`);
+  await enTant('authenticated', admin, `select public.admin_prononciation_retirer('point d''attente')`);
+  x17 = await enTant('authenticated', admin, `select public.admin_prononciation_retirer('juliett')`);
+  if (!x17.ok || (await q(`select 1 from public.prononciations`)).length) pb17.push('retrait refusé ou sans effet');
+  const j17 = await q(`select action from public.admin_audit_log where target_type = 'prononciation' order by id`);
+  if (j17.map(j => j.action).join() !== 'prononciation.definir,prononciation.definir,prononciation.definir,prononciation.retirer,prononciation.retirer,prononciation.retirer') pb17.push(`journal : ${JSON.stringify(j17)}`);
+  await moi13(null);
+  if (pb17.length) { rate('les prononciations ne se comportent pas comme prévu :'); pb17.forEach(m => console.log(rouge('      · ' + m))); }
+  else passe('prononciations : lecture publique, écriture par l\'admin plein seul (fonctions journalisées), mot normalisé, graphie bornée et jamais auto-référente');
 }
 
 console.log('');

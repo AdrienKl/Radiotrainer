@@ -349,6 +349,16 @@
         });
       });
     },
+    /* ---- Prononciation (sql/013) ---- */
+    prononciations:function(){
+      return lignes(connecte().from('prononciations').select('mot,dit').order('mot'));
+    },
+    prononciationDefinir:function(mot, dit){
+      return ex(connecte().rpc('admin_prononciation_definir', { cle:mot, graphie:dit })).then(function(r){ return r.data; });
+    },
+    prononciationRetirer:function(mot){
+      return ex(connecte().rpc('admin_prononciation_retirer', { cle:mot })).then(function(r){ return r.data; });
+    },
     compteDebloquer:function(id){
       return ex(connecte().rpc('admin_compte_debloquer', { ligne:id })).then(function(r){ return r.data; });
     },

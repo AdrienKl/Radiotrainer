@@ -84,7 +84,19 @@ const BIGRAMS = {
   'tan go':'tango', 'gol f':'golf', 'ho tel':'hotel', 'al pha':'alpha',
   'bra vo':'bravo', 'si erra':'sierra', 'whis key':'whiskey', 'ou isky':'whiskey',
   /* Noms de terrains recollés avec l'organisme (« Nice Tour » → « nitou »). */
-  'ni ce':'nice', 'mari gnane':'marignane', 'meri gnac':'merignac'
+  'ni ce':'nice', 'mari gnane':'marignane', 'meri gnac':'merignac',
+  /* ---- 30/09/2026, signalés par le développeur ----
+     « ident » coupé en deux ; la correction floue faisait ensuite de « dent »
+     un « cent » — « transpondeur ident » devenait « transpondeur i cent ». */
+  'i dent':'ident', 'hi dent':'ident', 'y dent':'ident', 'i dans':'ident', 'i dente':'ident',
+  /* « vent arrière » sous Safari, qui coupe et soude autrement que Chrome. */
+  'vent derriere':'vent arriere', 'vend arriere':'vent arriere', 'vents arriere':'vent arriere',
+  'vendre iere':'vent arriere', 'vendre arriere':'vent arriere', 'vent a riere':'vent arriere',
+  'vent arrieres':'vent arriere', 'van derriere':'vent arriere',
+  /* Sigles dits comme des mots (manuel p. 11-12 : VOR, NOTAM ; SIGMET) et
+     épelés lettre par lettre. */
+  'veau or':'vor', 'sig met':'sigmet', 'cig met':'sigmet', 'si gmet':'sigmet',
+  'no tam':'notam', 'a tis':'atis', 'a fis':'afis', 'a fisse':'afis', 'a tisse':'atis'
 };
 
 /* Erreurs de transcription fréquentes (section D3) : correspondances connues du moteur
@@ -214,5 +226,12 @@ const MISHEARD = {
   victeure:'victor', vicktor:'victor',
   ouiskey:'whiskey', ouiske:'whiskey', wisqui:'whiskey',
   yankeu:'yankee', yanqui:'yankee', yankais:'yankee',
-  zoulout:'zulu', zoulouh:'zulu'
+  zoulout:'zulu', zoulouh:'zulu',
+  /* ---- 30/09/2026 ---- */
+  indent:'ident', idente:'ident', identes:'ident', idan:'ident', idents:'ident',
+  traffic:'trafic', trafique:'trafic', trafics:'trafic', trafiques:'trafic', traffics:'trafic',
+  ventarrieres:'vent arriere',
+  sigmette:'sigmet', sigmets:'sigmet', cigmet:'sigmet',
+  notame:'notam', notams:'notam',
+  atisse:'atis', afisse:'afis'
 };

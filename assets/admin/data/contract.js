@@ -70,6 +70,10 @@
                                   les adresses bloquées (leur empreinte seule est
                                   gardée : libelle = le pseudo du compte supprimé)
      compteDebloquer(id)        → {ok}   (audité)
+     prononciations()           → [{mot,dit}] — les graphies réglées par l'admin
+                                  (sql/013), qui complètent PRONONCIATION_BASE
+     prononciationDefinir(mot, dit) → {ok}   (admin plein, audité)
+     prononciationRetirer(mot)  → {ok}   — retour à la graphie du code
 
    FORMES
      UserRow      {id,name,email,role,status,createdAt,lastSeenAt,sessions,
@@ -183,7 +187,8 @@
                   'userWeaknesses','flights','flight','analytics','exercises',
                   'errors','error','capabilities','voix','voixCatalogue','voixRegler',
                   'voixPlafond','voixDefinirPlafond','comptesPlan','definirPlan','voixJournal',
-                  'compteSupprimer','comptesBloques','compteDebloquer'];
+                  'compteSupprimer','comptesBloques','compteDebloquer',
+                  'prononciations','prononciationDefinir','prononciationRetirer'];
 
   function enregistrer(src){
     sources[src.id] = src;

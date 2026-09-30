@@ -418,7 +418,7 @@ test('admin › Prononciation : les 26 lettres, la graphie envoyée, et le résu
   await expect(p.locator('.adm-pron-mot')).not.toHaveCount(0);
   for (const m of ['Alpha', 'Juliett', 'Whiskey', 'X-ray', 'Zulu'])
     await expect(p.locator(`.adm-pron-mot[data-mot="${m}"]`)).toBeVisible();
-  await expect(p.locator('.adm-pron-mot[data-mot="Juliett"]')).toContainText('djouliette');
+  await expect(p.locator('.adm-pron-mot[data-mot="Juliett"]')).toContainText('djouliètt');
   await expect(p.locator('.adm-pron-voix')).toHaveValue('fr-FR-Chirp3-HD-Charon');   // la voix par défaut
   await p.locator('.adm-pron-mot[data-mot="Whiskey"]').click();
   await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => [r.voix, r.texte]))
@@ -444,7 +444,42 @@ test('toute parole passe par la prononciation OACI, sauf demande « brut »', as
   const requetes = await fonction(page);
   await compte(page, { plan: 'premium' });
   await page.evaluate(() => Voix.parler('Juliett Whiskey Echo', { voixGoogle: 'fr-FR-Neural2-F' }));
-  await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => r.texte)).toEqual(['djouliette ouiski èkko']);
+  await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => r.texte)).toEqual(['djouliètt ouiski èkko']);
   await page.evaluate(() => Voix.parler('Juliett Whiskey', { voixGoogle: 'fr-FR-Neural2-F', brut: true }));
   await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => r.texte).slice(1)).toEqual(['Juliett Whiskey']);
+});
+
+test('admin › Prononciation : l\'atelier écoute une graphie, l\'enregistre pour tout le monde, puis la retire', async ({ page }) => {
+  await admin(page);
+  const requetes = await fonction(page);
+  await compte(page, { plan: 'premium' });
+  await onglet(page, 'Prononciation');
+  const p = page.locator('#page-admin');
+  await p.locator('.adm-pron-mot[data-mot="Mike"]').click();
+  await expect(p.locator('.adm-pron-atelier')).toBeVisible();
+  await expect(p.locator('.adm-pron-atelier')).toContainText('graphie du code');
+  await p.locator('.adm-pron-graphie').fill('maïque');
+  await p.getByRole('button', { name: 'Écouter cette graphie' }).click();
+  await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => r.texte)).toContain('maïque');
+  await p.locator('.adm-pron-enreg').click();
+  // Redessiné : le mot porte sa nouvelle graphie, et le moteur l'applique partout.
+  await expect(p.locator('.adm-pron-mot[data-mot="Mike"]')).toContainText('maïque');
+  expect(await page.evaluate(() => prononciationRadio('Mike Echo'))).toBe('maïque èkko');
+  await p.locator('.adm-pron-mot[data-mot="Mike"]').click();
+  await expect(p.locator('.adm-pron-atelier')).toContainText('graphie réglée ici');
+  await p.locator('.adm-pron-retirer').click();
+  await expect(p.locator('.adm-pron-mot[data-mot="Mike"] small')).toHaveCount(0);
+  expect(await page.evaluate(() => prononciationRadio('Mike'))).toBe('Mike');
+});
+
+test('admin › Prononciation : une graphie qui contient le mot est refusée avant tout envoi', async ({ page }) => {
+  await admin(page);
+  await fonction(page);
+  await compte(page, { plan: 'premium' });
+  await onglet(page, 'Prononciation');
+  const p = page.locator('#page-admin');
+  await p.locator('.adm-pron-mot[data-mot="Pan Pan"]').click();
+  await p.locator('.adm-pron-graphie').fill('pan pan pan');
+  await p.locator('.adm-pron-enreg').click();
+  await expect(p.locator('.adm-pron-atelier-msg')).toContainText('ne doit pas contenir le mot');
 });

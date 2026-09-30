@@ -1479,7 +1479,7 @@
         : '{CALL}, piste {PISTE} en service, vent {VENT}, QNH {QNH}, pas de trafic connu.' });
 
     // 6 — Décollage (p. 59) — le pilote dit « je décolle », JAMAIS « autorisé décollage »
-    push({ ph:'Décollage', src:'p. 59', stn:C.depStn, freq:C.depF.f, leg:0.03,
+    push({ ph:'Décollage', src:'p. 59', stn:C.depStn, freq:C.depF.f, leg:0.03, nmDep:0.5,
       reel:'Collationnez l\'autorisation de décollage.',
       consigne: (C.depNat==='twr')
         ? 'Collationnez l\'autorisation. Le pilote dit « je décolle » — « autorisé décollage » est réservé au contrôleur.'
@@ -1490,7 +1490,7 @@
                  {label:'Votre indicatif',ref:'callsign'} ] });
 
     // 7 — Montée initiale (p. 63)
-    push({ ph:'Montée initiale', src:'p. 63', stn:C.depStn, freq:C.depF.f, leg:0.07,
+    push({ ph:'Montée initiale', src:'p. 63', stn:C.depStn, freq:C.depF.f, leg:0.07, nmDep:2,
       atcBefore:'{CALL}, continuez au cap de la piste.',
       reel:'Collationnez.',
       consigne:'Collationnez.',
@@ -1511,7 +1511,7 @@
                        ? {stn:C.arrStn, f:C.arrF.f, k:C.arrF.k} : null);
 
       // 8 — Sortie de circuit (p. 153)
-      push({ ph:'Sortie de circuit', src:'p. 153', stn:C.depStn, freq:C.depF.f, leg:0.12,
+      push({ ph:'Sortie de circuit', src:'p. 153', stn:C.depStn, freq:C.depF.f, leg:0.12, nmDep:4,
         atcBefore:'{CALL}, rappelez quittant la fréquence.',
         reel:'Quittez la fréquence de '+C.depStn+'.',
       consigne:'Annoncez votre sortie de circuit et que vous quittez la fréquence.',
@@ -1523,7 +1523,7 @@
 
       /* Pas de segment en route : le transfert se fait d'un bloc vers l'arrivée. */
       if(!C.infoF && suivant){
-        push({ ph:'Changement de fréquence', src:'p. 182', stn:C.depStn, freq:C.depF.f, leg:0.2,
+        push({ ph:'Changement de fréquence', src:'p. 182', stn:C.depStn, freq:C.depF.f, leg:0.2, nmDep:8,
           reel:'Collationnez la fréquence.',
           consigne:'Collationnez : le nom de l\'organisme, la fréquence, puis votre indicatif.',
           attendu:suivant.stn+' '+fq(suivant.f)+', {CALL}.',
@@ -1535,7 +1535,7 @@
 
       if(C.infoF){
         // 9 — Changement de fréquence (p. 182)
-        push({ ph:'Changement de fréquence', src:'p. 182', stn:C.depStn, freq:C.depF.f, leg:0.16,
+        push({ ph:'Changement de fréquence', src:'p. 182', stn:C.depStn, freq:C.depF.f, leg:0.16, nmDep:8,
           reel:'Collationnez la fréquence.',
       consigne:'Collationnez : le nom de l\'organisme, la fréquence, puis votre indicatif.',
           attendu:C.infoStn+' '+fq(C.infoF.f)+', {CALL}.',
@@ -1692,7 +1692,7 @@
       }
 
       // 14 — Intégration : appel initial complet (p. 149)
-      push({ ph:'Intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.82,
+      push({ ph:'Intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.82, nmArr:10,
         /* Météo propre à l'arrivée : sur plusieurs centaines de kilomètres, garder le
            vent et le QNH du départ n'a aucun sens. On retire un vent à destination
            et on en déduit la piste en service et le QNH annoncés à l'intégration. */
@@ -1714,7 +1714,7 @@
         atcAfter:'{CALL}, entrez vent arrière piste {PISTE}, QNH {QNH}, rappelez vent arrière.' });
 
       // 15 — Collationnement intégration (p. 149)
-      push({ ph:'Collationnement intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.88,
+      push({ ph:'Collationnement intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.88, nmArr:8,
         reel:'Collationnez.',
       consigne:'Collationnez : vent arrière piste {PISTE}, le QNH, et vous rappellerez vent arrière.',
         attendu:'J\'entre vent arrière piste {PISTE}, QNH {QNH}, je rappelle vent arrière, {CALL}.',
@@ -1736,7 +1736,7 @@
                    {label:'Numéro de piste',ref:'piste'} ],
         atcAfter:'{CALL}, numéro {NUM}, rappelez base piste {PISTE}.' });
     } else {
-      push({ ph:'Vent arrière', src:'p. 150', stn:C.arrStn, freq:C.arrF.f, leg:0.92,
+      push({ ph:'Vent arrière', src:'p. 150', stn:C.arrStn, freq:C.arrF.f, leg:0.92, nmArr:2,
         reel:'Annoncez votre position.',
       consigne:'Annoncez votre position en vent arrière pour la piste {PISTE}.',
         attendu:'{CALL}, vent arrière piste {PISTE}.',
@@ -1748,7 +1748,7 @@
     var lastStn=C.arr?C.arrStn:C.depStn, lastF=C.arr?C.arrF.f:C.depF.f;
 
     // 16 — Base (p. 151)
-    push({ ph:'Base', src:'p. 151', stn:lastStn, freq:lastF, leg:0.95,
+    push({ ph:'Base', src:'p. 151', stn:lastStn, freq:lastF, leg:0.95, nmArr:1.5,
       reel:'Annoncez votre position.',
       consigne:'Annoncez que vous êtes en base pour la piste {PISTE}.',
       attendu:'{CALL}, base piste {PISTE}.',
@@ -1758,7 +1758,7 @@
       atcAfter:'{CALL}, rappelez finale piste {PISTE}.' });
 
     // 17 — Finale (p. 151-154)
-    push({ ph:'Finale', src:'p. 151', stn:lastStn, freq:lastF, leg:0.97,
+    push({ ph:'Finale', src:'p. 151', stn:lastStn, freq:lastF, leg:0.97, nmArr:1,
       reel:'Annoncez votre position.',
       consigne:'Annoncez que vous êtes en finale pour la piste {PISTE}.',
       attendu:'{CALL}, finale piste {PISTE}.',
@@ -1769,7 +1769,7 @@
               : '{CALL}, piste {PISTE} en service, vent {VENT}, pas de trafic connu.' });
 
     // 18 — Atterrissage (p. 154) — le pilote dit « j'atterris »
-    push({ ph:'Atterrissage', src:'p. 154', stn:lastStn, freq:lastF, leg:0.99,
+    push({ ph:'Atterrissage', src:'p. 154', stn:lastStn, freq:lastF, leg:0.99, nmArr:0.3,
       reel:'Collationnez l\'autorisation d\'atterrissage.',
       consigne: (C.arrNat==='twr')
         ? 'Collationnez. Le pilote dit « j\'atterris » — « autorisé atterrissage » est réservé au contrôleur.'
@@ -2756,7 +2756,7 @@
     $v('vfHint').classList.toggle('hidden', ecoute);
     $v('vfNext').disabled = !ecoute;
     $v('vfTransText').value=''; $v('vfValider').disabled=true;
-    movePlane(s.leg);
+    movePlane(avancementEtape(s));
     var atc=$v('vfAtc');
     aRevELer=[];                                  // nouvelle étape : rien en attente
     arreterAtis();                                // une diffusion en cours s'arrête ici
@@ -2786,7 +2786,8 @@
     var corrected=fuzzyCorrect(raw||'');
     // Le texte validé reste visible dans le champ éditable : pas de second affichage.
     vfLog('you',raw||'(rien entendu)');
-    var res=s.motsCles.map(function(mc){ return {label:mc.label, found:mcFound(mc,corrected)}; });
+    var res=s.motsCles.map(function(mc){ return {label:mc.label, found:mcFound(mc,corrected)}; })
+      .concat(ecartsDeSens(s, corrected, F.attendus[F.i]||fillDisplay(s.attendu||'')));
     F.results[F.i]=res;
     F.dits[F.i]=raw||'';        // conservé pour le détail de l'historique
     // Même moteur d'explications que les Scénarios (défini dans le bloc principal).
@@ -2835,15 +2836,39 @@
     var dl=(b[1]-a[1])*Math.cos((a[0]+b[0])/2*Math.PI/180);
     return Math.atan2(dl, b[0]-a[0])*180/Math.PI;
   }
+  /* t = la part du trajet PARCOURUE, en distance. Route brisée : la coupure
+     tombe à la part réelle du premier tronçon, et non plus au milieu — une
+     déviation courte d'un côté faisait sinon courir l'avion deux fois plus vite
+     sur l'un des tronçons. */
   function legPoint(t){
     var a=F.ctx.dep, b=F.ctx.arr;
     if(!b) return [a.lat,a.lon];
     var via=F.ctx.via;
     if(!via) return [a.lat+(b.lat-a.lat)*t, a.lon+(b.lon-a.lon)*t];
-    // Route brisée : première moitié dep→via, seconde moitié via→arr.
-    if(t<0.5){ var u=t/0.5; return [a.lat+(via.lat-a.lat)*u, a.lon+(via.lon-a.lon)*u]; }
-    var v=(t-0.5)/0.5;
+    var d1=distNM(a,via), d2=distNM(via,b), k=(d1+d2)>0 ? d1/(d1+d2) : 0.5;
+    if(t<k){ var u=k>0 ? t/k : 0; return [a.lat+(via.lat-a.lat)*u, a.lon+(via.lon-a.lon)*u]; }
+    var v=k<1 ? (t-k)/(1-k) : 1;
     return [via.lat+(b.lat-via.lat)*v, via.lon+(b.lon-via.lon)*v];
+  }
+  function longueurRouteNM(){
+    var a=F.ctx.dep, b=F.ctx.arr, via=F.ctx.via;
+    if(!b) return 0;
+    return via ? distNM(a,via)+distNM(via,b) : distNM(a,b);
+  }
+  /* Où est l'avion pendant cet échange. Panne du 30/09/2026 : au départ de
+     Nice pour Orly, l'avion était déjà au-dessus des Préalpes au décollage.
+     Chaque étape portait une part FIXE du trajet (décollage 3 %, sortie de
+     circuit 12 %) : sur 590 km, ça faisait 18 puis 70 km. Les phases
+     d'aérodrome se placent désormais en DISTANCE réelle du terrain (nmDep
+     depuis le départ, nmArr avant l'arrivée) ; la part fixe reste la borne,
+     pour qu'un trajet court ne voie pas l'avion dépasser la phase suivante. */
+  function avancementEtape(s){
+    if(!s) return null;
+    var t=s.leg, L=longueurRouteNM();
+    if(t==null || !L) return t;
+    if(s.nmDep!=null) return Math.min(t, s.nmDep/L);
+    if(s.nmArr!=null) return Math.max(t, 1-s.nmArr/L);
+    return t;
   }
   /* Zoom de suivi en vol. On reste au zoom NATIF du fond affiché : au-delà,
      Leaflet agrandit l'image et la carte devient floue — exactement au moment où

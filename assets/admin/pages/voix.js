@@ -479,27 +479,44 @@
         'Uniform','Victor','Whiskey','X-ray','Yankee','Zulu'] },
     { titre:'Chiffres', mots:['zéro','unité','deux','trois','quatre','cinq','six','sept','huit','neuf','décimale'] },
     { titre:'Sigles', mots:['VFR','IFR','QNH','QFE','QFU','ATIS','AFIS','ATC','CTR','CTA','TMA','SIV','ULM',
-        'VOR','NDB','DME','ILS','GPS','SIGMET','METAR','TAF','NOTAM'] },
-    { titre:'Mots de l\'aviation', mots:['Mayday','Pan Pan','transpondeur','affichez','ident','collationnez',
+        'VOR','NDB','DME','ILS','GPS','SIGMET','METAR','TAF','NOTAM','CAVOK'] },
+    { titre:'Mots de l\'aviation', mots:['Mayday','Pan Pan','transpondeur','affichez','ident','trafic','collationnez',
         'vent arrière','étape de base','finale','point d\'attente','remise de gaz','hectopascals','nœuds',
         'pieds','niveau de vol','Tour','Sol','Info','Approche'] },
     { titre:'Avions', mots:['Cessna','Piper','Robin','Jodel','Tecnam','Rallye','DR400','PA-28','TB10','DA40'] },
-    { titre:'Nombres lus comme à la radio', mots:['QNH 1013','piste 27','3500 pieds','vent 250 degrés 15 nœuds',
-        'fréquence 118.5','transpondeur 7000','niveau de vol 65'] }
+    { titre:'Nombres lus comme à la radio', nombres:true, mots:['QNH 1013','piste 22','piste 07','3500 pieds',
+        'vent 250 degrés 15 nœuds','fréquence 135.530','fréquence 118.5','transpondeur 7000','niveau de vol 65','zone R 162'] }
   ];
+  var voixPron = null;          // la voix choisie ici survit au redessin de l'onglet
   // Ce que le moteur enverra pour ce mot : prononciation, puis nombres — l'ordre de moteur.js › fillSpeech.
   function texteParle(t){
     try{ if (typeof prononciationRadio === 'function') t = prononciationRadio(t); }catch(e){}
     try{ if (typeof spokenDigits === 'function') t = spokenDigits(t); }catch(e){}
     return t;
   }
-  function ongletPrononciation(zone){
-    var c = UI.carte('Prononciation', { wide:true, sub:'Chaque mot passe par Google avec la voix choisie, exactement '
-      + 'comme pendant un exercice. Sous un mot réécrit, en violet, la graphie envoyée à la voix. '
+  // La clé d'un mot, comme sql/013 l'accepte : minuscules, accents et apostrophe gardés.
+  function cleDe(m){ return String(m).toLowerCase().trim(); }
+  var RE_CLE = /^[a-z0-9àâäçéèêëîïôöùûüÿœæ][a-z0-9àâäçéèêëîïôöùûüÿœæ' -]{0,39}$/;
+
+  function ongletPrononciation(zone, redessiner){
+    var c = UI.carte('Prononciation', { wide:true, sub:'Cliquez un mot : il est dit par Google avec la voix choisie, '
+      + 'exactement comme pendant un exercice, et s\'ouvre dans l\'atelier. Là, changez sa graphie, réécoutez, et '
+      + 'enregistrez : elle vaut pour tout le monde, toutes voix confondues, dès le prochain chargement. '
       + 'Chaque écoute compte sur votre quota ; un mot réécouté ne recoûte rien tant que la page reste ouverte.' });
     zone.appendChild(c);
-    UI.charger(c.body, RT.data.voixCatalogue(), function(liste){
+    var lecture = Promise.all([RT.data.voixCatalogue(),
+      RT.data.prononciations().then(null, function(){ return null; })]);
+    UI.charger(c.body, lecture, function(t){
+      var liste = t[0], reglees = t[1];
+      /* Les graphies de la base, appliquées AVANT de dessiner : sous chaque mot,
+         on montre ce que l'élève entend aujourd'hui. */
+      if (reglees && typeof definirPrononciations === 'function') definirPrononciations(reglees);
+      var parCle = {};
+      (reglees || []).forEach(function(r){ parCle[r.mot] = r.dit; });
       var z = el('div');
+      if (reglees === null)
+        z.appendChild(UI.notice('Les graphies réglées ici ne sont pas encore disponibles : la migration sql/013 '
+          + 'n\'est pas posée. L\'écoute marche ; l\'enregistrement attendra.', 'warn'));
       var actives = liste.filter(function(v){ return v.active; });
       if (!actives.length) return UI.etatVide('Aucune voix active', 'Activez une voix dans « Voix proposées ».', I.mic);
       var ordre = familles().map(function(f){ return f.code; });
@@ -515,15 +532,75 @@
       sel.style.cssText = 'padding:8px 10px;border-radius:10px;border:1px solid var(--adm-border,#ccc);font:inherit;max-width:100%';
       actives.forEach(function(v){
         var o = el('option', null, esc(libelleVoix(v, true) + (v.parDefaut ? ' — par défaut' : '')));
-        o.value = v.nom; if (v.parDefaut) o.selected = true;
+        o.value = v.nom;
+        if (voixPron ? v.nom === voixPron : v.parDefaut) o.selected = true;
         sel.appendChild(o);
       });
+      sel.addEventListener('change', function(){ voixPron = sel.value; });
       barre.appendChild(sel);
       var etat = el('span', 'adm-pron-etat');
       etat.setAttribute('role', 'status');
       etat.style.cssText = 'font-size:13px;font-weight:600';
       barre.appendChild(etat);
       z.appendChild(barre);
+
+      /* ---- L'atelier : un mot, sa graphie, écouter, enregistrer ---- */
+      var at = el('div', 'adm-pron-atelier hidden');
+      at.style.cssText = 'border:1px solid var(--adm-border,#ccc);border-radius:12px;padding:12px;margin-bottom:16px';
+      var atTitre = el('p', 'adm-pron-atelier-titre'); atTitre.style.margin = '0 0 8px';
+      var atChamp = el('input'); atChamp.type = 'text'; atChamp.maxLength = 80; atChamp.className = 'adm-pron-graphie';
+      atChamp.setAttribute('aria-label', 'Graphie envoyée à la voix');
+      atChamp.style.cssText = 'flex:1 1 220px;min-width:0;padding:9px 11px;border-radius:10px;border:1px solid var(--adm-border,#ccc);font:inherit';
+      var atMsg = el('p', 'adm-sub adm-pron-atelier-msg'); atMsg.setAttribute('role', 'alert'); atMsg.style.margin = '8px 0 0';
+      var atLigne = el('div'); atLigne.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center';
+      atLigne.appendChild(atChamp);
+      var motCourant = null;
+      atLigne.appendChild(UI.bouton('Écouter cette graphie', { onClick:function(e){
+        var g = atChamp.value.trim(); if (!g) return atChamp.focus();
+        direTexte(g, sel.value, e.currentTarget, true, etat);
+      } }));
+      var bEnreg = UI.bouton('Enregistrer pour tout le monde', { cls:'cta', onClick:function(){
+        var g = atChamp.value.trim(), k = cleDe(motCourant);
+        if (!g) return (atMsg.textContent = 'La graphie est vide.');
+        if (g.toLowerCase().indexOf(k) >= 0) return (atMsg.textContent = 'La graphie ne doit pas contenir le mot lui-même.');
+        atMsg.textContent = 'Enregistrement…';
+        RT.data.prononciationDefinir(k, g).then(function(){
+          toast('Prononciation enregistrée : ' + motCourant + ' → ' + g);
+          if (window.Voix && Voix.rechargerPrononciations) Voix.rechargerPrononciations();
+          redessiner();
+        }, function(e){ atMsg.textContent = 'Refusé : ' + erreurDe(e); });
+      } });
+      bEnreg.classList.add('adm-pron-enreg');
+      atLigne.appendChild(bEnreg);
+      var bRetirer = UI.bouton('Revenir à la graphie d\'origine', { onClick:function(){
+        RT.data.prononciationRetirer(cleDe(motCourant)).then(function(){
+          toast('Graphie d\'origine rétablie : ' + motCourant);
+          if (window.Voix && Voix.rechargerPrononciations) Voix.rechargerPrononciations();
+          redessiner();
+        }, function(e){ atMsg.textContent = 'Refusé : ' + erreurDe(e); });
+      } });
+      bRetirer.classList.add('adm-pron-retirer');
+      atLigne.appendChild(bRetirer);
+      at.appendChild(atTitre); at.appendChild(atLigne); at.appendChild(atMsg);
+      function ouvrirAtelier(m){
+        var k = cleDe(m);
+        motCourant = m; atMsg.textContent = '';
+        if (!RE_CLE.test(k)){
+          at.classList.remove('hidden');
+          atTitre.innerHTML = '<b>' + esc(m) + '</b>';
+          atChamp.value = texteParle(m);
+          atMsg.textContent = 'Ce mot ne peut pas être réglé ici (caractères non admis).';
+          bEnreg.disabled = true; bRetirer.classList.add('hidden');
+          return;
+        }
+        bEnreg.disabled = (reglees === null);
+        at.classList.remove('hidden');
+        var propre = Object.prototype.hasOwnProperty.call(parCle, k);
+        atTitre.innerHTML = '<b>' + esc(m) + '</b> — ' + (propre ? 'graphie réglée ici' : 'graphie du code');
+        atChamp.value = texteParle(m);
+        bRetirer.classList.toggle('hidden', !propre);
+      }
+      z.appendChild(at);
 
       // Une phrase libre, avec ou sans la table.
       var libre = el('div');
@@ -540,7 +617,7 @@
       libre.appendChild(UI.bouton('Écouter', { cls:'cta', onClick:function(e){
         var t = champ.value.trim(); if (!t) return champ.focus();
         var brut = brutLbl.querySelector('input').checked;
-        direTexte(brut ? t : texteParle(t), sel.value, e.currentTarget, brut, etat);
+        direTexte(brut ? t : texteParle(t), sel.value, e.currentTarget, true, etat);
       } }));
       z.appendChild(libre);
 
@@ -564,7 +641,11 @@
             + 'background:var(--adm-surface,transparent);color:inherit;font:inherit;cursor:pointer;min-height:44px';
           b.innerHTML = '<span>' + esc(m) + '</span>'
             + (dit !== m ? '<small style="display:block;color:var(--violet,#5b4bce);font-size:11.5px">' + esc(dit) + '</small>' : '');
-          b.addEventListener('click', function(){ direTexte(dit, sel.value, b, true, etat); });
+          b.addEventListener('click', function(){
+            direTexte(dit, sel.value, b, true, etat);
+            // Les nombres se lisent par règle (spokenDigits), pas par la table : pas d'atelier.
+            if (!g.nombres) ouvrirAtelier(m);
+          });
           grille.appendChild(b);
         });
         z.appendChild(grille);

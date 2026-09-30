@@ -46,6 +46,7 @@
   /* ---------- Voix Google : l'état de démonstration ---------------------------- */
   var voixDemo = null;
   var blocagesDemo = []; blocagesDemo.n = 0;
+  var prononciationsDemo = [];
   function etatVoixDemo(){
     if (voixDemo) return voixDemo;
     voixDemo = {
@@ -534,6 +535,19 @@
       return Promise.resolve({ ok:true, bloque:!!bloquer });
     },
     comptesBloques:function(){ return Promise.resolve(blocagesDemo.slice()); },
+    prononciations:function(){ return Promise.resolve(prononciationsDemo.slice()); },
+    prononciationDefinir:function(mot, dit){
+      var m = String(mot||'').trim().toLowerCase(), g = String(dit||'').trim();
+      if (!g) return Promise.reject(new Error('graphie vide ou trop longue (80 caractères au plus)'));
+      if (g.toLowerCase().indexOf(m) >= 0) return Promise.reject(new Error('la graphie ne doit pas contenir le mot lui-même'));
+      prononciationsDemo = prononciationsDemo.filter(function(x){ return x.mot !== m; }).concat([{ mot:m, dit:g }]);
+      return Promise.resolve({ ok:true });
+    },
+    prononciationRetirer:function(mot){
+      var m = String(mot||'').trim().toLowerCase();
+      prononciationsDemo = prononciationsDemo.filter(function(x){ return x.mot !== m; });
+      return Promise.resolve({ ok:true });
+    },
     compteDebloquer:function(id){
       var i = blocagesDemo.map(function(b){ return b.id; }).indexOf(id);
       if (i < 0) return Promise.reject(new Error('blocage introuvable'));

@@ -819,7 +819,27 @@ var Voix=(function(){
     try{ if(ctx && ctx.state==='suspended') ctx.resume(); }catch(e){}
   }
 
+  /* Les graphies réglées depuis l'administration (sql/013, table
+     `prononciations`, lecture publique). Une fois par page, dès qu'un client
+     Supabase existe ; rappelée par l'administration après un enregistrement.
+     Un échec ne coûte rien : la table du code (PRONONCIATION_BASE) reste. */
+  var PRON = { charge:false };
+  function chargerPrononciations(forcer){
+    if(PRON.charge && !forcer) return Promise.resolve(false);
+    var c = null;
+    try{ c = window.RTAuth && RTAuth.client && RTAuth.client(); }catch(e){}
+    if(!c || !c.from || typeof definirPrononciations!=='function') return Promise.resolve(false);
+    PRON.charge = true;
+    return Promise.resolve(c.from('prononciations').select('mot,dit')).then(function(r){
+      if(r && !r.error && Array.isArray(r.data)){ definirPrononciations(r.data); return true; }
+      PRON.charge = false; return false;
+    }, function(){ PRON.charge = false; return false; });
+  }
+  window.addEventListener('rt:auth', function(){ chargerPrononciations(); });
+  window.addEventListener('rt:page', function(){ chargerPrononciations(); });
+
   return { parler:parler, empiler:empiler, stop:stop, occupe:occupe,
+           rechargerPrononciations:function(){ return chargerPrononciations(true); },
            voixGoogle:listerVoix, etatGoogle:etatGoogle, relancerGoogle:relancerGoogle,
            preparerAudio:preparerAudio, station:station,
            FAMILLES_GOOGLE:FAMILLES, familleGoogle:familleDe, libelleGoogle:libelleDe };

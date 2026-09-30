@@ -130,9 +130,49 @@ function numVariants(str){
    (ex : "unité 0 unité 5" ou "un zéro un cinq" → "1015"). Le texte est déjà normalisé. */
 const WORD2DIGIT = { zero:'0', un:'1', une:'1', unite:'1', deux:'2', trois:'3', quatre:'4',
                      cinq:'5', six:'6', sept:'7', huit:'8', neuf:'9' };
+/* Nombres dits EN TOUTES LETTRES (30/09/2026) : le contrôleur dit désormais
+   « piste vingt-deux » et « cent trente-cinq décimale cinq cent trente »
+   (manuel p. 17), et l'élève qui l'imite doit être compté juste. Une suite de
+   mots-nombres qui contient au moins un mot de dizaine, cent ou mille devient
+   son nombre ; une suite de chiffres seuls (« un zéro un cinq ») reste
+   épelée, et le recollage plus bas s'en charge comme avant. */
+const MOTS_NOMBRES = { zero:0, un:1, une:1, unite:1, deux:2, trois:3, quatre:4, cinq:5, six:6,
+  sept:7, huit:8, neuf:9, dix:10, onze:11, douze:12, treize:13, quatorze:14, quinze:15,
+  seize:16, vingt:20, vingts:20, trente:30, quarante:40, cinquante:50, soixante:60,
+  cent:100, cents:100, mille:1000 };
+const MOTS_GRANDS = { dix:1, onze:1, douze:1, treize:1, quatorze:1, quinze:1, seize:1,
+  vingt:1, vingts:1, trente:1, quarante:1, cinquante:1, soixante:1, cent:1, cents:1, mille:1 };
+function valeurMots(mots){
+  let total=0, courant=0;
+  for(let i=0;i<mots.length;i++){
+    const w=mots[i], v=MOTS_NOMBRES[w];
+    if(w==='et') continue;
+    if(w==='cent'||w==='cents') courant=(courant||1)*100;
+    else if(w==='mille'){ total+=(courant||1)*1000; courant=0; }
+    else if((w==='vingt'||w==='vingts') && mots[i-1]==='quatre') courant+=76;   // 4 + 76 = 80
+    else courant+=v;
+  }
+  return total+courant;
+}
+function nombresEnLettres(texte){
+  const t=texte.split(' '), out=[];
+  for(let i=0;i<t.length;){
+    let j=i, grand=false;
+    while(j<t.length && (MOTS_NOMBRES[t[j]]!==undefined || (t[j]==='et' && j>i && MOTS_NOMBRES[t[j+1]]!==undefined))){
+      if(MOTS_GRANDS[t[j]]) grand=true; j++;
+    }
+    if(j>i && grand){ out.push(String(valeurMots(t.slice(i,j)))); i=j; }
+    else { out.push(t[i]); i++; }
+  }
+  return out.join(' ');
+}
 function digitCanon(normText){
-  let d = (normText||"").split(' ')
+  let d = nombresEnLettres(normText||"").split(' ')
     .map(w => (WORD2DIGIT[w]!==undefined ? WORD2DIGIT[w] : w)).join(' ');
+  /* « décimale » (ou « virgule ») entre deux nombres : c'est une fréquence. Le
+     mot tombe, les deux parties se recollent — « 135 décimale 530 » vaut 135530,
+     comme la valeur attendue. */
+  d = d.replace(/(\d)\s+(?:decimales?|virgule)\s+(?=\d)/g, '$1 ');
   /* « deux » ressort très souvent « de » de la reconnaissance : « unité deux quatre »
      devient « unité de 4 ». On ne le traite comme un chiffre que COINCÉ ENTRE deux
      chiffres — isolé, « de » reste la préposition et ne doit pas être touché. */
@@ -2182,6 +2222,30 @@ function detecterPieges(corrected, results){
     out.push("« Roger » signifie seulement « message reçu ». Il ne remplace jamais un collationnement chiffré : reprenez la valeur elle-même (p. 19-21).");
   return out;
 }
+/* =========================================================================
+   CONTRESENS — un mot EN TROP qui change le sens du message (30/09/2026)
+   -------------------------------------------------------------------------
+   La notation ne cherche que des mots-clés PRÉSENTS. « Je rappelle en finale
+   piste 07 » contenait « finale » et « 07 » : compté juste, alors que ce n'est
+   pas un compte rendu de position — c'est la promesse d'en faire un. Ces
+   règles ajoutent un élément FAUX quand un mot qui change le sens est dit alors
+   que la phrase attendue (et ses variantes acceptées) ne le contient pas.
+   Chaque règle vient du manuel ; en ajouter une sans source serait inventer.
+   ========================================================================= */
+const CONTRESENS = [
+  { mot:/\brappel\w*/, label:'« Je rappelle » en trop',
+    why:"« Je rappelle… » annonce un appel à venir (réponse à « rappelez… »). Ici, on attend le compte rendu lui-même : la position, sans « rappelle » (manuel p. 19-21, RAPPELEZ)." },
+  { mot:/\bautorise\w*/, label:'« Autorisé » dans la bouche du pilote',
+    why:"Le pilote ne dit pas « autorisé » : c'est le mot du contrôleur. Il collationne à la première personne — « je décolle », « j'atterris » (manuel p. 59)." }
+];
+function ecartsDeSens(step, corrected, attendu){
+  if(!step || !step.motsCles) return [];
+  const permis = [fuzzyCorrect(attendu||'')];
+  step.motsCles.forEach(mc => { try{ resolveVariants(mc).forEach(v => permis.push(normalize(v||''))); }catch(e){} });
+  const tout = permis.join(' | ');
+  return CONTRESENS.filter(r => r.mot.test(corrected) && !r.mot.test(tout))
+                   .map(r => ({ label:r.label, found:false, sens:true, why:r.why }));
+}
 /* Rendu commun aux Exercices et à la Navigation. */
 function rendreFeedback(box, step, results, corrected, cls){
   box.innerHTML='';
@@ -2190,7 +2254,9 @@ function rendreFeedback(box, step, results, corrected, cls){
     const div=document.createElement('div');
     div.className=cls+' '+(r.found?'ok':'ko');
     let html='<span class="mk">'+(r.found?ICONS.check:ICONS.warn)+'</span><span>'+escapeHtml(r.label);
-    if(!r.found){
+    if(r.sens){
+      html+=' — formulation fausse<span class="fb-why">'+escapeHtml(r.why)+'</span>';
+    } else if(!r.found){
       const why=expliquerManque(mc, corrected);
       html+=' — manquant';
       if(why) html+='<span class="fb-why">'+escapeHtml(why)+'</span>';
@@ -2222,7 +2288,8 @@ function evaluate(rawText){
   const corrected = fuzzyCorrect(rawText);      // normalisé + corrigé (section D2/D3)
   logRow('you', fillDisplay('{CALL}')+' — '+(rawText||'').trim());
 
-  const results = step.motsCles.map(mc=>({ label:mc.label, found: mcFound(mc, corrected) }));
+  const results = step.motsCles.map(mc=>({ label:mc.label, found: mcFound(mc, corrected) }))
+    .concat(ecartsDeSens(step, corrected, fillDisplay(step.attendu||'')));
   state.results[state.stepIndex] = results;
   state.dits[state.stepIndex] = rawText || '';        // conservé pour la trace fine
 

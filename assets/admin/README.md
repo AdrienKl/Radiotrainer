@@ -160,6 +160,14 @@ Six tables. Le raisonnement (et ce qui a été écarté) est dans `ADMIN.md` § 
 > Le hook répond `http_code 500`, « Une erreur est survenue. Réessayez plus
 > tard. » (décision du développeur : rien ne dit qu'un blocage existe) ;
 > `assets/auth.js` l'affiche tel quel.
+>
+> **La prononciation (sql/013, 30/09/2026)** : table `prononciations` (mot →
+> graphie « pour l'oreille »), lecture publique, écriture par
+> `admin_prononciation_definir(cle, graphie)` et `admin_prononciation_retirer(cle)`
+> (admin plein, journal). Elle complète `PRONONCIATION_BASE`
+> (1-alphabet-nombres.js), chargée par 5-voix.js au premier `rt:auth` /
+> `rt:page`. Une graphie ne peut pas contenir son propre mot : le moteur peut
+> repasser sur un texte déjà réécrit.
 
 ```sql
 -- =====================================================================

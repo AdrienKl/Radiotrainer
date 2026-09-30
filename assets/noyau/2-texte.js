@@ -106,7 +106,11 @@ const REF_WORDS = [
      présent plus haut pour « mi-travers ») : les trois mots-clés du scénario
      « Traversée de piste » étaient introuvables SUR LEUR PROPRE PHRASE ATTENDUE.
      Même chose pour « transit », rabattu sur « transite ». */
-  'transit','traverse','traversee','traverser','traversons','traversez'
+  'transit','traverse','traversee','traverser','traversons','traversez',
+  /* 30/09/2026 : sans eux, « le VOR » devenait « le vol », et les sigles dits
+     comme des mots (manuel p. 11-12) étaient rabattus sur un voisin. */
+  'vor','sigmet','notam','atis','afis','metar','taf','ndb','dme','ils','squawk',
+  'mayday','panne','affichez','affiche','decimale','identification'
 ];
 /* ---- Mots français ORDINAIRES à ne jamais « corriger » ----
    Le correcteur flou ne connaît que le lexique radio : tout mot absent lui
@@ -263,6 +267,16 @@ function lissageTranscription(txt){
     if(norm[i+1] && BIGRAMS[paire]){ out.push(BIGRAMS[paire]); i++; continue; }
     out.push(MISHEARD[norm[i]] || bruts[i]);
   }
-  return out.join(' ');
+  return fusionFrequence(out.join(' '));
+}
+/* Une fréquence dictée à moitié en mots : la reconnaissance rend « unité 35
+   décimales 530 », que l'élève lisait comme une faute alors qu'il avait dit
+   juste (30/09/2026). « unité » collé à un nombre redevient le chiffre 1, et
+   « décimale » entre une partie de 3 chiffres et la suite devient le point :
+   « 135.530 ». Rien d'autre ne bouge. */
+function fusionFrequence(t){
+  return String(t)
+    .replace(/\bunit[ée]\s+(\d{2})\b/gi, '1$1')
+    .replace(/\b(\d{3})\s*(?:d[ée]cimales?|virgule)\s*(\d{1,3})\b/gi, '$1.$2');
 }
 

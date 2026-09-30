@@ -49,14 +49,16 @@ async function fonction(page, { dire = { status: 200 } } = {}) {
   return requetes;
 }
 
-async function compte(page, { plan, catalogue = null }) {
-  await page.evaluate(([plan, catalogue]) => {
+/* role : depuis le 30/09/2026, seul l'administrateur choisit sa voix et
+   dispose de l'essai. Les tests du choix de voix passent donc en « admin ». */
+async function compte(page, { plan, catalogue = null, role = 'user' }) {
+  await page.evaluate(([plan, catalogue, role]) => {
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
       speaking: false, pending: false, paused: false, getVoices: () => [], cancel() {}, pause() {}, resume() {},
       speak(u) { setTimeout(() => { u.onstart && u.onstart(); setTimeout(() => u.onend && u.onend(), 10); }, 5); }
     } });
     RTAuth.utilisateur = () => ({ id: 'u1', email: 'pilote@exemple.fr' });
-    RTAuth.profil = () => ({ id: 'u1', plan, pseudo: 'pilote' });
+    RTAuth.profil = () => ({ id: 'u1', plan, role, pseudo: 'pilote' });
     const auth = { getSession: () => Promise.resolve({ data: { session: { access_token: 'jeton' } } }) };
     /* Le catalogue de l'administration est posé AVANT l'événement : Google
        étant le moteur par défaut (29/09/2026), la liste se charge dès la
@@ -66,7 +68,7 @@ async function compte(page, { plan, catalogue = null }) {
           Promise.resolve(t === 'voix_catalogue' ? { data: catalogue, error: null } : { data: [], error: null }) }) })
       : () => ({ auth });
     window.dispatchEvent(new CustomEvent('rt:auth', { detail: { connecte: true } }));
-  }, [plan, catalogue]);
+  }, [plan, catalogue, role]);
   await page.mouse.click(5, 5);   // le geste qui débloque l'audio
 }
 const reglages = page => page.evaluate(() => JSON.parse(localStorage.getItem('rt-settings') || '{}'));
@@ -110,7 +112,7 @@ test('Premium : la liste de voix-atc, rangée par modèle, avec le genre', async
   await ouvrir(page);
   const requetes = await fonction(page);
   await entrer(page, 'parametres/voix');
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogleRow')).toBeVisible();
   await expect(page.locator('#setVoixNavRow')).toBeHidden();
@@ -133,7 +135,7 @@ test('changer de voix : enregistré, et le message SUIVANT part avec elle', asyn
   await ouvrir(page);
   const requetes = await fonction(page);
   await entrer(page, 'parametres/voix');
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
   await page.locator('#setVoixGoogle').selectOption('fr-FR-Neural2-G');
@@ -146,7 +148,7 @@ test('revenir au navigateur : plus aucune requête', async ({ page }) => {
   await ouvrir(page);
   const requetes = await fonction(page);
   await entrer(page, 'parametres/voix');
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
   await page.locator('[data-moteur="navigateur"]').click();
@@ -161,7 +163,7 @@ test('l\'essai passe par Google et le dit', async ({ page }) => {
   await ouvrir(page);
   const requetes = await fonction(page);
   await entrer(page, 'parametres/voix');
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
   await page.locator('#setVoiceTest').click();
@@ -173,7 +175,7 @@ test('l\'essai refusé par la base dit POURQUOI, et la voix du navigateur prend 
   await ouvrir(page);
   await fonction(page, { dire: { status: 429, body: { erreur: 'quota', restant: 0 } } });
   await entrer(page, 'parametres/voix');
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
   await page.locator('#setVoiceTest').click();
@@ -185,7 +187,7 @@ test('la liste des voix indisponible : on le dit, rien ne casse', async ({ page 
   await ouvrir(page);
   await page.route(FONCTION, r => r.fulfill({ status: 502, contentType: 'application/json', body: '{"erreur":"google"}' }));
   await entrer(page, 'parametres/voix');
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogleAide')).toContainText('Impossible de charger les voix réalistes');
 });
@@ -259,7 +261,7 @@ test('admin › Voix Google : refusée sans le rôle', async ({ page }) => {
 /* ---- sql/007 : les voix proposées, la voix par défaut, l'écran des scénarios -- */
 
 async function compteAvecCatalogue(page, catalogue) {
-  await compte(page, { plan: 'premium', catalogue });
+  await compte(page, { plan: 'premium', role: 'admin', catalogue });
 }
 
 test('une voix désactivée par l\'administration n\'est pas proposée ; la voix par défaut est présélectionnée', async ({ page }) => {
@@ -281,7 +283,7 @@ test('voix refusée par la base (désactivée) : l\'essai le dit', async ({ page
   await ouvrir(page);
   await fonction(page, { dire: { status: 403, body: { erreur: 'voix_desactivee' } } });
   await entrer(page, 'parametres/voix');
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
   await page.locator('#setVoiceTest').click();
@@ -292,7 +294,7 @@ test('Google actif : l\'écran des scénarios ne propose plus les voix du naviga
   await ouvrir(page);
   await fonction(page);
   await entrer(page, 'parametres/voix');
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.locator('[data-moteur="google"]').click();
   await expect(page.locator('#setVoixGoogle optgroup')).toHaveCount(5);
   await page.locator('#setVoixGoogle').selectOption('fr-FR-Chirp3-HD-Kore');
@@ -386,7 +388,7 @@ test('admin › Consommation : le graphique jour par jour est là', async ({ pag
 test('admin › Voix proposées : « Écouter » passe par Google, même réglé sur Navigateur', async ({ page }) => {
   await admin(page);
   const requetes = await fonction(page);
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.evaluate(() => localStorage.setItem('rt-settings', JSON.stringify({ voixMoteur: 'navigateur' })));
   await onglet(page, 'Voix proposées');
   const b = page.locator('#page-admin tr', { hasText: 'Kore' }).getByRole('button', { name: 'Écouter' });
@@ -399,7 +401,7 @@ test('admin › Voix proposées : « Écouter » passe par Google, même réglé
 test('admin › « Écouter » refusé : la cause est dite en clair', async ({ page }) => {
   await admin(page);
   await fonction(page, { dire: { status: 429, body: { erreur: 'quota' } } });
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.evaluate(() => { window.__toasts = []; window.showToast = t => window.__toasts.push(t); });
   await onglet(page, 'Voix proposées');
   await page.locator('#page-admin tr', { hasText: 'Kore' }).getByRole('button', { name: 'Écouter' }).click();
@@ -412,7 +414,7 @@ test('admin › « Écouter » refusé : la cause est dite en clair', async ({ p
 test('admin › Prononciation : les 26 lettres, la graphie envoyée, et le résultat reste affiché', async ({ page }) => {
   await admin(page);
   const requetes = await fonction(page);
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await onglet(page, 'Prononciation');
   const p = page.locator('#page-admin');
   await expect(p.locator('.adm-pron-mot')).not.toHaveCount(0);
@@ -431,7 +433,7 @@ test('admin › Prononciation : les 26 lettres, la graphie envoyée, et le résu
 test('admin › Prononciation : un refus est écrit en clair, et reste à l\'écran', async ({ page }) => {
   await admin(page);
   await fonction(page, { dire: { status: 429, body: { erreur: 'quota' } } });
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await onglet(page, 'Prononciation');
   await page.locator('#page-admin .adm-pron-mot[data-mot="Mike"]').click();
   await expect(page.locator('#page-admin .adm-pron-etat')).toContainText('quota du jour');
@@ -442,7 +444,7 @@ test('admin › Prononciation : un refus est écrit en clair, et reste à l\'éc
 test('toute parole passe par la prononciation OACI, sauf demande « brut »', async ({ page }) => {
   await admin(page);
   const requetes = await fonction(page);
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await page.evaluate(() => Voix.parler('Juliett Whiskey Echo', { voixGoogle: 'fr-FR-Neural2-F' }));
   await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => r.texte)).toEqual(['djouliètt ouiski èkko']);
   await page.evaluate(() => Voix.parler('Juliett Whiskey', { voixGoogle: 'fr-FR-Neural2-F', brut: true }));
@@ -452,7 +454,7 @@ test('toute parole passe par la prononciation OACI, sauf demande « brut »', as
 test('admin › Prononciation : l\'atelier écoute une graphie, l\'enregistre pour tout le monde, puis la retire', async ({ page }) => {
   await admin(page);
   const requetes = await fonction(page);
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await onglet(page, 'Prononciation');
   const p = page.locator('#page-admin');
   await p.locator('.adm-pron-mot[data-mot="Mike"]').click();
@@ -475,11 +477,49 @@ test('admin › Prononciation : l\'atelier écoute une graphie, l\'enregistre po
 test('admin › Prononciation : une graphie qui contient le mot est refusée avant tout envoi', async ({ page }) => {
   await admin(page);
   await fonction(page);
-  await compte(page, { plan: 'premium' });
+  await compte(page, { plan: 'premium', role: 'admin' });
   await onglet(page, 'Prononciation');
   const p = page.locator('#page-admin');
   await p.locator('.adm-pron-mot[data-mot="Pan Pan"]').click();
   await p.locator('.adm-pron-graphie').fill('pan pan pan');
   await p.locator('.adm-pron-enreg').click();
   await expect(p.locator('.adm-pron-atelier-msg')).toContainText('ne doit pas contenir le mot');
+});
+
+/* 30/09/2026 : un élève ne choisit pas sa voix et n'a pas d'essai. Il garde le
+   moteur, le débit et le bruit ; il entend la voix par défaut de
+   l'administration, même s'il en avait choisi une autre avant. */
+test('compte élève : ni choix de voix ni essai, dans les Paramètres comme sur l\'écran des scénarios', async ({ page }) => {
+  await ouvrir(page);
+  await fonction(page);
+  await entrer(page, 'parametres/voix');
+  await compte(page, { plan: 'premium' });
+  await expect(page.locator('[data-moteur="google"]')).toBeEnabled();
+  await expect(page.locator('#setVoixGoogleRow')).toBeHidden();
+  await expect(page.locator('#setVoixNavRow')).toBeHidden();
+  await expect(page.locator('#setEssaiRow')).toBeHidden();
+  await page.locator('[data-moteur="navigateur"]').click();
+  await expect(page.locator('#setVoixNavRow')).toBeHidden();
+  expect(await page.evaluate(() => document.getElementById('voiceSelect').parentNode.style.display)).toBe('none');
+});
+
+test('compte élève : la voix par défaut de l\'administration, pas un ancien choix', async ({ page }) => {
+  await ouvrir(page);
+  const requetes = await fonction(page);
+  await page.evaluate(() => localStorage.setItem('rt-settings', JSON.stringify({ voixMoteur: 'google', voixGoogle: 'fr-FR-Wavenet-F' })));
+  await compte(page, { plan: 'premium', catalogue: [{ voix: 'fr-FR-Chirp3-HD-Kore', active: true, par_defaut: true }] });
+  await entrer(page, 'navigation');
+  await expect.poll(() => requetes.filter(r => r.action === 'voix').length).toBeGreaterThan(0);
+  await page.waitForTimeout(300);
+  await page.evaluate(() => Voix.parler('Rappelez prêt au départ.', {}));
+  await expect.poll(() => requetes.filter(r => r.action === 'dire').map(r => r.voix)).toEqual(['fr-FR-Chirp3-HD-Kore']);
+});
+
+test('administrateur : le choix de la voix et l\'essai restent', async ({ page }) => {
+  await ouvrir(page);
+  await fonction(page);
+  await entrer(page, 'parametres/voix');
+  await compte(page, { plan: 'premium', role: 'admin' });
+  await expect(page.locator('#setVoixGoogleRow')).toBeVisible();
+  await expect(page.locator('#setEssaiRow')).toBeVisible();
 });

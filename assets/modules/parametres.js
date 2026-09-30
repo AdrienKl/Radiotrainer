@@ -118,6 +118,14 @@
      Le choix reste donc ouvert ; c'est la séance qui décide si Google parle. */
   function enLancement(){ return !!(window.RTLancement && RTLancement.actif() && estConnecte()); }
   function peutChoisirGoogle(){ return estPremium() || enLancement(); }
+  /* Choisir la voix, et l'essai : l'administrateur SEUL (décision du
+     développeur, 30/09/2026). Un élève garde le moteur (réaliste ou
+     navigateur), le débit et le bruit ; la voix est celle que
+     l'administration met par défaut (Admin › Voix Google). C'est un choix
+     d'interface, pas une règle de sécurité : rien n'est à protéger ici. */
+  function estAdmin(){
+    try{ var p = window.RTAuth && RTAuth.profil && RTAuth.profil(); return !!(p && p.role==='admin'); }catch(e){ return false; }
+  }
   // Sans choix explicite, Google : c'est le défaut de 5-voix.js (moteurVoulu).
   function moteurEffectif(){ return ((S.voixMoteur||'google')==='google' && peutChoisirGoogle()) ? 'google' : 'navigateur'; }
   // Le libellé et le modèle d'une voix : écrits une fois, dans 5-voix.js.
@@ -203,8 +211,11 @@
     if(bG){ bG.disabled=!ouvert; bG.title = ouvert ? '' : 'Réservé aux comptes Premium';
             var chip=bG.querySelector('.set-premium'); if(chip) chip.textContent = (!prem && enLancement()) ? 'Offerte' : 'Premium'; }
     segSet(null,m,'data-moteur');
-    if(rowNav) rowNav.hidden=(m==='google');
-    if(rowG) rowG.hidden=(m!=='google');
+    var adm=estAdmin();
+    if(rowNav) rowNav.hidden=(m==='google') || !adm;
+    if(rowG) rowG.hidden=(m!=='google') || !adm;
+    var essai=$s('setEssaiRow'); if(essai) essai.hidden=!adm;
+    var msgE=$s('setVoiceMsg'); if(msgE && !adm) msgE.classList.add('hidden');
     if(aideM){
       aideM.textContent = prem ? AIDE_M
         : enLancement() ? aideLancement()
@@ -212,7 +223,7 @@
         : S.voixMoteur==='google' ? "Votre compte n'est plus Premium : la voix du navigateur est utilisée."
         : 'La voix réaliste du contrôleur est réservée aux comptes Premium.';
     }
-    if(m==='google') chargerVoixGoogle();
+    if(m==='google' && adm) chargerVoixGoogle();
     peindreVoixScenarios(m);
   }
   /* L'écran de configuration des scénarios a son propre sélecteur « Voix ATC »
@@ -223,6 +234,8 @@
   function peindreVoixScenarios(m){
     var sv=document.getElementById('voiceSelect'); if(!sv) return;
     var boite=sv.parentNode, note=boite.querySelector('.voix-google-note');
+    // Élève : pas de choix de voix ici non plus (voir estAdmin).
+    boite.style.display = estAdmin() ? '' : 'none';
     if(m==='google'){
       /* style et non `hidden` : un `display` posé par la feuille de style
          l'emporte sur l'attribut — le piège est tombé trois fois ici. */

@@ -10,7 +10,17 @@
    serveur Python ci-dessous — le même que celui du § 17.1, pour que les tests
    voient exactement ce que le développeur voit.
    ========================================================================== */
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, webkit } from '@playwright/test';
+import { existsSync } from 'node:fs';
+
+/* WebKit s'installe à part (npx playwright install webkit) et son
+   téléchargement peut échouer. Absent, le projet « safari » n'est pas lancé —
+   la suite ne rougit pas pour un navigateur manquant — mais on le DIT, pour
+   qu'une vérification sautée ne passe pas pour une vérification faite. */
+let webkitPresent = false;
+try { webkitPresent = existsSync(webkit.executablePath()); } catch { webkitPresent = false; }
+if (!webkitPresent)
+  console.warn('\n⚠ WebKit absent : le projet « safari » est sauté. Installez-le : npx playwright install webkit\n');
 
 export default defineConfig({
   testDir: './tests/parcours',
@@ -29,7 +39,15 @@ export default defineConfig({
     locale: 'fr-FR'
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /safari/ },
+    /* Safari (30/09/2026). La voix réaliste était MUETTE sous Safari alors que
+       Chrome parlait : le chemin du son y est différent (5-voix.js ›
+       parElement). Ce projet ouvre le site dans WebKit, le moteur de Safari,
+       et vérifie que ce chemin-là est pris SANS le forcer, et qu'il va
+       jusqu'au bout. WebKit n'a pas de haut-parleur : que le son s'ENTENDE
+       reste une vérification à l'oreille (CLAUDE.md § 17.2). Installation,
+       une fois : npx playwright install webkit */
+    ...(webkitPresent ? [{ name: 'safari', use: { ...devices['Desktop Safari'] }, testMatch: /safari/ }] : []),
     /* Largeur téléphone : le § 17.2 la demande à chaque modification touchant
        une page. Elle rejoue le même parcours de démarrage et de navigation.
        « contact » l'a rejointe le 22/09/2026 : la modale y change de forme

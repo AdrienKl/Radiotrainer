@@ -2358,7 +2358,7 @@
                 <button class="seg3-opt" type="button" data-moteur="google">Réaliste <span class="set-premium">Premium</span></button>
               </div>
             </div>
-            <div class="set-row" id="setVoixNavRow">
+            <div class="set-row" id="setVoixNavRow" hidden>
               <div class="set-lbl"><b>Voix</b><span>Voix française disponible sur votre navigateur.</span></div>
               <select id="setVoice" class="set-input"></select>
             </div>
@@ -2395,7 +2395,10 @@
                  distante qui ne démarre jamais, moteur qui attend une interaction,
                  aucune voix française installée. Sans essai, on découvre la panne
                  au milieu d'un exercice et on croit que c'est l'exercice. -->
-            <div class="set-row">
+            <!-- Essai et choix de la voix : administrateur seul depuis le 30/09/2026
+                 (parametres.js › estAdmin). L'élève entend la voix par défaut réglée
+                 dans Admin › Voix Google. -->
+            <div class="set-row" id="setEssaiRow" hidden>
               <div class="set-lbl"><b>Essai</b><span>Écoutez une vraie phrase de contrôleur, avec la voix et le débit choisis ci-dessus.</span></div>
               <button class="btn small" id="setVoiceTest" type="button">Écouter un exemple</button>
             </div>

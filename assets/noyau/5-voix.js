@@ -438,7 +438,10 @@ var Voix=(function(){
       var p = A.profil && A.profil();
       if(forcee) return (p && (p.plan==='premium' || p.role==='admin')) ? String(forcee) : null;
       if(!accesGoogle(p)) return null;
-      var choisie = r.voixGoogle || POOL.defaut;
+      /* Seul l'administrateur choisit sa voix (30/09/2026) : un élève entend
+         la voix par défaut de l'administration. Tant que la liste n'est pas
+         arrivée, un ancien choix sert encore, plutôt que la voix du navigateur. */
+      var choisie = (p && p.role==='admin') ? (r.voixGoogle || POOL.defaut) : (POOL.defaut || r.voixGoogle);
       if(!choisie){ chargerPoolGoogle(); return null; }   // la liste arrive : ce message-ci part au navigateur
       return voixGoogleDuRang(String(choisie), rangMessage(m));
     }catch(e){ return null; }

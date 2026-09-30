@@ -1052,7 +1052,9 @@
             associées sont supprimés. Avant de demander la fermeture, pensez à exporter vos données depuis
             la page Paramètres : la suppression est définitive.</li>
           <li><b>À l'initiative de l'éditeur</b> — en cas de manquement au § 5, l'accès peut être suspendu,
-            puis le compte fermé. Sauf urgence ou obligation légale, un avertissement est adressé d'abord.</li>
+            puis le compte fermé. Sauf urgence ou obligation légale, un avertissement est adressé d'abord.
+            L'adresse e-mail d'un compte fermé pour ce motif peut être empêchée de créer un nouveau compte
+            pendant <b>3 ans</b> (voir la politique de confidentialité, « Adresse bloquée »).</li>
           <li><b>Si le service s'arrête</b> — un préavis raisonnable sera donné aux comptes actifs, afin que
             chacun puisse exporter ses données.</li>
         </ul>
@@ -1168,7 +1170,19 @@
                     le texte prononcé.</b></td>
                 <td>Appliquer le quota journalier, et suivre le coût du service.</td>
                 <td>Exécution du contrat</td>
-                <td>Tant que le compte existe.</td></tr>
+                <td>Tant que le compte existe. À sa fermeture, les totaux par jour et par voix sont
+                    gardés <b>sans aucun lien avec vous</b> (ni compte, ni pseudo, ni adresse), pour le
+                    suivi des coûts.</td></tr>
+            <!-- sql/012 (30/09/2026) : comptes_bloques. L'adresse n'est PAS
+                 stockée, seulement son empreinte SHA-256 ; le pseudo l'est, pour
+                 que l'administrateur reconnaisse la ligne. -->
+            <tr><td><b>Adresse bloquée</b> — seulement si votre compte a été fermé par l'éditeur pour
+                    manquement aux conditions d'utilisation : une <b>empreinte</b> de votre adresse
+                    e-mail (qui ne permet pas de la relire), votre pseudo, et la date</td>
+                <td>Empêcher la création d'un nouveau compte avec la même adresse après une fermeture
+                    pour abus.</td>
+                <td>Intérêt légitime</td>
+                <td><b>3 ans</b> après la fermeture, puis effacement automatique.</td></tr>
             <tr><td><b>Avis</b> — votre note, votre commentaire, la date, et votre <b>pseudo</b>
                     tel qu'il était à l'envoi ; votre compte y est rattaché, mais n'est jamais montré</td>
                 <td>Publier votre avis sur le site après vérification (page « Avis », et parfois

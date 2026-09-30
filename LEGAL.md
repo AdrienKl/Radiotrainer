@@ -195,6 +195,28 @@ remplirez les champs : il cessera simplement d'exiger le bandeau d'état.
   confidentialité **avant** d'être collectée, pas après.
 
 
+## Suppression de compte et adresse bloquée (30/09/2026)
+
+L'administrateur peut supprimer un compte (effacement complet, `sql/012`), et
+choisir d'empêcher l'adresse de recréer un compte. Encadrement :
+
+- **CGU § 10** prévoyait déjà la fermeture à l'initiative de l'éditeur pour
+  manquement au § 5, avec avertissement préalable sauf urgence. Il dit
+  désormais que l'adresse peut être bloquée **3 ans**. `CGU_VERSION` n'a pas
+  bougé : le texte est encore `brouillon-1`, à revoir en bloc avant la mise en
+  ligne publique (CLAUDE.md § 15) — cette phrase devra alors compter comme une
+  modification de fond (§ 11 des CGU).
+- **Politique de confidentialité** : ligne « Adresse bloquée » — empreinte de
+  l'adresse (pas l'adresse), pseudo, date ; intérêt légitime ; 3 ans puis
+  effacement automatique. Ligne « Consommation de la voix » : à la fermeture,
+  totaux gardés sans aucun lien avec la personne.
+- Le site répond à une adresse bloquée « Une erreur est survenue. Réessayez plus
+  tard. » (choix du développeur). **Cela ne vaut que pour le site** : une
+  demande d'accès RGPD (art. 15) d'une personne bloquée appelle une réponse
+  exacte, blocage compris.
+- Le journal d'audit ne garde ni l'adresse ni le pseudo du compte supprimé.
+
+
 ## Avis des élèves (29/09/2026)
 
 Obligations suivies (Code de la consommation, art. L111-7-2 et D111-16 à

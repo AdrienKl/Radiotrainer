@@ -246,7 +246,17 @@
           });
       }
       return Promise.all([
-        lire(0, []),
+        /* L'historique des comptes SUPPRIMÉS, sans nom (sql/012) : sans lui,
+           les coûts baissaient après coup. Tant que sql/012 n'est pas posée,
+           la table manque : on s'en passe plutôt que d'afficher une erreur. */
+        Promise.all([lire(0, []), Promise.resolve(c.from('voix_historique_anonyme')
+            .select('jour,voix,modele,caracteres,requetes').gte('jour', depuis))
+          .then(function(x){ return (x && !x.error && x.data) || []; }, function(){ return []; })])
+          .then(function(t){
+            return t[0].concat(t[1].map(function(x){
+              return { user_id:null, jour:x.jour, voix:x.voix, modele:x.modele, caracteres:x.caracteres, requetes:x.requetes };
+            }));
+          }),
         /* Les Premium ACTIFS (sql/008 › admin_premium_actifs, qui applique
            premium_actif() : un achat expiré n'y compte plus). Tant que sql/008
            n'est pas posée, la fonction manque : on retombe sur l'ancien
@@ -257,11 +267,13 @@
         })
       ]).then(function(r){
         var rows = r[0];
-        return noms(rows.map(function(x){ return x.user_id; })).then(function(mn){
+        return noms(rows.map(function(x){ return x.user_id; }).filter(Boolean)).then(function(mn){
           return {
             aujourdhui:auj,
             premiumTotal:(r[1] && typeof r[1].count === 'number') ? r[1].count : null,
             rows:rows.map(function(x){
+              if (!x.user_id) return { userId:'comptes-supprimes', userName:'Comptes supprimés', jour:x.jour, voix:x.voix,
+                                       modele:x.modele, caracteres:x.caracteres || 0, requetes:x.requetes || 0 };
               return { userId:x.user_id, userName:mn[x.user_id] || String(x.user_id).slice(0, 8),
                        jour:x.jour, voix:x.voix, modele:x.modele,
                        caracteres:x.caracteres || 0, requetes:x.requetes || 0 };
@@ -322,6 +334,23 @@
     definirPlan:function(id, plan){
       return ex(connecte().rpc('admin_definir_plan', { cible:id, nouveau_plan:plan }))
         .then(function(r){ return r.data; });
+    },
+    /* ---- Suppression de comptes (sql/012) ---------------------------------
+       Tout se décide dans la base : admin plein, jamais soi ni un compte à
+       rôle, confirmation par l'adresse. La page ne fait que transmettre. */
+    compteSupprimer:function(id, bloquer, confirmation){
+      return ex(connecte().rpc('admin_compte_supprimer', { cible:id, bloquer:!!bloquer, confirmation:confirmation || '' }))
+        .then(function(r){ return r.data; });
+    },
+    comptesBloques:function(){
+      return ex(connecte().rpc('admin_comptes_bloques')).then(function(r){
+        return (r.data || []).map(function(x){
+          return { id:x.id, libelle:x.libelle, bloqueLe:x.bloque_le, expireLe:x.expire_le, bloquePar:x.bloque_par };
+        });
+      });
+    },
+    compteDebloquer:function(id){
+      return ex(connecte().rpc('admin_compte_debloquer', { ligne:id })).then(function(r){ return r.data; });
     },
     voixJournal:function(){
       return lignes(connecte().from('admin_audit_log')

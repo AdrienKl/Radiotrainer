@@ -18,6 +18,115 @@
      liste remise à zéro après avoir consulté trois profils est une punition. */
   var etat = { q:'', status:'all', role:'all', sort:'lastSeenAt', dir:'desc', page:1 };
 
+  function toast(m){ try{ if (window.showToast) window.showToast(m); }catch(e){} }
+  function erreurDe(e){ return (e && (e.message || e.details || e.hint)) || String(e); }
+
+  /* ---------------------------------------------------------------------------
+     SUPPRIMER UN COMPTE — 30/09/2026 (sql/012)
+     Deux choix, décision du développeur :
+       · supprimer — la personne peut se réinscrire avec la même adresse ;
+       · supprimer et bloquer — l'adresse ne peut plus créer de compte pendant
+         3 ans ; le site lui répond « Une erreur est survenue. Réessayez plus
+         tard. », sans rien dire du blocage.
+     La confirmation se fait en RETAPANT l'adresse du compte, et la base la
+     revérifie : un bouton dans la page ne protège rien (CLAUDE.md § 8). La
+     base refuse aussi son propre compte et un compte qui a un rôle.
+     ------------------------------------------------------------------------ */
+  function carteSuppression(u, ctx){
+    var c = UI.carte('Supprimer le compte', { sub:'Irréversible. Le compte, son profil, ses séances, son avis et '
+      + 'son quota de voix sont effacés de la base. Les paiements restent, sans nom (pièce comptable) ; '
+      + 'l\'historique de voix aussi, sans nom.' });
+    c.classList.add('adm-suppr');
+    if (u.role && u.role !== 'user'){
+      c.body.appendChild(UI.notice('Ce compte a le rôle « ' + (RT.labels.role[u.role] || u.role)
+        + ' ». Retirez-lui d\'abord ce rôle : la base refuse de supprimer un compte qui en a un.', 'warn'));
+      return c;
+    }
+    var row = el('div', 'adm-btnrow');
+    row.appendChild(UI.bouton('Supprimer', { title:'La personne pourra se réinscrire avec la même adresse',
+      onClick:function(){ confirmer(u, false, ctx); } }));
+    row.appendChild(UI.bouton('Supprimer et bloquer l\'adresse', { cls:'cta',
+      title:'L\'adresse ne pourra plus créer de compte pendant 3 ans',
+      onClick:function(){ confirmer(u, true, ctx); } }));
+    c.body.appendChild(row);
+    return c;
+  }
+  function confirmer(u, bloquer, ctx){
+    var boite = el('div');
+    boite.appendChild(UI.notice(bloquer
+      ? 'Le compte est supprimé, et l\'adresse ne pourra plus créer de compte pendant 3 ans. Si la personne '
+        + 'réessaie, le site affichera seulement « Une erreur est survenue. Réessayez plus tard. » '
+        + 'Vous pourrez la débloquer depuis la liste des utilisateurs › Adresses bloquées.'
+      : 'Le compte est supprimé. La personne pourra se réinscrire avec la même adresse si elle le souhaite.',
+      bloquer ? 'danger' : 'warn'));
+    var lab = el('label', null, 'Pour confirmer, tapez l\'adresse du compte : <b>' + esc(u.email || '') + '</b>');
+    lab.style.cssText = 'display:block;margin:14px 0 6px;font-size:13.5px';
+    boite.appendChild(lab);
+    var champ = el('input');
+    champ.type = 'email'; champ.autocomplete = 'off'; champ.className = 'adm-suppr-confirmation';
+    champ.setAttribute('aria-label', 'Adresse du compte, pour confirmer');
+    champ.style.cssText = 'width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--adm-border,#ccc);font:inherit';
+    boite.appendChild(champ);
+    var msg = el('p', 'adm-sub');
+    msg.setAttribute('role', 'alert');
+    boite.appendChild(msg);
+    var d, enCours = false;
+    var go = UI.bouton(bloquer ? 'Supprimer définitivement et bloquer' : 'Supprimer définitivement', { cls:'cta',
+      onClick:function(){
+        if (enCours) return;
+        if (champ.value.trim().toLowerCase() !== String(u.email || '').trim().toLowerCase()){
+          msg.textContent = 'L\'adresse tapée ne correspond pas.'; return champ.focus();
+        }
+        enCours = true; go.disabled = true; msg.textContent = 'Suppression…';
+        RT.data.compteSupprimer(u.id, bloquer, champ.value).then(function(){
+          if (d && d.close) d.close(); else UI.fermerTiroir();
+          toast(bloquer ? 'Compte supprimé, adresse bloquée.' : 'Compte supprimé.');
+          ctx.go('admin/users');
+        }, function(e){
+          enCours = false; go.disabled = false;
+          msg.textContent = 'Refusé : ' + erreurDe(e);
+        });
+      } });
+    go.classList.add('adm-suppr-go');
+    var r = el('div', 'adm-btnrow'); r.style.marginTop = '12px';
+    r.appendChild(go);
+    boite.appendChild(r);
+    d = UI.tiroir(bloquer ? 'Supprimer et bloquer ' + u.name : 'Supprimer ' + u.name, boite);
+    // Après le tiroir, qui pose le focus sur sa croix au bout de 30 ms.
+    setTimeout(function(){ try{ champ.focus(); }catch(e){} }, 60);
+  }
+
+  /* Les adresses bloquées. La base n'en garde que l'EMPREINTE : on ne peut
+     pas les relire, seulement reconnaître la ligne au pseudo du compte
+     supprimé. Une ligne s'efface d'elle-même au bout de 3 ans. */
+  function ouvrirBlocages(){
+    var boite = el('div');
+    boite.appendChild(el('p', 'adm-sub', 'L\'adresse elle-même n\'est pas conservée, seulement son empreinte : '
+      + 'chaque ligne porte le pseudo du compte supprimé. Un blocage expire au bout de 3 ans.'));
+    var zone = el('div');
+    boite.appendChild(zone);
+    function peindre(){
+      UI.charger(zone, RT.data.comptesBloques(), function(rows){
+        if (!rows.length) return UI.etatVide('Aucune adresse bloquée', 'Rien à débloquer.', I.lock);
+        var liste = el('div');
+        rows.forEach(function(b){
+          var l = el('div', 'adm-bloc-ligne');
+          l.style.cssText = 'display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--adm-border,#ddd)';
+          l.appendChild(el('div', null, '<b>' + esc(b.libelle || 'compte sans pseudo') + '</b><br><small class="muted">Bloquée le '
+            + esc(F.date(b.bloqueLe)) + (b.bloquePar ? ' par ' + esc(b.bloquePar) : '') + ' · jusqu\'au ' + esc(F.date(b.expireLe)) + '</small>'));
+          l.appendChild(UI.bouton('Débloquer', { onClick:function(){
+            RT.data.compteDebloquer(b.id).then(function(){ toast('Adresse débloquée.'); peindre(); },
+              function(e){ toast('Refusé : ' + erreurDe(e)); });
+          } }));
+          liste.appendChild(l);
+        });
+        return liste;
+      }, 'Lecture des blocages…');
+    }
+    peindre();
+    UI.tiroir('Adresses bloquées', boite);
+  }
+
   function tonStatut(s){ return s === 'active' ? 'ok' : (s === 'suspended' ? 'bad' : 'warn'); }
   function tonRole(r){ return r === 'admin' ? 'violet' : (r === 'user' ? null : 'warn'); }
 
@@ -32,6 +141,9 @@
       g.appendChild(el('p', 'adm-sub',
         'Rechercher, filtrer et ouvrir une fiche d\'analyse. Cliquez une ligne pour voir le détail.'));
       tete.appendChild(g);
+      var actTete = el('div', 'adm-head__r');
+      actTete.appendChild(UI.bouton('Adresses bloquées', { onClick:ouvrirBlocages }));
+      tete.appendChild(actTete);
       hote.appendChild(tete);
 
       var carte = UI.carte(null, { plain:true });
@@ -283,6 +395,9 @@
         row.appendChild(bt);
         cVue.body.appendChild(row);
         w.appendChild(cVue);
+
+        /* ---- Ligne 5 : supprimer le compte (sql/012) ---- */
+        w.appendChild(carteSuppression(u, ctx));
 
         return w;
       }, 'Ouverture de la fiche…');

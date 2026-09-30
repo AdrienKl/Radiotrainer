@@ -132,6 +132,34 @@ Six tables. Le raisonnement (et ce qui a été écarté) est dans `ADMIN.md` § 
 > Aucune politique UPDATE / DELETE : modération par `admin_avis_moderer`,
 > `admin_avis_vedette`, `admin_avis_supprimer`, `admin_avis_liste` (admin
 > plein, journal d'audit). L'auteur lit le sien par `mon_avis()`.
+>
+> **Supprimer un compte, bloquer une adresse (sql/012, 30/09/2026)** :
+> `admin_compte_supprimer(cible, bloquer, confirmation)` — admin plein, jamais
+> soi ni un compte à rôle, `confirmation` = l'adresse du compte, revérifiée en
+> base. Une transaction : historique de voix gardé SANS NOM
+> (`voix_historique_anonyme`), blocage éventuel, journal (`compte.supprime` ou
+> `compte.supprime_bloque`, sans adresse ni pseudo), puis
+> `delete from auth.users` — la cascade emporte le reste. **Aucune clé
+> `service_role`** : la fonction de la base suffit. Le blocage garde
+> l'**empreinte** SHA-256 de l'adresse normalisée (minuscules, sans `+…`), le
+> pseudo et la date, 3 ans (`comptes_bloques`, aucune politique : fonctions
+> seules). `admin_comptes_bloques()`, `admin_compte_debloquer(ligne)`.
+>
+> **Le refus à l'inscription demande une ACTIVATION** dans la configuration
+> Auth du projet — le fichier SQL seul ne bloque rien. Hook « Before User
+> Created » → fonction Postgres `public.hook_avant_creation_compte`. Par le
+> tableau de bord (Authentication › Hooks), ou par l'API :
+>
+> ```sh
+> curl -X PATCH "https://api.supabase.com/v1/projects/vbziwjeuzcbvrbrihhrg/config/auth" \
+>   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+>   -d '{"hook_before_user_created_enabled":true,
+>        "hook_before_user_created_uri":"pg-functions://postgres/public/hook_avant_creation_compte"}'
+> ```
+>
+> Le hook répond `http_code 500`, « Une erreur est survenue. Réessayez plus
+> tard. » (décision du développeur : rien ne dit qu'un blocage existe) ;
+> `assets/auth.js` l'affiche tel quel.
 
 ```sql
 -- =====================================================================

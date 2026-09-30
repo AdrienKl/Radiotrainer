@@ -62,6 +62,14 @@
      definirPlan(id, plan)      → {ok, plan}    (écriture auditée, free | premium)
      voixJournal()              → [{at,adminName,action,cible,meta}] — les 20
                                    dernières écritures ci-dessus
+     compteSupprimer(id, bloquer, confirmation)
+                                → {ok, bloque} — supprime le compte de Supabase
+                                  (sql/012). confirmation = l'adresse du compte,
+                                  revérifiée par la base. Admin plein, audité.
+     comptesBloques()           → [{id,libelle,bloqueLe,expireLe,bloquePar}] —
+                                  les adresses bloquées (leur empreinte seule est
+                                  gardée : libelle = le pseudo du compte supprimé)
+     compteDebloquer(id)        → {ok}   (audité)
 
    FORMES
      UserRow      {id,name,email,role,status,createdAt,lastSeenAt,sessions,
@@ -174,7 +182,8 @@
   var METHODES = ['overview','activity','alerts','users','user','userSessions',
                   'userWeaknesses','flights','flight','analytics','exercises',
                   'errors','error','capabilities','voix','voixCatalogue','voixRegler',
-                  'voixPlafond','voixDefinirPlafond','comptesPlan','definirPlan','voixJournal'];
+                  'voixPlafond','voixDefinirPlafond','comptesPlan','definirPlan','voixJournal',
+                  'compteSupprimer','comptesBloques','compteDebloquer'];
 
   function enregistrer(src){
     sources[src.id] = src;

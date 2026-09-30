@@ -64,6 +64,13 @@
      pas si c'est l'adresse ou le mot de passe qui est faux, et c'est voulu —
      l'inverse permettrait de découvrir quelles adresses ont un compte. */
   var TRAD = [
+    /* Le refus d'une adresse BLOQUÉE par l'administration (sql/012,
+       hook_avant_creation_compte). Décision du développeur, 30/09/2026 : le
+       site ne dit ni qu'il y a un blocage ni qui l'a posé — il rend le message
+       tel quel, celui d'une panne passagère. En tête : sans cette entrée, il
+       sortait « Échec de l'opération : … », qui trahissait un message à part. */
+    [/une erreur est survenue\. réessayez plus tard/i,
+                                          "Une erreur est survenue. Réessayez plus tard."],
     [/invalid login credentials/i,        "Adresse ou mot de passe incorrect."],
     [/email not confirmed/i,              "Adresse pas encore confirmée. Ouvrez le message que nous vous avons envoyé."],
     [/user already registered|already been registered/i,

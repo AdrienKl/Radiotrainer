@@ -45,6 +45,7 @@
 
   /* ---------- Voix Google : l'état de démonstration ---------------------------- */
   var voixDemo = null;
+  var blocagesDemo = []; blocagesDemo.n = 0;
   function etatVoixDemo(){
     if (voixDemo) return voixDemo;
     voixDemo = {
@@ -517,6 +518,28 @@
       return Promise.resolve({ ok:true, plan:plan });
     },
     voixJournal:function(){ return Promise.resolve(etatVoixDemo().journal.slice(0, 20)); },
+
+    /* Suppression de comptes (sql/012), en mémoire : mêmes refus que la base,
+       pour que la page les montre en démonstration comme en vrai. */
+    compteSupprimer:function(id, bloquer, confirmation){
+      var M = construire(), u = M.users.filter(function(x){ return x.id === id; })[0];
+      if (!u) return Promise.reject(new Error('compte introuvable'));
+      if (u.role && u.role !== 'user') return Promise.reject(new Error('ce compte a un rôle (' + u.role + ') : retirez-le d\'abord'));
+      if (String(confirmation || '').trim().toLowerCase() !== String(u.email || '').trim().toLowerCase())
+        return Promise.reject(new Error('la confirmation ne correspond pas à l\'adresse du compte'));
+      M.users.splice(M.users.indexOf(u), 1);
+      M.sessions = M.sessions.filter(function(x){ return x.userId !== id; });
+      if (bloquer) blocagesDemo.unshift({ id:++blocagesDemo.n, libelle:u.name, bloqueLe:new Date().toISOString(),
+        expireLe:new Date(Date.now() + 3 * 365.25 * 86400000).toISOString(), bloquePar:'Vous (démo)' });
+      return Promise.resolve({ ok:true, bloque:!!bloquer });
+    },
+    comptesBloques:function(){ return Promise.resolve(blocagesDemo.slice()); },
+    compteDebloquer:function(id){
+      var i = blocagesDemo.map(function(b){ return b.id; }).indexOf(id);
+      if (i < 0) return Promise.reject(new Error('blocage introuvable'));
+      blocagesDemo.splice(i, 1);
+      return Promise.resolve({ ok:true });
+    },
 
     overview:function(opts){
       var M = construire(), f = fenetre(opts);

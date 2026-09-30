@@ -878,6 +878,86 @@ if (!problemes) {
 
   if (pb15.length) { rate('les avis ne se comportent pas comme prévu :'); pb15.forEach(m => console.log(rouge('      · ' + m))); }
   else passe('avis : un par compte, pour soi, dès la connexion (sql/011) ; en attente jusqu\'à modération ; ni modifiable ni supprimable par l\'auteur, même par l\'API ; public = publiés seuls, sans user_id ; 3 vedettes publiées au plus ; admin plein seul, journalisé');
+
+  /* 16. Supprimer un compte, bloquer une adresse (sql/012). La suppression
+         passe par auth.users et sa cascade ; le blocage par l'empreinte de
+         l'adresse, lue par le hook d'inscription de Supabase Auth. */
+  const pb16 = [];
+  await db.exec(`insert into auth.users (email) values ('supprA@albatros.test'), ('supprB@albatros.test'), ('supprC@albatros.test')`);
+  const sA = await idDe('supprA@albatros.test'), sB = await idDe('supprB@albatros.test'), sC = await idDe('supprC@albatros.test');
+  await db.exec(`update public.profiles set pseudo = 'pilote-sb', status = 'active' where id = '${sB}'`);
+  await db.exec(`insert into public.voix_historique (user_id, jour, voix, modele, caracteres, requetes) values
+    ('${sA}', '2026-09-01', 'fr-FR-Chirp3-HD-Kore', 'Chirp3-HD', 500, 2),
+    ('${sA}', '2026-09-02', 'fr-FR-Chirp3-HD-Kore', 'Chirp3-HD', 300, 1)`);
+  await db.exec(`insert into public.sessions (user_id, kind, status) values ('${sA}', 'flight', 'completed')`);
+  const hook = async adresse => (await q(`select public.hook_avant_creation_compte('${JSON.stringify({ user: { email: adresse } })}'::jsonb) as r`))[0].r;
+  const supprimer = (qui, cible, bloquer, conf) =>
+    enTant('authenticated', qui, `select public.admin_compte_supprimer('${cible}', ${bloquer}, '${conf}') as r`);
+
+  // 16.1 Refusé : élève, modérateur, soi-même, un compte à rôle, une confirmation fausse.
+  let x16 = await supprimer(sC, sA, false, 'supprA@albatros.test');
+  if (x16.ok) pb16.push('un élève a supprimé un compte');
+  x16 = await supprimer(modo, sA, false, 'supprA@albatros.test');
+  if (x16.ok) pb16.push('un modérateur a supprimé un compte');
+  x16 = await supprimer(admin, admin, false, 'admin@albatros.test');
+  if (x16.ok) pb16.push('l\'administrateur a supprimé son propre compte');
+  x16 = await supprimer(admin, modo, false, 'modo@albatros.test');
+  if (x16.ok) pb16.push('un compte modérateur a été supprimé sans retrait du rôle');
+  x16 = await supprimer(admin, sA, false, 'autre@albatros.test');
+  if (x16.ok) pb16.push('suppression acceptée avec une confirmation fausse');
+  if (!(await q(`select 1 from auth.users where id = '${sA}'`)).length) pb16.push('un refus a quand même supprimé le compte');
+
+  // 16.2 Supprimer, sans bloquer : tout part, l'historique de voix reste sans nom, l'adresse reste libre.
+  x16 = await supprimer(admin, sA, false, '  SupprA@Albatros.test ');
+  if (!x16.ok) pb16.push(`suppression légitime refusée : ${x16.message}`);
+  for (const [t, col] of [['auth.users', 'id'], ['public.profiles', 'id'], ['public.sessions', 'user_id'], ['public.voix_historique', 'user_id']])
+    if ((await q(`select 1 from ${t} where ${col} = '${sA}'`)).length) pb16.push(`${t} garde le compte supprimé`);
+  const [anon16] = await q(`select sum(caracteres)::int as c, sum(requetes)::int as n from public.voix_historique_anonyme`);
+  if (anon16.c !== 800 || anon16.n !== 3) pb16.push(`historique de voix anonyme : ${JSON.stringify(anon16)}`);
+  if ((await q(`select 1 from public.comptes_bloques`)).length) pb16.push('une suppression simple a bloqué l\'adresse');
+  if (JSON.stringify(await hook('supprA@albatros.test')) !== '{}') pb16.push('l\'adresse supprimée sans blocage est refusée à l\'inscription');
+
+  // 16.3 Supprimer et bloquer : l'adresse n'est pas stockée, le hook refuse — y compris avec un « +… ».
+  x16 = await supprimer(admin, sB, true, 'supprB@albatros.test');
+  if (!x16.ok) pb16.push(`suppression avec blocage refusée : ${x16.message}`);
+  const bl = await q(`select * from public.comptes_bloques`);
+  if (bl.length !== 1 || !/^[0-9a-f]{64}$/.test(bl[0].empreinte) || bl[0].libelle !== 'pilote-sb')
+    pb16.push(`ligne de blocage : ${JSON.stringify(bl)}`);
+  if (JSON.stringify(bl).includes('supprB')) pb16.push('l\'adresse bloquée est stockée en clair');
+  for (const a of ['supprB@albatros.test', ' SUPPRB@albatros.test', 'supprb+nouveau@albatros.test']) {
+    const r = await hook(a);
+    if (!r.error || r.error.message !== 'Une erreur est survenue. Réessayez plus tard.') pb16.push(`hook pour « ${a} » : ${JSON.stringify(r)}`);
+  }
+  if (JSON.stringify(await hook('autre@albatros.test')) !== '{}') pb16.push('le hook refuse une adresse non bloquée');
+  const j16 = await q(`select action, meta from public.admin_audit_log where action like 'compte.supprime%' order by id`);
+  if (j16.map(j => j.action).join() !== 'compte.supprime,compte.supprime_bloque') pb16.push(`journal : ${JSON.stringify(j16)}`);
+  if (/supprA|supprB|pilote-sb/i.test(JSON.stringify(await q(`select meta from public.admin_audit_log where action like 'compte.%'`)))) pb16.push('le journal garde l\'adresse ou le pseudo du compte supprimé');
+
+  // 16.4 Ni l'élève ni le public ne lisent les blocages, n'appellent le hook ni l'empreinte.
+  for (const [role, qui] of [['anon', null], ['authenticated', sC]])
+    for (const sql of [`select * from public.comptes_bloques`, `select public.empreinte_email('x@y.fr')`,
+                       `select public.hook_avant_creation_compte('{}'::jsonb)`, `select * from public.admin_comptes_bloques()`,
+                       `select * from public.voix_historique_anonyme`]) {
+      x16 = await enTant(role, qui, sql);
+      if (x16.ok && !(role === 'authenticated' && sql.includes('voix_historique_anonyme') && x16.r === undefined))
+        pb16.push(`${role} a pu : ${sql}`);
+    }
+
+  // 16.5 L'admin liste et débloque (journalisé) ; un blocage expiré s'efface tout seul.
+  x16 = await enTant('authenticated', admin, `select count(*)::int as n from public.admin_comptes_bloques()`);
+  if (!x16.ok || x16.r.n !== 1) pb16.push(`liste des blocages : ${JSON.stringify(x16)}`);
+  x16 = await enTant('authenticated', admin, `select public.admin_compte_debloquer(${bl[0].id})`);
+  if (!x16.ok) pb16.push(`déblocage refusé : ${x16.message}`);
+  if (JSON.stringify(await hook('supprB@albatros.test')) !== '{}') pb16.push('adresse débloquée toujours refusée');
+  await db.exec(`insert into public.comptes_bloques (empreinte, bloque_le, expire_le)
+    values (public.empreinte_email('vieux@albatros.test'), now() - interval '4 years', now() - interval '1 year')`);
+  if (JSON.stringify(await hook('vieux@albatros.test')) !== '{}') pb16.push('un blocage expiré refuse encore');
+  if ((await q(`select 1 from public.comptes_bloques`)).length) pb16.push('un blocage expiré n\'a pas été effacé');
+  if (!(await q(`select 1 from public.admin_audit_log where action = 'compte.debloque'`)).length) pb16.push('le déblocage n\'est pas journalisé');
+  await moi13(null);
+
+  if (pb16.length) { rate('la suppression de comptes ne se comporte pas comme prévu :'); pb16.forEach(m => console.log(rouge('      · ' + m))); }
+  else passe('suppression de compte : admin plein seul, confirmation par l\'adresse, jamais soi ni un rôle ; cascade complète, historique de voix gardé sans nom ; blocage par empreinte (« +… » compris), refusé par le hook avec un message neutre, 3 ans, déblocage journalisé');
 }
 
 console.log('');

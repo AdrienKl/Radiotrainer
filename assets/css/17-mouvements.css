@@ -1,0 +1,281 @@
+/* =============================================================================
+   Albatros VFR — Mouvements, et la version téléphone
+   -----------------------------------------------------------------------------
+   Ajouté le 30/09/2026, à la demande du développeur :
+     · l'encadré rouge « Chrome, Edge ou Safari » à la connexion et à
+       l'inscription, là où l'on tape son adresse ;
+     · des transitions « à la iOS 26 » : une pastille qui GLISSE d'une entrée à
+       l'autre (menu, onglets des Paramètres, boutons segmentés), un léger
+       rebond, un enfoncement au toucher, des panneaux qui entrent au lieu
+       d'apparaître ;
+     · une version téléphone refaite : barre d'onglets en verre en bas, menu
+       complet en feuille qui monte du bas, barre du haut en verre, cartes plus
+       rondes, champs à 16 px ;
+     · la tour de contrôle retirée de l'accueil sur téléphone.
+
+   Ce fichier est le n° 17, le DERNIER du site : il corrige ce qui précède, sans
+   !important (sauf .sans-anim, qui doit couper toute transition). L'ORDRE DE
+   CHARGEMENT EST LE CONTRAT : tests/contrat/chargement.test.mjs le surveille.
+
+   ┌─ L'ORDINATEUR NE DOIT RIEN PERDRE ──────────────────────────────────────┐
+   │ Tout ce qui REFAIT la mise en page est derrière une media query de       │
+   │ largeur (≤ 860 px pour l'application, comme le tiroir de 06-coquille ;   │
+   │ ≤ 760 px pour l'accueil, comme le hero de 02-vitrine). Hors de ces       │
+   │ blocs, il n'y a que des mouvements : la pastille, l'enfoncement, les     │
+   │ entrées de panneaux. Au repos, une page d'ordinateur est pixel pour      │
+   │ pixel celle d'avant.                                                     │
+   └──────────────────────────────────────────────────────────────────────────┘
+   ========================================================================== */
+
+  /* ---------- Le ressort ----------
+     Une courbe `linear()` échantillonnée sur un ressort amorti : elle dépasse
+     d'environ 1,7 % puis revient, ce qui suffit à donner du poids sans faire
+     rebondir. Un navigateur qui ne connaît pas linear() rejette la valeur et
+     retombe sur `ease` : rien ne casse, ça rebondit juste moins. */
+  :root{
+    --ressort:linear(0, .006, .025 2.8%, .101 6.1%, .539 18.9%, .721 25.3%, .849 31.5%,
+      .937 38.1%, .968 41.8%, .991 45.7%, 1.006 50.1%, 1.015 55%, 1.017 63.9%, 1);
+    --ressort-vif:linear(0, .02, .08 4%, .5 14%, .86 24%, 1.04 34%, 1.07 40%, 1.05 48%, 1.01 60%, .998 72%, 1);
+    /* Le verre : un blanc (ou un nuit) translucide, flouté derrière. Des rgba
+       et non des color-mix() : tests/parcours/_contraste.js compose les
+       rgba sur leur fond, il ne sait pas lire color(srgb …). */
+    --verre:rgba(255,255,255,.86);
+    --verre-bord:rgba(255,255,255,.7);
+    --verre-ombre:0 10px 36px rgba(36,40,56,.16), 0 1px 0 rgba(255,255,255,.6) inset;
+  }
+  :root[data-theme="dark"]{
+    --verre:rgba(30,33,46,.86);
+    --verre-bord:rgba(255,255,255,.10);
+    --verre-ombre:0 12px 40px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.08) inset;
+  }
+
+  /* =========================================================================
+     1. « Chrome, Edge ou Safari » — connexion et inscription
+     ========================================================================= */
+  /* Rouge foncé sur rose très pâle : 6,9:1 mesuré en théorie (#a61b1b sur
+     #fdeceb), avec la marge que le projet s'impose sous 15 px (voir
+     --ink-2-fort). En sombre, rose clair sur un rouge très sombre : 9,6:1. */
+  .nav-requis{ display:flex; gap:10px; align-items:flex-start; margin:-4px 0 16px;
+    padding:11px 13px; border-radius:12px; font-size:13px; line-height:1.5;
+    color:#a61b1b; background:#fdeceb; border:1.5px solid #e35d5b; }
+  .nav-requis b{ color:#8c1212; }
+  .nav-requis .ic-svg{ flex:none; width:18px; height:18px; margin-top:1px;
+    fill:none; stroke:currentColor; stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+  /* Le navigateur courant n'a pas de reconnaissance : le cadre s'épaissit. */
+  .nav-requis--ici{ border-width:2px; box-shadow:0 0 0 4px rgba(227,93,91,.16); }
+  .nav-requis__ici{ font-weight:700; }
+  :root[data-theme="dark"] .nav-requis{ color:#ffc9c5; background:#3a1616; border-color:#c2413e; }
+  :root[data-theme="dark"] .nav-requis b{ color:#ffe3e0; }
+
+  /* =========================================================================
+     2. La pastille qui glisse (assets/modules/mouvements.js)
+     ========================================================================= */
+  .a-glisseur:not(.tabbar){ position:relative; }
+  .a-glisseur > :not(.glisseur){ position:relative; z-index:1; }
+  .glisseur{ position:absolute; left:0; top:0; z-index:0; pointer-events:none;
+    border-radius:var(--pill); background:var(--violet); opacity:0;
+    box-shadow:0 4px 14px rgba(91,75,206,.32);
+    transition:transform .52s var(--ressort), width .52s var(--ressort),
+      height .52s var(--ressort), opacity .2s ease; }
+  .glisseur.sans-anim{ transition:none !important; }
+  /* Pendant le glissement seulement : la pastille se montre, l'entrée choisie
+     rend son fond (elle le reprend à la fin — voir l'en-tête du module). Un
+     léger étirement dans le sens de la course, comme une goutte. */
+  .glisse > .glisseur{ opacity:1; animation:etireX .52s ease-out; }
+  @keyframes etireX{ 0%{scale:1} 30%{scale:1.10 .90} 100%{scale:1} }
+  .glisse > .set-tab.active, .glisse > .seg3-opt.active, .glisse > .seg-opt.active,
+  .glisse > .nav-mode-opt.active, .glisse > .nav-diff-opt.active{
+    background:transparent; box-shadow:none; }
+  /* Le texte passe au blanc un peu APRÈS le départ : sinon il blanchit sur le
+     gris, avant que la pastille n'arrive dessous. */
+  .set-tab, .seg3-opt, .seg-opt, .nav-mode-opt, .nav-diff-opt{
+    transition:color .22s ease .08s, background .15s ease; }
+
+  /* Le menu : la pastille reprend le relief de .sidelink.current (06-coquille). */
+  .side-nav > .glisseur{ border-radius:11px;
+    background:linear-gradient(180deg, rgba(142,126,255,.36), rgba(91,75,206,.22));
+    border:1px solid rgba(162,148,255,.46);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 9px 24px rgba(66,52,176,.44); }
+  .side-nav.glisse > .glisseur{ animation-name:etireY; }
+  @keyframes etireY{ 0%{scale:1} 30%{scale:.95 1.14} 100%{scale:1} }
+  .side-nav.glisse > .sidelink.current{ background:transparent; border-color:transparent; box-shadow:none; }
+  .side-nav.glisse > .sidelink.current::before{ opacity:0; }
+  .sidelink::before{ transition:opacity .2s ease; }
+
+  /* =========================================================================
+     3. Au toucher, ça s'enfonce ; en entrant, ça arrive
+     ========================================================================= */
+  .btn, .sidelink, .side-logout, .set-tab, .seg3-opt, .seg-opt, .nav-mode-opt,
+  .nav-diff-opt, .tabbar__item, .hamburger, .ct-fab{ -webkit-tap-highlight-color:transparent; }
+  .btn:active:not(:disabled), .side-logout:active, .hamburger:active{
+    transform:scale(.965); transition:transform .12s ease; }
+  .sidelink:active{ transform:scale(.97); }
+  .set-tab:active, .seg3-opt:active, .seg-opt:active,
+  .nav-mode-opt:active, .nav-diff-opt:active{ transform:scale(.94); }
+  .sidelink, .set-tab, .seg3-opt, .seg-opt, .nav-mode-opt, .nav-diff-opt{
+    transition-property:color, background, border-color, box-shadow, transform;
+    transition-duration:.22s, .15s, .15s, .15s, .4s;
+    transition-timing-function:ease, ease, ease, ease, var(--ressort-vif); }
+
+  /* Les pages : un fondu qui monte, un soupçon d'échelle. Toujours par
+     transform et opacity seulement — un filter sur .page ferait perdre, comme
+     transform, leur ancrage aux position:fixed de la page, mais coûterait en
+     plus un flou de toute la page à chaque image sur téléphone. */
+  .page.active{ animation:pageIn2 .55s var(--ressort) both; }
+  @keyframes pageIn2{ from{ opacity:0; transform:translateY(12px) scale(.988); } to{ opacity:1; transform:none; } }
+
+  /* Les onglets des Paramètres : le panneau qui s'ouvre sort du flou. Le
+     passage de hidden à visible relance l'animation tout seul — aucun script.
+     SANS déplacement, et c'est voulu : une première version le faisait aussi
+     monter de 10 px ; ses boutons bougeaient donc pendant une demi-seconde
+     après chaque changement d'onglet, et un clic immédiat (celui de
+     tests/parcours/lancement.spec.js) attendait qu'ils se posent — assez
+     longtemps pour que la bulle Contact apparaisse par-dessus. */
+  .set-panel:not([hidden]){ animation:panneauIn .38s ease-out both; }
+  @keyframes panneauIn{ from{ opacity:0; filter:blur(6px); } to{ opacity:1; filter:none; } }
+
+  /* Le repli du menu d'ordinateur (rail) suit le même ressort. */
+  .sidebar, body.state-app main{ transition:width .42s var(--ressort), margin-left .42s var(--ressort); }
+
+  /* =========================================================================
+     4. TÉLÉPHONE ET TABLETTE ÉTROITE — l'application (≤ 860 px)
+     Même seuil que le tiroir de 06-coquille.css, exprès : les deux doivent
+     basculer ensemble, sinon on aurait un menu d'ordinateur ET une barre du bas.
+     ========================================================================= */
+  .tabbar{ display:none; }
+  @media (max-width:860px){
+
+    /* --- La barre du haut : du verre, la marque à gauche, le menu à droite --- */
+    body.state-app .app-topbar{ padding:10px 16px; padding-top:max(10px, env(safe-area-inset-top));
+      background:var(--verre); border-bottom:1px solid var(--verre-bord);
+      -webkit-backdrop-filter:saturate(180%) blur(22px); backdrop-filter:saturate(180%) blur(22px); }
+    .app-topbar .brand{ font-size:17px; letter-spacing:-.01em; }
+    .hamburger{ order:2; margin-left:auto; width:40px; height:40px; padding:0;
+      align-items:center; justify-content:center; border-radius:50%;
+      background:var(--verre); border:1px solid var(--border);
+      box-shadow:0 2px 10px rgba(36,40,56,.08); }
+
+    /* --- La barre d'onglets, en bas, en verre --- */
+    body.state-app .tabbar{ display:grid; grid-template-columns:repeat(5,1fr); gap:2px;
+      position:fixed; z-index:110; left:12px; right:12px;
+      bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+      padding:6px; border-radius:30px;
+      background:var(--verre); border:1px solid var(--verre-bord); box-shadow:var(--verre-ombre);
+      -webkit-backdrop-filter:saturate(180%) blur(24px); backdrop-filter:saturate(180%) blur(24px);
+      animation:barreIn .6s var(--ressort) both; }
+    @keyframes barreIn{ from{ transform:translateY(120%); opacity:0; } to{ transform:none; opacity:1; } }
+    .tabbar__item{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+      min-height:52px; padding:6px 2px; border:none; background:transparent; cursor:pointer;
+      border-radius:24px; font-family:var(--sans); font-size:10.5px; font-weight:650; letter-spacing:.01em;
+      color:var(--ink-2-fort); transition:color .25s ease, transform .4s var(--ressort-vif); }
+    .tabbar__item .ic-svg{ width:23px; height:23px; transition:transform .45s var(--ressort-vif); }
+    .tabbar__item:active{ transform:scale(.9); }
+    .tabbar__item.courant{ color:var(--violet-dark); }
+    .tabbar__item.courant .ic-svg{ transform:translateY(-1px) scale(1.08); }
+    /* Ici, la pastille reste visible au repos : la barre est à nous, aucun
+       fond d'origine à rendre. */
+    .tabbar > .glisseur{ opacity:1; border-radius:24px; background:var(--violet-soft);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 1px rgba(91,75,206,.12); }
+    :root[data-theme="dark"] .tabbar > .glisseur{ box-shadow:inset 0 1px 0 rgba(255,255,255,.10), 0 0 0 1px rgba(179,166,255,.18); }
+
+    /* Rien ne doit finir sous la barre : ni le bas des pages, ni le bouton
+       Contact, ni sa bulle, ni le rappel d'avis, ni les messages. */
+    body.state-app main{ padding-bottom:calc(92px + env(safe-area-inset-bottom, 0px)); }
+    body.state-app .ct-fab{ bottom:calc(88px + env(safe-area-inset-bottom, 0px)); right:16px; }
+    body.state-app .ct-bulle, body.state-app .av-rappel{ bottom:calc(154px + env(safe-area-inset-bottom, 0px)); }
+    body.state-app .toast{ bottom:calc(94px + env(safe-area-inset-bottom, 0px)); }
+
+    /* --- Le menu complet : une FEUILLE qui monte du bas ---
+       Même tiroir, même bouton, même routeur (setDrawer, 06-coquille.css) :
+       seule la géométrie change. Il garde sa console noire. */
+    body.state-app .sidebar{ top:auto; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom, 0px));
+      width:auto; max-height:min(86vh, 680px); overflow-y:auto; overscroll-behavior:contain;
+      border-radius:32px; padding:8px 16px 16px; z-index:130;
+      transform:translateY(calc(100% + 40px));
+      transition:transform .55s var(--ressort);
+      box-shadow:0 -10px 60px rgba(4,6,14,.45), inset 0 1px 0 rgba(255,255,255,.08); }
+    body.state-app .sidebar.open{ transform:none; }
+    body.state-app .sidebar::after{ display:none; }
+    /* La poignée : on sait que ça se referme. */
+    body.state-app .sidebar::before{ content:""; display:block; flex:none; width:40px; height:5px;
+      margin:4px auto 10px; border-radius:3px; background:rgba(255,255,255,.26); }
+    body.state-app .side-head{ padding:2px 4px 12px; }
+    /* Deux colonnes de tuiles : huit entrées tiennent en quatre rangs, sans
+       défiler, à portée de pouce. */
+    body.state-app .side-nav{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    body.state-app .sidelink{ flex-direction:column; align-items:flex-start; gap:8px; min-height:74px;
+      padding:13px 14px; border-radius:18px; font-size:14px;
+      background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.07); }
+    body.state-app .sidelink .ic-svg{ width:22px; height:22px; }
+    body.state-app .sidelink.current::before{ display:none; }
+    body.state-app .side-nav > .glisseur{ border-radius:18px; }
+    body.state-app .side-logout{ margin-top:12px; justify-content:center; border-radius:16px; min-height:48px; }
+    .side-overlay{ background:rgba(10,8,24,.34);
+      -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); }
+    body.state-app.drawer-open .side-overlay{ animation:voileIn .3s ease both; }
+    @keyframes voileIn{ from{ opacity:0; } to{ opacity:1; } }
+    /* Menu ouvert : le bouton Contact, sa bulle et le rappel d'avis (z-index
+       300) passaient PAR-DESSUS la feuille et masquaient deux entrées. */
+    body.state-app.drawer-open .ct-fab, body.state-app.drawer-open .ct-bulle,
+    body.state-app.drawer-open .av-rappel{ visibility:hidden; }
+  }
+
+  /* =========================================================================
+     5. TÉLÉPHONE (≤ 560 px) — le contenu
+     ========================================================================= */
+  @media (max-width:560px){
+    /* Des cartes plus rondes, comme les listes groupées d'iOS. */
+    .set-card, .panel, .tb-card, .tb-stat{ border-radius:22px; }
+    .set-card{ padding:18px 18px 12px; }
+    /* Les onglets des Paramètres prennent la largeur : un seul bloc, qui
+       défile sur le côté s'il le faut (08-parametres.css). */
+    .set-tabs{ width:100%; }
+    .set-tab{ padding:10px 15px; }
+
+    /* Connexion et inscription : une carte en verre posée sur la carte OACI. */
+    .auth-wrap{ padding:max(22px, env(safe-area-inset-top)) 12px 28px; align-items:flex-start; }
+    .auth-card{ border-radius:28px; padding:26px 20px 22px; margin-top:4vh;
+      background:var(--verre); border-color:var(--verre-bord); box-shadow:var(--verre-ombre);
+      -webkit-backdrop-filter:saturate(170%) blur(20px); backdrop-filter:saturate(170%) blur(20px); }
+    .auth-field input{ border-radius:14px; min-height:50px; }
+    .auth-submit{ min-height:52px; }
+  }
+  /* Un champ sous 16 px fait ZOOMER Safari sur iPhone au moment où l'on tape,
+     et la page reste agrandie ensuite. Seulement au doigt : à la souris, les
+     tailles d'origine restent. */
+  @media (max-width:860px) and (hover:none){
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea{ font-size:16px; }
+  }
+
+  /* =========================================================================
+     6. L'ACCUEIL SUR TÉLÉPHONE (≤ 760 px, le seuil du hero de 02-vitrine)
+     ========================================================================= */
+  @media (max-width:760px){
+    /* La tour de contrôle quitte le téléphone (30/09/2026, demande du
+       développeur) : en haut à droite, elle repoussait le titre sous la ligne
+       de flottaison. Elle reste dans le HTML pour l'ordinateur ; `loading`
+       n'y change rien, un <img> masqué se télécharge quand même — 60 ko,
+       acceptés plutôt que de dupliquer la balise. */
+    .hero__tour{ display:none; }
+    .hero__inner{ padding-top:clamp(34px, 7vh, 60px); }
+    .hero__title{ font-size:clamp(34px, 10vw, 44px); line-height:1.04; }
+    .hero__cta{ flex-direction:column; gap:10px; }
+    .hero__cta .btn{ width:100%; min-height:54px; }
+    /* Les quatre nombres deviennent quatre tuiles de verre, deux par deux. */
+    .hero__strip{ gap:10px; padding-bottom:40px; }
+    .hero__num{ padding:14px 16px; border-radius:20px; background:var(--verre);
+      border:1px solid var(--verre-bord); box-shadow:0 6px 22px rgba(36,40,56,.08);
+      -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+    .hero__num b{ font-size:26px; }
+    .hero__num span{ font-size:10.5px; }
+  }
+
+  /* =========================================================================
+     7. Mouvement réduit : tout ce qui précède, à l'arrêt
+     ========================================================================= */
+  @media (prefers-reduced-motion:reduce){
+    .glisseur, .page.active, .set-panel:not([hidden]), body.state-app .tabbar,
+    body.state-app .sidebar, .tabbar__item, .tabbar__item .ic-svg{ animation:none; transition:none; }
+    .btn:active:not(:disabled), .sidelink:active, .set-tab:active, .seg3-opt:active,
+    .seg-opt:active, .tabbar__item:active{ transform:none; }
+  }

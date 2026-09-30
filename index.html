@@ -70,6 +70,7 @@
 <link rel="stylesheet" href="assets/css/14-carte.css">
 <link rel="stylesheet" href="assets/css/15-contact.css">
 <link rel="stylesheet" href="assets/css/16-avis.css">
+<link rel="stylesheet" href="assets/css/17-mouvements.css">
 
 <!-- Console d'administration : styles isolés dans leur propre fichier (préfixe
      .adm-, portés par #page-admin). Chargés après le <style> du site pour que les
@@ -162,6 +163,22 @@
     <button class="hamburger" id="hamburger" type="button" aria-label="Menu" aria-expanded="false"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
     <div class="brand"><span class="logo"><svg class="ic-svg logo-albatros" viewBox="0 0 369 338" aria-hidden="true"><use href="#logo-albatros"/></svg></span><span>Albatros VFR</span></div>
   </div>
+
+  <!-- Barre d'onglets du bas — TÉLÉPHONE seulement (30/09/2026). Les quatre pages
+       qu'on ouvre le plus, à portée de pouce ; « Plus » ouvre le menu complet
+       (le même tiroir que le hamburger, qui reste en haut). Ce sont de vrais
+       [data-page] : le routeur les relie à leur <section> au chargement, comme
+       les liens du menu — les quatre routes sont dans PAGES. La classe n'est PAS
+       .sidelink : tests/parcours/routeur.spec.js parcourt les .sidelink un par
+       un, et ceux-ci ne sont pas des entrées du menu. L'onglet courant est posé
+       par assets/modules/mouvements.js, à l'écoute de « rt:page ». -->
+  <nav class="tabbar" id="tabbar" aria-label="Accès rapide">
+    <button class="tabbar__item" type="button" data-page="tableau"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="1.5"/></svg><span>Accueil</span></button>
+    <button class="tabbar__item" type="button" data-page="exercices"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg><span>Scénarios</span></button>
+    <button class="tabbar__item" type="button" data-page="navigation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5.5-5.5 2 2-5.5 5.5-2z" fill="currentColor" stroke="none"/></svg><span>Navigation</span></button>
+    <button class="tabbar__item" type="button" data-page="epellation"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6M12 4v16"/></svg><span>Alphabet</span></button>
+    <button class="tabbar__item" type="button" id="tabPlus" aria-label="Plus : menu complet"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg><span>Plus</span></button>
+  </nav>
 
   <!-- Toile de fond des trois scènes (Scénarios, Navigation, Épellation). Elle
        vit ICI, hors de <main> : les sections de page portent une animation
@@ -506,6 +523,15 @@
             <label for="loginId">Adresse e-mail</label>
             <input id="loginId" type="email" autocomplete="username" spellcheck="false" placeholder="vous@exemple.fr">
           </div>
+          <!-- Le navigateur, dit AU MOMENT où l'on donne son adresse (30/09/2026,
+               demande du développeur). La vitrine le disait déjà, en petit : pas
+               assez pour qui arrive de Firefox, crée son compte, et découvre au
+               premier exercice que le micro ne répond pas. Rouge parce que c'est
+               une condition, pas un conseil. assets/modules/mouvements.js ajoute
+               une ligne quand le navigateur courant n'a pas de reconnaissance
+               vocale — il ne retire rien : Brave, par exemple, déclare l'API
+               sans la faire marcher, et le message général reste juste. -->
+          <p class="nav-requis" id="loginNavRequis" role="note"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20z"/><path d="M12 10v4.5M12 17.2v.3"/></svg><span><b>Chrome, Edge ou Safari uniquement.</b> Sur Firefox et les autres navigateurs, la reconnaissance vocale ne fonctionne pas : vous ne pourriez pas parler au contrôleur.<span class="nav-requis__ici" hidden> Votre navigateur actuel n'est pas compatible.</span></span></p>
           <div class="auth-field">
             <label for="loginPwd">Mot de passe</label>
             <input id="loginPwd" type="password" autocomplete="current-password" placeholder="••••••••">
@@ -657,6 +683,15 @@
               <label for="insEmail">Adresse e-mail</label>
               <input id="insEmail" type="email" autocomplete="email" spellcheck="false" placeholder="vous@exemple.fr">
             </div>
+            <!-- Le navigateur, dit AU MOMENT où l'on donne son adresse (30/09/2026,
+                 demande du développeur). La vitrine le disait déjà, en petit : pas
+                 assez pour qui arrive de Firefox, crée son compte, et découvre au
+                 premier exercice que le micro ne répond pas. Rouge parce que c'est
+                 une condition, pas un conseil. assets/modules/mouvements.js ajoute
+                 une ligne quand le navigateur courant n'a pas de reconnaissance
+                 vocale — il ne retire rien : Brave, par exemple, déclare l'API
+                 sans la faire marcher, et le message général reste juste. -->
+            <p class="nav-requis" id="insNavRequis" role="note"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20z"/><path d="M12 10v4.5M12 17.2v.3"/></svg><span><b>Chrome, Edge ou Safari uniquement.</b> Sur Firefox et les autres navigateurs, la reconnaissance vocale ne fonctionne pas : vous ne pourriez pas parler au contrôleur.<span class="nav-requis__ici" hidden> Votre navigateur actuel n'est pas compatible.</span></span></p>
 
             <div class="ins-coche">
               <input type="checkbox" id="insCgu">
@@ -2931,6 +2966,13 @@
 <!-- Les avis (29/09/2026) : widget, rappel, accueil, page #avis. Lu à la demande :
      place libre, APRÈS le markup de la modale de contact et de la vitrine. -->
 <script src="assets/modules/avis.js"></script>
+
+<!-- Les mouvements (30/09/2026) : pastilles qui glissent sous l'entrée courante
+     (menu, onglets des Paramètres, barre du bas), entrée des panneaux, onglet
+     courant de la barre du bas. Comme contact.js, il n'emprunte rien : le DOM,
+     l'événement « rt:page » et #hamburger. Chargé APRÈS parametres.js pour que
+     les onglets aient déjà leur classe .active quand il mesure. -->
+<script src="assets/modules/mouvements.js"></script>
 
 <!-- ==================== CONSOLE D'ADMINISTRATION ====================
      Scripts classiques (pas de modules ES) et namespace global window.RTAdmin :

@@ -1,6 +1,6 @@
 {
   "_lisezmoi": "Genere par tests/contrat/_geler.mjs. Ne pas modifier a la main : regenerer et lire le diff.",
-  "gele_le": "2026-09-29",
+  "gele_le": "2026-09-30",
   "ordre_scripts": [
     "index.html#1",
     "assets/donnees/aerodromes.js",
@@ -29,6 +29,7 @@
     "assets/modules/contact.js",
     "assets/modules/lancement.js",
     "assets/modules/avis.js",
+    "assets/modules/mouvements.js",
     "assets/supabase-config.js",
     "assets/vendor/supabase.js",
     "assets/auth.js",
@@ -72,6 +73,7 @@
     "assets/css/14-carte.css",
     "assets/css/15-contact.css",
     "assets/css/16-avis.css",
+    "assets/css/17-mouvements.css",
     "assets/admin/admin.css"
   ],
   "symboles_partages": [
@@ -194,6 +196,14 @@
       ]
     },
     {
+      "nom": "definirPrononciations",
+      "declare": "assets/noyau/1-alphabet-nombres.js",
+      "lu_par": [
+        "assets/noyau/5-voix.js",
+        "assets/admin/pages/voix.js"
+      ]
+    },
+    {
       "nom": "DIGIT_WORDS",
       "declare": "assets/noyau/1-alphabet-nombres.js",
       "lu_par": [
@@ -202,6 +212,13 @@
     },
     {
       "nom": "drawMeteo",
+      "declare": "assets/scenarios/moteur.js",
+      "lu_par": [
+        "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "ecartsDeSens",
       "declare": "assets/scenarios/moteur.js",
       "lu_par": [
         "assets/modules/navigation.js"
@@ -430,7 +447,9 @@
       "nom": "prononciationRadio",
       "declare": "assets/noyau/1-alphabet-nombres.js",
       "lu_par": [
-        "assets/scenarios/moteur.js"
+        "assets/noyau/5-voix.js",
+        "assets/scenarios/moteur.js",
+        "assets/admin/pages/voix.js"
       ]
     },
     {
@@ -580,7 +599,8 @@
       "nom": "spokenDigits",
       "declare": "assets/noyau/1-alphabet-nombres.js",
       "lu_par": [
-        "assets/scenarios/moteur.js"
+        "assets/scenarios/moteur.js",
+        "assets/admin/pages/voix.js"
       ]
     },
     {
@@ -676,9 +696,12 @@
       "nom": "Voix",
       "declare": "assets/noyau/5-voix.js",
       "lu_par": [
+        "assets/noyau/6-micro.js",
         "assets/scenarios/moteur.js",
         "assets/modules/navigation.js",
-        "assets/modules/parametres.js"
+        "assets/modules/parametres.js",
+        "assets/modules/lancement.js",
+        "assets/admin/pages/voix.js"
       ]
     },
     {
@@ -701,6 +724,7 @@
   "lectures_differees": [
     "codeSSR@assets/donnees/phraseologie-scenarios.js",
     "ctrlOf@assets/noyau/5-voix.js",
+    "el@assets/noyau/5-voix.js",
     "el@assets/noyau/6-micro.js",
     "el@assets/noyau/7-interface.js",
     "fillSpeech@assets/noyau/5-voix.js",

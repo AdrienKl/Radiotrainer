@@ -214,9 +214,9 @@
 
         <!-- Les quatre nombres sont comptés dans le code de l'application :
              AERODROMES, AIRCRAFT, SCENARIOS, et le tirage d'aléas du mode Réel.
-             68 112 est leur produit — 387 × 176 — et non une estimation. Si un
-             de ces tableaux change, cette phrase change avec lui. -->
-        <p class="hero__claim"><b>68 112 vols différents</b> rien qu'en combinant les terrains et les appareils. Puis viennent le scénario, le vent et l'imprévu — et <b>cinq façons de s'entraîner</b>.</p>
+             La phrase « 68 112 vols différents… cinq façons de s'entraîner »
+             qui les précédait a été retirée le 30/09/2026 (demande du
+             développeur : l'accueil doit prendre moins de place). -->
         <div class="hero__strip">
           <span class="hero__num"><b>387</b><span>aérodromes français</span></span>
           <span class="hero__num"><b>176</b><span>types d'appareils</span></span>
@@ -227,52 +227,10 @@
         <button class="scroll-cue" id="scrollCue" type="button" aria-label="Voir la suite"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       </div>
 
-      <!-- ---- Les cinq façons de s'entraîner ---- -->
-      <section class="sec">
-        <div class="container">
-          <span class="sec-tag">Ce qu'on peut faire</span>
-          <h2 class="sec-h">5 façons différentes de s'entraîner.</h2>
-          <p class="sec-lede">La radio ne se travaille pas d'un seul bloc. Un vol complet entretient l'enchaînement&nbsp;; un quiz de trente secondes répare le mot qui vous manquait. <b>Les deux comptent dans la même progression.</b></p>
-
-          <ul class="facons">
-            <li class="facon reveal">
-              <span class="facon__q">13 scénarios</span>
-              <div>
-                <h3>Un vol complet, du parking au parking</h3>
-                <p>Mise en route, roulage, décollage, circuit, croisière, intégration, atterrissage. Le vol se déroule d'un bout à l'autre sans coupure, et chaque phrase attendue renvoie à sa page du manuel de la DSNA.</p>
-              </div>
-            </li>
-            <li class="facon reveal">
-              <span class="facon__q">387 terrains</span>
-              <div>
-                <h3>Vous choisissez votre trajet parmi des milliers de possibilités</h3>
-                <p>Départ, arrivée, dégagement, altitude, nombre de passagers, type d'appareil&nbsp;: vous remplissez votre préparation comme avant un vrai vol, la carte OACI et les espaces aériens sous les yeux. Ensuite vous volez exactement le trajet que vous venez de choisir.</p>
-              </div>
-            </li>
-            <li class="facon reveal">
-              <span class="facon__q">Alphabet OACI</span>
-              <div>
-                <h3>Apprendre parfaitement l'alphabet aéronautique (alpha, bravo…)</h3>
-                <p>L'application affiche une immatriculation, F-BYFO, ou un code de terrain, LFOR. Vous l'épelez au micro, lettre par lettre&nbsp;: «&nbsp;Foxtrot Bravo Yankee Foxtrot Oscar&nbsp;». Chaque lettre se colore selon qu'elle est juste ou fausse, et le chronomètre tourne pendant ce temps.</p>
-              </div>
-            </li>
-            <li class="facon reveal">
-              <span class="facon__q">Quiz · p. 19-21</span>
-              <div>
-                <h3>Un quiz sur les mots qu'emploie le contrôleur</h3>
-                <p>Huit questions à choix multiple&nbsp;: que répondre à «&nbsp;Êtes-vous prêt pour un départ immédiat&nbsp;?&nbsp;», ce que veut dire WILCO, la différence entre APPROUVÉ et AUTORISÉ. Vous cochez une réponse&nbsp;: la bonne passe au vert, la vôtre au rouge si vous vous êtes trompé, et le point compte dans le récapitulatif de fin.</p>
-              </div>
-            </li>
-            <li class="facon reveal">
-              <span class="facon__q">Quiz · p. 11-18</span>
-              <div>
-                <h3>Un quiz sur les nombres, les sigles et les indicatifs</h3>
-                <p>Neuf questions à choix multiple&nbsp;: comment on annonce la fréquence 120,775, pourquoi un cap se donne toujours en trois chiffres, comment se prononce le sigle QNH, ce que veut dire QFU, et à quel moment on a le droit d'abréger F-BGBX en F-BX.</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <!-- La section « 5 façons différentes de s'entraîner » a été SUPPRIMÉE le
+           30/09/2026, à la demande du développeur : l'accueil passe directement
+           du hero au DR400. Son contenu (scénarios, navigation, alphabet, deux
+           quiz) reste décrit par les étapes et la bande de l'offre plus bas. -->
 
       <!-- ---- Préparer le vol. Les avions ne sont que du décor. ---- -->
       <section class="fleet">
@@ -458,32 +416,36 @@
         <div class="container">
           <span class="sec-tag">Avant de vous lancer</span>
           <h2 class="sec-h">Les questions qu'on nous pose.</h2>
-          <dl class="qa">
-            <div class="qa__i reveal">
-              <dt>Il me faut quoi&nbsp;?</dt>
-              <dd>Un ordinateur, un micro, et <b>Chrome, Edge ou Safari</b>. Rien à installer, rien à configurer. Firefox ne sait pas faire de reconnaissance vocale dans le navigateur&nbsp;: l'exercice s'ouvre, le contrôleur parle, mais rien de ce que vous dites n'est entendu. Dans les scénarios et la navigation, vous pouvez taper vos réponses au clavier en secours — mais c'est la radio à voix haute qui s'entraîne ici. Mieux vaut le savoir avant d'y passer une soirée.</dd>
-            </div>
-            <div class="qa__i reveal">
-              <dt>Est-ce que ça remplace mon instructeur&nbsp;?</dt>
-              <dd><b>Non, et ce n'est pas le but.</b> Votre instructeur vous apprend à voler. Ici vous répétez la radio autant de fois qu'il le faut, ce qu'aucune heure de vol ne permet — en vol, on ne recommence pas un appel pour le plaisir.</dd>
-            </div>
-            <div class="qa__i reveal">
-              <dt>Je n'ose pas parler à la radio.</dt>
-              <dd>C'est exactement le problème que ça traite. Personne ne vous écoute, personne n'attend derrière vous, et vous pouvez rater le même message vingt fois. <b>La peur du micro ne se raisonne pas, elle s'use.</b></dd>
-            </div>
-            <div class="qa__i reveal">
-              <dt>D'où viennent les phrases&nbsp;?</dt>
-              <dd>Du <b>Manuel de phraséologie à l'usage de la circulation aérienne générale</b> de la DSNA, 10<sup>e</sup> édition. Chaque échange porte sa page dans le code, et rien n'est formulé sans elle.</dd>
-            </div>
-            <div class="qa__i reveal">
-              <dt>Et si le micro me comprend mal&nbsp;?</dt>
-              <dd>Les confusions habituelles de la reconnaissance vocale sont rattrapées&nbsp;: chiffres énoncés un par un, lettres de l'alphabet aéronautique, indicatifs épelés. Et le score se fait <b>élément par élément</b>, pas sur la phrase entière&nbsp;: un mot mal transcrit ne fait pas tomber tout le message.</dd>
-            </div>
-            <div class="qa__i reveal">
-              <dt>Mes données&nbsp;?</dt>
-              <dd>Votre voix <b>n'est jamais conservée</b>. Pour être transcrite, elle passe par le service de reconnaissance de votre navigateur — chez Google sur Chrome. Ce qui est conservé, c'est le texte de vos exercices et votre score. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.</dd>
-            </div>
-          </dl>
+          <!-- Repliées (30/09/2026, demande du développeur) : la question seule,
+               une flèche, et la réponse au clic. <details> plutôt qu'un script :
+               le clavier, le lecteur d'écran et la recherche dans la page
+               (Ctrl+F ouvre la réponse qui contient le mot) marchent d'office. -->
+          <div class="qa">
+            <details class="qa__i reveal">
+              <summary>Il me faut quoi&nbsp;?</summary>
+              <div class="qa__r">Un ordinateur, un micro, et <b>Chrome, Edge ou Safari</b>. Rien à installer, rien à configurer. Firefox ne sait pas faire de reconnaissance vocale dans le navigateur&nbsp;: l'exercice s'ouvre, le contrôleur parle, mais rien de ce que vous dites n'est entendu. Dans les scénarios et la navigation, vous pouvez taper vos réponses au clavier en secours — mais c'est la radio à voix haute qui s'entraîne ici. Mieux vaut le savoir avant d'y passer une soirée.</div>
+            </details>
+            <details class="qa__i reveal">
+              <summary>Est-ce que ça remplace mon instructeur&nbsp;?</summary>
+              <div class="qa__r"><b>Non, et ce n'est pas le but.</b> Votre instructeur vous apprend à voler. Ici vous répétez la radio autant de fois qu'il le faut, ce qu'aucune heure de vol ne permet — en vol, on ne recommence pas un appel pour le plaisir.</div>
+            </details>
+            <details class="qa__i reveal">
+              <summary>Je n'ose pas parler à la radio.</summary>
+              <div class="qa__r">C'est exactement le problème que ça traite. Personne ne vous écoute, personne n'attend derrière vous, et vous pouvez rater le même message vingt fois. <b>La peur du micro ne se raisonne pas, elle s'use.</b></div>
+            </details>
+            <details class="qa__i reveal">
+              <summary>D'où viennent les phrases&nbsp;?</summary>
+              <div class="qa__r">Du <b>Manuel de phraséologie à l'usage de la circulation aérienne générale</b> de la DSNA, 10<sup>e</sup> édition. Chaque échange porte sa page dans le code, et rien n'est formulé sans elle.</div>
+            </details>
+            <details class="qa__i reveal">
+              <summary>Et si le micro me comprend mal&nbsp;?</summary>
+              <div class="qa__r">Les confusions habituelles de la reconnaissance vocale sont rattrapées&nbsp;: chiffres énoncés un par un, lettres de l'alphabet aéronautique, indicatifs épelés. Et le score se fait <b>élément par élément</b>, pas sur la phrase entière&nbsp;: un mot mal transcrit ne fait pas tomber tout le message.</div>
+            </details>
+            <details class="qa__i reveal">
+              <summary>Mes données&nbsp;?</summary>
+              <div class="qa__r">Votre voix <b>n'est jamais conservée</b>. Pour être transcrite, elle passe par le service de reconnaissance de votre navigateur — chez Google sur Chrome. Ce qui est conservé, c'est le texte de vos exercices et votre score. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.</div>
+            </details>
+          </div>
         </div>
       </section>
 

@@ -1598,6 +1598,12 @@
                 </div>
                 <div class="radio-cmd">
                   <div class="xp-roues" id="scXpdrRoues"></div>
+                  <!-- Saisie directe du code (30/09/2026) : au doigt, les roues sont
+                       trop petites. Comme la saisie de la radio : on compose, puis
+                       EXÉC. Affichée sur écran tactile seulement (17-mouvements.css). -->
+                  <input class="radio-saisie xp-saisie" id="scXpdrSaisie" type="text" inputmode="numeric"
+                         pattern="[0-7]*" placeholder="code" maxlength="4" autocomplete="off"
+                         aria-label="Saisir le code transpondeur (chiffres 0 à 7)">
                   <button class="xp-btn exec" id="scXpdrExec" type="button"
                           title="Activer le code affiché sur les roues">EXÉC</button>
                   <button class="xp-btn" id="scXpdrMode" type="button" title="Veille / marche / altitude">MODE</button>
@@ -1933,6 +1939,12 @@
                 </div>
                 <div class="radio-cmd">
                   <div class="xp-roues" id="xpdrRoues"></div>
+                  <!-- Saisie directe du code (30/09/2026) : au doigt, les roues sont
+                       trop petites. Comme la saisie de la radio : on compose, puis
+                       EXÉC. Affichée sur écran tactile seulement (17-mouvements.css). -->
+                  <input class="radio-saisie xp-saisie" id="xpdrSaisie" type="text" inputmode="numeric"
+                         pattern="[0-7]*" placeholder="code" maxlength="4" autocomplete="off"
+                         aria-label="Saisir le code transpondeur (chiffres 0 à 7)">
                   <button class="xp-btn exec" id="xpdrExec" type="button"
                           title="Activer le code affiché sur les roues">EXÉC</button>
                   <button class="xp-btn" id="xpdrMode" type="button" title="Veille / marche / altitude">MODE</button>

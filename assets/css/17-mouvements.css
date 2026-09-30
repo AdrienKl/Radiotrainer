@@ -296,11 +296,23 @@
       padding:6px max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left)); }
     /* Tout ce qui n'est pas la session : titre, formulaire, historique… */
     body.en-session .page.active > .container > :not(.nav-flight){ display:none; }
+    /* TROIS colonnes (30/09/2026, « agrandis la carte ») : l'échange, la
+       radio et le transpondeur, puis la carte sur TOUTE la hauteur. En deux
+       colonnes, la carte n'avait que ce que l'avionique lui laissait dessous,
+       une bande de 80 à 170 px. */
     body.en-session .nav-flight:not(.hidden){ display:grid; gap:8px;
-      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-      grid-template-rows:auto auto auto minmax(0,1fr);
-      grid-template-areas:"haut haut" "evit evit" "ech avio" "ech bas";
+      grid-template-columns:minmax(0,1fr) minmax(0,.9fr) minmax(0,1.1fr);
+      grid-template-rows:auto auto minmax(0,1fr);
+      grid-template-areas:"haut haut haut" "evit evit evit" "ech avio bas";
       height:calc(100dvh - 12px); }
+    body.en-session .nav-flight > .avio-rang{ overflow-y:auto; overscroll-behavior:contain; }
+    /* L'avionique tient dans la hauteur sans défiler : roues moins hautes,
+       mêmes largeurs (ce sont elles qui comptent au doigt). */
+    body.en-session .nav-flight .radio.xpdr[data-skin] .xp-roue button{ height:22px; }
+    body.en-session .nav-flight .radio.xpdr[data-skin] .xp-roue span{ font-size:13px; }
+    body.en-session .nav-flight .radio.xpdr[data-skin] .xp-btn{ min-height:34px; }
+    body.en-session .nav-flight .radio[data-skin] .rk{ height:32px; }
+    body.en-session .nav-flight .radio[data-skin] .radio-saisie{ min-height:32px; }
     body.en-session .nav-flight > .vf-top{ grid-area:haut; margin:0; padding:5px 10px; gap:6px 10px;
       flex-wrap:nowrap; border-radius:14px; }
     body.en-session .nav-flight .vf-tune{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; gap:6px; }
@@ -330,17 +342,14 @@
     body.en-session .nav-flight .radio-ecran{ padding:3px 8px; }
     body.en-session .nav-flight .radio-lab{ display:none; }
     body.en-session .nav-flight .radio-val{ font-size:17px; }
-    /* Le transpondeur sur UNE ligne quand elle tient (844 px), deux sinon
-       (667 px, petit iPhone : MODE et IDENT sortaient du boîtier). */
-    body.en-session .nav-flight .xpdr .radio-corps{ flex-direction:row; flex-wrap:wrap; align-items:center; }
-    body.en-session .nav-flight .xpdr .radio-ecran{ width:auto; flex:0 0 auto; gap:6px; }
-    body.en-session .nav-flight .xpdr .radio-cmd{ width:auto; flex:1 1 auto; justify-content:flex-end; flex-wrap:wrap; gap:5px; }
-    body.en-session .nav-flight .xpdr .radio-val{ font-size:16px; }
-    body.en-session .nav-flight .xp-btn{ padding-left:5px; padding-right:5px; }
+    /* Colonne étroite : les deux boutons MHz / kHz sur une ligne, la saisie
+       de fréquence sur la suivante — sinon kHz sortait du boîtier. */
+    body.en-session .nav-flight .radio:not(.xpdr) .radio-cmd{ flex-wrap:wrap; width:100%;
+      justify-content:space-between; row-gap:6px; }
+    body.en-session .nav-flight .radio:not(.xpdr) .radio-saisie{ order:3; flex:1 1 100%; width:100%; }
     /* La plaque verticale (BECKER, XPDR) rend 24 px par boîtier : c'est ce qui
        faisait déborder IDENT. */
     body.en-session .nav-flight .radio-plaque{ display:none; }
-    body.en-session .nav-flight .xpdr .radio-ecran{ padding:3px 6px; }
     body.en-session .nav-flight .leaflet-control-attribution{ font-size:8px; line-height:1.3; }
     body.en-session .nav-flight .radio-cible{ display:flex; width:100%; margin:4px 0 2px; padding:4px 5px 4px 12px; }
     body.en-session .nav-flight .radio-cible.hidden{ display:none; }
@@ -359,29 +368,17 @@
     body.en-session .ct-fab svg{ width:19px; height:19px; }
   }
 
-  /* Le message « Tournez votre téléphone » : en PORTRAIT seulement, et
-     seulement si le verrou a été refusé. Tourner l'écran le fait disparaître. */
-  .tourner{ display:none; }
-  /* Hors de toute media query : celle de la section 4 ne vaut que sous 860 px. */
-  @keyframes voileIn{ from{ opacity:0; } to{ opacity:1; } }
-  @media (orientation:portrait){
-    body.en-session.tourner-demande:not(.vertical-accepte) .tourner{
-      display:flex; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center;
-      padding:24px; background:rgba(10,8,24,.55);
-      -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
-      animation:voileIn .3s ease both; }
+  /* Petit téléphone couché (moins de 760 px de large : iPhone SE, 667 px) :
+     toujours trois colonnes — en deux, l'avionique prenait toute la hauteur et
+     la carte sortait de l'écran — mais la colonne du milieu passe devant : c'est
+     l'afficheur de la radio (active, permutation, standby) qui fixe la largeur
+     minimale. */
+  @media (orientation:landscape) and (max-height:500px) and (pointer:coarse) and (max-width:759px){
+    body.en-session .nav-flight:not(.hidden){
+      grid-template-columns:minmax(0,.8fr) minmax(236px,1fr) minmax(0,.8fr); gap:6px; }
+    body.en-session .nav-flight .radio-val{ font-size:15px; }
+    body.en-session .nav-flight .radio-ecran{ gap:4px; padding:3px 5px; }
   }
-  .tourner__carte{ max-width:340px; text-align:center; padding:26px 22px 20px; border-radius:28px;
-    background:var(--surface); color:var(--ink); box-shadow:var(--shadow-lg);
-    animation:carteIn .5s var(--ressort) both; }
-  @keyframes carteIn{ from{ opacity:0; transform:translateY(16px) scale(.96); } to{ opacity:1; transform:none; } }
-  .tourner__carte h2{ font-size:19px; margin:10px 0 8px; }
-  .tourner__carte p{ margin:0 0 10px; font-size:14px; line-height:1.5; color:var(--ink-2-fort); }
-  .tourner__aide{ font-size:12.5px; }
-  .tourner__carte .btn{ margin-top:6px; }
-  .tourner__tel{ width:64px; height:64px; fill:none; stroke:var(--violet); stroke-width:3;
-    stroke-linecap:round; animation:tourne 2.2s var(--ressort) infinite; }
-  @keyframes tourne{ 0%,20%{ transform:none; } 55%,85%{ transform:rotate(-90deg); } 100%{ transform:none; } }
 
   /* Pendant la rotation, la mise en page change d'un coup : aucune transition
      ne doit la traverser (paysage.js › tourne). La nouvelle disposition
@@ -391,12 +388,51 @@
   @keyframes rotationIn{ from{ opacity:.25; } to{ opacity:1; } }
 
   /* =========================================================================
+     7 ter. LES COMMANDES AU DOIGT (30/09/2026, retours du développeur)
+     ========================================================================= */
+  /* Pas de zoom au double tap : deux appuis rapides sur « + » réglaient la
+     radio ET agrandissaient la page. `manipulation` garde le défilement et le
+     pincement (zoom volontaire, nécessaire à l'accessibilité) ; il ne retire
+     que le double tap. La carte Leaflet garde son propre touch-action:none. */
+  html, body, button, a, input, select, textarea, label{ touch-action:manipulation; }
+
+  /* La photo d'avion à côté de la radio : décorative, et elle prenait une
+     demi-hauteur d'écran sur téléphone. */
+  @media (max-width:860px){ .vf-avion{ display:none; } }
+
+  /* La saisie du code transpondeur : écran tactile seulement, comme le bouton
+     « Régler ». À la souris, les roues restent le seul moyen, comme avant. */
+  .xp-saisie{ display:none; }
+  @media (pointer:coarse){
+    /* `.radio[data-skin]` devant chaque règle : l'habillage de chaque poste
+       (11-avionique.css, `.radio[data-skin="robin"] .rk`…) fixe ses propres
+       tailles avec un sélecteur plus précis — la première version de ces
+       règles n'agrandissait rien. */
+    .radio[data-skin] .rk{ width:38px; height:36px; font-size:18px; }
+    .radio[data-skin] .radio-swap{ min-width:46px; min-height:40px; }
+    .radio[data-skin] .radio-saisie{ min-height:38px; font-size:16px; }
+    /* Le transpondeur en GRILLE : les roues et la saisie du code sur une
+       ligne, EXÉC / MODE / IDENT de même largeur sur la suivante. En flex, la
+       saisie s'écrasait (« co… ») et IDENT tombait seul sur une troisième
+       ligne. */
+    .radio.xpdr[data-skin] .radio-cmd{ display:grid; width:100%; gap:8px;
+      grid-template-columns:repeat(3, minmax(0,1fr)); align-items:stretch; }
+    .radio.xpdr[data-skin] .xp-roues{ grid-column:1 / span 2; justify-content:space-between; gap:5px; }
+    .radio.xpdr[data-skin] .xp-saisie{ display:block; width:100%; min-width:0; text-align:center;
+      letter-spacing:.12em; align-self:center; }
+    .radio.xpdr[data-skin] .xp-roue{ flex:1 1 0; }
+    .radio.xpdr[data-skin] .xp-roue button{ width:100%; height:28px; font-size:13px; }
+    .radio.xpdr[data-skin] .xp-roue span{ font-size:15px; }
+    .radio.xpdr[data-skin] .xp-btn{ min-height:40px; padding:6px 4px; font-size:11.5px; }
+  }
+
+  /* =========================================================================
      7. Mouvement réduit : tout ce qui précède, à l'arrêt
      ========================================================================= */
   @media (prefers-reduced-motion:reduce){
     .glisseur, .page.active, .set-panel:not([hidden]), body.state-app .sidebar, .logo-rebond,
-    .nav-tgl.on, .field.nav-only-voyage, .nav-diff-note, .ac-list.open, .tourner__tel,
-    .tourner__carte, body.en-rotation main{ animation:none; transition:none; }
+    .nav-tgl.on, .field.nav-only-voyage, .nav-diff-note, .ac-list.open,
+    body.en-rotation main{ animation:none; transition:none; }
     .btn:active:not(:disabled), .sidelink:active, .set-tab:active, .seg3-opt:active,
     .seg-opt:active{ transform:none; }
   }

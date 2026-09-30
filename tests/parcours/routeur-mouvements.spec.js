@@ -166,32 +166,67 @@ test('ordinateur : un appui long sur la pastille du menu la promène jusqu\'à u
   await expect(page.locator('#page-progression')).toBeVisible();
 });
 
-test('téléphone : en vol, le message « tournez » s\'affiche en portrait si le verrou est refusé', async ({ page }) => {
+test('téléphone : aucun message « tournez » ; à l\'horizontale, trois colonnes et la carte en grand', async ({ page }) => {
   test.skip(!etroit(page), 'téléphone seulement');
   await commeUnIphone(page);
   await ouvrir(page);
   await lancerVol(page);
   await expect(page.locator('body')).toHaveClass(/en-session/);
-  const msg = page.locator('.tourner');
-  await expect(msg).toBeVisible();
-  await expect(msg).toContainText('Tournez votre téléphone');
+  /* Retiré le 30/09/2026, à la demande : le vertical tient bien. */
+  expect(await page.locator('.tourner').count()).toBe(0);
+  await expect(page.locator('#vfAvion')).toBeHidden();       // la photo d'avion quitte le téléphone
 
-  /* Tourné : le message part, la mise en page paysage prend la main. */
   const vp = page.viewportSize();
   await page.setViewportSize({ width: vp.height, height: vp.width });
-  await expect(msg).toBeHidden();
   await expect(page.locator('#appTopbar')).toBeHidden();
-  expect(await page.evaluate(() => getComputedStyle(document.getElementById('navFlight')).display)).toBe('grid');
-
-  /* Revenu en portrait, « Continuer en vertical » ferme le message. */
+  const grille = await page.evaluate(() => getComputedStyle(document.getElementById('navFlight')).gridTemplateColumns.split(' ').length);
+  expect(grille).toBe(3);
+  /* La carte prend toute la hauteur sous le bandeau : plus de la moitié de l'écran. */
+  const haut = await page.evaluate(() => document.getElementById('vfMapSlot').getBoundingClientRect().height);
+  expect(haut).toBeGreaterThan(vp.width * 0.5);
   await page.setViewportSize(vp);
-  await expect(msg).toBeVisible();
-  await msg.locator('.btn').click();
-  await expect(msg).toBeHidden();
 
-  /* Quitter la page met fin à la session : tout est rendu. */
   await page.evaluate(() => { location.hash = '#tableau'; });
-  await expect(page.locator('body')).not.toHaveClass(/en-session|tourner-demande/);
+  await expect(page.locator('body')).not.toHaveClass(/en-session/);
+});
+
+test('téléphone : le code transpondeur se tape, puis EXÉC', async ({ page }) => {
+  test.skip(!etroit(page), 'écran tactile seulement');
+  await ouvrir(page);
+  await lancerVol(page);
+  const champ = page.locator('#xpdrSaisie');
+  await expect(champ).toBeVisible();
+  await champ.fill('4589');                        // 8 et 9 n'existent pas en code SSR : retirés
+  await expect(champ).toHaveValue('45');
+  await champ.fill('');
+  await champ.pressSequentially('4521');
+  await expect(page.locator('#xpdrCode')).toHaveText('4521');
+  await expect(page.locator('#xpdrEtat')).toHaveText('EXÉC ?');   // composé, pas encore émis
+  await page.locator('#xpdrExec').click();
+  await expect(page.locator('#xpdrEtat')).not.toHaveText('EXÉC ?');
+});
+
+test('ordinateur : pas de saisie du code transpondeur, les roues restent', async ({ page }) => {
+  test.skip(etroit(page), 'ordinateur seulement');
+  await ouvrir(page);
+  await lancerVol(page);
+  await expect(page.locator('#xpdrSaisie')).toBeHidden();
+  await expect(page.locator('#xpdrRoues button').first()).toBeVisible();
+});
+
+test('« Régler » n\'existe pas en mode Réel', async ({ page }) => {
+  await ouvrir(page);
+  await entrer(page, 'exercices');
+  await page.evaluate(() => { const s = document.getElementById('difficultySelect'); s.value = 'reel'; s.dispatchEvent(new Event('change')); });
+  await page.evaluate(() => window.rtRelancerScenario(0, 'LFBD'));
+  const cible = page.locator('#scRadioCible');
+  if (await cible.isVisible()) expect(await cible.locator('.cible-regler').count()).toBe(0);
+});
+
+test('pas de zoom au double tap (touch-action: manipulation)', async ({ page }) => {
+  await ouvrir(page);
+  const ta = await page.evaluate(() => [getComputedStyle(document.documentElement).touchAction, getComputedStyle(document.querySelector('button')).touchAction]);
+  expect(ta).toEqual(['manipulation', 'manipulation']);
 });
 
 test('ordinateur : un vol ne demande jamais de tourner l\'écran', async ({ page }) => {

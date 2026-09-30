@@ -1862,7 +1862,7 @@ function scMajXpdr(){
   $('scXpdrCode').classList.toggle('attendue', reste && !enAttente);
   $('scXpdrIdent').classList.toggle('attendu', !!(s&&s.identReq&&!scXpdr.ident));
   scCible($('scXpdrCible'), reste ? ['Code à afficher', scXpdr.attendu] : null,
-    function(){ scXpdr.saisie=scXpdr.attendu; scXpdrExecuter(); });
+    state.difficulty!=='reel' ? function(){ scXpdr.saisie=scXpdr.attendu; scXpdrExecuter(); } : null);
   if(!a) return;
   if(enAttente){
     a.textContent='Code composé sur les roues — pressez EXÉC pour l\'activer.';
@@ -1890,7 +1890,9 @@ function scMajRadio(){
   var manque = s && s.freq && !scBonneFreq();
   scCible($('scRadioCible'), manque
     ? [fillDisplay(s.station||'Station')+' écoute sur', scFmt(s.freq)] : null,
-    function(){ scPoserStby(s.freq); scPermuter(); });
+    /* « Régler » en Débutant seulement : en Réel, régler son poste fait partie
+       de l'exercice (30/09/2026). */
+    state.difficulty!=='reel' ? function(){ scPoserStby(s.freq); scPermuter(); } : null);
   if(manque){
     a.textContent='Vous émettez sur '+scFmt(scRadio.act)+' — '+fillDisplay(s.station||'la station')+
       ' est sur '+scFmt(s.freq)+'. Affichez-la en standby puis permutez.';
@@ -2082,6 +2084,21 @@ if($('scRadioSwap')){
   });
 }
 if($('scXpdrMode')){
+  /* Saisie directe du code, comme en Navigation (navigation.js, « Commandes du
+     transpondeur ») : chiffres 0 à 7, quatre posés → roues composées, clavier
+     refermé ; EXÉC active. */
+  const xs=$('scXpdrSaisie');
+  if(xs){
+    xs.addEventListener('input', ()=>{
+      const v=xs.value.replace(/[^0-7]/g,'').slice(0,4);
+      if(xs.value!==v) xs.value=v;
+      if(v.length===4){ scXpdr.saisie=v; scMajXpdr(); xs.blur(); }
+    });
+    xs.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); if(xs.value.length===4) scXpdrExecuter(); xs.value=''; }
+    });
+    xs.addEventListener('blur', ()=>{ if(xs.value.length===4) xs.value=''; });
+  }
   $('scXpdrExec').addEventListener('click', scXpdrExecuter);
   $('scXpdrMode').addEventListener('click', ()=>{ scXpdr.mode=(scXpdr.mode+1)%3; scXpdr.ident=false; scMajXpdr(); });
   $('scXpdrIdent').addEventListener('click', ()=>{ scXpdr.ident=true; scMajXpdr(); scSuite7600(); });

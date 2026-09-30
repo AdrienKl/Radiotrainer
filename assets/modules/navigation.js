@@ -2480,7 +2480,9 @@
        chercher fait partie de l'exercice, et la consigne la donne déjà. */
     cible($v('radioCible'),
       (manque && !(s && s.atisStep)) ? [(s.stn||'Station')+' écoute sur', fmtF(s.freq)] : null,
-      function(){ poserStby(s.freq); permuter(); });
+      /* « Régler » en DÉBUTANT seulement (30/09/2026) : en Réel, régler son
+         poste fait partie de l'exercice. */
+      level==='debutant' ? function(){ poserStby(s.freq); permuter(); } : null);
     if(manque){
       a.textContent='Vous émettez sur '+fmtF(radio.act)+' — '+(s.stn||'la station')+
         ' est sur '+fmtF(s.freq)+'. Affichez-la en standby puis permutez.';
@@ -2681,7 +2683,7 @@
     $v('xpdrIdent').classList.toggle('attendu', !!(s&&s.identReq&&!xpdr.ident));
     // Pastille : le code à afficher, en clair, tant qu'il ne l'est pas.
     cible($v('xpdrCible'), reste ? ['Code à afficher', xpdr.attendu] : null,
-      function(){ xpdr.saisie=xpdr.attendu; xpdrExecuter(); });
+      level==='debutant' ? function(){ xpdr.saisie=xpdr.attendu; xpdrExecuter(); } : null);
     if(!a) return;
     if(!xpdrManuel()){ a.textContent=''; a.classList.remove('alerte'); return; }
     if(enAttente){
@@ -3448,6 +3450,23 @@
   });
 
   /* ---- Commandes du transpondeur ---- */
+  /* Saisie directe du code (30/09/2026), comme la saisie de la radio : taper
+     compose le code sur les roues, EXÉC l'active. Un code SSR n'a que des
+     chiffres 0 à 7 : les autres sont retirés à la frappe. Quatre chiffres
+     posés, le clavier se referme — le pavé numérique de l'iPhone n'a pas de
+     touche Entrée, il resterait ouvert sur l'écran. */
+  var xpSaisie=$v('xpdrSaisie');
+  if(xpSaisie){
+    xpSaisie.addEventListener('input',function(){
+      var v=xpSaisie.value.replace(/[^0-7]/g,'').slice(0,4);
+      if(xpSaisie.value!==v) xpSaisie.value=v;
+      if(v.length===4){ xpdr.saisie=v; majXpdr(); xpSaisie.blur(); }
+    });
+    xpSaisie.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){ e.preventDefault(); if(xpSaisie.value.length===4) xpdrExecuter(); xpSaisie.value=''; }
+    });
+    xpSaisie.addEventListener('blur',function(){ if(xpSaisie.value.length===4) xpSaisie.value=''; });
+  }
   $v('xpdrExec').addEventListener('click', xpdrExecuter);
   $v('xpdrMode').addEventListener('click',function(){
     xpdr.mode=(xpdr.mode+1)%3; xpdr.ident=false; majXpdr();

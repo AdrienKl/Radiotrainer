@@ -266,6 +266,29 @@
     filter:drop-shadow(0 18px 22px rgba(10,16,30,.40))}
   .fleet__txt{min-width:0}
   .fleet__txt .sec-lede + .sec-lede{margin-top:14px}
+
+  /* LE BLOC VIOLET (30/09/2026, demande du développeur) : le texte ET le DR400
+     dans un même rectangle plein, du violet du site, pour que la section
+     remplisse mieux la largeur. Le violet porte du texte blanc : 6,3:1 pour le
+     blanc plein, 5,3:1 pour le blanc à 90 % du paragraphe — au-dessus du
+     seuil AA de 4,5:1. La vitrine reste toujours claire (parametres.js ›
+     applyTheme) : --violet y vaut toujours #5b4bce. Le halo violet derrière
+     l'avion devient une lueur blanche — du violet sur du violet ne se voit pas. */
+  /* `.fleet > .fleet__grid` et non `.fleet__grid` : le bloc est AUSSI un
+     .container, et `.fleet > .container{padding-top:0; padding-bottom:0}`
+     (plus haut) mettait son rembourrage à zéro — le texte collait au bord.
+     La largeur est bornée pour qu'il ne touche jamais les bords de l'écran. */
+  .fleet > .fleet__grid{background:
+      radial-gradient(90% 120% at 100% 0%, rgba(255,255,255,.14), transparent 55%),
+      var(--violet);
+    width:auto; max-width:min(1160px, calc(100% - 24px)); margin-left:auto; margin-right:auto;
+    border-radius:28px; padding:clamp(24px,4vw,52px);
+    box-shadow:0 24px 60px rgba(91,75,206,.32), inset 0 1px 0 rgba(255,255,255,.18)}
+  .fleet__grid .sec-tag{color:#fff; background:rgba(255,255,255,.16); border-color:rgba(255,255,255,.38)}
+  .fleet__grid .sec-h{color:#fff}
+  .fleet__grid .sec-lede{color:rgba(255,255,255,.9)}
+  .fleet__grid .fleet__halo{background:radial-gradient(58% 52% at 50% 54%, rgba(255,255,255,.34), transparent 72%)}
+  .fleet__grid .fleet__shot{filter:drop-shadow(0 26px 30px rgba(20,12,70,.45))}
   @media (max-width:900px){
     /* minmax(0,1fr) et non 1fr : une piste « 1fr » ne descend pas sous le
        minimum de contenu de ce qu'elle porte, et le cadre ci-dessus reclame

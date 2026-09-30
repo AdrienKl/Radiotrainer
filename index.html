@@ -47,6 +47,11 @@
 <!-- La carte du hero est la plus grande image de la première vue : la
      précharger évite qu'elle n'arrive après le texte. -->
 <link rel="preload" as="image" href="assets/images/carte-oaci-hero.webp">
+<!-- La police du site, préchargée : sans cela, le texte s'affiche d'abord dans
+     la police système puis saute (font-display:swap). Seul le fichier latin
+     droit — celui de presque tout le texte. crossorigin est obligatoire pour
+     une police, même servie par le même site, sinon elle est téléchargée deux fois. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="assets/polices/atkinson-hyperlegible-next-latin-wght-normal.woff2">
 <link rel="stylesheet" href="assets/leaflet.css">
 <!-- ===========================================================================
      LE CSS DU SITE — extrait du <style> qui vivait ici, le 18/09/2026.
@@ -79,6 +84,7 @@
 <link rel="stylesheet" href="assets/css/15-contact.css">
 <link rel="stylesheet" href="assets/css/16-avis.css">
 <link rel="stylesheet" href="assets/css/17-mouvements.css">
+<link rel="stylesheet" href="assets/css/18-typographie.css">
 
 <!-- Console d'administration : styles isolés dans leur propre fichier (préfixe
      .adm-, portés par #page-admin). Chargés après le <style> du site pour que les
@@ -252,13 +258,13 @@
       <!-- ---- Comment ça se passe, et à quoi ça ressemble ---- -->
       <section class="sec">
         <div class="container">
-          <span class="sec-tag">Comment ça se passe</span>
+          <span class="sec-tag">Comment ça marche</span>
           <h2 class="sec-h">Vous parlez. On vous répond. On vous corrige.</h2>
 
           <div class="steps__grid">
-            <div class="step reveal"><span class="step__n">1</span><h3>Vous choisissez</h3><p>Un départ, une arrivée, un avion et un niveau. En Débutant, on vous dit quoi dire. En Réel, à vous de jouer.</p></div>
-            <div class="step reveal"><span class="step__n">2</span><h3>Vous parlez</h3><p>Maintenez le bouton et parlez, comme sur une vraie radio.</p></div>
-            <div class="step reveal"><span class="step__n">3</span><h3>On vous corrige</h3><p>Le contrôleur vous répond à voix haute. S'il manque quelque chose dans votre message, vous le voyez tout de suite.</p></div>
+            <div class="step reveal"><span class="step__n">1</span><h3>Vous choisissez</h3><p>Un aérodrome de départ, une destination, un avion et votre niveau. En mode débutant, les consignes vous guident. En mode réel, c'est à vous de gérer la situation.</p></div>
+            <div class="step reveal"><span class="step__n">2</span><h3>Faites votre annonce</h3><p>Faites votre annonce comme sur une vraie fréquence. Votre message est ensuite retranscrit et analysé.</p></div>
+            <div class="step reveal"><span class="step__n">3</span><h3>Voyez ce qui n'allait pas</h3><p>Le contrôleur vous répond, puis votre message est analysé. Les erreurs et les éléments oubliés apparaissent immédiatement, avec la formulation attendue.</p></div>
           </div>
 
           <!-- Extrait littéral : ces phrases sont celles que l'application

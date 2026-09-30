@@ -89,6 +89,18 @@ la première chose que voit un abonné à chaque connexion. Pour la retirer :
 la balise `.tb-avion` d'`index.html`, et la ligne correspondante
 d'`assets/avions.js` si vous la voulez hors de l'application aussi.
 
+## 2 ter. La police du site (30/09/2026)
+
+**Atkinson Hyperlegible Next** (Braille Institute), sous **SIL Open Font License 1.1**.
+La licence permet d'utiliser, d'intégrer et de redistribuer la police gratuitement,
+à condition de joindre le texte de la licence : il est dans `assets/polices/OFL.txt`,
+publié avec les fichiers. Aucune mention n'est exigée sur les pages.
+
+Elle est **hébergée sur le site** et non chargée depuis Google Fonts : sinon, chaque
+visite enverrait l'adresse IP du visiteur à Google, et la politique de confidentialité
+devrait le dire (§ 15 de CLAUDE.md). Si un jour elle est chargée depuis un service
+tiers, la politique de confidentialité change dans le même travail.
+
 ## 3. Ce que la politique de confidentialité dit, et qui n'allait pas de soi
 
 **Le microphone part chez Google.** La reconnaissance vocale n'est pas faite par

@@ -1104,6 +1104,10 @@ function setupAutocomplete(input, list, onPick, filterFn){
     div.className='ac-item'; div.setAttribute('role','option');
     div.innerHTML='<span class="code">'+a.icao+'</span> — '+escapeHtml(a.nom);
     div.addEventListener('mousedown', ev=>{ ev.preventDefault(); pick(a); });
+    /* Au doigt (30/09/2026). Sur iPhone, le mousedown d'un tap n'arrive pas
+       toujours : le click, lui, arrive. pick() ignore le second appel (la liste
+       est déjà fermée). */
+    div.addEventListener('click', ()=> pick(a));
     return div;
   }
   function entete(t){
@@ -1139,6 +1143,8 @@ function setupAutocomplete(input, list, onPick, filterFn){
     ouvrir();
   }
   function pick(a){
+    if(!list.classList.contains('open')) return;   // déjà choisi par le mousedown
+    toucheListe=false;
     input.value = a.icao+' — '+a.nom;
     list.classList.remove('open'); input.setAttribute('aria-expanded','false');
     onPick(a);
@@ -1146,7 +1152,18 @@ function setupAutocomplete(input, list, onPick, filterFn){
   input.addEventListener('input', ()=>{ onPick(null); render(input.value); });
   input.addEventListener('focus', ()=> render(input.value));
   input.addEventListener('click', ()=>{ if(!list.classList.contains('open')) render(input.value); });
-  input.addEventListener('blur', ()=> setTimeout(()=>list.classList.remove('open'), 120));
+  /* FAIRE DÉFILER LA LISTE AU DOIGT la refermait (30/09/2026) : le toucher
+     retire le focus du champ, le blur fermait la liste 120 ms plus tard, avant
+     qu'on ait pu choisir. Un toucher DANS la liste la garde ouverte ; un
+     toucher ailleurs la ferme. */
+  let toucheListe=false;
+  list.addEventListener('touchstart', ()=>{ toucheListe=true; }, {passive:true});
+  document.addEventListener('touchstart', e=>{
+    if(list.contains(e.target) || e.target===input) return;
+    toucheListe=false;
+    if(document.activeElement!==input) list.classList.remove('open');
+  }, {passive:true});
+  input.addEventListener('blur', ()=> setTimeout(()=>{ if(!toucheListe) list.classList.remove('open'); }, 120));
   input.addEventListener('keydown', e=>{
     const opts=[...list.querySelectorAll('.ac-item')];
     if(e.key==='ArrowDown'){ e.preventDefault(); active=Math.min(active+1,opts.length-1); }
@@ -1784,10 +1801,15 @@ function scBonCode(){
   return true;
 }
 /* Pastille « à afficher » partagée par la radio et le transpondeur des Scénarios. */
-function scCible(el, contenu){
+/* `regler` : bouton « Régler » sur écran tactile seulement, comme en
+   Navigation (navigation.js › cible) — les roues sont trop petites au doigt. */
+function scCible(el, contenu, regler){
   if(!el) return;
   if(!contenu){ el.classList.add('hidden'); el.textContent=''; return; }
-  el.innerHTML='<span>'+escapeHtml(contenu[0])+'</span><b>'+escapeHtml(String(contenu[1]))+'</b>';
+  el.innerHTML='<span>'+escapeHtml(contenu[0])+'</span><b>'+escapeHtml(String(contenu[1]))+'</b>'+
+    (regler ? '<button type="button" class="cible-regler">Régler</button>' : '');
+  var b=el.querySelector('.cible-regler');
+  if(b) b.addEventListener('click', regler);
   el.classList.remove('hidden');
 }
 function scXpdrExecuter(){
@@ -1839,7 +1861,8 @@ function scMajXpdr(){
   var reste = scXpdr.attendu!=null && scXpdr.code!==scXpdr.attendu;
   $('scXpdrCode').classList.toggle('attendue', reste && !enAttente);
   $('scXpdrIdent').classList.toggle('attendu', !!(s&&s.identReq&&!scXpdr.ident));
-  scCible($('scXpdrCible'), reste ? ['Code à afficher', scXpdr.attendu] : null);
+  scCible($('scXpdrCible'), reste ? ['Code à afficher', scXpdr.attendu] : null,
+    function(){ scXpdr.saisie=scXpdr.attendu; scXpdrExecuter(); });
   if(!a) return;
   if(enAttente){
     a.textContent='Code composé sur les roues — pressez EXÉC pour l\'activer.';
@@ -1866,7 +1889,8 @@ function scMajRadio(){
   var s=currentStep(), a=$('scRadioAide');
   var manque = s && s.freq && !scBonneFreq();
   scCible($('scRadioCible'), manque
-    ? [fillDisplay(s.station||'Station')+' écoute sur', scFmt(s.freq)] : null);
+    ? [fillDisplay(s.station||'Station')+' écoute sur', scFmt(s.freq)] : null,
+    function(){ scPoserStby(s.freq); scPermuter(); });
   if(manque){
     a.textContent='Vous émettez sur '+scFmt(scRadio.act)+' — '+fillDisplay(s.station||'la station')+
       ' est sur '+scFmt(s.freq)+'. Affichez-la en standby puis permutez.';

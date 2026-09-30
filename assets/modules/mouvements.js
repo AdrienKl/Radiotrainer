@@ -41,7 +41,11 @@
     ['.side-nav',  '.sidelink',     'current'],
     ['.set-tabs',  '.set-tab',      'active'],
     ['.seg3',      '.seg3-opt',     'active'],
-    ['.segmented', '.seg-opt',      'active'],
+    /* `.segmented-ui` et non `.segmented` : le <select class="segmented"> des
+       Scénarios (niveau, débit) est REMPLACÉ au chargement par des boutons dans
+       une boîte .segmented-ui (routeur.js). Viser le <select> ne branchait
+       rien, et la page Scénarios n'avait aucune pastille. */
+    ['.segmented-ui', '.seg-opt',   'active'],
     ['.nav-mode',  '.nav-mode-opt', 'active'],
     ['.nav-diff',  '.nav-diff-opt', 'active']
   ];
@@ -60,6 +64,9 @@
     boite.classList.add('a-glisseur');
 
     var derniere = null, minuterie = 0;
+    /* Vrai quand la pastille vient d'être lâchée par un appui long : elle est
+       déjà là où le doigt l'a laissée, et doit partir DE LÀ. */
+    var depuisIci = false;
 
     function choisie(){
       var a = boite.querySelector(selEntree + '.' + classe);
@@ -88,10 +95,13 @@
       }
       /* Nouvelle entrée : la pastille repart de l'ancienne (elle y est déjà),
          devient visible, puis glisse. */
-      p.classList.add('sans-anim');
-      poser(derniere);
-      void p.offsetWidth;
-      p.classList.remove('sans-anim');
+      if(!depuisIci){
+        p.classList.add('sans-anim');
+        poser(derniere);
+        void p.offsetWidth;
+        p.classList.remove('sans-anim');
+      }
+      depuisIci = false;
       boite.classList.add('glisse');
       requestAnimationFrame(function(){ poser(a); });
       derniere = a;
@@ -109,8 +119,116 @@
     }).observe(boite, { attributes:true, subtree:true, attributeFilter:['class','hidden'] });
     /* Un conteneur né caché (page inactive, onglet fermé) mesure zéro : c'est
        quand il prend sa taille qu'on peut enfin poser la pastille. */
-    if(window.ResizeObserver) new ResizeObserver(function(){ derniere = null; placer(); }).observe(boite);
+    if(window.ResizeObserver) new ResizeObserver(function(){ if(!appui) { derniere = null; placer(); } }).observe(boite);
     placer();
+
+    /* ---------- L'appui long : attraper la pastille et la promener ----------
+       30/09/2026, demande du développeur. On appuie sur l'entrée choisie (la
+       pastille est dessous), on garde le doigt — ou le bouton de la souris —
+       une fraction de seconde : la pastille se soulève, suit le doigt dans
+       l'axe du groupe, et l'entrée où on la lâche est choisie. Comme la barre
+       d'onglets d'iOS 26.
+
+       Trois pièges, tous tombés en l'écrivant :
+         · un doigt qui BOUGE avant la fin de l'attente veut faire défiler la
+           page, pas attraper la pastille : on abandonne au-delà de 8 px ;
+         · une fois la pastille attrapée, le navigateur voudrait faire défiler
+           au premier mouvement : le touchmove est annulé (écouteur NON passif),
+           et c'est le premier touchmove, donc il est encore annulable ;
+         · lâcher déclenche un click natif sur l'entrée de DÉPART. Sur le menu,
+           ça recharge la page courante et la remonte en haut. Ce click-là est
+           avalé ; celui qu'on envoie nous-mêmes à l'entrée d'arrivée passe
+           (il n'est pas isTrusted). */
+    var LONG = 380, appui = null, avaler = false;
+    var axeY = null;
+    function entrees(){
+      return [].slice.call(boite.querySelectorAll(selEntree))
+        .filter(function(e){ return !e.hidden && e.offsetWidth && e.parentNode === boite; });
+    }
+    function sous(x, y){
+      var meilleure = null, dmin = Infinity;
+      entrees().forEach(function(e){
+        var r = e.getBoundingClientRect();
+        var cx = Math.max(r.left, Math.min(x, r.right)), cy = Math.max(r.top, Math.min(y, r.bottom));
+        var d = Math.hypot(x - cx, y - cy);
+        if(d < dmin){ dmin = d; meilleure = e; }
+      });
+      return meilleure;
+    }
+    function suivre(x, y){
+      var e = sous(x, y); if(!e) return;
+      var L = entrees(), r = boite.getBoundingClientRect();
+      var w = e.offsetWidth, h = e.offsetHeight, px, py;
+      if(axeY){
+        px = e.offsetLeft;
+        py = y - r.top - boite.clientTop + boite.scrollTop - h / 2;
+        py = Math.max(L[0].offsetTop, Math.min(py, L[L.length - 1].offsetTop + L[L.length - 1].offsetHeight - h));
+      } else {
+        py = e.offsetTop;
+        px = x - r.left - boite.clientLeft + boite.scrollLeft - w / 2;
+        px = Math.max(L[0].offsetLeft, Math.min(px, L[L.length - 1].offsetLeft + L[L.length - 1].offsetWidth - w));
+      }
+      p.style.width = w + 'px'; p.style.height = h + 'px';
+      p.style.transform = 'translate(' + px + 'px,' + py + 'px)';
+      if(appui.survol !== e){
+        if(appui.survol) appui.survol.removeAttribute('data-survol');
+        e.setAttribute('data-survol', '');
+        appui.survol = e;
+        try{ if(navigator.vibrate) navigator.vibrate(6); }catch(err){}
+      }
+    }
+    function attraper(){
+      if(!appui) return;
+      var L = entrees();
+      axeY = L.length > 1 && Math.abs(L[1].offsetTop - L[0].offsetTop) > Math.abs(L[1].offsetLeft - L[0].offsetLeft);
+      appui.tire = true;
+      clearTimeout(minuterie);
+      boite.classList.add('glisse', 'tire');
+      try{ if(navigator.vibrate) navigator.vibrate(12); }catch(err){}
+      suivre(appui.x, appui.y);
+    }
+    function finir(annule){
+      if(!appui) return;
+      clearTimeout(appui.minuterie);
+      var etait = appui.tire, arrivee = appui.survol, depart = appui.depart;
+      if(arrivee) arrivee.removeAttribute('data-survol');
+      appui = null;
+      if(!etait) return;
+      boite.classList.remove('tire');
+      avaler = true; setTimeout(function(){ avaler = false; }, 450);
+      if(!annule && arrivee && arrivee !== depart){
+        depuisIci = true;
+        arrivee.click();                    // le groupe fait son travail : page, onglet, réglage
+      } else {
+        /* Lâchée sur place (ou geste annulé) : elle revient se poser. */
+        poser(depart);
+      }
+      clearTimeout(minuterie);
+      minuterie = setTimeout(function(){ boite.classList.remove('glisse'); }, DUREE);
+    }
+    boite.addEventListener('pointerdown', function(e){
+      if(e.button > 0 || reduit) return;
+      var en = e.target.closest ? e.target.closest(selEntree) : null;
+      if(!en || en.parentNode !== boite || !en.classList.contains(classe)) return;
+      appui = { x:e.clientX, y:e.clientY, x0:e.clientX, y0:e.clientY, depart:en, tire:false, survol:null };
+      appui.minuterie = setTimeout(attraper, LONG);
+    });
+    window.addEventListener('pointermove', function(e){
+      if(!appui) return;
+      appui.x = e.clientX; appui.y = e.clientY;
+      if(!appui.tire){
+        if(Math.hypot(e.clientX - appui.x0, e.clientY - appui.y0) > 8) finir(true);
+        return;
+      }
+      suivre(e.clientX, e.clientY);
+    });
+    window.addEventListener('pointerup', function(){ finir(false); });
+    window.addEventListener('pointercancel', function(){ finir(true); });
+    boite.addEventListener('touchmove', function(e){ if(appui && appui.tire) e.preventDefault(); }, { passive:false });
+    boite.addEventListener('contextmenu', function(e){ if(appui) e.preventDefault(); });
+    boite.addEventListener('click', function(e){
+      if(avaler && e.isTrusted){ e.stopPropagation(); e.preventDefault(); avaler = false; }
+    }, true);
   }
 
   function brancherTout(){
@@ -122,6 +240,18 @@
   /* Des segmentés sont fabriqués après coup (console, modales) : on repasse
      à chaque page, ce qui ne coûte rien — brancher() ne double jamais. */
   window.addEventListener('rt:page', function(){ setTimeout(brancherTout, 0); });
+
+  /* ---------- Le logo ----------
+     Il ramène à l'accueil (routeur.js). Sur téléphone, le menu est fermé : la
+     pastille glisse sans qu'on la voie, et déjà sur l'accueil rien ne bouge
+     du tout. Le logo lui-même fait donc un petit battement d'aile, à chaque
+     fois. */
+  document.querySelectorAll('.brand, .side-brand, .auth-brand').forEach(function(b){
+    b.addEventListener('click', function(){
+      var l = b.querySelector('.logo') || b;
+      l.classList.remove('logo-rebond'); void l.offsetWidth; l.classList.add('logo-rebond');
+    });
+  });
 
   /* ---------- « Chrome, Edge ou Safari » ---------- */
   var reco = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);

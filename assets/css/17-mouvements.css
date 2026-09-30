@@ -102,6 +102,24 @@
   .side-nav.glisse > .sidelink.current::before{ opacity:0; }
   .sidelink::before{ transition:opacity .2s ease; }
 
+  /* L'appui long (mouvements.js › attraper) : la pastille se SOULÈVE — un
+     peu plus grande, une ombre plus portée — et suit le doigt sans ressort,
+     sinon elle traînerait derrière lui. L'entrée survolée prend le texte clair ;
+     l'entrée de départ, que la pastille a quittée, reprend l'encre normale. */
+  .a-glisseur > :not(.glisseur){ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+  .tire > .glisseur{ opacity:1; scale:1.07; animation:none;
+    transition:transform .12s ease-out, width .2s ease, height .2s ease, scale .35s var(--ressort-vif);
+    box-shadow:0 12px 30px rgba(91,75,206,.45), inset 0 1px 0 rgba(255,255,255,.35); }
+  .tire > .set-tab.active:not([data-survol]), .tire > .seg3-opt.active:not([data-survol]),
+  .tire > .seg-opt.active:not([data-survol]), .tire > .nav-mode-opt.active:not([data-survol]),
+  .tire > .nav-diff-opt.active:not([data-survol]){ color:var(--ink-2-fort); }
+  .tire > [data-survol]{ color:#fff; }
+  /* Sous le doigt, la couleur suit TOUT DE SUITE : le délai de .08 s qui sert
+     au glissement normal laissait le texte gris sur la pastille. */
+  .tire > :not(.glisseur){ transition-delay:0s; transition-duration:.08s; }
+  .side-nav.tire > .sidelink.current:not([data-survol]){ color:var(--sb-ink-2); }
+  .side-nav.tire > .sidelink.current::before{ opacity:0; }
+
   /* =========================================================================
      3. Au toucher, ça s'enfonce ; en entrant, ça arrive
      ========================================================================= */
@@ -133,6 +151,44 @@
      longtemps pour que la bulle Contact apparaisse par-dessus. */
   .set-panel:not([hidden]){ animation:panneauIn .38s ease-out both; }
   @keyframes panneauIn{ from{ opacity:0; filter:blur(6px); } to{ opacity:1; filter:none; } }
+
+  /* Le logo : un battement d'aile à chaque clic (mouvements.js). */
+  .logo-rebond{ animation:logoRebond .7s var(--ressort-vif); }
+  @keyframes logoRebond{ 0%{ transform:none; } 25%{ transform:scale(.84) rotate(-9deg); }
+    60%{ transform:scale(1.12) rotate(4deg); } 100%{ transform:none; } }
+
+  /* Les réglages des pages Scénarios et Navigation. */
+  .nav-tgl{ transition:background .25s ease, border-color .25s ease, color .25s ease, transform .4s var(--ressort-vif); }
+  .nav-tgl:active{ transform:scale(.93); }
+  .nav-tgl.on{ animation:allume .45s var(--ressort-vif); }
+  @keyframes allume{ 0%{ transform:scale(.92); } 60%{ transform:scale(1.05); } 100%{ transform:none; } }
+  .switch-line{ transition:transform .4s var(--ressort-vif), background .2s ease; }
+  .switch-line:active{ transform:scale(.95); }
+  /* Un champ qui réapparaît (« Voyage » après « Vol local ») entre au lieu de
+     surgir : une animation déclarée joue d'elle-même quand l'élément quitte
+     display:none. */
+  .field.nav-only-voyage{ animation:apparait .42s var(--ressort) both; }
+  @keyframes apparait{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+  .nav-diff-note{ animation:apparait .35s ease both; }
+  /* Les listes déroulantes s'ouvrent depuis leur champ. */
+  .ac-list.open{ animation:listeIn .3s var(--ressort) both; transform-origin:top center; }
+  @keyframes listeIn{ from{ opacity:0; transform:translateY(-6px) scale(.98); } to{ opacity:1; transform:none; } }
+  .field input, .field select, .auth-field input, .set-input{
+    transition:border-color .2s ease, box-shadow .3s var(--ressort); }
+  /* Les champs d'aérodrome de la Navigation portent, au doigt, la liste du
+     moteur (navigation.js) : elle se place sous le champ. */
+  .ac-porteur{ position:relative; }
+
+  /* « Régler » sur les pastilles de la radio et du transpondeur : écran
+     TACTILE seulement (navigation.js › cible, moteur.js › scCible). */
+  .cible-regler{ display:none; }
+  @media (pointer:coarse){
+    .radio-cible .cible-regler{ display:inline-flex; align-items:center; margin-left:4px;
+      min-height:36px; padding:6px 14px; border:none; border-radius:var(--pill); cursor:pointer;
+      background:var(--violet); color:#fff; font-family:var(--sans); font-size:13px; font-weight:700;
+      box-shadow:0 4px 14px rgba(91,75,206,.35); transition:transform .35s var(--ressort-vif); }
+    .radio-cible .cible-regler:active{ transform:scale(.92); }
+  }
 
   /* Le repli du menu d'ordinateur (rail) suit le même ressort. */
   .sidebar, body.state-app main{ transition:width .42s var(--ressort), margin-left .42s var(--ressort); }
@@ -216,10 +272,124 @@
   }
 
   /* =========================================================================
+     7 bis. L'EXERCICE SUR TÉLÉPHONE, À L'HORIZONTALE (assets/modules/paysage.js)
+     Téléphone tourné : ~ 844 × 390. Un seul écran, sans défilement de la page :
+     le bandeau en haut, l'échange à gauche, la radio et le transpondeur à
+     droite, et dessous la carte (Navigation) ou la fiche du terrain
+     (Scénarios) — la disposition de l'ordinateur, resserrée, carte plus petite.
+     `display:contents` sur .vf-layout fait de ses deux enfants des cases de la
+     grille de .nav-flight : aucune balise n'a bougé, l'ordinateur garde les
+     siennes. Seuil : paysage ET hauteur ≤ 500 px ET écran tactile — une fenêtre
+     d'ordinateur très basse n'est pas un téléphone.
+     ========================================================================= */
+  @media (orientation:landscape) and (max-height:500px) and (pointer:coarse){
+    body.en-session .app-topbar{ display:none; }
+    body.en-session main{ padding-bottom:0; }
+    body.en-session .page.active > .container{ max-width:none; margin:0;
+      padding:6px max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left)); }
+    /* Tout ce qui n'est pas la session : titre, formulaire, historique… */
+    body.en-session .page.active > .container > :not(.nav-flight){ display:none; }
+    body.en-session .nav-flight:not(.hidden){ display:grid; gap:8px;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      grid-template-rows:auto auto auto minmax(0,1fr);
+      grid-template-areas:"haut haut" "evit evit" "ech avio" "ech bas";
+      height:calc(100dvh - 12px); }
+    body.en-session .nav-flight > .vf-top{ grid-area:haut; margin:0; padding:5px 10px; gap:6px 10px;
+      flex-wrap:nowrap; border-radius:14px; }
+    body.en-session .nav-flight .vf-tune{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; gap:6px; }
+    body.en-session .nav-flight .vf-tune > *{ flex:none; font-size:12px; padding:3px 8px; }
+    body.en-session .nav-flight .vf-prog{ order:0; flex-basis:auto; flex:1 1 60px; min-width:40px; }
+    body.en-session .nav-flight .vf-quit{ min-height:34px; padding:5px 12px; font-size:12.5px; }
+    body.en-session .nav-flight > .vf-evit{ grid-area:evit; margin:0; }
+    body.en-session .nav-flight > .avio-rang{ grid-area:avio; margin:0; min-width:0; }
+    body.en-session .nav-flight .vf-avion{ display:none; }
+    body.en-session .nav-flight .avio{ gap:6px; }
+    body.en-session .nav-flight .radio .radio-aide{ display:none; }
+    body.en-session .nav-flight > .vf-layout{ display:contents; }
+    /* L'échange : il défile SEUL, la page ne bouge plus. */
+    body.en-session .nav-flight .vf-radio{ grid-area:ech; min-height:0; overflow-y:auto;
+      overscroll-behavior:contain; padding:12px 14px; margin:0; }
+    body.en-session .nav-flight .vf-mapslot,
+    body.en-session .nav-flight .sc-fiche{ grid-area:bas; min-height:0; position:static; overflow:auto; margin:0; }
+    body.en-session .nav-flight .vf-mapslot .nav-mapwrap{ height:100%; display:flex; flex-direction:column; }
+    body.en-session.in-flight .nav-map{ height:auto; flex:1 1 auto; min-height:110px; }
+    body.en-session .nav-flight .nav-legend{ display:none; }
+    /* L'avionique se resserre en hauteur — c'est elle qui prenait la place de
+       la carte. Les étiquettes ACTIVE / STANDBY / CODE tombent : la place des
+       valeurs suffit à les dire. Les petits boutons restent, mais le geste
+       courant est désormais « Régler » (pastille ci-dessous). */
+    body.en-session .nav-flight .radio{ margin-bottom:5px; }
+    body.en-session .nav-flight .radio-corps{ padding:6px 8px; gap:6px; }
+    body.en-session .nav-flight .radio-ecran{ padding:3px 8px; }
+    body.en-session .nav-flight .radio-lab{ display:none; }
+    body.en-session .nav-flight .radio-val{ font-size:17px; }
+    /* Le transpondeur sur UNE ligne quand elle tient (844 px), deux sinon
+       (667 px, petit iPhone : MODE et IDENT sortaient du boîtier). */
+    body.en-session .nav-flight .xpdr .radio-corps{ flex-direction:row; flex-wrap:wrap; align-items:center; }
+    body.en-session .nav-flight .xpdr .radio-ecran{ width:auto; flex:0 0 auto; gap:6px; }
+    body.en-session .nav-flight .xpdr .radio-cmd{ width:auto; flex:1 1 auto; justify-content:flex-end; flex-wrap:wrap; gap:5px; }
+    body.en-session .nav-flight .xpdr .radio-val{ font-size:16px; }
+    body.en-session .nav-flight .xp-btn{ padding-left:5px; padding-right:5px; }
+    /* La plaque verticale (BECKER, XPDR) rend 24 px par boîtier : c'est ce qui
+       faisait déborder IDENT. */
+    body.en-session .nav-flight .radio-plaque{ display:none; }
+    body.en-session .nav-flight .xpdr .radio-ecran{ padding:3px 6px; }
+    body.en-session .nav-flight .leaflet-control-attribution{ font-size:8px; line-height:1.3; }
+    body.en-session .nav-flight .radio-cible{ display:flex; width:100%; margin:4px 0 2px; padding:4px 5px 4px 12px; }
+    body.en-session .nav-flight .radio-cible.hidden{ display:none; }
+    body.en-session .nav-flight .radio-cible > span{ flex:1 1 auto; min-width:0; overflow:hidden;
+      text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
+    body.en-session .nav-flight .radio-cible .cible-regler{ min-height:32px; padding:4px 14px; }
+    /* L'échange plus serré, et le bouton du micro TOUJOURS à l'écran : collé au
+       bas de la colonne qui défile. C'est le geste de tout l'exercice. */
+    body.en-session .nav-flight .vf-phase{ font-size:11px; margin-bottom:8px; }
+    body.en-session .nav-flight .vf-atc{ font-size:14px; padding:9px 12px; }
+    body.en-session .nav-flight .vf-consigne{ font-size:14.5px; padding:10px 13px; line-height:1.5; }
+    body.en-session .nav-flight .vf-ptt{ position:sticky; bottom:0; z-index:2; padding:12px; font-size:15px;
+      box-shadow:0 -8px 18px var(--surface); }
+    /* Le bouton Contact se fait discret : il ne doit pas couvrir la radio. */
+    body.en-session .ct-fab{ width:40px; height:40px; right:max(8px, env(safe-area-inset-right)); bottom:8px; opacity:.85; }
+    body.en-session .ct-fab svg{ width:19px; height:19px; }
+  }
+
+  /* Le message « Tournez votre téléphone » : en PORTRAIT seulement, et
+     seulement si le verrou a été refusé. Tourner l'écran le fait disparaître. */
+  .tourner{ display:none; }
+  /* Hors de toute media query : celle de la section 4 ne vaut que sous 860 px. */
+  @keyframes voileIn{ from{ opacity:0; } to{ opacity:1; } }
+  @media (orientation:portrait){
+    body.en-session.tourner-demande:not(.vertical-accepte) .tourner{
+      display:flex; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center;
+      padding:24px; background:rgba(10,8,24,.55);
+      -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+      animation:voileIn .3s ease both; }
+  }
+  .tourner__carte{ max-width:340px; text-align:center; padding:26px 22px 20px; border-radius:28px;
+    background:var(--surface); color:var(--ink); box-shadow:var(--shadow-lg);
+    animation:carteIn .5s var(--ressort) both; }
+  @keyframes carteIn{ from{ opacity:0; transform:translateY(16px) scale(.96); } to{ opacity:1; transform:none; } }
+  .tourner__carte h2{ font-size:19px; margin:10px 0 8px; }
+  .tourner__carte p{ margin:0 0 10px; font-size:14px; line-height:1.5; color:var(--ink-2-fort); }
+  .tourner__aide{ font-size:12.5px; }
+  .tourner__carte .btn{ margin-top:6px; }
+  .tourner__tel{ width:64px; height:64px; fill:none; stroke:var(--violet); stroke-width:3;
+    stroke-linecap:round; animation:tourne 2.2s var(--ressort) infinite; }
+  @keyframes tourne{ 0%,20%{ transform:none; } 55%,85%{ transform:rotate(-90deg); } 100%{ transform:none; } }
+
+  /* Pendant la rotation, la mise en page change d'un coup : aucune transition
+     ne doit la traverser (paysage.js › tourne). La nouvelle disposition
+     apparaît simplement. */
+  body.en-rotation *, body.en-rotation *::before, body.en-rotation *::after{ transition:none !important; }
+  body.en-rotation main{ animation:rotationIn .4s ease both; }
+  @keyframes rotationIn{ from{ opacity:.25; } to{ opacity:1; } }
+
+  /* =========================================================================
      7. Mouvement réduit : tout ce qui précède, à l'arrêt
      ========================================================================= */
   @media (prefers-reduced-motion:reduce){
-    .glisseur, .page.active, .set-panel:not([hidden]), body.state-app .sidebar{ animation:none; transition:none; }
+    .glisseur, .page.active, .set-panel:not([hidden]), body.state-app .sidebar, .logo-rebond,
+    .nav-tgl.on, .field.nav-only-voyage, .nav-diff-note, .ac-list.open, .tourner__tel,
+    .tourner__carte, body.en-rotation main{ animation:none; transition:none; }
     .btn:active:not(:disabled), .sidelink:active, .set-tab:active, .seg3-opt:active,
     .seg-opt:active{ transform:none; }
   }

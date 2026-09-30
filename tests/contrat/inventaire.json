@@ -30,6 +30,7 @@
     "assets/modules/lancement.js",
     "assets/modules/avis.js",
     "assets/modules/mouvements.js",
+    "assets/modules/paysage.js",
     "assets/supabase-config.js",
     "assets/vendor/supabase.js",
     "assets/auth.js",
@@ -567,6 +568,13 @@
     {
       "nom": "setRecoSink",
       "declare": "assets/noyau/6-micro.js",
+      "lu_par": [
+        "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "setupAutocomplete",
+      "declare": "assets/scenarios/moteur.js",
       "lu_par": [
         "assets/modules/navigation.js"
       ]

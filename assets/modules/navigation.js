@@ -242,15 +242,29 @@
         div.className='ac-item'; div.setAttribute('role','option');
         div.innerHTML='<span class="code">'+esc(code(d))+'</span> — '+esc(label(d));
         div.addEventListener('mousedown',function(ev){ ev.preventDefault(); pick(d); });
+        div.addEventListener('click',function(){ pick(d); });   // au doigt, voir plus bas
         list.appendChild(div);
       });
       active=-1; list.classList.add('open'); input.setAttribute('aria-expanded','true');
     }
-    function pick(d){ input.value=label(d); list.classList.remove('open');
+    function pick(d){ if(!list.classList.contains('open')) return;   // déjà choisi par le mousedown
+      toucheListe=false;
+      input.value=label(d); list.classList.remove('open');
       input.setAttribute('aria-expanded','false'); onPick(d); }
     input.addEventListener('input',function(){ render(input.value); });
     input.addEventListener('focus',function(){ render(input.value||''); });
-    input.addEventListener('blur',function(){ setTimeout(function(){ list.classList.remove('open'); },120); });
+    /* Au doigt (30/09/2026), même correctif que setupAutocomplete() du moteur :
+       faire défiler la liste retirait le focus du champ, et le blur la
+       refermait avant qu'on ait choisi. Sur iPhone, le tap arrive en click. */
+    var toucheListe=false;
+    list.addEventListener('touchstart',function(){ toucheListe=true; },{passive:true});
+    document.addEventListener('touchstart',function(e){
+      if(list.contains(e.target) || e.target===input || (btnOuvrir && btnOuvrir.contains(e.target))) return;
+      toucheListe=false;
+      if(document.activeElement!==input) list.classList.remove('open');
+    },{passive:true});
+    var btnOuvrir=input.parentNode && input.parentNode.querySelector('.ac-open');
+    input.addEventListener('blur',function(){ setTimeout(function(){ if(!toucheListe) list.classList.remove('open'); },120); });
     input.addEventListener('keydown',function(e){
       var opts=[].slice.call(list.querySelectorAll('.ac-item'));
       if(e.key==='ArrowDown'){ e.preventDefault(); active=Math.min(active+1,opts.length-1); }
@@ -273,6 +287,7 @@
       list.innerHTML=html;
       [].slice.call(list.querySelectorAll('.ac-item')).forEach(function(el,i){
         el.addEventListener('mousedown',function(ev){ ev.preventDefault(); pick(items[i]); });
+        el.addEventListener('click',function(){ pick(items[i]); });
       });
       active=-1; list.classList.add('open'); input.setAttribute('aria-expanded','true');
     }
@@ -917,6 +932,34 @@
     });
   });
   document.getElementById('navFl').addEventListener('change',renderZones);
+
+  /* ---- Au doigt : la liste des Scénarios à la place du <datalist> ----
+     30/09/2026. Safari sur iPhone n'affiche presque rien d'un <datalist> (au
+     mieux une flèche, souvent rien) : « les aéroports ne s'affichent pas ».
+     Sur écran tactile seulement, chaque champ reçoit donc la liste du moteur
+     (setupAutocomplete, moteur.js) — mêmes terrains connus en tête, même tri,
+     mêmes gestes. Le choix passe par l'événement « change » du champ, que le
+     gestionnaire ci-dessus traite déjà : un seul chemin pour poser un terrain.
+     À la souris, le <datalist> reste : rien ne change sur ordinateur. */
+  var auDoigt=false;
+  try{ auDoigt=window.matchMedia('(pointer: coarse)').matches; }catch(e){}
+  if(auDoigt && typeof setupAutocomplete==='function'){
+    Object.keys(IN).forEach(function(slot){
+      var champ=IN[slot];
+      champ.removeAttribute('list');
+      champ.setAttribute('role','combobox'); champ.setAttribute('autocomplete','off');
+      var liste=document.createElement('div');
+      liste.className='ac-list'; liste.id='navAdList-'+slot; liste.setAttribute('role','listbox');
+      champ.setAttribute('aria-controls', liste.id);
+      champ.parentNode.classList.add('ac-porteur');
+      champ.parentNode.insertBefore(liste, champ.nextSibling);
+      setupAutocomplete(champ, liste, function(a){
+        if(!a) return;                             // frappe en cours : rien à poser
+        champ.value=a.icao;
+        champ.dispatchEvent(new Event('change'));
+      }, function(a){ return !!BY[a.icao]; });     // seulement les terrains placés sur la carte
+    });
+  }
 
   // Bascule du fond de carte : un seul bouton qui alterne OACI ↔ OpenStreetMap.
   var basemapBtn=document.getElementById('navBasemap');
@@ -2436,7 +2479,8 @@
        Exception : sur l'écoute ATIS on ne souffle pas la fréquence — aller la
        chercher fait partie de l'exercice, et la consigne la donne déjà. */
     cible($v('radioCible'),
-      (manque && !(s && s.atisStep)) ? [(s.stn||'Station')+' écoute sur', fmtF(s.freq)] : null);
+      (manque && !(s && s.atisStep)) ? [(s.stn||'Station')+' écoute sur', fmtF(s.freq)] : null,
+      function(){ poserStby(s.freq); permuter(); });
     if(manque){
       a.textContent='Vous émettez sur '+fmtF(radio.act)+' — '+(s.stn||'la station')+
         ' est sur '+fmtF(s.freq)+'. Affichez-la en standby puis permutez.';
@@ -2636,7 +2680,8 @@
     $v('xpdrCode').classList.toggle('attendue', reste && !enAttente);
     $v('xpdrIdent').classList.toggle('attendu', !!(s&&s.identReq&&!xpdr.ident));
     // Pastille : le code à afficher, en clair, tant qu'il ne l'est pas.
-    cible($v('xpdrCible'), reste ? ['Code à afficher', xpdr.attendu] : null);
+    cible($v('xpdrCible'), reste ? ['Code à afficher', xpdr.attendu] : null,
+      function(){ xpdr.saisie=xpdr.attendu; xpdrExecuter(); });
     if(!a) return;
     if(!xpdrManuel()){ a.textContent=''; a.classList.remove('alerte'); return; }
     if(enAttente){
@@ -2656,10 +2701,18 @@
   }
 
   /* Pastille commune radio / transpondeur. */
-  function cible(el, contenu){
+  /* `regler` (30/09/2026, demande du développeur) : sur écran TACTILE
+     seulement, la pastille porte un bouton qui affiche directement la valeur —
+     les roues et les boutons +/− sont trop petits sous le doigt. Le bouton est
+     masqué à la souris par la feuille (17-mouvements.css, pointer:coarse) :
+     sur ordinateur, on continue de régler le poste soi-même. */
+  function cible(el, contenu, regler){
     if(!el) return;
     if(!contenu){ el.classList.add('hidden'); el.textContent=''; return; }
-    el.innerHTML='<span>'+esc(contenu[0])+'</span><b>'+esc(String(contenu[1]))+'</b>';
+    el.innerHTML='<span>'+esc(contenu[0])+'</span><b>'+esc(String(contenu[1]))+'</b>'+
+      (regler ? '<button type="button" class="cible-regler">Régler</button>' : '');
+    var b=el.querySelector('.cible-regler');
+    if(b) b.addEventListener('click', regler);
     el.classList.remove('hidden');
   }
 

@@ -113,8 +113,12 @@
      sombre de la photo — et une ombre portée AUTOUR DES LETTRES suffit à le
      détacher des écrans allumés. Ce n'est pas un voile : rien ne recouvre la
      photo entre les lignes. */
+  /* PLEIN ÉCRAN (01/10/2026, demande du développeur) : la photo occupe tout
+     l'écran à l'arrivée ; la bande blanche n'apparaît qu'en descendant. Une
+     version à « 100svh − 96 px » laissait voir le blanc dessous, exprès — à
+     tort. 100vh d'abord, pour les navigateurs qui ignorent svh. */
   .acc-hero{position:relative; isolation:isolate; display:flex; flex-direction:column; justify-content:flex-end;
-    min-height:max(560px, calc(100svh - 96px)); padding:110px 0 clamp(30px,4.4vw,56px); overflow:hidden; background:#1b1f25}
+    min-height:100vh; min-height:100svh; padding:110px 0 clamp(30px,4.4vw,56px); overflow:hidden; background:#1b1f25}
   .acc-hero__photo{position:absolute; inset:0; z-index:-1; width:100%; height:100%; object-fit:cover; object-position:50% 46%;
     animation:acPhoto 1.4s ease both}
   @keyframes acPhoto{from{opacity:0} to{opacity:1}}
@@ -171,7 +175,7 @@
   @media (max-width:640px){
     /* Téléphone en portrait : la photo, recadrée sur la piste et le tableau
        de bord, garde la plus grande part de l'écran ; le texte en bas. */
-    .acc-hero{min-height:max(560px, calc(100svh - 140px)); padding-top:96px}
+    .acc-hero{padding-top:96px}
     .acc-hero__photo{object-position:50% 50%}
     .acc-hero .acc-boutons{flex-direction:column}
     .acc-hero .acc-btn{width:100%}

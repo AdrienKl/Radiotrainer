@@ -108,7 +108,11 @@
      le blanc des liens sous le seuil AA. Même couleur dans les deux thèmes. */
   .topnav{--nav-h:60px; --nav-y:12px;
     position:sticky; top:var(--nav-y); z-index:100; display:flex; align-items:center; justify-content:space-between; gap:16px;
-    width:min(1360px, calc(100% - 24px)); height:var(--nav-h); margin:var(--nav-y) auto 0;
+    width:min(1360px, calc(100% - 24px)); height:var(--nav-h);
+    /* Marge droite FIXE, gauche automatique : ouverte, la barre reste centrée
+       (les deux marges sont égales) ; repliée (17-mouvements.css), elle se
+       resserre vers la DROITE, et le logo glisse avec son bord gauche. */
+    margin:var(--nav-y) max(12px, calc((100% - 1360px) / 2)) 0 auto;
     padding:0 10px 0 16px; border-radius:16px;
     border:1px solid rgba(255,255,255,.08);
     background:rgba(18,19,24,.90);

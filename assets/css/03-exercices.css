@@ -181,7 +181,6 @@
   .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px}
   .btn .ic-svg{width:17px; height:17px}
   .brand .logo .ic-svg{width:18px; height:18px; stroke:#fff}
-  .feature .fic .ic-svg{width:25px; height:25px; stroke:var(--violet)}
   .badge .ic .ic-svg{width:22px; height:22px; stroke:var(--violet)}
   .badge.locked .ic .ic-svg{stroke:var(--ink-2)}
   .fb-item .mk{display:inline-flex; align-items:center; justify-content:center}
@@ -190,14 +189,4 @@
   .fb-item.ko .mk .ic-svg{stroke:#c98a00}
   .ptt .rec-dot{width:10px; height:10px; border-radius:50%; background:#fff; flex:none}
 
-  /* ============ Indicateur de scroll (bas du hero) ============ */
-  .scroll-cue{position:absolute; left:50%; bottom:calc(clamp(56px,9vw,104px) + 12px); transform:translateX(-50%);
-    z-index:3; width:42px; height:42px; display:grid; place-items:center; cursor:pointer; color:#fff;
-    background:rgba(255,255,255,.14); border:1.5px solid rgba(255,255,255,.55); border-radius:50%;
-    -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); transition:background .18s, border-color .18s;
-    animation:cueBounce 1.9s ease-in-out infinite}
-  .scroll-cue .ic-svg{width:20px; height:20px; stroke:#fff; stroke-width:2}
-  .scroll-cue:hover{background:rgba(255,255,255,.28); border-color:#fff}
-  @keyframes cueBounce{0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)}}
-  @media (prefers-reduced-motion:reduce){ .scroll-cue{animation:none} }
 

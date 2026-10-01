@@ -135,13 +135,17 @@
   /* Sur le gris foncé, l'encre du site ne tient plus : la marque et les liens passent
      au blanc, et le survol devient un voile clair au lieu de --surface-2. */
   .topnav .brand{color:#fff}
-  .topnav .brand .logo{box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 4px 14px rgba(91,75,206,.45)}
+  /* Plus de violet dans la barre (01/10/2026, avec le nouvel accueil) : le
+     jaune « balise » des panneaux de piste — celui de l'accueil — marque la
+     page courante et « S'inscrire », texte nuit sur jaune (10,9:1). */
+  .topnav .brand .logo{box-shadow:0 0 0 1px rgba(255,255,255,.12)}
   .topnav .navlink{color:rgba(255,255,255,.76)}
   .topnav .navlink:hover{color:#fff; background:rgba(255,255,255,.10)}
-  .topnav .navlink.current{color:#b7abff}
-  .topnav .navlink.current::after{background:#b7abff}
-  .topnav .nav-cta{background:var(--violet); box-shadow:0 4px 16px rgba(91,75,206,.45)}
-  .topnav .nav-cta:hover{background:#6b5ce0}
+  .topnav .navlink.current{color:#e9b949}
+  .topnav .navlink.current::after{background:#e9b949}
+  .topnav .nav-cta{background:#e9b949; color:#0b0d10; border-radius:8px; box-shadow:none}
+  .topnav .nav-cta:hover{background:#f3c95f}
+  .topnav :focus-visible{outline-color:#e9b949}
   .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px; color:var(--ink)}
   .brand .logo{width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
     background:linear-gradient(135deg,var(--violet),var(--violet-dark)); color:#fff; font-size:17px}

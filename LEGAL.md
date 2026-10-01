@@ -93,6 +93,12 @@ d'`assets/avions.js` si vous la voulez hors de l'application aussi.
 01/10/2026) : un Cessna vu de dessus, **fourni par le développeur, qui en est
 l'auteur**. Aucune licence tierce, aucune attribution due.
 
+**La photo du hero de l'accueil** (`assets/images/cockpit-finale*.webp`, depuis le
+01/10/2026) : un cockpit en courte finale, d'Oskar Kadaksoo, licence Unsplash
+(usage commercial, sans attribution obligatoire — créditée quand même en pied de
+page). Les deux pilotes sont de dos, casque sur la tête : aucun visage n'est
+visible. Elle remplace la tour découpée (rawpixel, CC0) et la carte OACI.
+
 ## 2 ter. La police du site (30/09/2026)
 
 **Atkinson Hyperlegible Next** (Braille Institute), sous **SIL Open Font License 1.1**.

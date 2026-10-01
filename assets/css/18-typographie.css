@@ -20,8 +20,6 @@
    ========================================================================== */
 
   /* ---------- Site et application ---------- */
-  .hero__eyebrow, .hero__num span, .sec-tag, .rx__head, .rx__who,
-  .strip__id, .strip__kind, .strip__jour-t, .strip__f dt,
   .sc-btn .sc-tags i, .hint .label,
   .spell-hero .sh-tag, .spell-kind, .spell-line .lbl, .spell-stat span, .fiche-h,
   .auth-field label, .ins-fil li, .ins-pas__txt, .legal-tab thead th,
@@ -32,21 +30,14 @@
     font-family:var(--sans); text-transform:none; letter-spacing:normal; }
 
   /* Sans capitales, 9,5 à 11,5 px ne se lisent plus : un cran au-dessus. */
-  .hero__eyebrow, .sec-tag{ font-size:13.5px; font-weight:700; }
-  .hero__num span{ font-size:13px; font-weight:600; }
   .auth-field label, .nav-form label, .vf-transwrap label{ font-size:13.5px; font-weight:700; }
   .nav-grp > h4, .sc-manques h4, .fiche-h{ font-size:14px; font-weight:800; }
   .vf-phase{ font-size:13px; font-weight:700; }
-  .strip__id, .strip__kind, .strip__jour-t{ font-size:13px; }
-  .strip__f dt, .nav-navlog dt, .nav-recap dt, .sc-fiche-l dt, .nhd-info b, .nhl-lab,
+  .nav-navlog dt, .nav-recap dt, .sc-fiche-l dt, .nhd-info b, .nhl-lab,
   .spell-line .lbl, .spell-stat span, .legal-tab thead th{ font-size:12.5px; font-weight:700; }
   .sc-btn .sc-tags i, .sc-fiche-tag, .ac-fam, .ins-fil li, .ins-pas__txt, .hint .label,
-  .rx__who, .rx__head, .vf-log .r .who, .spell-hero .sh-tag, .spell-kind{ font-size:12px; font-weight:700; }
+  .vf-log .r .who, .spell-hero .sh-tag, .spell-kind{ font-size:12px; font-weight:700; }
 
-  /* Les nombres du hero (387, 176…) et la valeur des cases de la bande ne
-     sont pas des afficheurs : police du site. */
-  .hero__num b, .strip__f dd, .impr__ref{ font-family:var(--sans); letter-spacing:normal; }
-  .impr__ref{ font-size:12px; }
 
   /* ---------- Console d'administration ----------
      #page-admin devant chaque sélecteur : admin.css charge APRÈS le site

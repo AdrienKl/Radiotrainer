@@ -371,13 +371,6 @@
       : "Aucune carte demandée, aucun prélèvement automatique.");
   })();
 
-  // Indicateur de scroll du hero : défilement fluide vers la 1re section de contenu.
-  var cue=document.getElementById('scrollCue');
-  if(cue) cue.addEventListener('click',function(){
-    var t=document.querySelector('#page-accueil .container');
-    if(t) t.scrollIntoView({behavior:'smooth', block:'start'});
-  });
-
   observeReveals();
   showPage((location.hash||'#accueil').slice(1),false);
 })();

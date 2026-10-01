@@ -35,17 +35,32 @@ test('téléphone : pas de barre du bas, le menu est le tiroir de gauche, le bou
   await expect(page.locator('#sidebar')).not.toHaveClass(/open/);
 });
 
-test('téléphone : la tour de contrôle n\'est plus sur l\'accueil', async ({ page }) => {
-  test.skip(!etroit(page), 'écran étroit seulement');
+/* L'accueil refait le 01/10/2026 : photo du cockpit, plus de tour, aucun
+   violet. On vérifie la photo, le titre, et l'absence de violet calculé. */
+test('accueil : photo du cockpit, titre visible, aucun violet', async ({ page }) => {
   await ouvrir(page);
-  await expect(page.locator('.hero__title')).toBeVisible();
-  await expect(page.locator('.hero__tour')).toBeHidden();
+  await expect(page.locator('.acc-hero__titre')).toBeVisible();
+  await expect(page.locator('.acc-hero__photo')).toBeVisible();
+  await expect(page.locator('.hero__tour')).toHaveCount(0);
+  const violets = await page.evaluate(() => {
+    const re = /rgba?\((\d+), (\d+), (\d+)/g, trouves = [];
+    for (const e of [document.querySelector('.topnav'), ...document.querySelectorAll('#page-accueil, #page-accueil *, .ct-fab')]) {
+      const cs = getComputedStyle(e);
+      for (const v of [cs.color, cs.backgroundColor, cs.borderTopColor, cs.backgroundImage, cs.boxShadow]) {
+        for (const m of v.matchAll(re)) {
+          const [r, g, b] = [+m[1], +m[2], +m[3]];
+          if (b > r + 40 && b > g + 40 && r > g + 15) trouves.push(e.className + ' ' + v);
+        }
+      }
+    }
+    return trouves;
+  });
+  expect(violets).toEqual([]);
 });
 
-test('ordinateur : la tour reste, le menu est à gauche', async ({ page }) => {
+test('ordinateur : le menu est à gauche', async ({ page }) => {
   test.skip(etroit(page), 'ordinateur seulement');
   await ouvrir(page);
-  await expect(page.locator('.hero__tour')).toBeVisible();
   await entrer(page, 'tableau');
   await expect(page.locator('#sidebar')).toBeVisible();
 });

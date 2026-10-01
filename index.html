@@ -197,112 +197,103 @@
     <!-- ==================== ACCUEIL ==================== -->
     <section id="page-accueil" class="page">
 
-      <!-- ---- Le hero : la carte OACI en sol, la tour découpée posée dessus.
-           Rien n'est voilé — la carte est fabriquée éclaircie. Voir le
-           commentaire CSS de .hero__carte. ---- -->
-      <div class="hero">
-        <div class="hero__carte" aria-hidden="true"></div>
-        <!-- width/height portés sur la balise : sans eux la tour n'a pas de
-             place réservée et le titre saute quand elle arrive. -->
-        <img class="hero__tour" src="assets/images/tour-decoupee.webp" alt=""
-             width="405" height="487" decoding="async" aria-hidden="true">
+      <!-- ==== L'ACCUEIL, REPARTI DE ZÉRO (01/10/2026, demande du développeur) ====
+           Fond sombre et simple, AUCUN violet (02-vitrine.css redéfinit les jetons
+           de couleur sur toute la page, --violet compris : un composant partagé
+           qui le lit — avis, liens — ne peut pas le faire réapparaître).
+           La tour découpée et la carte OACI ont quitté le hero : la photo du
+           cockpit en finale les remplace. Les textes sont ceux choisis par le
+           développeur les 29 et 30/09/2026 ; seule la mise en page change. -->
 
-        <div class="hero__inner">
-          <div class="hero__content">
-            <span class="hero__eyebrow">Phraséologie radio VFR · en français</span>
-            <h1 class="hero__title">Maîtrisez la phraséologie VFR comme un vrai pilote.</h1>
-            <!-- Texte du développeur (29/09/2026), qui REMPLACE l'ancienne accroche
-                 (« Albatros VFR vous fait parler à la radio comme en vol… ») — il
-                 avait d'abord été posé à part, dans un bloc « À propos », retiré le
-                 30/09/2026 pour ne pas dire deux fois la même chose. -->
-            <p class="hero__sub">Créé par un élève pilote, Albatros VFR est né d'un constat simple&nbsp;: à la radio, on progresse en parlant. Ici, vous répétez chaque échange autant de fois qu'il le faut — du roulage à l'atterrissage, jusqu'à la panne moteur ou radio.</p>
-            <div class="hero__cta">
-              <button class="btn cta" type="button" data-page="signup">Commencer l'essai gratuit</button>
-              <button class="btn cta-ghost" type="button" data-page="login">Se connecter</button>
-            </div>
+      <!-- ---- Le hero : un cockpit en courte finale ----
+           <img> et non un fond CSS : srcset laisse le téléphone charger la petite
+           version (90 Ko) au lieu de la grande (240 Ko). width/height réservent
+           la place, la photo est décorative (alt vide). -->
+      <div class="acc-hero">
+        <img class="acc-hero__photo" src="assets/images/cockpit-finale.webp"
+             srcset="assets/images/cockpit-finale-1300.webp 1300w, assets/images/cockpit-finale.webp 2400w"
+             sizes="100vw" width="2400" height="1601" alt="" decoding="async" fetchpriority="high">
+        <div class="acc-hero__in">
+          <!-- Le « panneau » : noir, cadre et lettres jaunes — les panneaux de
+               position des voies de circulation. C'est le seul signe distinctif
+               de la page ; il revient en tête de chaque section. -->
+          <span class="acc-panneau">Phraséologie radio VFR · en français</span>
+          <h1 class="acc-hero__titre">Maîtrisez la phraséologie VFR comme un vrai pilote.</h1>
+          <p class="acc-hero__sub">Créé par un élève pilote, Albatros VFR est né d'un constat simple&nbsp;: à la radio, on progresse en parlant. Ici, vous répétez chaque échange autant de fois qu'il le faut — du roulage à l'atterrissage, jusqu'à la panne moteur ou radio.</p>
+          <div class="acc-boutons">
+            <button class="acc-btn acc-btn--plein" type="button" data-page="signup">Commencer l'essai gratuit</button>
+            <button class="acc-btn acc-btn--creux" type="button" data-page="login">Se connecter</button>
           </div>
-        </div>
 
-        <!-- Les quatre nombres sont comptés dans le code de l'application :
-             AERODROMES, AIRCRAFT, SCENARIOS, et le tirage d'aléas du mode Réel.
-             La phrase « 68 112 vols différents… cinq façons de s'entraîner »
-             qui les précédait a été retirée le 30/09/2026 (demande du
-             développeur : l'accueil doit prendre moins de place). -->
-        <div class="hero__strip">
-          <span class="hero__num"><b>387</b><span>aérodromes français</span></span>
-          <span class="hero__num"><b>176</b><span>types d'appareils</span></span>
-          <span class="hero__num"><b>13</b><span>scénarios complets</span></span>
-          <span class="hero__num"><b>43</b><span>imprévus en vol</span></span>
+          <!-- Les quatre nombres sont comptés dans le code de l'application :
+               AERODROMES, AIRCRAFT, SCENARIOS, et le tirage d'aléas du mode Réel. -->
+          <dl class="acc-chiffres">
+            <div><dt>aérodromes français</dt><dd>387</dd></div>
+            <div><dt>types d'appareils</dt><dd>176</dd></div>
+            <div><dt>scénarios complets</dt><dd>13</dd></div>
+            <div><dt>imprévus en vol</dt><dd>43</dd></div>
+          </dl>
         </div>
-
-        <button class="scroll-cue" id="scrollCue" type="button" aria-label="Voir la suite"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       </div>
 
-      <!-- La section « 5 façons différentes de s'entraîner » a été SUPPRIMÉE le
-           30/09/2026, à la demande du développeur : l'accueil passe directement
-           du hero au DR400. Son contenu (scénarios, navigation, alphabet, deux
-           quiz) reste décrit par les étapes et la bande de l'offre plus bas. -->
-
-      <!-- ---- Préparer le vol. Les avions ne sont que du décor. ---- -->
-      <section class="fleet">
-        <div class="container fleet__grid">
-          <!-- Un seul appareil, le DR400 : voir le commentaire CSS de .fleet. -->
-          <div class="fleet__stage" aria-hidden="true">
-            <div class="fleet__halo"></div>
-            <img class="fleet__shot" src="assets/avions/dr400-f-guxq.webp" alt="" width="760" height="402" decoding="async">
+      <!-- ---- Avant de partir ---- -->
+      <section class="acc-sec" id="accSuite">
+        <div class="acc-in acc-deux">
+          <div>
+            <span class="acc-panneau">Avant de partir</span>
+            <h2 class="acc-h">Vous préparez le vol, puis vous le faites de A à Z.</h2>
           </div>
-          <div class="fleet__txt">
-            <span class="sec-tag">Avant de partir</span>
-            <h2 class="sec-h">Vous préparez le vol, puis vous le faites de A à Z.</h2>
-            <p class="sec-lede">Départ, arrivée, dégagement, altitude, passagers à bord, type d'appareil. La carte OACI et les espaces aériens sont sous vos yeux pendant que vous parlez.</p>
-            <p class="sec-lede">Ensuite, c'est vous qui parlez. Mise en route, décollage, croisière, panne…</p>
+          <div class="acc-texte">
+            <p>Départ, arrivée, dégagement, altitude, passagers à bord, type d'appareil. La carte OACI et les espaces aériens sont sous vos yeux pendant que vous parlez.</p>
+            <p>Ensuite, c'est vous qui parlez. Mise en route, décollage, croisière, panne…</p>
           </div>
         </div>
       </section>
 
-      <!-- ---- Comment ça se passe, et à quoi ça ressemble ---- -->
-      <section class="sec">
-        <div class="container">
-          <span class="sec-tag">Comment ça marche</span>
-          <h2 class="sec-h">Vous parlez. On vous répond. On vous corrige.</h2>
+      <!-- ---- Comment ça marche : trois étapes (une vraie suite, d'où les
+           numéros) et un vrai échange ---- -->
+      <section class="acc-sec acc-sec--ardoise">
+        <div class="acc-in">
+          <span class="acc-panneau">Comment ça marche</span>
+          <h2 class="acc-h">Vous parlez. On vous répond. On vous corrige.</h2>
 
-          <div class="steps__grid">
-            <div class="step reveal"><span class="step__n">1</span><h3>Vous choisissez</h3><p>Un aérodrome de départ, une destination, un avion et votre niveau. En mode débutant, les consignes vous guident. En mode réel, c'est à vous de gérer la situation.</p></div>
-            <div class="step reveal"><span class="step__n">2</span><h3>Le contrôleur vous répond</h3><p>Vous faites votre annonce, et le contrôleur vous répond avec une voix réaliste. Chaque contrôleur a sa propre voix : la tour, le sol et l'information de vol ne parlent pas pareil.</p></div>
-            <div class="step reveal"><span class="step__n">3</span><h3>Voyez ce qui n'allait pas</h3><p>Le contrôleur vous répond, puis votre message est analysé. Les erreurs et les éléments oubliés apparaissent immédiatement, avec la formulation attendue.</p></div>
-          </div>
+          <ol class="acc-etapes">
+            <li class="reveal"><span class="acc-etapes__n">1</span><h3>Vous choisissez</h3><p>Un aérodrome de départ, une destination, un avion et votre niveau. En mode débutant, les consignes vous guident. En mode réel, c'est à vous de gérer la situation.</p></li>
+            <li class="reveal"><span class="acc-etapes__n">2</span><h3>Le contrôleur vous répond</h3><p>Vous faites votre annonce, et le contrôleur vous répond avec une voix réaliste. Chaque contrôleur a sa propre voix : la tour, le sol et l'information de vol ne parlent pas pareil.</p></li>
+            <li class="reveal"><span class="acc-etapes__n">3</span><h3>Voyez ce qui n'allait pas</h3><p>Le contrôleur vous répond, puis votre message est analysé. Les erreurs et les éléments oubliés apparaissent immédiatement, avec la formulation attendue.</p></li>
+          </ol>
 
           <!-- Extrait littéral : ces phrases sont celles que l'application
                attend vraiment (scénario Décollage puis aléa « panne moteur »),
-               reprises du manuel DSNA. -->
-          <div class="rx reveal">
-            <div class="rx__head"><span class="rx__dot"></span> LFOR · CHARTRES-MÉTROPOLE TOUR · SCÉNARIO DÉCOLLAGE · MODE RÉEL</div>
-            <div class="rx__body">
-              <div class="rx__l rx__l--moi"><span class="rx__who">Vous</span><span class="rx__t">Chartres-Métropole tour, F-BYFO, point d'attente piste 27, prêt au départ.</span></div>
-              <div class="rx__l"><span class="rx__who">Contrôle</span><span class="rx__t">F-BYFO, alignez-vous et attendez piste 27.</span></div>
-              <div class="rx__l rx__l--moi"><span class="rx__who">Vous</span><span class="rx__t">Je m'aligne et j'attends piste 27, F-BYFO.</span></div>
-              <div class="rx__l rx__l--alea"><span class="rx__who">Imprévu</span><span class="rx__t">En montée initiale, le moteur perd sa puissance.</span></div>
-              <div class="rx__l rx__l--moi"><span class="rx__who">Vous</span><span class="rx__t">MAYDAY MAYDAY MAYDAY, Chartres-Métropole tour, F-BYFO, panne moteur, je me pose.</span></div>
-              <div class="rx__l"><span class="rx__who">Contrôle</span><span class="rx__t">F-BYFO, MAYDAY reçu, transpondeur 7700, terrain dégagé, vous êtes prioritaire.</span></div>
-              <div class="rx__l rx__l--moi"><span class="rx__who">Vous</span><span class="rx__t">Transpondeur 7700, F-BYFO.</span></div>
+               reprises du manuel DSNA. Ne pas les retoucher pour la mise en page. -->
+          <div class="acc-radio reveal">
+            <div class="acc-radio__tete"><span class="acc-radio__voyant"></span>LFOR · Chartres-Métropole tour · scénario Décollage · mode Réel</div>
+            <div class="acc-radio__corps">
+              <div class="acc-radio__l acc-radio__l--moi"><span class="acc-radio__qui">Vous</span><span class="acc-radio__t">Chartres-Métropole tour, F-BYFO, point d'attente piste 27, prêt au départ.</span></div>
+              <div class="acc-radio__l"><span class="acc-radio__qui">Contrôle</span><span class="acc-radio__t">F-BYFO, alignez-vous et attendez piste 27.</span></div>
+              <div class="acc-radio__l acc-radio__l--moi"><span class="acc-radio__qui">Vous</span><span class="acc-radio__t">Je m'aligne et j'attends piste 27, F-BYFO.</span></div>
+              <div class="acc-radio__l acc-radio__l--alea"><span class="acc-radio__qui">Imprévu</span><span class="acc-radio__t">En montée initiale, le moteur perd sa puissance.</span></div>
+              <div class="acc-radio__l acc-radio__l--moi"><span class="acc-radio__qui">Vous</span><span class="acc-radio__t">MAYDAY MAYDAY MAYDAY, Chartres-Métropole tour, F-BYFO, panne moteur, je me pose.</span></div>
+              <div class="acc-radio__l"><span class="acc-radio__qui">Contrôle</span><span class="acc-radio__t">F-BYFO, MAYDAY reçu, transpondeur 7700, terrain dégagé, vous êtes prioritaire.</span></div>
+              <div class="acc-radio__l acc-radio__l--moi"><span class="acc-radio__qui">Vous</span><span class="acc-radio__t">Transpondeur 7700, F-BYFO.</span></div>
             </div>
-            <div class="rx__foot">Ces phrases sont celles que l'exercice attend, mot pour mot, d'après le manuel de phraséologie de la DSNA. Chaque élément est vérifié à part&nbsp;: l'appel, l'organisme, l'indicatif, la nature, l'intention, le code.</div>
+            <div class="acc-radio__pied">Ces phrases sont celles que l'exercice attend, mot pour mot, d'après le manuel de phraséologie de la DSNA. Chaque élément est vérifié à part&nbsp;: l'appel, l'organisme, l'indicatif, la nature, l'intention, le code.</div>
           </div>
         </div>
       </section>
 
-      <!-- ---- Ce qu'il y a dans la boîte ---- -->
-      <section class="sec sec--surface">
-        <div class="container">
-          <span class="sec-tag">Ce que vous travaillez</span>
-          <div class="feature-grid">
-          <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg></div><h3>Prenez confiance à la radio</h3><p>Entraînez-vous autant que nécessaire avant votre prochain vol. Vous arrivez plus à l'aise sur la fréquence.</p></div>
-          <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></div><h3>Soyez plus à l'aise en vol</h3><p>Répétez les situations que vous pouvez rencontrer en vol pour être plus à l'aise quand elles arrivent vraiment.</p></div>
-          <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.2l2.4 2.4 4.6-4.9"/></svg></div><h3>Apprenez de vos erreurs</h3><p>Voyez rapidement ce qui n'allait pas dans vos messages et comprenez ce qu'il faut améliorer.</p></div>
-          <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><h3>Gagnez en réactivité</h3><p>Apprenez à écouter, réfléchir et répondre rapidement sans avoir besoin de préparer chaque phrase à l'avance.</p></div>
-          <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 13.5h4.5"/></svg></div><h3>Améliorez votre phraséologie</h3><p>Entraînez-vous à utiliser les bons mots et les bonnes formulations pour vos communications radio.</p></div>
-          <div class="feature reveal"><div class="fic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg></div><h3>Suivez votre progression</h3><p>Voyez vos résultats au fil des exercices et identifiez les points sur lesquels vous devez encore travailler.</p></div>
-          </div>
+      <!-- ---- Ce que vous travaillez : six bénéfices (texte du développeur, 01/10) ---- -->
+      <section class="acc-sec">
+        <div class="acc-in">
+          <span class="acc-panneau">Ce que vous travaillez</span>
+          <ul class="acc-benef">
+            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg><h3>Prenez confiance à la radio</h3><p>Entraînez-vous autant que nécessaire avant votre prochain vol. Vous arrivez plus à l'aise sur la fréquence.</p></li>
+            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><h3>Soyez plus à l'aise en vol</h3><p>Répétez les situations que vous pouvez rencontrer en vol pour être plus à l'aise quand elles arrivent vraiment.</p></li>
+            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.2l2.4 2.4 4.6-4.9"/></svg><h3>Apprenez de vos erreurs</h3><p>Voyez rapidement ce qui n'allait pas dans vos messages et comprenez ce qu'il faut améliorer.</p></li>
+            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><h3>Gagnez en réactivité</h3><p>Apprenez à écouter, réfléchir et répondre rapidement sans avoir besoin de préparer chaque phrase à l'avance.</p></li>
+            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 13.5h4.5"/></svg><h3>Améliorez votre phraséologie</h3><p>Entraînez-vous à utiliser les bons mots et les bonnes formulations pour vos communications radio.</p></li>
+            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg><h3>Suivez votre progression</h3><p>Voyez vos résultats au fil des exercices et identifiez les points sur lesquels vous devez encore travailler.</p></li>
+          </ul>
         </div>
       </section>
 
@@ -312,167 +303,143 @@
            sont celles du champ `src` de chaque aléa : si un aléa change de
            page dans le code, celle-ci devient fausse — c'est la seule chose
            à vérifier en touchant ce bloc. -->
-      <section class="sec">
-        <div class="container">
-          <span class="sec-tag">Ce qui peut arriver</span>
-          <h2 class="sec-h">En vol, tout ne se passe pas comme prévu.</h2>
-          <p class="sec-lede">Le vent tourne, le contrôleur vous donne un cap, un avion vous est signalé. <b>43 situations comme celles-ci</b> peuvent arriver pendant un exercice, au hasard. En voici neuf.</p>
+      <section class="acc-sec acc-sec--ardoise">
+        <div class="acc-in">
+          <span class="acc-panneau">Ce qui peut arriver</span>
+          <h2 class="acc-h">En vol, tout ne se passe pas comme prévu.</h2>
+          <p class="acc-lede">Le vent tourne, le contrôleur vous donne un cap, un avion vous est signalé. <b>43 situations comme celles-ci</b> peuvent arriver pendant un exercice, au hasard. En voici neuf.</p>
 
-          <ul class="impr">
-            <li class="impr__it reveal"><span class="impr__ref">p. 148</span>
-              <h3>Le vent a tourné</h3>
-              <p>La piste change pendant que vous arrivez. Vous reprenez votre arrivée avec la nouvelle piste.</p></li>
-            <li class="impr__it reveal"><span class="impr__ref">p. 150</span>
-              <h3>Attente en vent arrière</h3>
-              <p>On vous fait attendre dans le circuit. Vous accusez réception, puis vous laissez la fréquence libre.</p></li>
-            <li class="impr__it reveal"><span class="impr__ref">p. 195</span>
-              <h3>Changement de cap</h3>
-              <p>Le contrôleur vous donne un cap. Vous le répétez exactement.</p></li>
-            <li class="impr__it reveal"><span class="impr__ref">p. 211</span>
-              <h3>Information de trafic</h3>
-              <p>On vous signale un avion. Vous répondez «&nbsp;Roger&nbsp;» ou «&nbsp;Trafic en vue&nbsp;», et ça ne veut pas dire la même chose.</p></li>
-            <li class="impr__it reveal"><span class="impr__ref">p. 159</span>
-              <h3>Remise de gaz</h3>
-              <p>On vous fait remettre les gaz en finale. Vous refaites un tour de piste et vous vous annoncez à nouveau.</p></li>
-            <li class="impr__it reveal"><span class="impr__ref">p. 46</span>
-              <h3>Traversée de piste</h3>
-              <p>Au sol, on vous fait attendre avant une piste ou la traverser. Attention au mot «&nbsp;piste&nbsp;»&nbsp;: il n'est employé que dans un cas précis.</p></li>
-            <li class="impr__it reveal"><span class="impr__ref">p. 205</span>
-              <h3>Renseignement SIGMET</h3>
-              <p>Un phénomène météo est signalé sur votre route. Vous accusez réception et vous dites ce que vous allez faire.</p></li>
-            <li class="impr__it reveal"><span class="impr__ref">p. 208</span>
-              <h3>Zone réglementée active</h3>
-              <p>Une zone s'active devant vous. Vous changez de route et vous l'annoncez.</p></li>
-            <li class="impr__it reveal"><span class="impr__ref">p. 238</span>
-              <h3>Malaise à bord</h3>
-              <p>Un passager fait un malaise. C'est une urgence, pas une détresse&nbsp;: on dit PAN PAN, pas MAYDAY.</p></li>
+          <ul class="acc-impr">
+            <li class="reveal"><span class="acc-impr__ref">Manuel p. 148</span><h3>Le vent a tourné</h3><p>La piste change pendant que vous arrivez. Vous reprenez votre arrivée avec la nouvelle piste.</p></li>
+            <li class="reveal"><span class="acc-impr__ref">Manuel p. 150</span><h3>Attente en vent arrière</h3><p>On vous fait attendre dans le circuit. Vous accusez réception, puis vous laissez la fréquence libre.</p></li>
+            <li class="reveal"><span class="acc-impr__ref">Manuel p. 195</span><h3>Changement de cap</h3><p>Le contrôleur vous donne un cap. Vous le répétez exactement.</p></li>
+            <li class="reveal"><span class="acc-impr__ref">Manuel p. 211</span><h3>Information de trafic</h3><p>On vous signale un avion. Vous répondez «&nbsp;Roger&nbsp;» ou «&nbsp;Trafic en vue&nbsp;», et ça ne veut pas dire la même chose.</p></li>
+            <li class="reveal"><span class="acc-impr__ref">Manuel p. 159</span><h3>Remise de gaz</h3><p>On vous fait remettre les gaz en finale. Vous refaites un tour de piste et vous vous annoncez à nouveau.</p></li>
+            <li class="reveal"><span class="acc-impr__ref">Manuel p. 46</span><h3>Traversée de piste</h3><p>Au sol, on vous fait attendre avant une piste ou la traverser. Attention au mot «&nbsp;piste&nbsp;»&nbsp;: il n'est employé que dans un cas précis.</p></li>
+            <li class="reveal"><span class="acc-impr__ref">Manuel p. 205</span><h3>Renseignement SIGMET</h3><p>Un phénomène météo est signalé sur votre route. Vous accusez réception et vous dites ce que vous allez faire.</p></li>
+            <li class="reveal"><span class="acc-impr__ref">Manuel p. 208</span><h3>Zone réglementée active</h3><p>Une zone s'active devant vous. Vous changez de route et vous l'annoncez.</p></li>
+            <li class="reveal"><span class="acc-impr__ref">Manuel p. 238</span><h3>Malaise à bord</h3><p>Un passager fait un malaise. C'est une urgence, pas une détresse&nbsp;: on dit PAN PAN, pas MAYDAY.</p></li>
           </ul>
 
-          <p class="impr__foot">En mode Réel, <b>vous ne savez pas quand ça arrive</b>, et le texte du contrôleur est caché&nbsp;: vous n'avez que votre oreille, comme en vol. Ensuite, vous voyez ce que vous avez dit à côté de la phrase attendue.</p>
+          <p class="acc-note">En mode Réel, <b>vous ne savez pas quand ça arrive</b>, et le texte du contrôleur est caché&nbsp;: vous n'avez que votre oreille, comme en vol. Ensuite, vous voyez ce que vous avez dit à côté de la phrase attendue.</p>
         </div>
       </section>
 
       <!-- ---- Les avis mis en avant (29/09/2026, assets/modules/avis.js) ----
            Masquée tant qu'aucun avis n'est publié : une section vide, ou des avis
            inventés pour la remplir, seraient pires que pas de section. -->
-      <section class="sec av-accueil" id="avAccueil" hidden>
-        <div class="container">
-          <span class="sec-tag">Avis</span>
-          <h2 class="sec-h">Ce qu'en disent les élèves.</h2>
+      <section class="acc-sec av-accueil" id="avAccueil" hidden>
+        <div class="acc-in">
+          <span class="acc-panneau">Avis</span>
+          <h2 class="acc-h">Ce qu'en disent les élèves.</h2>
           <div class="av-grille" id="avAccueilListe"></div>
-          <p class="av-accueil__pied"><button class="btn" type="button" data-page="avis">Voir tous les avis</button></p>
+          <p class="av-accueil__pied"><button class="acc-btn acc-btn--creux" type="button" data-page="avis">Voir tous les avis</button></p>
         </div>
       </section>
 
       <!-- ---- L'offre ----
            Le tarif, la durée d'essai et l'exigence d'une carte ne sont PAS
-           écrits ici : ils viennent de RT_OFFRE (un seul endroit, plus bas dans
-           le script de la vitrine). Tant que le prix n'est pas fixé, la page
-           n'en invente aucun — elle dit qu'il sera annoncé, ce qui est vrai.
-           Les valeurs de repli ci-dessous sont celles d'aujourd'hui. -->
-      <section class="offre">
-        <div class="container">
-          <span class="sec-tag">L'offre</span>
-          <h2 class="sec-h">Gratuit pendant la phase de lancement.</h2>
-          <p class="sec-lede">Créez un compte, faites un vol complet, et jugez par vous-même.</p>
+           écrits ici : ils viennent de RT_OFFRE (routeur.js, un seul endroit).
+           Tant que le prix n'est pas fixé, la page n'en invente aucun. Les
+           valeurs ci-dessous sont celles de repli, d'aujourd'hui. -->
+      <section class="acc-sec offre">
+        <div class="acc-in">
+          <span class="acc-panneau">L'offre</span>
+          <h2 class="acc-h">Gratuit pendant la phase de lancement.</h2>
+          <p class="acc-lede">Créez un compte, faites un vol complet, et jugez par vous-même.</p>
 
-          <div class="strip reveal">
-            <div class="strip__head">
-              <span class="strip__id">Albatros VFR<small> · Bande de progression</small></span>
-              <span class="strip__kind" data-offre="kind">Essai</span>
+          <div class="acc-offre reveal">
+            <div class="acc-offre__tete">
+              <span>Albatros VFR</span>
+              <span class="acc-offre__kind" data-offre="kind">Essai</span>
             </div>
-            <dl class="strip__fields">
-              <div class="strip__f"><dt>Prix</dt><dd data-offre="duree">Gratuit<small>pendant le lancement</small></dd></div>
-              <div class="strip__f"><dt>Accès</dt><dd>Tout<small>aucun exercice bloqué</small></dd></div>
-              <div class="strip__f"><dt>Carte bancaire</dt><dd data-offre="carte">Non<small>rien à saisir</small></dd></div>
-              <div class="strip__f"><dt>Ensuite</dt><dd data-offre="prix">Abonnement<small>prix annoncé ici</small></dd></div>
+            <dl class="acc-offre__cases">
+              <div><dt>Prix</dt><dd data-offre="duree">Gratuit<small>pendant le lancement</small></dd></div>
+              <div><dt>Accès</dt><dd>Tout<small>aucun exercice bloqué</small></dd></div>
+              <div><dt>Carte bancaire</dt><dd data-offre="carte">Non<small>rien à saisir</small></dd></div>
+              <div><dt>Ensuite</dt><dd data-offre="prix">Abonnement<small>prix annoncé ici</small></dd></div>
             </dl>
-            <!-- Les limites de la phase de lancement (29/09/2026). Les nombres sont
-                 ceux de assets/modules/lancement.js (LIMITES) : les changer là-bas
-                 sans les changer ici ferait mentir la vitrine. -->
-            <div class="strip__jour">
-              <span class="strip__jour-t">Chaque jour, pendant le lancement</span>
-              <ul>
-                <li><b>3 vols et 5 scénarios</b> avec la voix réaliste du contrôleur</li>
-                <li>puis <b>jusqu'à 10 vols et 15 scénarios</b> avec la voix de votre navigateur</li>
-                <li><b>QCM illimités</b></li>
-              </ul>
-              <span class="strip__jour-n">Les compteurs repartent à zéro à minuit. Vous les voyez sur votre tableau de bord.</span>
+            <div class="acc-offre__deux">
+              <!-- Les limites de la phase de lancement (29/09/2026). Les nombres
+                   sont ceux de assets/modules/lancement.js (LIMITES) : les changer
+                   là-bas sans les changer ici ferait mentir la vitrine. -->
+              <div>
+                <h3>Chaque jour, pendant le lancement</h3>
+                <ul class="acc-liste">
+                  <li><b>3 vols et 5 scénarios</b> avec la voix réaliste du contrôleur</li>
+                  <li>puis <b>jusqu'à 10 vols et 15 scénarios</b> avec la voix de votre navigateur</li>
+                  <li><b>QCM illimités</b></li>
+                </ul>
+                <p class="acc-petit">Les compteurs repartent à zéro à minuit. Vous les voyez sur votre tableau de bord.</p>
+              </div>
+              <div>
+                <h3>Ce qu'il y a dedans</h3>
+                <ul class="acc-liste">
+                  <li><b>13 scénarios</b> — du parking au parking, plus les quiz de vocabulaire et de nombres</li>
+                  <li><b>43 imprévus</b> tirés au sort, du SIGMET au MAYDAY</li>
+                  <li><b>387 aérodromes</b> français, leurs vraies pistes et leurs vraies fréquences</li>
+                  <li><b>176 appareils</b>, du DR400 à l'Elixir</li>
+                  <li><b>Mode Réel</b> : le texte du contrôleur est masqué, vous n'avez que l'oreille</li>
+                  <li><b>Chaque phrase</b> renvoie à sa page du manuel DSNA</li>
+                </ul>
+              </div>
             </div>
-            <div class="strip__body">
-              <ul class="strip__list">
-                <li><b>13 scénarios</b> — du parking au parking, plus les quiz de vocabulaire et de nombres</li>
-                <li><b>43 imprévus</b> tirés au sort, du SIGMET au MAYDAY</li>
-                <li><b>387 aérodromes</b> français, leurs vraies pistes et leurs vraies fréquences</li>
-                <li><b>176 appareils</b>, du DR400 à l'Elixir</li>
-                <li><b>Mode Réel</b> : le texte du contrôleur est masqué, vous n'avez que l'oreille</li>
-                <li><b>Chaque phrase</b> renvoie à sa page du manuel DSNA</li>
-              </ul>
+            <div class="acc-offre__pied">
+              <button class="acc-btn acc-btn--plein" type="button" data-page="signup">Commencer l'essai gratuit</button>
+              <span class="acc-petit">Deux minutes pour créer votre compte. <span data-offre="foot">Aucune carte demandée, aucun prélèvement automatique.</span></span>
             </div>
-            <div class="strip__act">
-              <button class="btn cta" type="button" data-page="signup">Commencer l'essai gratuit</button>
-              <span class="strip__side">Deux minutes pour créer votre compte.</span>
-            </div>
-            <p class="strip__foot" data-offre="foot">Aucune carte demandée, aucun prélèvement automatique.</p>
           </div>
         </div>
       </section>
 
-      <!-- ---- Les objections, dites à voix haute ----
-           Ce qui empêche de créer un compte, ce n'est pas le manque d'arguments :
-           c'est une question sans réponse. Elles sont ici, avec la réponse vraie,
-           y compris quand elle ne nous arrange pas. -->
-      <section class="faq">
-        <div class="container">
-          <span class="sec-tag">Avant de vous lancer</span>
-          <h2 class="sec-h">Les questions qu'on nous pose.</h2>
-          <!-- Repliées (30/09/2026, demande du développeur) : la question seule,
-               une flèche, et la réponse au clic. <details> plutôt qu'un script :
-               le clavier, le lecteur d'écran et la recherche dans la page
-               (Ctrl+F ouvre la réponse qui contient le mot) marchent d'office. -->
-          <div class="qa">
-            <details class="qa__i reveal">
+      <!-- ---- Les questions qu'on nous pose ----
+           Repliées : <details> plutôt qu'un script — le clavier, le lecteur
+           d'écran et la recherche dans la page marchent d'office. -->
+      <section class="acc-sec acc-sec--ardoise">
+        <div class="acc-in acc-deux">
+          <div>
+            <span class="acc-panneau">Avant de vous lancer</span>
+            <h2 class="acc-h">Les questions qu'on nous pose.</h2>
+          </div>
+          <div class="acc-qa">
+            <details class="reveal">
               <summary>Il me faut quoi&nbsp;?</summary>
-              <div class="qa__r">Vous devez utiliser Albatros VFR sur <b>Chrome, Edge ou Safari</b>, avec un micro, sur ordinateur comme sur téléphone. Firefox ne reconnaît pas la voix.</div>
+              <div class="acc-qa__r">Vous devez utiliser Albatros VFR sur <b>Chrome, Edge ou Safari</b>, avec un micro, sur ordinateur comme sur téléphone. Firefox ne reconnaît pas la voix.</div>
             </details>
-            <details class="qa__i reveal">
+            <details class="reveal">
               <summary>Est-ce que ça remplace mon instructeur&nbsp;?</summary>
-              <div class="qa__r"><b>Non.</b> Votre instructeur vous apprend à voler. Ici, vous répétez la radio autant de fois que vous voulez, ce qui est impossible en vol.</div>
+              <div class="acc-qa__r"><b>Non.</b> Votre instructeur vous apprend à voler. Ici, vous répétez la radio autant de fois que vous voulez, ce qui est impossible en vol.</div>
             </details>
-            <details class="qa__i reveal">
+            <details class="reveal">
               <summary>Je n'ose pas parler à la radio.</summary>
-              <div class="qa__r">C'est justement fait pour ça. Personne ne vous écoute, et vous pouvez vous tromper autant de fois que vous voulez.</div>
+              <div class="acc-qa__r">C'est justement fait pour ça. Personne ne vous écoute, et vous pouvez vous tromper autant de fois que vous voulez.</div>
             </details>
-            <details class="qa__i reveal">
+            <details class="reveal">
               <summary>D'où viennent les phrases&nbsp;?</summary>
-              <div class="qa__r">Du <b>manuel de phraséologie officiel de la DSNA</b> (10<sup>e</sup> édition). Aucune phrase n'est inventée.</div>
+              <div class="acc-qa__r">Du <b>manuel de phraséologie officiel de la DSNA</b> (10<sup>e</sup> édition). Aucune phrase n'est inventée.</div>
             </details>
-            <details class="qa__i reveal">
+            <details class="reveal">
               <summary>Et si le micro me comprend mal&nbsp;?</summary>
-              <div class="qa__r">Vous pouvez corriger le texte avant de valider, ou réenregistrer votre message.</div>
+              <div class="acc-qa__r">Vous pouvez corriger le texte avant de valider, ou réenregistrer votre message.</div>
             </details>
-            <details class="qa__i reveal">
+            <details class="reveal">
               <summary>Mes données&nbsp;?</summary>
-              <div class="qa__r">Votre voix <b>n'est jamais enregistrée</b>. C'est votre navigateur qui la transforme en texte (chez Google sur Chrome). On garde seulement le texte de vos exercices et votre score. Tous les détails sont dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.</div>
+              <div class="acc-qa__r">Votre voix <b>n'est jamais enregistrée</b>. C'est votre navigateur qui la transforme en texte (chez Google sur Chrome). On garde seulement le texte de vos exercices et votre score. Tous les détails sont dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.</div>
             </details>
           </div>
         </div>
       </section>
 
       <!-- ---- L'appel final ---- -->
-      <section class="final">
-        <!-- width/height portés sur la balise : la place est réservée avant que
-             l'image arrive, sinon le panneau sursaute au chargement. -->
-        <img class="final__avion" src="assets/avions/a320-air-france.webp" alt=""
-             width="760" height="219" decoding="async" loading="lazy" aria-hidden="true">
-        <div class="final__in">
+      <section class="acc-final">
+        <div class="acc-in">
           <h2>Lors d'une panne en vol, vous n'aurez pas le temps de chercher vos mots. Entraînez-vous ici.</h2>
           <p>Créez votre compte et faites votre premier vol en quelques minutes.</p>
-          <div class="final__cta">
-            <button class="btn cta" type="button" data-page="signup">Commencer l'essai gratuit</button>
-            <button class="btn cta-ghost" type="button" data-page="login">Se connecter</button>
+          <div class="acc-boutons">
+            <button class="acc-btn acc-btn--plein" type="button" data-page="signup">Commencer l'essai gratuit</button>
+            <button class="acc-btn acc-btn--creux" type="button" data-page="login">Se connecter</button>
           </div>
-          <p class="final__note">Outil pédagogique — il ne remplace pas la formation avec un instructeur.</p>
+          <p class="acc-petit">Outil pédagogique — il ne remplace pas la formation avec un instructeur.</p>
         </div>
       </section>
     </section>
@@ -918,7 +885,7 @@
             d'en rediffuser les images sur ce site reste à établir</b> : consulter les conditions de
             réutilisation du SIA et de l'IGN avant toute mise en ligne publique. Voir la note ci-dessous.</li>
           <li><b>Bibliothèque cartographique</b> — Leaflet, licence BSD 2-clauses.</li>
-          <li><b>Photographies</b> — créditées en pied de page (Unsplash, Pixabay, rawpixel).</li>
+          <li><b>Photographies</b> — créditées en pied de page (Unsplash, Pixabay).</li>
         </ul>
         <p class="legal-avert"><b>Point à vérifier avant toute ouverture au public.</b> Le site embarque
           environ 116 Mo de tuiles de la carte OACI-VFR. Consulter une carte est une chose, en
@@ -2689,7 +2656,7 @@
          — et ici elle contredisait la politique de confidentialité. -->
     Une fois la page ouverte, un exercice se poursuit sans connexion : la séance est envoyée dès que la connexion revient. Trois choses sortent de votre machine : le <strong>fond de carte</strong> des pages Navigation et Carte, dont une couche vient des serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>voix</strong>, quand vous parlez au micro, transcrite par le service de reconnaissance de votre navigateur ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback » ; et, quand la voix réaliste du contrôleur parle (par défaut pendant la phase de lancement, désactivable dans les Paramètres), le <strong>texte que prononce le contrôleur</strong>, synthétisé par Google. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
     <br><button class="auth-link" type="button" data-contact>Contact / Feedback</button> · <button class="auth-link" type="button" data-page="mentions">Mentions légales</button> · <button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
-    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : rawpixel — licence CC0. Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation et de l’Alphabet aéro : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
+    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI-VFR 1:500 000 : SIA / DGAC, édition 2026. Photo d'accueil : Oskar Kadaksoo (Unsplash). Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation et de l’Alphabet aéro : Unsplash — Rita Candeias ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
 
   <div class="toast" id="toast"></div>

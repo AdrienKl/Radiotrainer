@@ -224,6 +224,11 @@
    ["Rolladen-Schneider LS4","LS4","Planeur",1], ["Motoplaneur","MOTOPLANEUR","Planeur",2],
    ["Diamond HK36 Super Dimona","DIMONA","Planeur",2], ["Scheibe SF25 Falke","FALKE","Planeur",2]
   ].map(function(a){ return {nom:a[0], abbr:a[1], fam:a[2], places:a[3]||4, kt:VITESSE[a[2]]||100}; });
+  /* Les noms d'avions sont protégés du correcteur flou (01/10/2026), comme les
+     noms de terrains : « Jodel » devenait « hotel », « Pitts » « piste »,
+     « Stampe » « étape », « CAP10 » « cap » — et le type annoncé, pourtant
+     juste, était compté faux. noyau/2-texte.js › protegerMots. */
+  if(typeof protegerMots==='function') AIRCRAFT.forEach(function(a){ protegerMots([a.nom, a.abbr, a.fam]); });
   // Aucun avion présélectionné : le champ reste vide tant que l'élève n'a pas choisi.
   var acChoice=null;
 
@@ -2239,7 +2244,10 @@
     return v;
   }
   // Variantes pour le type d'avion et le nombre de personnes à bord.
+  /* Toutes les écritures du type (« da 50 », « da50 », « d a 50 »…) :
+     noyau/2-texte.js › typeAvionVariantes. L'ancienne liste reste en repli. */
   function acVars(ab){
+    if(typeof typeAvionVariantes==='function') return typeAvionVariantes(ab);
     var v=[ab.toLowerCase()];
     ab.toLowerCase().split(/[\s-]+/).forEach(function(w){ if(w.length>2) v.push(w); });
     return v;

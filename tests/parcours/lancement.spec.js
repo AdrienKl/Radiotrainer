@@ -109,7 +109,8 @@ test('la vitrine annonce la phase de lancement et ses limites', async ({ page })
   await expect(offre).toContainText('jusqu\'à 10 vols et 15 scénarios');
   await expect(offre).toContainText('QCM illimités');
   await expect(page.locator('[data-offre="kind"]')).toHaveText('Phase de lancement');
-  await expect(page.locator('.hero__note')).toContainText('Phase de lancement');
+  // La phrase du hero (« Phase de lancement : gratuit… ») a été retirée le
+  // 01/10/2026, à la demande : la section Offre ci-dessus suffit à l'annoncer.
 });
 
 test('Paramètres : un onglet à la fois, lu et écrit dans l\'adresse', async ({ page }) => {

@@ -874,11 +874,8 @@ function drawTypeEtDestination(){
     .filter(a => a && a !== ici && /^LF[A-Z]{2}$/.test(a.icao||''));
   state.scDest = autres.length ? autres[Math.floor(Math.random()*autres.length)] : null;
 }
-function typeVariants(t){
-  const v=[normalize(t)];
-  normalize(t).split(' ').forEach(w=>{ if(w.length>2) v.push(w); });
-  return v;
-}
+// Toutes les écritures du type (« da 50 », « da50 », « d a 50 »…) : 2-texte.js.
+function typeVariants(t){ return typeAvionVariantes(t); }
 
 /* =========================================================================
    MÉTÉO DÉTAILLÉE — les paramètres que diffuse un ATIS

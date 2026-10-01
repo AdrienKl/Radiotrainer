@@ -12,6 +12,8 @@
      2. L'ENCADRÉ « Chrome, Edge ou Safari » des écrans de connexion et
         d'inscription : une ligne de plus quand ce navigateur-ci n'a pas de
         reconnaissance vocale.
+     3. LA BARRE DE LA VITRINE QUI SE REPLIE sur le logo quand on descend
+        l'accueil (01/10/2026).
 
    ┌─ AU REPOS, LE DOCUMENT EST EXACTEMENT CELUI D'AVANT ─────────────────┐
    │ La pastille ne se voit que PENDANT le glissement (classe .glisse, une │
@@ -284,6 +286,61 @@
       l.classList.remove('logo-rebond'); void l.offsetWidth; l.classList.add('logo-rebond');
     });
   });
+
+  /* ---------- La barre de la vitrine qui se replie (01/10/2026) ----------
+     Sur l'accueil seulement. On descend → la barre se resserre sur le logo et
+     le nom ; on remonte → elle se rouvre. Logo ou nom cliqué barre repliée :
+     elle se rouvre, et la page NE remonte PAS (demande du développeur) ;
+     barre ouverte, le logo garde son rôle (routeur.js : haut de la vitrine
+     ou tableau de bord).
+     Le clic est pris en CAPTURE sur la barre, avant l'écouteur du logo posé
+     par routeur.js, et arrêté là : sans quoi les deux partiraient ensemble.
+     Le sens du défilement est cumulé sur SEUIL px : un tremblement du doigt
+     ou de la molette ne fait pas battre la barre. */
+  (function(){
+    var barre = document.getElementById('topnav');
+    if(!barre) return;
+    var marque = barre.querySelector('.brand');
+    var HAUT = 80, SEUIL = 24;
+    var dernierY = window.scrollY, cumul = 0;
+    function surAccueil(){
+      var a = document.getElementById('page-accueil');
+      return !!(a && a.classList.contains('active'));
+    }
+    function mesurer(){
+      if(!marque) return;
+      var cs = getComputedStyle(barre);
+      var w = marque.offsetWidth + parseFloat(cs.paddingLeft) + 16 +
+              parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
+      barre.style.setProperty('--nav-compacte', Math.ceil(w) + 'px');
+    }
+    function replier(oui){
+      if(oui === barre.classList.contains('compacte')) return;
+      if(oui) mesurer();
+      barre.classList.toggle('compacte', oui);
+    }
+    window.addEventListener('scroll', function(){
+      var y = window.scrollY, d = y - dernierY;
+      dernierY = y;
+      if(!surAccueil() || y < HAUT){ cumul = 0; replier(false); return; }
+      cumul = (d > 0) === (cumul > 0) ? cumul + d : d;
+      if(cumul > SEUIL) replier(true);
+      else if(cumul < -SEUIL) replier(false);
+    }, { passive:true });
+    window.addEventListener('rt:page', function(){ cumul = 0; replier(false); });
+    window.addEventListener('resize', function(){ if(barre.classList.contains('compacte')) mesurer(); });
+    function rouvrir(e){
+      if(!barre.classList.contains('compacte')) return;
+      if(!e.target.closest || !e.target.closest('.brand')) return;
+      if(e.type === 'keydown' && e.key !== 'Enter') return;
+      e.preventDefault(); e.stopPropagation();
+      cumul = 0; replier(false);
+      var l = marque && marque.querySelector('.logo');
+      if(l){ l.classList.remove('logo-rebond'); void l.offsetWidth; l.classList.add('logo-rebond'); }
+    }
+    barre.addEventListener('click', rouvrir, true);
+    barre.addEventListener('keydown', rouvrir, true);
+  })();
 
   /* ---------- « Chrome, Edge ou Safari » ---------- */
   var reco = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);

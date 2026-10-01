@@ -534,3 +534,24 @@
   /* Le logo ramène à la maison (assets/modules/routeur.js) : il doit se voir
      cliquable. */
   .brand, .side-brand, .auth-brand{ cursor:pointer; }
+
+  /* ---------- LE LOGO EN NOIR ET BLANC (01/10/2026) ----------
+     Demande du développeur : « tous les logos Albatros VFR en noir et blanc ».
+     Le violet ne reste qu'au site (boutons, liens), plus à la marque.
+       · sur un fond SOMBRE (barre de la vitrine, menu de gauche, console) :
+         pastille blanche, albatros noir — ou albatros blanc seul ;
+       · sur un fond CLAIR (barre mobile, cartes de connexion) : pastille
+         noire, albatros blanc — ou albatros noir seul (l'encre du site, qui
+         passe au blanc en thème sombre).
+     Placé en fin de fichier : il passe devant 01-socle.css (le dégradé violet
+     de .brand .logo) et devant les règles de couleur plus haut. */
+  .brand .logo{ background:#111318; }
+  .topnav .brand .logo{ background:#fff; box-shadow:0 0 0 1px rgba(255,255,255,.18), 0 4px 14px rgba(0,0,0,.35); }
+  .topnav .brand .logo .ic-svg.logo-albatros{ color:#111318; }
+  /* Barre mobile de l'application : le logo n'était PAS centré dans sa pastille
+     (display:inline-flex sans alignement, posé plus haut) — on le centre. */
+  .app-topbar .brand .logo{ display:inline-grid; place-items:center; color:#fff; }
+  :root[data-theme="dark"] .app-topbar .brand .logo{ background:#fff; }
+  :root[data-theme="dark"] .app-topbar .brand .logo .ic-svg.logo-albatros{ color:#111318; }
+  .auth-brand .logo, :root[data-theme="dark"] .auth-brand .logo{ color:var(--ink); }
+  .side-brand .logo{ color:#fff; }

@@ -232,7 +232,12 @@ test('une erreur du micro est dite à l\'utilisateur, et ne note rien', async ({
   });
   await page.waitForTimeout(400);
 
-  const journal = await page.locator('#log').innerText().catch(() => '');
+  /* Le journal est replié par défaut depuis le 01/10/2026 (« Échanges
+     précédents ») : l'alerte doit être VISIBLE au-dessus de lui, et rester dans
+     le journal. */
+  const avis = page.locator('#page-exercices .journal-avis');
+  await expect(avis).toBeVisible();
+  const journal = (await avis.innerText()) + ' ' + (await page.locator('#log').textContent());
   expect(/aucune parole|micro/i.test(journal),
     `L'erreur du micro n'est dite nulle part. L'utilisateur voit un exercice qui ne réagit pas.\n${journal.slice(0, 200)}`).toBe(true);
   expect(await page.locator('#feedback .fb-item').count(),

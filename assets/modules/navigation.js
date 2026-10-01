@@ -2273,13 +2273,8 @@
   }
 
   // ---- Rendu d'une étape ----
-  function vfLog(who,txt){
-    var d=document.createElement('div'); d.className='r '+who;
-    var w=(who==='atc')?'ATC':(who==='you'?'Vous':'—');
-    d.innerHTML='<span class="who">'+w+'</span>'+esc(txt);
-    $v('vfLog').appendChild(d); $v('vfLog').scrollTop=1e6;
-    return d;
-  }
+  // Le journal : rendu partagé avec les Scénarios (noyau/7-interface.js › journalLigne).
+  function vfLog(who,txt,qui){ return journalLigne($v('vfLog'), who, txt, qui); }
 
   /* ================= AFFICHAGE DES MESSAGES DU CONTRÔLEUR =================
      Débutant : le message est écrit, on peut le relire.
@@ -2384,14 +2379,14 @@
     var texte=fillDisplay(brut), atc=$v('vfAtc');
     if(level!=='reel'){
       atc.innerHTML='<b>'+esc(stn||'ATC')+' :</b> '+esc(texte);
-      vfLog('atc',texte);
+      vfLog('atc',texte,stn);
     } else {
       atc.innerHTML='<div class="vf-ecoute"><span class="qui">'+ICONS.son+
         esc(stn||'Le contrôle')+' vous transmet</span>'+
         '<button class="vf-rejouer" type="button" data-rejouer>'+ICONS.rejouer+'Réécouter</button></div>';
       var b=atc.querySelector('[data-rejouer]');
       if(b) b.addEventListener('click',function(){ speakATC(brut, urgent); });
-      var ligne=vfLog('atc','(transmission — répondez, le texte s\'affichera ensuite)');
+      var ligne=vfLog('atc','(transmission — répondez, le texte s\'affichera ensuite)',stn);
       ligne.classList.add('attente');
       aRevELer.push({el:ligne, texte:texte});
     }
@@ -2400,7 +2395,7 @@
   function devoilerATC(){
     aRevELer.forEach(function(o){
       o.el.classList.remove('attente');
-      o.el.innerHTML='<span class="who">ATC</span>'+esc(o.texte);
+      var t=o.el.querySelector('.j-txt'); if(t) t.textContent=o.texte;
     });
     aRevELer=[];
   }
@@ -2881,18 +2876,13 @@
   }
 
   // ---- Avion animé sur la carte ----
-  /* Silhouettes vues de dessus, nez en haut, centrees sur la voilure (24x24).
-     Vu du dessus, ce qui distingue un Cessna d'un DR400 n'est pas la position de
-     l'aile — invisible sous cet angle — mais son PLAN : aile rectangulaire et
-     longue envergure pour le Cessna, aile trapezoidale plus courte pour le DR400. */
-  var PLANE_CESSNA = '<svg viewBox="0 0 24 24" fill="currentColor">'+
-    '<path d="M11.3 3.4c0-.55.3-.95.7-.95s.7.4.7.95l.22 6.9h9.3c.3 0 .55.25.55.55v1.1c0 .3-.25.55-.55.55h-9.28l.28 5.4 2.9 1.5c.2.1.33.31.33.54v.86c0 .27-.25.47-.51.41L12 20.4l-3.94.81c-.26.06-.51-.14-.51-.41v-.86c0-.23.13-.44.33-.54l2.9-1.5.28-5.4H1.78c-.3 0-.55-.25-.55-.55v-1.1c0-.3.25-.55.55-.55h9.3z"/>'+
-    '<rect x="8.6" y="2.5" width="6.8" height=".85" rx=".42"/></svg>';
-  var PLANE_DR400 = '<svg viewBox="0 0 24 24" fill="currentColor">'+
-    '<path d="M11.3 3.2c0-.55.3-.95.7-.95s.7.4.7.95l.24 7.2 8.2 1.35c.35.06.6.36.6.71v.5c0 .33-.29.58-.62.53l-8.15-1.2.3 5.15 2.75 1.45c.2.11.32.32.32.55v.82c0 .27-.24.46-.5.4L12 20.5l-3.84.79c-.26.06-.5-.13-.5-.4v-.82c0-.23.12-.44.32-.55l2.75-1.45.3-5.15-8.15 1.2c-.33.05-.62-.2-.62-.53v-.5c0-.35.25-.65.6-.71l8.2-1.35z"/>'+
-    '<rect x="8.9" y="2.35" width="6.2" height=".8" rx=".4"/></svg>';
+  /* Un Cessna dessiné vu de dessus, nez en haut (01/10/2026, image fournie par
+     le développeur : les deux silhouettes vectorielles d'avant étaient jugées
+     « vraiment moches »). Fond détouré, image CARRÉE (128 px, l'avion centré) :
+     la rotation se fait autour du centre sans rogner les ailes. Même dessin
+     pour tous les avions — c'est un repère de position, pas un modèle. */
   function silhouetteAvion(){
-    return (acChoice && acChoice.fam==='Cessna') ? PLANE_CESSNA : PLANE_DR400;
+    return '<img class="vf-plane__img" src="assets/images/avion-carte.png" alt="" width="32" height="32" draggable="false">';
   }
   /* Cap suivi par le symbole : il doit pointer le long du trait de route. */
   function capRoute(a,b){
@@ -2949,12 +2939,12 @@
     var p=legPoint(t);
     if(!F.planeMk){
       F.planeMk=L.marker(p,{icon:L.divIcon({className:'vf-plane',html:silhouetteAvion(),
-                            iconSize:[28,28],iconAnchor:[14,14]}), zIndexOffset:1000}).addTo(map);
+                            iconSize:[32,32],iconAnchor:[16,16]}), zIndexOffset:1000}).addTo(map);
     } else F.planeMk.setLatLng(p);
     // Orientation : on vise un point legerement en avant sur la meme branche.
     var av=legPoint(Math.min(1,(t||0)+0.03));
     if(av[0]!==p[0] || av[1]!==p[1]) F.capAvion=capRoute(p,av);
-    var sv=F.planeMk.getElement() && F.planeMk.getElement().querySelector('svg');
+    var sv=F.planeMk.getElement() && F.planeMk.getElement().querySelector('.vf-plane__img');
     if(sv && F.capAvion!=null) sv.style.transform='rotate('+F.capAvion.toFixed(1)+'deg)';
     // En vol, la carte suit l'avion de près : elle sert de repère de situation,
     // pas de vue d'ensemble (le trajet complet est visible à la configuration).
@@ -2995,7 +2985,7 @@
     $v('radioSaisie').value='';
     $v('vfTransText').value=''; $v('vfValider').disabled=true;
     $v('vfTrans').textContent=''; $v('vfFb').innerHTML='';
-    $v('vfLog').innerHTML='';
+    journalVider($v('vfLog'));
     $v('vfSituation').classList.add('hidden');
     $v('vfAtc').innerHTML='';
   }

@@ -252,7 +252,7 @@
   .vf-rejouer:hover{ filter:brightness(1.08); }
   .vf-rejouer .ic-svg{ width:14px; height:14px; }
   /* Ligne de journal en attente : le texte n'apparaît qu'une fois la réponse donnée. */
-  .vf-log .r.attente{ font-style:normal; opacity:.75; }
+  .vf-log .j-msg.attente .j-txt{ font-style:italic; color:var(--ink-2-fort); }
   .vf-consigne:empty{ display:none; }
   .vf-situation{ display:flex; align-items:flex-start; gap:10px; background:#fdf2f0;
     border:1px solid #e6bdb7; border-radius:11px; padding:11px 13px; font-size:14.5px;
@@ -314,15 +314,40 @@
 
   .vf-actions{ display:flex; gap:8px; margin-top:13px; }
   .vf-actions .btn{ flex:1; }
-  .vf-log{ margin-top:14px; border-top:1px solid var(--border); padding-top:11px;
-    max-height:190px; overflow-y:auto; font-size:12.5px; line-height:1.5; }
-  .vf-log:empty{ display:none; }   /* sinon une bordure orpheline flotte sous les boutons */
-  .vf-log .r{ margin-bottom:5px; }
-  .vf-log .r .who{ font-family:var(--mono); font-size:10.5px; text-transform:uppercase;
-    letter-spacing:.05em; color:var(--ink-2); margin-right:6px; }
-  .vf-log .r.atc{ color:var(--violet-dark); }
-  .vf-log .r.you{ color:var(--ink); }
-  .vf-log .r.sys{ color:var(--ink-2); }
+  /* ---- Échanges précédents (01/10/2026) — noyau/7-interface.js › journalLigne ----
+     Un encadré repliable, fermé par défaut ; dedans, une conversation : le
+     contrôleur à gauche, vous à droite, le score posé sur votre bulle. Caché
+     tant qu'il n'y a rien dedans. */
+  .journal-avis{ margin-top:12px; padding:9px 12px; border-radius:10px; font-size:13px; line-height:1.45;
+    background:#fff6ed; border:1px solid #f0c9a6; color:#5f3312; }
+  .journal-avis[hidden]{ display:none; }
+  .journal{ margin-top:14px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
+  .journal:has(.vf-log:empty){ display:none; }
+  .journal > summary{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px;
+    padding:11px 14px; font-size:13.5px; font-weight:700; color:var(--ink); border-radius:14px; user-select:none; }
+  .journal > summary::-webkit-details-marker{ display:none; }
+  .journal > summary::after{ content:""; margin-left:auto; width:8px; height:8px; flex:none;
+    border-right:2px solid var(--ink-2-fort); border-bottom:2px solid var(--ink-2-fort);
+    transform:rotate(45deg) translateY(-2px); transition:transform .2s; }
+  .journal[open] > summary::after{ transform:rotate(-135deg) translateY(-2px); }
+  .journal > summary:hover{ background:var(--surface-2); }
+  .journal__n{ min-width:22px; padding:1px 7px; border-radius:99px; background:var(--surface-2);
+    border:1px solid var(--border); font-size:12px; text-align:center; color:var(--ink-2-fort); }
+  .vf-log{ display:flex; flex-direction:column; gap:8px; padding:4px 12px 14px;
+    max-height:340px; overflow-y:auto; font-size:13.5px; line-height:1.45; }
+  .vf-log .j-msg{ max-width:88%; padding:8px 12px; border-radius:14px; color:var(--ink); overflow-wrap:anywhere; }
+  .vf-log .j-msg.atc{ align-self:flex-start; background:var(--surface-2); border:1px solid var(--border); border-bottom-left-radius:4px; }
+  .vf-log .j-msg.you{ align-self:flex-end; background:var(--violet-soft); border-bottom-right-radius:4px; }
+  .vf-log .j-msg .who{ display:block; margin-bottom:2px; font-size:11.5px; font-weight:700; color:var(--ink-2-fort); }
+  .vf-log .j-score{ display:table; margin-top:6px; padding:2px 9px; border-radius:99px;
+    font-size:11.5px; font-weight:700; background:rgba(199,74,74,.12); color:#8a2f2b; }
+  .vf-log .j-score.ok{ background:rgba(46,158,91,.14); color:#1b6139; }
+  .vf-log .j-note{ align-self:center; max-width:92%; text-align:center; font-size:12.5px; color:var(--ink-2-fort); }
+  .vf-log .j-sep{ display:flex; align-items:center; gap:10px; margin:4px 0; font-size:12px; font-weight:700; color:var(--ink-2-fort); }
+  .vf-log .j-sep::before, .vf-log .j-sep::after{ content:""; flex:1; height:1px; background:var(--border); }
+  :root[data-theme="dark"] .journal-avis{ background:#2e2114; border-color:#5c4426; color:#f0c99b; }
+  :root[data-theme="dark"] .vf-log .j-score{ background:rgba(199,74,74,.22); color:#ffcecb; }
+  :root[data-theme="dark"] .vf-log .j-score.ok{ background:rgba(46,158,91,.24); color:#b9f0cf; }
 
   /* =========================================================================
      SCÉNARIOS — session en direct
@@ -392,10 +417,12 @@
 
   /* Marqueur avion sur la carte pendant le vol */
   .vf-plane{ font-size:0; }
-  /* Le rouge se confondait avec les zones R/P/D de la carte OACI. Bleu ardoise
-     cercle de blanc : lisible sur un fond charge, sans imiter un symbole reel. */
-  .vf-plane svg{ display:block; width:28px; height:28px; color:#1b3a63;
-    filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 3px #fff) drop-shadow(0 1px 3px rgba(0,0,0,.4));
+  /* Le Cessna vu de dessus (01/10/2026), blanc et bleu. Sans contour, il se
+     fondait dans la carte OACI (blanc et bleu, elle aussi) : un liseré bleu
+     nuit en deux passes l'en détache, une ombre portée le soulève. */
+  .vf-plane__img{ display:block; width:32px; height:32px; pointer-events:none; user-select:none;
+    filter:drop-shadow(0 0 .6px #0b1730) drop-shadow(0 0 .6px #0b1730) drop-shadow(0 0 1px #0b1730)
+           drop-shadow(0 2px 4px rgba(0,0,0,.45));
     transition:transform .8s linear; transform-origin:50% 50%; }
 
   /* --- Zone de parole (placé APRÈS les règles .vf-* d'origine pour les surcharger) ---
@@ -413,9 +440,8 @@
   .vf-fb .fb{ font-size:14px; padding:9px 12px; }
   .vf-actions{ margin-top:16px; }
   .vf-actions .btn{ padding:12px 16px; font-size:14.5px; }
-  /* Le journal s'étire jusqu'au bas du panneau — mais reste masqué tant qu'il est
-     vide, sinon sa bordure supérieure flotte toute seule sous les boutons. */
-  .vf-log{ flex:1 1 auto; max-height:none; font-size:13.5px; }
+  /* Grand écran : la conversation a un peu plus de hauteur avant de défiler. */
+  .vf-log{ max-height:420px; font-size:13.5px; }
 
   @media (max-width:980px){
     /* minmax(0,1fr) et non 1fr : la piste « auto » laissait la carte Leaflet imposer

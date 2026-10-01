@@ -89,6 +89,10 @@ la première chose que voit un abonné à chaque connexion. Pour la retirer :
 la balise `.tb-avion` d'`index.html`, et la ligne correspondante
 d'`assets/avions.js` si vous la voulez hors de l'application aussi.
 
+**Le dessin de l'avion sur la carte** (`assets/images/avion-carte.png`, depuis le
+01/10/2026) : un Cessna vu de dessus, **fourni par le développeur, qui en est
+l'auteur**. Aucune licence tierce, aucune attribution due.
+
 ## 2 ter. La police du site (30/09/2026)
 
 **Atkinson Hyperlegible Next** (Braille Institute), sous **SIL Open Font License 1.1**.

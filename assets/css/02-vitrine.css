@@ -35,12 +35,25 @@
      posé sur .hero teindrait aussi le texte et la tour. Ici il ne touche
      qu'elle. */
   .hero__carte{position:absolute; inset:0; z-index:0;
-    /* CARTE — OACI VFR 1:500 000, SIA/DGAC édition 2026 ; tuile
-       assets/oaci/7_64_44.webp (Paris sud-ouest), recadrée en 16:9, floutée de
-       2 px, désaturée à 0,90 et éclaircie de 48 % — plus 13 % de plus sur la
-       moitié gauche, qui s'éteignent avant la tour. */
-    background:url("../images/carte-oaci-hero.webp") 50% 46%/cover no-repeat}
+    /* CARTE — OACI VFR 1:500 000, SIA/DGAC édition 2026. Depuis le
+       01/10/2026 (demande du développeur) : la CÔTE D'AZUR, un peu plus
+       dézoomée qu'avant, et SANS le voile blanc (l'ancienne image, Paris
+       sud-ouest éclaircie de 48 %, reste celle des écrans de connexion :
+       carte-oaci-hero.webp). Fabriquée à partir des tuiles 7_65-67_46-47 du
+       site : 2 400 × 1 349 px recadrés, bord droit sur Menton — la carte
+       française s'arrête là, au-delà c'est du blanc (le coin bas droit en a
+       un peu, caché par la tour et le fondu du bas) —, réduits à 1 800 px,
+       flou de 1 px. Nice est donc à droite : sur ordinateur, la tour en
+       cache une partie ; sur téléphone (tour retirée), l'image est calée à
+       droite pour la montrer. */
+    background:url("../images/carte-oaci-accueil.webp") 50% 50%/cover no-repeat}
   :root[data-theme="dark"] .hero__carte{filter:brightness(.30) saturate(.72) contrast(1.06)}
+  /* Sans le voile blanc, le texte se lisait mal sur une carte chargée. Plutôt
+     que de remettre un voile, un HALO autour des lettres seules : la carte
+     reste nette, le texte s'en détache. Thème clair seulement — en sombre,
+     la carte est déjà éteinte. */
+  :root:not([data-theme="dark"]) .hero__title, :root:not([data-theme="dark"]) .hero__sub{
+    text-shadow:0 0 2px #fff, 0 0 6px #fff, 0 0 12px rgba(255,255,255,.95), 0 0 22px rgba(255,255,255,.85)}
 
   /* Le bas se dissout dans la page. Le dégradé est en --bg et non en noir :
      il suit le thème, et en thème clair il ÉCLAIRCIT — ce qui sert aussi les
@@ -149,6 +162,7 @@
     /* La barre flottante (01-socle.css) passe au-dessus du hero : la tour,
        remise dans le flux, commence sous elle. */
     .hero{padding-top:72px}
+    .hero__carte{background-position:85% 50%}   /* Nice et la côte en vue, la tour n'étant plus là */
     .hero__eyebrow{font-size:11px; letter-spacing:.11em}
     .hero__strip{grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 26px; max-width:none}
     .hero__num b{font-size:22px}

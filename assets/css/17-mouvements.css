@@ -436,3 +436,24 @@
     .btn:active:not(:disabled), .sidelink:active, .set-tab:active, .seg3-opt:active,
     .seg-opt:active{ transform:none; }
   }
+
+/* ---------- La barre de la vitrine qui se replie (01/10/2026) ----------
+   Demande du développeur : sur l'accueil, en descendant, la barre se resserre
+   jusqu'au logo et au nom ; en remontant, elle se rouvre, même mouvement à
+   l'envers. Un clic sur le logo ou le nom, barre repliée, la rouvre SANS
+   remonter la page. mouvements.js pose .compacte et mesure la largeur du
+   repli (--nav-compacte) : une largeur en px se transitionne partout, Safari
+   compris, ce que min(…) ↔ auto ne fait pas.
+   Les liens de droite ne rétrécissent pas : la barre les rogne (overflow)
+   pendant qu'ils s'effacent, sans quoi « Se connecter » passerait sur deux
+   lignes au milieu du mouvement. */
+.topnav{ overflow:hidden;
+  transition:width .55s cubic-bezier(.32,.72,0,1), padding .55s cubic-bezier(.32,.72,0,1); }
+.topnav .brand, .topnav .nav-right{ flex:none; }
+.topnav .nav-right{ transition:opacity .3s ease .12s, transform .45s cubic-bezier(.32,.72,0,1); }
+.topnav.compacte{ width:var(--nav-compacte, 220px); padding-right:16px; }
+.topnav.compacte .nav-right{ opacity:0; visibility:hidden; transform:translateX(14px);
+  transition:opacity .18s ease, transform .4s cubic-bezier(.32,.72,0,1), visibility 0s linear .18s; }
+@media (prefers-reduced-motion:reduce){
+  .topnav, .topnav .nav-right, .topnav.compacte .nav-right{ transition:none; }
+}

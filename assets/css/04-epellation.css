@@ -107,8 +107,11 @@
      d'embarquement le jour, dans le poste la nuit — et un voile plus épais
      qu'ailleurs : ce qui est écrit dessus est fait pour être lu longuement,
      pas parcouru. */
-  body.on-tableau   { --scene-img:url("../images/tableau-hall-jour.webp");
-                      --scene-pos:center 46%; --scene-haut:.68; --scene-bas:.40; --scene-vignette:.34; }
+  /* 01/10/2026, demande du développeur : en thème clair, un CIEL (Sam
+     Schooler, Unsplash) remplace le hall d'embarquement. Voile plus léger
+     que l'ancien (.68) : le bleu doit rester du bleu. */
+  body.on-tableau   { --scene-img:url("../images/tableau-ciel-jour.webp");
+                      --scene-pos:center 40%; --scene-haut:.24; --scene-bas:.10; --scene-vignette:.10; }
   body.on-exercices { --scene-img:url("../images/avion-nuages.webp");
                       --scene-pos:center 48%; --scene-haut:.62; --scene-bas:.30; --scene-vignette:.30; }
   body.on-navigation{ --scene-img:url("../images/jet-montagne.webp");
@@ -133,7 +136,7 @@
                       --scene-pos:center 58%; --scene-haut:.24; --scene-bas:.60; --scene-vignette:.48; }
   /* Écran étroit : la version légère de chaque photo (1100 px au lieu de 2000). */
   @media (max-width:820px){
-    body.on-tableau   { --scene-img:url("../images/tableau-hall-jour-800.webp"); }
+    body.on-tableau   { --scene-img:url("../images/tableau-ciel-jour-800.webp"); }
     body.on-exercices { --scene-img:url("../images/avion-nuages-800.webp"); }
     body.on-navigation{ --scene-img:url("../images/jet-montagne-800.webp"); }
     body.on-epellation{ --scene-img:url("../images/terminal-jour-800.webp"); }

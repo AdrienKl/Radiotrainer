@@ -99,6 +99,10 @@ l'auteur**. Aucune licence tierce, aucune attribution due.
 page). Les deux pilotes sont de dos, casque sur la tête : aucun visage n'est
 visible. Elle remplace la tour découpée (rawpixel, CC0) et la carte OACI.
 
+**Le ciel du tableau de bord en thème clair** (`assets/images/tableau-ciel-jour*.webp`,
+depuis le 01/10/2026) : Sam Schooler, licence Unsplash. Aucune personne, aucune
+marque. Il remplace le hall d'embarquement (`tableau-hall-jour`), retiré.
+
 ## 2 ter. La police du site (30/09/2026)
 
 **Atkinson Hyperlegible Next** (Braille Institute), sous **SIL Open Font License 1.1**.

@@ -95,10 +95,12 @@
      développeur). La photo de cockpit de nuit est chargée de reflets, et les
      chiffres s'y lisaient moins bien que sur les scènes d'exercice. Seules les
      variables changent : les cartes n'ont rien à apprendre (voir .scene dans
-     04-epellation.css). */
+     04-epellation.css).
+     01/10/2026, nouvelle demande : encore un cran (.72 → .82), et une teinte
+     neutre au lieu du bleu nuit, comme les fonds du thème. */
   :root[data-theme="dark"] #page-tableau .scene{
-    --surface:rgba(11,15,28,.72);
-    --surface-2:rgba(6,9,18,.64);
+    --surface:rgba(13,16,20,.82);
+    --surface-2:rgba(8,10,13,.74);
   }
   :root[data-theme="dark"] .tb-l3.bon{ background:rgba(69,193,135,.16); color:#8fe3b8; }
   :root[data-theme="dark"] .tb-l3.moy{ background:rgba(232,169,74,.16); color:#f0c99b; }

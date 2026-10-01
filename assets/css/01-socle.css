@@ -96,20 +96,19 @@
   :focus-visible{outline:2px solid var(--violet); outline-offset:2px}
 
   /* ---------- Header ---------- */
-  /* La bande du haut est NOIRE, et le violet du site n'y passe qu'en reflets :
-     deux halos très dilués posés là où il se passe quelque chose — la marque à
-     gauche, les boutons à droite — et un filet violet pour toute bordure basse.
-     Rien de saturé : ici le violet éclaire, il ne remplit pas. La bande garde
-     sa couleur dans les deux thèmes ; c'est le seul bloc du site qui ne suit
-     pas --surface, et c'est voulu — elle sert de cadre à la page. */
+  /* La bande du haut est GRIS FONCÉ et LÉGÈREMENT TRANSPARENTE (01/10/2026,
+     demande du développeur : le noir dégradé aux halos violets d'avant était
+     jugé lourd). La page défile dessous, floutée par backdrop-filter : la
+     bande reste lisible sans boucher l'écran. Opacité .86 — en dessous, une
+     photo claire passant derrière ferait tomber le blanc des liens sous le
+     seuil AA. La bande garde sa couleur dans les deux thèmes : c'est le seul
+     bloc du site qui ne suit pas --surface, et c'est voulu. */
   .topnav{position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; gap:16px;
-    padding:0 clamp(16px,4vw,44px); height:64px; border-bottom:1px solid rgba(91,75,206,.36);
-    background:
-      radial-gradient(130% 210% at 6% 0%, rgba(107,63,151,.34) 0%, rgba(107,63,151,0) 56%),
-      radial-gradient(95% 190% at 97% 108%, rgba(91,75,206,.34) 0%, rgba(91,75,206,0) 60%),
-      linear-gradient(180deg,#16171f 0%, #0b0c11 100%);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 6px 24px rgba(10,11,16,.26)}
-  /* Sur le noir, l'encre du site ne tient plus : la marque et les liens passent
+    padding:0 clamp(16px,4vw,44px); height:64px; border-bottom:1px solid rgba(255,255,255,.08);
+    background:rgba(40,42,50,.86);
+    -webkit-backdrop-filter:saturate(160%) blur(14px); backdrop-filter:saturate(160%) blur(14px);
+    box-shadow:0 6px 24px rgba(10,11,16,.18)}
+  /* Sur le gris foncé, l'encre du site ne tient plus : la marque et les liens passent
      au blanc, et le survol devient un voile clair au lieu de --surface-2. */
   .topnav .brand{color:#fff}
   .topnav .brand .logo{box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 4px 14px rgba(91,75,206,.45)}

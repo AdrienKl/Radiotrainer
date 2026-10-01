@@ -2324,7 +2324,8 @@ function evaluate(rawText){
   const step=currentStep();
   if(!step || !step.motsCles) return;
   const corrected = fuzzyCorrect(rawText);      // normalisé + corrigé (section D2/D3)
-  logRow('you', fillDisplay('{CALL}')+' — '+(rawText||'').trim());
+  // Le journal dit déjà « Vous » : l'indicatif devant la phrase faisait doublon.
+  logRow('you', (rawText||'').trim() || '(rien entendu)');
 
   const results = step.motsCles.map(mc=>({ label:mc.label, found: mcFound(mc, corrected) }))
     .concat(ecartsDeSens(step, corrected, fillDisplay(step.attendu||'')));

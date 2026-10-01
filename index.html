@@ -1652,7 +1652,14 @@
                 <button class="btn small" id="skipBtn" type="button">Passer</button>
               </div>
 
-              <div class="vf-log" id="log" aria-live="polite"></div>
+              <!-- Échanges précédents (01/10/2026) : la conversation, repliée par
+                   défaut ; les avis importants restent visibles juste au-dessus.
+                   noyau/7-interface.js › journalLigne. -->
+              <div class="journal-avis" role="status" hidden></div>
+              <details class="journal">
+                <summary>Échanges précédents <span class="journal__n">0</span></summary>
+                <div class="vf-log" id="log" aria-live="polite"></div>
+              </details>
             </div>
 
             <!-- Colonne de droite : la fiche du terrain. En Navigation c'est la carte
@@ -1997,7 +2004,14 @@
                 <button class="btn small" id="vfSkip" type="button">Passer</button>
               </div>
 
-              <div class="vf-log" id="vfLog" aria-live="polite"></div>
+              <!-- Échanges précédents (01/10/2026) : la conversation, repliée par
+                   défaut ; les avis importants restent visibles juste au-dessus.
+                   noyau/7-interface.js › journalLigne. -->
+              <div class="journal-avis" role="status" hidden></div>
+              <details class="journal">
+                <summary>Échanges précédents <span class="journal__n">0</span></summary>
+                <div class="vf-log" id="vfLog" aria-live="polite"></div>
+              </details>
             </div>
           </div>
         </div>

@@ -64,7 +64,8 @@ html.no-anim .adm{ transition:none; }
 .adm-rail__maison:focus-visible{ outline:2px solid var(--adm-accent); outline-offset:2px; }
 .adm-rail__logo{
   flex:none; width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
-  background:linear-gradient(135deg,var(--adm-accent),#4d3fbe); color:#fff;
+  /* Noir et blanc (01/10/2026) : pastille blanche, albatros noir, sur le rail sombre. */
+  background:#fff; color:#111318;
 }
 .adm-rail__logo .ic-svg{ width:17px; height:17px; }
 .adm-rail__logo:has(.logo-albatros){ width:38px; height:38px; border-radius:10px; }

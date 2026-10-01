@@ -75,18 +75,70 @@ function rtConfirm(text, opts){
    12) LOG + UTILS
    ========================================================================= */
 function ts(){ const d=new Date(), p=n=>String(n).padStart(2,'0'); return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
-function clearLog(){ el.log.innerHTML=''; }
-/* Journal radio, au format du vol Navigation : un libellé court en petites
-   capitales puis le texte, plutôt qu'un horodatage qui n'apprend rien. */
+/* =========================================================================
+   LE JOURNAL DES ÉCHANGES — refait le 01/10/2026 (demande du développeur :
+   « c'est bizarrement construit »). Partagé par les Scénarios (logRow) et la
+   Navigation (navigation.js › vfLog).
+   Avant : une ligne par événement, « Vous » collé au texte, et deux lignes
+   « — Éléments détectés : 2 / 4 » / « — Échange réussi. » sous chaque réponse.
+   Maintenant, une CONVERSATION dans un encadré repliable « Échanges
+   précédents » (fermé par défaut, téléphone et ordinateur) :
+     · le contrôleur à gauche, vous à droite, chacun dans sa bulle ;
+     · le score se pose SUR votre bulle (« 2 / 4 éléments », vert si complet)
+       au lieu de deux lignes de plus ;
+     · les titres « ━━ … ━━ » deviennent des séparateurs ;
+     · les autres avis (micro, fréquence, aléa…) restent dans le journal ET
+       s'affichent hors de l'encadré, dans .journal-avis, jusqu'à votre
+       prochaine réponse — un encadré fermé ne doit pas cacher une alerte.
+   La forme des appels ne change pas : logRow(kind, texte) et vfLog(qui,
+   texte) font ce qu'ils faisaient, seul le rendu change.
+   ========================================================================= */
 const LOG_QUI={atc:'Contrôle', you:'Vous', sys:'Info'};
-function logRow(kind, text){
-  if(!el.log) return;
-  if(el.log.querySelector('.empty')) el.log.innerHTML='';
-  const row=document.createElement('div');
-  row.className='r '+kind;
-  row.innerHTML='<span class="who">'+(LOG_QUI[kind]||kind)+'</span> '+escapeHtml(text);
-  el.log.appendChild(row); el.log.scrollTop=el.log.scrollHeight;
+function journalAvis(boite, texte){
+  const j=boite.closest('.journal'), a=j && j.previousElementSibling;
+  if(!a || !a.classList.contains('journal-avis')) return;
+  a.textContent=texte||''; a.hidden=!texte;
 }
+function journalCompter(boite){
+  const j=boite.closest('.journal'), n=j && j.querySelector('.journal__n');
+  if(n) n.textContent=String(boite.querySelectorAll('.j-msg.you').length);
+}
+function journalVider(boite){
+  if(!boite) return;
+  boite.innerHTML=''; journalAvis(boite,''); journalCompter(boite);
+}
+function journalLigne(boite, kind, text, qui){
+  if(!boite) return null;
+  if(boite.querySelector('.empty')) boite.innerHTML='';
+  const t=String(text==null?'':text).trim();
+  const vous=boite.querySelectorAll('.j-msg.you'), dernier=vous[vous.length-1]||null;
+  // Le score se pose sur la dernière réponse, au lieu d'une ligne de plus.
+  const sc=kind==='sys' && t.match(/^Éléments détectés : (\d+) \/ (\d+)$/);
+  if(sc && dernier){
+    let b=dernier.querySelector('.j-score');
+    if(!b){ b=document.createElement('span'); b.className='j-score'; dernier.appendChild(b); }
+    b.textContent=sc[1]+' / '+sc[2]+' élément'+(+sc[2]>1?'s':'');
+    b.classList.toggle('ok', sc[1]===sc[2] && +sc[2]>0);
+    return b;
+  }
+  if(kind==='sys' && t==='Échange réussi.' && dernier && dernier.querySelector('.j-score')){
+    const b=dernier.querySelector('.j-score'); b.classList.add('ok'); return b;
+  }
+  const row=document.createElement('div');
+  const sep=kind==='sys' && t.match(/^━━\s*(.*?)\s*━━$/);
+  if(sep){ row.className='j-sep'; row.textContent=sep[1]; }
+  else if(kind==='sys'){ row.className='j-note r sys'; row.textContent=t; journalAvis(boite, t); }
+  else {
+    row.className='j-msg r '+kind;
+    row.innerHTML='<span class="who">'+escapeHtml(qui||LOG_QUI[kind]||kind)+'</span><span class="j-txt">'+escapeHtml(t)+'</span>';
+    if(kind==='you') journalAvis(boite,'');
+  }
+  boite.appendChild(row); boite.scrollTop=boite.scrollHeight;
+  journalCompter(boite);
+  return row;
+}
+function clearLog(){ journalVider(el.log); }
+function logRow(kind, text){ return journalLigne(el.log, kind, text); }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let toastTimer=null;
 function showToast(msg){ el.toast.textContent=msg; el.toast.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.toast.classList.remove('show'),2200); }

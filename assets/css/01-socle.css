@@ -143,14 +143,16 @@
   .topnav .brand{color:#fff}
   /* Plus de violet dans la barre (01/10/2026, avec le nouvel accueil) : le
      jaune « balise » des panneaux de piste — celui de l'accueil — marque la
-     page courante et « S'inscrire », texte nuit sur jaune (10,9:1). */
+     page courante. */
   .topnav .brand .logo{box-shadow:0 0 0 1px rgba(255,255,255,.12)}
   .topnav .navlink{color:rgba(255,255,255,.76)}
   .topnav .navlink:hover{color:#fff; background:rgba(255,255,255,.10)}
   .topnav .navlink.current{color:#e9b949}
   .topnav .navlink.current::after{background:#e9b949}
-  .topnav .nav-cta{background:#e9b949; color:#0b0d10; border-radius:8px; box-shadow:none}
-  .topnav .nav-cta:hover{background:#f3c95f}
+  /* « S'inscrire » prend la couleur du logo — pastille blanche, encre noire
+     (01/10/2026, demande du développeur). */
+  .topnav .nav-cta{background:#fff; color:#0b0d10; border-radius:8px; box-shadow:none}
+  .topnav .nav-cta:hover{background:#e6e8eb}
   .topnav :focus-visible{outline-color:#e9b949}
   .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px; color:var(--ink)}
   .brand .logo{width:32px; height:32px; border-radius:9px; display:grid; place-items:center;

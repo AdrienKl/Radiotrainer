@@ -221,10 +221,6 @@
              sizes="100vw" width="2400" height="1601" alt="" decoding="async" fetchpriority="high">
         <div class="acc-hero__in">
           <h1 class="acc-hero__titre">Maîtrisez la radio comme un vrai pilote.</h1>
-          <div class="acc-boutons">
-            <button class="acc-btn acc-btn--plein" type="button" data-page="signup">Commencer l'essai gratuit</button>
-            <button class="acc-btn acc-btn--creux" type="button" data-page="login">Se connecter</button>
-          </div>
         </div>
       </div>
 
@@ -233,7 +229,16 @@
            lisaient mal sur ses écrans allumés. -->
       <div class="acc-chiffres-bande">
         <div class="acc-in">
-          <p class="acc-intro">Créé par un élève pilote, Albatros VFR est né d'un constat simple&nbsp;: à la radio, on progresse en parlant. Ici, vous répétez chaque échange autant de fois qu'il le faut — du roulage à l'atterrissage, jusqu'à la panne moteur ou radio.</p>
+          <!-- La phrase d'introduction, et les deux boutons JUSTE À SA DROITE
+               (01/10/2026, demande du développeur : le hero ne garde que le
+               titre, pour laisser la place à la photo). -->
+          <div class="acc-intro-ligne">
+            <p class="acc-intro">Créé par un élève pilote, Albatros VFR est né d'un constat simple&nbsp;: à la radio, on progresse en parlant. Ici, vous répétez chaque échange autant de fois qu'il le faut — du roulage à l'atterrissage, jusqu'à la panne moteur ou radio.</p>
+            <div class="acc-boutons">
+              <button class="acc-btn acc-btn--plein" type="button" data-page="signup">Commencer l'essai gratuit</button>
+              <button class="acc-btn acc-btn--creux" type="button" data-page="login">Se connecter</button>
+            </div>
+          </div>
           <!-- Les nombres marqués data-chiffre sont recomptés au chargement
                (navigation.js) sur AERODROMES, AIRCRAFT, SCENARIOS et ALEAS_SCEN ;
                data-limite vient de lancement.js › LIMITES. Le texte ici n'est

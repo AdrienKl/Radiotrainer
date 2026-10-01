@@ -96,18 +96,29 @@
   :focus-visible{outline:2px solid var(--violet); outline-offset:2px}
 
   /* ---------- Header ---------- */
-  /* La bande du haut est GRIS FONCÉ et LÉGÈREMENT TRANSPARENTE (01/10/2026,
-     demande du développeur : le noir dégradé aux halos violets d'avant était
-     jugé lourd). La page défile dessous, floutée par backdrop-filter : la
-     bande reste lisible sans boucher l'écran. Opacité .86 — en dessous, une
-     photo claire passant derrière ferait tomber le blanc des liens sous le
-     seuil AA. La bande garde sa couleur dans les deux thèmes : c'est le seul
-     bloc du site qui ne suit pas --surface, et c'est voulu. */
-  .topnav{position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; gap:16px;
-    padding:0 clamp(16px,4vw,44px); height:64px; border-bottom:1px solid rgba(255,255,255,.08);
-    background:rgba(40,42,50,.86);
-    -webkit-backdrop-filter:saturate(160%) blur(14px); backdrop-filter:saturate(160%) blur(14px);
-    box-shadow:0 6px 24px rgba(10,11,16,.18)}
+  /* La barre du haut est un RECTANGLE FLOTTANT (01/10/2026, demande du
+     développeur) : décollée du haut et des bords, coins arrondis, gris foncé
+     légèrement transparent, la page floutée dessous (backdrop-filter). C'est
+     la barre « îlot » des sites récents (Linear, Vercel, Raycast…).
+     Sur l'accueil, elle FLOTTE AU-DESSUS du hero : la marge basse négative
+     (hauteur + décalage) rend sa place au flux, et la carte OACI passe dessous.
+     Sur les autres pages de la vitrine (avis, pages légales), elle garde sa
+     place — sinon le titre de la page passerait derrière.
+     Opacité .84 : en dessous, une zone claire passant derrière ferait tomber
+     le blanc des liens sous le seuil AA. Même couleur dans les deux thèmes. */
+  .topnav{--nav-h:60px; --nav-y:12px;
+    position:sticky; top:var(--nav-y); z-index:100; display:flex; align-items:center; justify-content:space-between; gap:16px;
+    width:min(1120px, calc(100% - 24px)); height:var(--nav-h); margin:var(--nav-y) auto 0;
+    padding:0 10px 0 16px; border-radius:16px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(36,38,46,.84);
+    -webkit-backdrop-filter:saturate(160%) blur(16px); backdrop-filter:saturate(160%) blur(16px);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 10px 30px rgba(16,17,24,.22), 0 2px 6px rgba(16,17,24,.12)}
+  body:has(#page-accueil.active) .topnav{margin-bottom:calc(-1 * (var(--nav-h) + var(--nav-y)))}
+  /* Dans un rectangle de 366 px (téléphone), « Se connecter » et le nom du
+     site passaient sur deux lignes : on les tient sur une seule. */
+  .topnav .brand, .topnav .navlink{white-space:nowrap}
+  @media (max-width:420px){ .topnav{padding:0 6px 0 12px; gap:8px} .topnav .navlink{padding:9px 9px} .topnav .brand{font-size:16.5px; gap:8px} }
   /* Sur le gris foncé, l'encre du site ne tient plus : la marque et les liens passent
      au blanc, et le survol devient un voile clair au lieu de --surface-2. */
   .topnav .brand{color:#fff}

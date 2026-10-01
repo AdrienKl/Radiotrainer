@@ -149,6 +149,9 @@
       animation:none; opacity:1}
     .hero::after{height:28%}
     .hero__inner{padding-top:clamp(8px,2vh,18px)}
+    /* La barre flottante (01-socle.css) passe au-dessus du hero : la tour,
+       remise dans le flux, commence sous elle. */
+    .hero{padding-top:72px}
     .hero__eyebrow{font-size:11px; letter-spacing:.11em}
     .hero__strip{grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 26px; max-width:none}
     .hero__num b{font-size:22px}

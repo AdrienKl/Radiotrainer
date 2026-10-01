@@ -816,20 +816,24 @@
          art. L111-7-2 et D111-16 à D111-19) : elle dit la vérité sur ce que
          fait sql/010, rien de plus. -->
     <section id="page-avis" class="page">
-      <div class="container legal-wrap">
+      <div class="container av-page">
         <p class="legal-fil"><button class="auth-link" type="button" data-page="accueil">← Albatros VFR</button></p>
-        <h1 class="legal-h1">Les avis des élèves</h1>
-        <div class="av-outils">
-          <p class="av-resume" id="avResume" aria-live="polite"></p>
-          <label class="av-tri">Trier :
-            <select id="avTri">
-              <option value="recents">Plus récents</option>
-              <option value="notes">Mieux notés</option>
-            </select>
-          </label>
-        </div>
+        <header class="av-tete">
+          <div class="av-tete__txt">
+            <h1 class="av-titre">Les avis des élèves</h1>
+            <p class="av-sous">Laissés par des élèves inscrits, et relus un par un avant d'être publiés.</p>
+            <label class="av-tri">Trier
+              <select id="avTri">
+                <option value="recents">Plus récents</option>
+                <option value="notes">Mieux notés</option>
+              </select>
+            </label>
+          </div>
+          <div class="av-score" id="avResume" aria-live="polite"></div>
+        </header>
         <div class="av-liste" id="avListe"></div>
-        <h2 class="legal-h2">Comment les avis sont collectés et modérés</h2>
+        <aside class="av-regles">
+          <h2 class="av-regles__titre">Comment les avis sont collectés et modérés</h2>
         <p class="av-mention" id="avMention">Les avis sont déposés depuis l'application, par des utilisateurs
           inscrits et connectés à leur compte ; chaque compte ne peut en laisser qu'un. Chaque avis est vérifié manuellement avant publication, dans un délai de <b>3 jours au
           plus</b>. Un avis est refusé s'il est injurieux, hors sujet, s'il contient des données personnelles
@@ -838,6 +842,7 @@
           ancien, ou par note si vous le choisissez ; les trois avis de la page d'accueil sont choisis par
           l'équipe parmi les avis publiés. Un avis n'est pas modifiable par son auteur une fois envoyé ;
           pour le faire retirer, écrivez-nous depuis le bouton Contact.</p>
+        </aside>
       </div>
     </section>
 

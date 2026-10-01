@@ -48,11 +48,20 @@
     try{ return new Date(iso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }); }
     catch(e){ return ''; }
   }
+  /* Une carte : les étoiles en tête, le texte, puis QUI et QUAND au pied,
+     derrière une pastille à l'initiale du pseudo (01/10/2026). Pas de photo :
+     on n'en demande aucune, et une fausse photo de stock ferait passer un vrai
+     avis pour un faux. L'initiale est échappée comme le reste. */
   function carte(a, avecDate){
+    var p = String(a.pseudo == null ? '' : a.pseudo);
+    var initiale = (p.trim().charAt(0) || '?').toUpperCase();
     return '<article class="av-carte">' +
-      '<div class="av-carte__tete"><span class="av-carte__qui">' + esc(a.pseudo) + '</span>' + etoiles(a.note) + '</div>' +
+      etoiles(a.note) +
       (a.commentaire ? '<p class="av-carte__txt">' + esc(a.commentaire) + '</p>' : '') +
-      (avecDate ? '<div class="av-carte__date">Déposé le ' + esc(dateFr(a.cree_le)) + '</div>' : '') +
+      '<div class="av-carte__pied"><span class="av-carte__ini" aria-hidden="true">' + esc(initiale) + '</span>' +
+        '<span class="av-carte__id"><span class="av-carte__qui">' + esc(p) + '</span>' +
+        (avecDate ? '<span class="av-carte__date">Déposé le ' + esc(dateFr(a.cree_le)) + '</span>' : '') +
+      '</span></div>' +
       '</article>';
   }
 
@@ -228,7 +237,10 @@
   function peindrePage(){
     var liste = $('avListe'), res = $('avResume'), tri = $('avTri');
     if(!liste) return;
+    var page = $('page-avis');
     if(tous === null){ liste.innerHTML = '<p class="av-vide">Chargement des avis…</p>'; return; }
+    // Sans avis, le panneau de la note n'a rien à dire : il se cache.
+    if(page) page.classList.toggle('av-sans', !tous.length);
     if(!tous.length){
       liste.innerHTML = '<p class="av-vide">Aucun avis publié pour l\'instant.</p>';
       if(res) res.textContent = '';
@@ -238,7 +250,22 @@
     if(tri && tri.value === 'notes') l.sort(function(a, b){ return (b.note - a.note) || (new Date(b.cree_le) - new Date(a.cree_le)); });
     else l.sort(function(a, b){ return new Date(b.cree_le) - new Date(a.cree_le); });
     var moy = l.reduce(function(s, a){ return s + a.note; }, 0) / l.length;
-    if(res) res.innerHTML = '<b>' + moy.toFixed(1).replace('.', ',') + ' / 5</b> — ' + l.length + ' avis publié' + (l.length > 1 ? 's' : '');
+    /* Le panneau de la note : la moyenne en grand, puis la répartition par
+       nombre d'étoiles — la moyenne seule cache un 1/5 au milieu des 5/5. */
+    var parNote = [0,0,0,0,0,0];
+    l.forEach(function(a){ parNote[Math.max(1, Math.min(5, a.note|0))]++; });
+    var barres = '';
+    for(var n = 5; n >= 1; n--){
+      var pc = Math.round(parNote[n] * 100 / l.length);
+      barres += '<li><span class="av-repart__n">' + n + '</span><span class="av-etoile on" aria-hidden="true"></span>' +
+        '<span class="av-repart__barre"><span style="width:' + pc + '%"></span></span>' +
+        '<span class="av-repart__c">' + parNote[n] + '</span></li>';
+    }
+    if(res) res.innerHTML =
+      '<div class="av-score__moy"><b>' + moy.toFixed(1).replace('.', ',') + '</b> / 5</div>' +
+      etoiles(Math.round(moy)) +
+      '<div class="av-score__nb">' + l.length + ' avis publié' + (l.length > 1 ? 's' : '') + '</div>' +
+      '<ul class="av-repart" aria-label="Répartition des notes">' + barres + '</ul>';
     liste.innerHTML = l.map(function(a){ return carte(a, true); }).join('');
   }
   function chargerPage(){

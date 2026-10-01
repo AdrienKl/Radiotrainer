@@ -64,6 +64,30 @@ function joinBigrams(tokens){
    correspondrait plus à « xray » côté transcription recollée. */
 function canonPhrase(s){ return joinBigrams(normalize(s).split(' ').filter(Boolean)).join(' '); }
 
+/* Toutes les façons dont la reconnaissance vocale peut écrire un TYPE D'AVION
+   (01/10/2026). Le développeur a dit « DA50 » ; la transcription a rendu
+   « da 50 », et l'élément a été compté faux : seule la forme collée « da50 »
+   était acceptée. Pour « DA50 », « PA-28 », « DR400 », « Cessna 172 »… on
+   accepte donc : la forme écrite, lettres et chiffres SÉPARÉS (« da 50 »),
+   COLLÉS (« da50 »), lettres ÉPELÉES (« d a 50 ») et, comme avant, chaque mot
+   de plus de deux lettres seul (« cessna », « diamond »). Les chiffres dits en
+   lettres (« da cinquante ») sont déjà rattrapés par mcFound, qui compare
+   aussi après digitCanon. Ce n'est pas de la phraséologie : c'est le même
+   type, écrit autrement par la transcription. Servi aux Scénarios
+   (moteur.js › typeVariants) et à la Navigation (navigation.js › acVars). */
+function typeAvionVariantes(t){
+  const base = normalize(t);
+  const out = [];
+  const ajouter = v => { v = canonPhrase(v); if(v && out.indexOf(v) < 0) out.push(v); };
+  ajouter(base);
+  const separe = base.replace(/([a-z])(\d)/g,'$1 $2').replace(/(\d)([a-z])/g,'$1 $2');
+  ajouter(separe);
+  ajouter(separe.replace(/\b([a-z]{1,4}) (\d+)\b/g,'$1$2'));
+  ajouter(separe.replace(/\b([a-z]{2,4})(?= \d)/g, m => m.split('').join(' ')));
+  base.split(' ').forEach(w => { if(w.length > 2) ajouter(w); });
+  return out;
+}
+
 /* Vocabulaire de référence pour la correction floue (mots NATO + chiffres + aviation
    issus de la référence §3). Un token reconnu proche d'un de ces mots est corrigé. */
 const REF_WORDS = [
@@ -157,6 +181,18 @@ function protegerNomsPropres(){
   });
 }
 protegerNomsPropres();   // appelé ICI : REF_SET vient d'être créé (zone morte sinon)
+/* Même protection pour d'autres noms propres, fournis par qui les connaît :
+   les noms et types d'avions (navigation.js, 01/10/2026). Mots de 3 lettres et
+   plus, chacun sous sa forme écrite et sous sa forme collée (« cap10 »). */
+function protegerMots(liste){
+  (liste||[]).forEach(function(t){
+    const n = normalize(t);
+    n.split(' ').forEach(function(w){ if(w.length>=3) REF_SET.add(w); });
+    const colle = n.replace(/\s+/g,'');
+    if(colle.length>=3) REF_SET.add(colle);
+  });
+}
+protegerMots(['DR400','CESSNA 172','PIPER PA28','TB10']);   // les types des Scénarios (moteur.js › TYPES_SCENARIO)
 
 
 function lev(a,b){

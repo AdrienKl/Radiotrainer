@@ -106,9 +106,6 @@
   .hero .cta-ghost{background:var(--surface); color:var(--ink); border:1.5px solid var(--border);
     -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:var(--shadow-sm)}
   .hero .cta-ghost:hover{background:var(--surface); border-color:var(--violet); color:var(--violet-dark)}
-  .hero__note{margin:20px 0 0; font-size:12.5px; line-height:1.6; color:var(--ink-2-fort);
-    opacity:0; animation:fadeUp .85s .74s ease forwards}
-  .hero__note b{color:var(--ink); font-weight:700}
 
   /* La bande de chiffres ferme le hero : quatre nombres vrais, comptés dans le
      code (AERODROMES, AIRCRAFT, SCENARIOS, et le tirage d'aléas du mode Réel).

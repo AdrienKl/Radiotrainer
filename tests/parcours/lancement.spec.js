@@ -123,6 +123,30 @@ test('accueil : hero, chiffres recalculés, questions — et plus de section Off
   expect(chiffres.imprevus).toBe(chiffres.attenduI);
 });
 
+/* La section « Les pannes » (01/10/2026). L'exemple radio reprend MOT POUR MOT
+   les phrases du scénario Urgence (Manuel DSNA p. 238 et p. 34-35) : si l'un
+   change, l'autre doit suivre — d'où la comparaison avec SCENARIOS. Et la
+   démonstration ne doit pas élargir la page sur téléphone. */
+test('accueil : la section des pannes et son exemple tiré du manuel', async ({ page }) => {
+  await ouvrir(page);
+  const demo = page.locator('#page-accueil .acc-demo');
+  await expect(page.locator('#page-accueil .acc-pannes')).toContainText('À vous de gérer la situation');
+  await expect(page.locator('#page-accueil .acc-pannes')).toContainText('Chaque panne est une nouvelle situation à gérer.');
+  await expect(demo).toContainText('Démonstration');
+  await expect(demo).toContainText('p.\u00a0238');
+  const attendus = await page.evaluate(() => {
+    const u = SCENARIOS.find(s => s.id === 'urgence').tours[0].options.find(o => o.key === 'mayday').tours;
+    return [u[0].attendu, u[1].atc, u[1].attendu];
+  });
+  expect(attendus[0]).toContain('MAYDAY MAYDAY MAYDAY, {ADRM} {STN}, {CALL}, {CAUSE}, je me pose, verticale terrain, {ALT} pieds.');
+  expect(attendus[1]).toBe('{CALL}, Mayday Roger, transpondeur 7700.');
+  expect(attendus[2]).toBe('Transpondeur 7700, {CALL}.');
+  await expect(demo).toContainText('F-BYFO, Mayday Roger, transpondeur 7700.');
+  await expect(demo).toContainText('Transpondeur 7700, F-BYFO.');
+  const deborde = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  expect(deborde).toBe(false);
+});
+
 test('Paramètres : un onglet à la fois, lu et écrit dans l\'adresse', async ({ page }) => {
   await ouvrir(page);
   await entrer(page, 'parametres/voix');

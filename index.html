@@ -271,6 +271,91 @@
         </div>
       </section>
 
+      <!-- ---- Les pannes (01/10/2026, demande du développeur) ----
+           Textes du développeur (orthographe corrigée). TOUT le texte est ici,
+           dans le HTML : aucun mot dans une image.
+           L'EXEMPLE RADIO est une DÉMONSTRATION VISUELLE, à faire vérifier avant
+           validation définitive. Il reprend mot pour mot les phrases que le
+           scénario « Urgence » attend déjà (phraseologie-scenarios.js) :
+             · message de détresse : structure SERA.14095, Manuel DSNA p. 238
+               (MAYDAY ×3, A organisme, B identification, C nature, D intentions,
+               E position et niveau) ;
+             · accusé du contrôleur : « Mayday Roger, transpondeur 7700 », p. 238 ;
+             · collationnement du code : « Transpondeur 5423, …, Rapidair 3245 »,
+               p. 34-35 (collationnement).
+           Indicatif, terrain et altitude sont des valeurs d'exemple. -->
+      <section class="acc-sec acc-sec--blanc acc-pannes">
+        <div class="acc-in">
+          <span class="acc-panneau">Les pannes</span>
+          <p class="acc-pannes__intro">Pendant un vol, tout ne se passe pas toujours comme prévu&nbsp;: une panne peut vite arriver. Avec Albatros VFR, on vous met face à ces pannes pour que vous soyez préparé le jour où ça arrive.</p>
+
+          <div class="acc-pannes__grille">
+            <div class="acc-pannes__texte">
+              <h2 class="acc-h">À vous de gérer la situation</h2>
+              <p>Une panne peut apparaître pendant votre vol. Vous devez identifier le problème, évaluer la situation, prendre une décision et adapter votre communication avec le contrôle.</p>
+              <p>On ne vous donne pas automatiquement la réponse&nbsp;: vous devez gérer la situation comme vous le feriez en vol.</p>
+              <ol class="acc-pannes__etapes">
+                <li><span>1</span>Identifier le problème</li>
+                <li><span>2</span>Évaluer la situation</li>
+                <li><span>3</span>Prendre une décision</li>
+                <li><span>4</span>Communiquer avec le contrôle</li>
+              </ol>
+            </div>
+
+            <!-- La démonstration : un écran de simulation. Les lignes apparaissent
+                 l'une après l'autre quand le bloc entre à l'écran (.reveal.in,
+                 routeur.js › observeReveals) ; sans animation, tout est visible. -->
+            <figure class="acc-demo reveal" aria-label="Démonstration : une panne moteur et le message radio du pilote">
+              <div class="acc-demo__tete">
+                <span class="acc-demo__badge">Démonstration</span>
+                <span class="acc-demo__lieu">LFOR · Chartres-Métropole tour</span>
+              </div>
+
+              <div class="acc-demo__alerte" role="img" aria-label="Alerte : panne moteur">
+                <span class="acc-demo__voyant" aria-hidden="true"></span>
+                <b>Panne moteur</b>
+                <span class="acc-demo__info">2 500 pieds · le moteur perd sa puissance</span>
+              </div>
+
+              <dl class="acc-demo__instru">
+                <div><dt>Altitude</dt><dd>2 500 ft</dd></div>
+                <div><dt>Moteur</dt><dd class="acc-demo__ko">0 tr/min</dd></div>
+                <div><dt>Transpondeur</dt><dd class="acc-demo__xpdr"><span class="acc-demo__x1">7000</span><span class="acc-demo__x2">7700</span></dd></div>
+              </dl>
+
+              <div class="acc-demo__radio">
+                <div class="acc-demo__l acc-demo__l--moi">
+                  <span class="acc-demo__qui">Vous</span>
+                  <p class="acc-demo__t">
+                    <span class="acc-demo__seg" data-seg="MAYDAY ×3">MAYDAY MAYDAY MAYDAY,</span>
+                    <span class="acc-demo__seg" data-seg="A · organisme">Chartres-Métropole tour,</span>
+                    <span class="acc-demo__seg" data-seg="B · indicatif">F-BYFO,</span>
+                    <span class="acc-demo__seg" data-seg="C · nature">panne moteur,</span>
+                    <span class="acc-demo__seg" data-seg="D · intentions">je me pose,</span>
+                    <span class="acc-demo__seg" data-seg="E · position, altitude">verticale terrain, 2 500 pieds.</span>
+                  </p>
+                </div>
+                <div class="acc-demo__l">
+                  <span class="acc-demo__qui">Contrôle</span>
+                  <p class="acc-demo__t">F-BYFO, Mayday Roger, transpondeur 7700.</p>
+                </div>
+                <div class="acc-demo__l acc-demo__l--moi">
+                  <span class="acc-demo__qui">Vous</span>
+                  <p class="acc-demo__t">Transpondeur 7700, F-BYFO.</p>
+                </div>
+              </div>
+
+              <figcaption class="acc-demo__pied">Exemple de démonstration. Message de détresse et réponse du contrôleur&nbsp;: manuel de phraséologie de la DSNA, p.&nbsp;238&nbsp;; collationnement&nbsp;: p.&nbsp;34-35.</figcaption>
+            </figure>
+          </div>
+
+          <div class="acc-pannes__fin">
+            <p class="acc-pannes__fin-titre">Chaque panne est une nouvelle situation à gérer.</p>
+            <p>Entraînez-vous à rester calme, prendre les bonnes décisions et communiquer efficacement, même lorsque le vol ne se déroule pas comme prévu.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- ---- Les avis mis en avant (29/09/2026, assets/modules/avis.js) ----
            Masquée tant qu'aucun avis n'est publié : une section vide, ou des avis
            inventés pour la remplir, seraient pires que pas de section. -->

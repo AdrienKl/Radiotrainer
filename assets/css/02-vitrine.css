@@ -174,6 +174,95 @@
   }
   @media (max-width:560px){ .acc-benef__liste{grid-template-columns:minmax(0,1fr)} }
 
+  /* ---------- Les pannes (01/10/2026) ----------
+     Le texte à gauche, une « démonstration » à droite : un écran de simulation
+     sombre — la seule surface sombre de la section, comme la radio de
+     l'application, un bloc de matériel. Les lignes y apparaissent dans
+     l'ordre d'un vrai échange quand le bloc entre à l'écran (.reveal.in). */
+  .acc-pannes__intro{margin:18px 0 0; max-width:62ch; font-size:clamp(18px,1.9vw,23px); line-height:1.5; font-weight:600;
+    color:var(--acc-encre); text-wrap:pretty}
+  .acc-pannes__grille{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:clamp(28px,5vw,72px);
+    align-items:center; margin-top:clamp(36px,4.6vw,60px)}
+  .acc-pannes__texte .acc-h{margin-top:0; max-width:14ch}
+  .acc-pannes__texte p{margin:16px 0 0; max-width:52ch; font-size:15.5px; line-height:1.65; color:var(--acc-gris)}
+  .acc-pannes__etapes{list-style:none; margin:26px 0 0; padding:0; display:grid; gap:10px}
+  .acc-pannes__etapes li{display:flex; align-items:center; gap:12px; font-size:15px; font-weight:700; color:var(--acc-encre)}
+  .acc-pannes__etapes span{flex:none; width:28px; height:28px; border-radius:6px; display:grid; place-items:center;
+    background:#000; color:var(--acc-balise); font-size:13px; font-weight:800}
+
+  /* L'écran de démonstration. Couleurs en dur : c'est du matériel. */
+  .acc-demo{--d-fond:#111418; --d-filet:#2a3038; --d-texte:#eceef1; --d-gris:#a2a9b3; --d-rouge:#f0605a;
+    margin:0; border-radius:16px; overflow:hidden; background:var(--d-fond); color:var(--d-texte);
+    box-shadow:0 30px 60px rgba(16,18,22,.22), 0 2px 6px rgba(16,18,22,.12)}
+  .acc-demo__tete{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:12px 18px; border-bottom:1px solid var(--d-filet)}
+  .acc-demo__badge{padding:3px 9px; border-radius:4px; border:1.5px solid var(--acc-balise); color:var(--acc-balise);
+    font-size:12.5px; font-weight:700}
+  .acc-demo__lieu{font-size:13px; color:var(--d-gris)}
+  .acc-demo__alerte{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:16px 18px 0; padding:12px 14px;
+    border-radius:10px; background:rgba(240,96,90,.12); border:1px solid rgba(240,96,90,.45)}
+  .acc-demo__alerte b{color:var(--d-rouge); font-size:15px; letter-spacing:.02em}
+  .acc-demo__info{font-size:13.5px; color:#f3c4c1}
+  .acc-demo__voyant{width:10px; height:10px; border-radius:50%; background:var(--d-rouge); box-shadow:0 0 12px var(--d-rouge)}
+  .acc-demo.in .acc-demo__voyant{animation:accClignote 1s steps(2,jump-none) infinite}
+  @keyframes accClignote{50%{opacity:.25; box-shadow:none}}
+  .acc-demo__instru{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:14px 18px 0; border:1px solid var(--d-filet); border-radius:10px}
+  .acc-demo__instru > div{padding:10px 12px; min-width:0}
+  .acc-demo__instru > div + div{border-left:1px solid var(--d-filet)}
+  .acc-demo__instru dt{font-size:12px; color:var(--d-gris)}
+  .acc-demo__instru dd{margin:3px 0 0; font-family:var(--mono); font-size:17px; font-weight:700; color:#9be8b0}
+  .acc-demo__instru .acc-demo__ko{color:var(--d-rouge)}
+  /* Le transpondeur passe de 7000 à 7700 au moment où le contrôleur le demande. */
+  .acc-demo__xpdr{display:grid}
+  .acc-demo__xpdr > span{grid-area:1/1}
+  .acc-demo__x2{opacity:0; color:var(--acc-balise)}
+  .acc-demo.in .acc-demo__x1{animation:accSort .3s 2.9s forwards}
+  .acc-demo.in .acc-demo__x2{animation:accEntre .4s 2.9s forwards}
+  @keyframes accSort{to{opacity:0}}
+  @keyframes accEntre{to{opacity:1}}
+  .acc-demo__radio{display:flex; flex-direction:column; gap:14px; padding:18px}
+  .acc-demo__l{display:grid; grid-template-columns:74px minmax(0,1fr); gap:12px; align-items:baseline}
+  .acc-demo__qui{font-size:13px; font-weight:700; color:var(--d-gris)}
+  .acc-demo__l--moi .acc-demo__qui{color:var(--acc-balise)}
+  .acc-demo__t{margin:0; font-size:15px; line-height:1.55; color:var(--d-texte)}
+  .acc-demo__l--moi .acc-demo__t{font-weight:600; color:#fff}
+  /* Les cinq éléments du message de détresse, étiquetés comme au manuel. */
+  .acc-demo__l:first-child .acc-demo__t{line-height:1; display:flex; flex-wrap:wrap; gap:16px 6px; padding-top:16px}
+  .acc-demo__seg{position:relative; padding:6px 7px; border-radius:6px; background:rgba(255,255,255,.06); line-height:1.35}
+  .acc-demo__seg::before{content:attr(data-seg); position:absolute; left:7px; bottom:100%; margin-bottom:2px; white-space:nowrap;
+    font-size:10.5px; font-weight:700; color:var(--acc-balise); letter-spacing:.01em}
+  .acc-demo__pied{margin:0; padding:12px 18px; border-top:1px dashed var(--d-filet); font-size:12.5px; line-height:1.5; color:var(--d-gris)}
+  /* L'ordre d'apparition : alerte, instruments, message, réponse, collationnement. */
+  .acc-demo .acc-demo__alerte, .acc-demo .acc-demo__instru, .acc-demo .acc-demo__l{opacity:0; transform:translateY(8px)}
+  .acc-demo.in .acc-demo__alerte, .acc-demo.in .acc-demo__instru, .acc-demo.in .acc-demo__l{animation:accLigne .5s ease forwards}
+  .acc-demo.in .acc-demo__alerte{animation-delay:.2s}
+  .acc-demo.in .acc-demo__instru{animation-delay:.5s}
+  .acc-demo.in .acc-demo__l:nth-child(1){animation-delay:1.1s}
+  .acc-demo.in .acc-demo__l:nth-child(2){animation-delay:2.5s}
+  .acc-demo.in .acc-demo__l:nth-child(3){animation-delay:3.6s}
+  @keyframes accLigne{to{opacity:1; transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .acc-demo .acc-demo__alerte, .acc-demo .acc-demo__instru, .acc-demo .acc-demo__l{opacity:1; transform:none; animation:none !important}
+    .acc-demo.in .acc-demo__voyant{animation:none}
+    .acc-demo__x1{opacity:0} .acc-demo__x2{opacity:1}
+    .acc-demo.in .acc-demo__x1, .acc-demo.in .acc-demo__x2{animation:none}
+  }
+
+  .acc-pannes__fin{margin-top:clamp(40px,5vw,64px); padding-top:clamp(24px,3vw,32px); border-top:1px solid var(--acc-filet);
+    display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:clamp(20px,5vw,72px); align-items:baseline}
+  .acc-pannes__fin p{margin:0; font-size:16px; line-height:1.6; color:var(--acc-gris); max-width:60ch}
+  .acc-pannes__fin .acc-pannes__fin-titre{font-size:clamp(22px,2.4vw,30px); font-weight:800; line-height:1.15; letter-spacing:-.02em; color:var(--acc-encre)}
+
+  @media (max-width:900px){
+    .acc-pannes__grille, .acc-pannes__fin{grid-template-columns:minmax(0,1fr)}
+  }
+  @media (max-width:560px){
+    .acc-demo__l{grid-template-columns:minmax(0,1fr); gap:4px}
+    .acc-demo__instru dd{font-size:15px}
+    .acc-demo__tete, .acc-demo__radio, .acc-demo__pied{padding-left:14px; padding-right:14px}
+    .acc-demo__alerte, .acc-demo__instru{margin-left:14px; margin-right:14px}
+  }
+
   /* ---------- Les avis (composants de 16-avis.css, jetons redéfinis plus haut) ---------- */
   #page-accueil .av-grille{margin-top:clamp(28px,3.6vw,40px)}
   #page-accueil .av-accueil__pied{margin:26px 0 0}

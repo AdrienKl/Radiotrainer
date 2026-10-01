@@ -75,7 +75,7 @@
                               rgba(250,251,255,var(--scene-bas,.30))  100%); }
   :root[data-theme="dark"] .scene-fond::after{
     background:
-      radial-gradient(120% 62% at 52% 2%, rgba(38,26,104,.28), transparent 64%),
+      radial-gradient(120% 62% at 52% 2%, rgba(11,13,16,.28), transparent 64%),
       radial-gradient(112% 92% at 50% 46%, transparent 42%, rgba(4,6,14,var(--scene-vignette,.52)) 100%),
       linear-gradient(180deg, rgba(5,8,18,var(--scene-haut,.30))  0%,
                               rgba(5,8,18,var(--scene-haut,.30))  22%,
@@ -205,7 +205,7 @@
        et éclaircir sur verre sombre — d'où une variable et non un rgba écrit
        en dur, qui ne pourrait être juste que d'un côté. --- */
     --sc-pose:rgba(28,34,54,.055); --sc-pose-2:rgba(28,34,54,.09); --sc-pose-3:rgba(28,34,54,.14);
-    --sc-pastille:rgba(91,75,206,.11); --sc-pastille-bord:rgba(91,75,206,.34);
+    --sc-pastille:rgba(31,36,43,.10); --sc-pastille-bord:rgba(31,36,43,.30);
     --sc-ombre:rgba(20,26,44,.16);
     /* .52 le 18/09, .70 le 20/09/2026 — 3,48:1 mesuré, seuil AA 4,5:1.
        Ce texte porte l'ATTRIBUTION DES PHOTOS. Attention à ne pas surjouer
@@ -234,9 +234,9 @@
     --surface:rgba(11,15,28,.62);
     --surface-2:rgba(6,9,18,.54);
     --border:rgba(255,255,255,.22);
-    --violet-dark:#a99cff;       /* sert de couleur de TEXTE : éclaircie */
-    --violet-soft:rgba(169,156,255,.18);
-    --violet-tint:rgba(169,156,255,.13);
+    --violet-dark:#e9b949;       /* sert de couleur de TEXTE : la balise */
+    --violet-soft:rgba(233,185,73,.18);
+    --violet-tint:rgba(233,185,73,.12);
     --ok:#5fe0a4; --warn:#ffc470; --bad:#ff8a86;
     --shadow-sm:0 1px 2px rgba(0,0,0,.34);
     --shadow-md:0 10px 30px rgba(0,0,0,.42);
@@ -252,7 +252,7 @@
     /* La pastille violette : sa teinte doit assombrir le verre, pas l'éclaircir,
        sinon l'accent qu'elle porte perd le contraste qu'elle est censée lui
        donner. Mesuré : 3,2:1 avec l'ancienne teinte claire, 5,6:1 avec celle-ci. */
-    --sc-pastille:rgba(24,20,52,.42); --sc-pastille-bord:rgba(169,156,255,.44);
+    --sc-pastille:rgba(8,10,13,.45); --sc-pastille-bord:rgba(233,185,73,.44);
     --sc-ombre:rgba(4,6,16,.42);
     /* .42 le 18/09, .58 le 20/09/2026 — 4,11:1 mesuré sur rgb(18,20,28),
        seuil AA 4,5:1. Même raison qu'en clair, même marge : .58 rend 6,70:1. */
@@ -260,7 +260,7 @@
   }
   /* La seule reprise à la main : la bordure de .hint, écrite en dur en violet
      clair, qui ne se voyait pas sur le verre sombre. */
-  :root[data-theme="dark"] .scene .hint{ border-color:rgba(169,156,255,.34); }
+  :root[data-theme="dark"] .scene .hint{ border-color:rgba(233,185,73,.34); }
 
   /* Les champs de saisie : le verre seul ne suffit pas, on a besoin de voir où
      l'on tape. Un cran plus contrasté que les panneaux, dans les deux sens. */
@@ -385,10 +385,10 @@
   .spell-scene .btn:hover{background:var(--sc-pose-3); border-color:var(--sc-line-2)}
   .spell-scene .btn:disabled{opacity:.46}
   .spell-scene .ptt{min-width:250px; border:none; color:#fff;
-    background:linear-gradient(135deg,#6d5af0,#4e3fbb);
-    box-shadow:0 10px 30px rgba(96,78,230,.52), inset 0 1px 0 rgba(255,255,255,.28)}
-  .spell-scene .ptt:hover{background:linear-gradient(135deg,#7d6bff,#5e4dd2);
-    box-shadow:0 14px 38px rgba(96,78,230,.62)}
+    background:linear-gradient(135deg,#3a414b,#1f242b);
+    box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.22)}
+  .spell-scene .ptt:hover{background:linear-gradient(135deg,#474f5a,#2a3038);
+    box-shadow:0 14px 38px rgba(0,0,0,.55)}
   .spell-scene .ptt.listening{background:linear-gradient(135deg,#ff6f6a,#d94a45);
     box-shadow:0 10px 30px rgba(217,74,69,.52)}
   .spell-scene .switch-line{background:var(--sc-pose); border:1px solid var(--sc-line);
@@ -425,7 +425,7 @@
   .spell-verdict.bad{background:rgba(255,138,134,.14); color:var(--sc-bad); border-color:rgba(255,138,134,.55)}
 
   .spell-status{padding:10px 14px; border-radius:12px; font-size:13.5px; font-weight:600;
-    background:rgba(169,156,255,.14); color:var(--sc-accent); border:1px solid rgba(169,156,255,.42)}
+    background:rgba(233,185,73,.14); color:var(--sc-accent); border:1px solid rgba(233,185,73,.42)}
   .spell-status.err{background:rgba(255,138,134,.14); color:var(--sc-bad); border-color:rgba(255,138,134,.5)}
 
   /* ---- Chronomètre ---- */
@@ -433,7 +433,7 @@
     font-size:15px; color:var(--sc-ink-2); background:var(--sc-pose);
     border:1px solid var(--sc-line-2); border-radius:var(--pill); padding:8px 14px;
     min-width:74px; justify-content:center; font-variant-numeric:tabular-nums}
-  .spell-timer.running{color:var(--sc-ink); border-color:rgba(169,156,255,.6); background:rgba(169,156,255,.16)}
+  .spell-timer.running{color:var(--sc-ink); border-color:rgba(233,185,73,.6); background:rgba(233,185,73,.16)}
   .spell-timer::before{content:""; width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.5}
   .spell-timer.running::before{opacity:1; animation:spellPulse 1s ease-in-out infinite}
   @keyframes spellPulse{0%,100%{opacity:1}50%{opacity:.25}}

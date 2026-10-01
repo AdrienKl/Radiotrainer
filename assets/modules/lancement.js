@@ -219,6 +219,13 @@
     if(p !== 'navigation' && p !== 'exercices') contexte = null;
   });
 
+  /* Les limites affichées sur l'accueil (01/10/2026) : lues dans LIMITES, pour
+     que les changer ici ne fasse plus mentir la vitrine. */
+  document.querySelectorAll('[data-limite]').forEach(function(e){
+    var k = e.getAttribute('data-limite').split('.'), v = LIMITES[k[0]] && LIMITES[k[0]][k[1]];
+    if(v) e.textContent = v;
+  });
+
   window.RTLancement = {
     actif: function(){ return ACTIF; },
     LIMITES: LIMITES,

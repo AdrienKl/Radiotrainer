@@ -153,7 +153,7 @@
   /* Zone de clic large et transparente ; la pastille visible est centrée dedans. */
   .nav-adhit{ display:flex; align-items:center; justify-content:center; background:none; border:none;
     cursor:pointer; }
-  .nav-adhit:hover .nav-admark{ transform:scale(1.55); box-shadow:0 0 0 4px rgba(91,75,206,.22),0 1px 4px rgba(0,0,0,.4); }
+  .nav-adhit:hover .nav-admark{ transform:scale(1.55); box-shadow:0 0 0 4px rgba(15,18,22,.22),0 1px 4px rgba(0,0,0,.4); }
   .nav-admark{ display:block; background:var(--violet); border:2px solid #fff; border-radius:50%;
     box-shadow:0 1px 4px rgba(0,0,0,.4); transition:transform .12s, box-shadow .12s; }
   .nav-admark.sel-dep{ background:#2e9e5b; }

@@ -42,8 +42,14 @@
     unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
 
   :root{
-    --violet:#5b4bce; --violet-dark:#4a3bb8; --violet-soft:rgba(91,75,206,.10); --violet-tint:#efecfb;
-    --grad-top:#3d2b83; --grad-mid:#6b3f97; --grad-bot:#ef8a6d;
+    /* PLUS DE VIOLET (01/10/2026, demande du développeur, après le nouvel
+       accueil). Les NOMS des jetons restent — plus de deux cents règles les
+       lisent, et les renommer n'apporterait rien —, mais ils portent la
+       palette de l'accueil : graphite en thème clair, la balise jaune comme
+       couleur de texte d'accent en thème sombre (09-theme-sombre.css).
+       --violet = FOND (texte blanc dessus, 15,6:1) ; --violet-dark = TEXTE. */
+    --violet:#1f242b; --violet-dark:#0f1216; --violet-soft:rgba(31,36,43,.08); --violet-tint:#eef0f3;
+    --grad-top:#13161a; --grad-mid:#1f242b; --grad-bot:#e9b949;
     --ink:#242838; --ink-2:#6b7280;
     /* ENCRE SECONDAIRE RENFORCÉE. --ink-2 (#6b7280) donne 4,83:1 sur le blanc en
        théorie, mais 4,07:1 MESURÉ sur les pixels d'un texte de 13,5 px : à ces

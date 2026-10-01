@@ -640,7 +640,7 @@
           b.style.cssText = 'text-align:left;padding:8px 10px;border-radius:10px;border:1px solid var(--adm-border,#ccc);'
             + 'background:var(--adm-surface,transparent);color:inherit;font:inherit;cursor:pointer;min-height:44px';
           b.innerHTML = '<span>' + esc(m) + '</span>'
-            + (dit !== m ? '<small style="display:block;color:var(--violet,#5b4bce);font-size:11.5px">' + esc(dit) + '</small>' : '');
+            + (dit !== m ? '<small style="display:block;color:var(--violet,#1f242b);font-size:11.5px">' + esc(dit) + '</small>' : '');
           b.addEventListener('click', function(){
             direTexte(dit, sel.value, b, true, etat);
             // Les nombres se lisent par règle (spokenDigits), pas par la table : pas d'atelier.

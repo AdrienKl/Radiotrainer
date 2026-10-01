@@ -580,7 +580,7 @@
     graphAire:graphAire, graphBarres:graphBarres, anneau:anneau, jauge:jauge, entonnoir:entonnoir,
     tiroir:tiroir, fermerTiroir:fermerTiroir, fiche:fiche, notice:notice,
     /* Palette des séries : reprise des jetons du site pour rester cohérent. */
-    couleurs:{ scenario:'#5b4bce', flight:'#e08a4a', spelling:'#2fa36b',
+    couleurs:{ scenario:'#4f6d8a', flight:'#e08a4a', spelling:'#2fa36b',
                neutre:'#8a90a6', ok:'#2fa36b', warn:'#e0912a', bad:'#d9534f' }
   };
 })();

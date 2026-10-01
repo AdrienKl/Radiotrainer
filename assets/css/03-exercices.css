@@ -111,7 +111,7 @@
   .fb-item.ok{color:var(--ok)}
   .fb-item.ko{color:var(--warn)}
 
-  .hint{margin-top:15px; background:var(--violet-soft); border:1px solid #d6cff5; border-radius:12px; padding:13px 16px; font-family:var(--mono); font-size:14px; color:var(--violet-dark)}
+  .hint{margin-top:15px; background:var(--violet-soft); border:1px solid #d3d7de; border-radius:12px; padding:13px 16px; font-family:var(--mono); font-size:14px; color:var(--violet-dark)}
   .hint.hidden{display:none}
   .hint .label{color:var(--violet); font-size:11px; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px; font-weight:700}
 
@@ -150,7 +150,7 @@
   .noreco{background:#fdecea; border:1px solid #f3c6c1; border-radius:var(--radius); padding:14px 17px; margin:14px 0; color:#9c352c; font-size:13.5px}
   .noreco.hidden{display:none}
   .noreco b{color:var(--bad)}
-  .exam-hero{background:linear-gradient(135deg,#efeafb,#f7fbff); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow-sm); margin-bottom:18px}
+  .exam-hero{background:linear-gradient(135deg,#eef0f3,#f7f8fa); border:1px solid var(--border); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow-sm); margin-bottom:18px}
   .exam-hero h2{font-size:22px; margin-bottom:8px}
   .exam-hero p{color:var(--ink-2); max-width:58ch; margin:0 0 20px}
 

@@ -66,8 +66,8 @@
   .side-brand .ic-svg.logo-albatros{ width:36px; height:36px; }
   .brand .logo .ic-svg.logo-albatros{ width:32px; height:32px; }
   .brand .logo .ic-svg.logo-albatros{ color:#fff; }
-  /* Thème sombre : le violet plein (#6b5ae0) du logo se perdait sur le fond de
-     la carte. Le violet clair du thème (--violet-dark, #b3a6ff en sombre) est
+  /* Thème sombre : la couleur pleine du logo se perdait sur le fond de
+     la carte. La couleur de texte du thème (--violet-dark, balise jaune en sombre) est
      celui des liens — ici c'est une ENCRE, pas un fond, donc il est à sa place. */
   :root[data-theme="dark"] .auth-brand .logo{ color:var(--violet-dark); }
   .auth-title{ font-family:var(--sans); font-size:23px; font-weight:800; color:var(--ink); margin:0 0 4px; letter-spacing:-.01em; }
@@ -458,11 +458,11 @@
        · une arête lumineuse sur le bord droit, qui détache le rail de la page.
      --------------------------------------------------------------------- */
   .sidebar{
-    --sb-ink:#eaedf7; --sb-ink-2:#8f97b0; --sb-accent:#a99cff;
+    --sb-ink:#eceef1; --sb-ink-2:#9aa1ab; --sb-accent:#e9b949;
     color:var(--sb-ink);
     background:
-      radial-gradient(118% 40% at 0% 0%, rgba(91,75,206,.32), transparent 62%),
-      linear-gradient(180deg,#151830 0%,#0e1020 46%,#0a0b14 100%);
+      radial-gradient(118% 40% at 0% 0%, rgba(255,255,255,.06), transparent 62%),
+      linear-gradient(180deg,#16191e 0%,#0f1114 46%,#0b0d10 100%);
     border-right:0;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 16px 0 44px rgba(4,6,14,.26); }
   /* L'arête droite : un dégradé, pas un trait — elle s'éteint vers le bas,
@@ -483,15 +483,15 @@
     border-color:rgba(255,255,255,.09);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.11), 0 5px 14px rgba(3,5,12,.38); }
   .sidelink.current{ color:#fff;
-    background:linear-gradient(180deg, rgba(142,126,255,.36), rgba(91,75,206,.22));
-    border-color:rgba(162,148,255,.46);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 9px 24px rgba(66,52,176,.44); }
+    background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
+    border-color:rgba(255,255,255,.18);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 9px 24px rgba(0,0,0,.40); }
   /* Le témoin de page courante est monté SUR l'arête gauche du rail, pas dans
      la pastille : on lit la position d'un coup d'œil, même menu replié.
      Son décalage suit le padding de la barre — d'où la reprise en mode rail. */
   .sidelink.current::before{ content:""; position:absolute; left:-14px; top:50%; transform:translateY(-50%);
     width:3px; height:21px; border-radius:0 3px 3px 0; background:var(--sb-accent);
-    box-shadow:0 0 12px rgba(169,156,255,.85); }
+    box-shadow:0 0 12px rgba(233,185,73,.7); }
   body.side-collapsed .sidelink.current::before{ left:-12px; }
 
   .side-logout{ color:var(--sb-ink-2); border-color:rgba(255,255,255,.10);
@@ -508,7 +508,7 @@
   .hamburger{ background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:7px;
     cursor:pointer; color:var(--ink); display:inline-flex; }
   .hamburger .ic-svg{ width:20px; height:20px; }
-  .side-overlay{ position:fixed; inset:0; background:rgba(20,16,40,.42); z-index:115; }
+  .side-overlay{ position:fixed; inset:0; background:rgba(8,10,13,.45); z-index:115; }
 
   @media (max-width:860px){
     /* Tiroir : le repli en rail n'a pas de sens ici, on l'annule entièrement. */

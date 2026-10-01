@@ -20,7 +20,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
 
 <meta name="description" content="Albatros VFR — simulateur de phraséologie radio VFR en français. Entraînez-vous au micro sur des scénarios réels, de la mise en route à l'atterrissage, avec un contrôleur qui vous répond et un retour immédiat sur votre phraséologie.">
-<meta name="theme-color" content="#5b4bce">
+<meta name="theme-color" content="#0b0d10">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Albatros VFR — Simulateur de phraséologie radio VFR">
 <meta property="og:description" content="Entraînez-vous à la radio VFR en français : reconnaissance vocale au micro, contrôleur qui répond, aérodromes et espaces aériens réels, score et progression. Outil pédagogique — ne remplace pas la formation avec un instructeur.">
@@ -125,7 +125,7 @@
        page blanche qui ressemble à une panne, on dit pourquoi. Styles en ligne :
        ce bloc doit se lire même si une feuille de style manque. -->
   <noscript>
-    <p style="margin:0;padding:16px 20px;background:#5b4bce;color:#fff;font:600 15px/1.5 system-ui,sans-serif;text-align:center">
+    <p style="margin:0;padding:16px 20px;background:#1f242b;color:#fff;font:600 15px/1.5 system-ui,sans-serif;text-align:center">
       Albatros VFR a besoin de JavaScript pour fonctionner. Activez-le dans votre navigateur, puis rechargez la page.
     </p>
   </noscript>
@@ -225,13 +225,15 @@
             <button class="acc-btn acc-btn--creux" type="button" data-page="login">Se connecter</button>
           </div>
 
-          <!-- Les quatre nombres sont comptés dans le code de l'application :
-               AERODROMES, AIRCRAFT, SCENARIOS, et le tirage d'aléas du mode Réel. -->
+          <!-- Les nombres marqués data-chiffre sont recomptés au chargement
+               (navigation.js) sur AERODROMES, AIRCRAFT, SCENARIOS et ALEAS_SCEN ;
+               data-limite vient de lancement.js › LIMITES. Le texte ici n'est
+               qu'une valeur de repli. -->
           <dl class="acc-chiffres">
-            <div><dt>aérodromes français</dt><dd>387</dd></div>
-            <div><dt>types d'appareils</dt><dd>176</dd></div>
-            <div><dt>scénarios complets</dt><dd>13</dd></div>
-            <div><dt>imprévus en vol</dt><dd>43</dd></div>
+            <div><dt>aérodromes français</dt><dd data-chiffre="aerodromes">387</dd></div>
+            <div><dt>types d'appareils</dt><dd data-chiffre="avions">176</dd></div>
+            <div><dt>scénarios complets</dt><dd data-chiffre="scenarios">13</dd></div>
+            <div><dt>imprévus en vol</dt><dd data-chiffre="imprevus">43</dd></div>
           </dl>
         </div>
       </div>
@@ -307,7 +309,7 @@
         <div class="acc-in">
           <span class="acc-panneau">Ce qui peut arriver</span>
           <h2 class="acc-h">En vol, tout ne se passe pas comme prévu.</h2>
-          <p class="acc-lede">Le vent tourne, le contrôleur vous donne un cap, un avion vous est signalé. <b>43 situations comme celles-ci</b> peuvent arriver pendant un exercice, au hasard. En voici neuf.</p>
+          <p class="acc-lede">Le vent tourne, le contrôleur vous donne un cap, un avion vous est signalé. <b><span data-chiffre="imprevus">43</span> situations comme celles-ci</b> peuvent arriver pendant un exercice, au hasard. En voici neuf.</p>
 
           <ul class="acc-impr">
             <li class="reveal"><span class="acc-impr__ref">Manuel p. 148</span><h3>Le vent a tourné</h3><p>La piste change pendant que vous arrivez. Vous reprenez votre arrivée avec la nouvelle piste.</p></li>
@@ -366,8 +368,8 @@
               <div>
                 <h3>Chaque jour, pendant le lancement</h3>
                 <ul class="acc-liste">
-                  <li><b>3 vols et 5 scénarios</b> avec la voix réaliste du contrôleur</li>
-                  <li>puis <b>jusqu'à 10 vols et 15 scénarios</b> avec la voix de votre navigateur</li>
+                  <li><b><span data-limite="vol.google">3</span> vols et <span data-limite="scenario.google">5</span> scénarios</b> avec la voix réaliste du contrôleur</li>
+                  <li>puis <b>jusqu'à <span data-limite="vol.max">10</span> vols et <span data-limite="scenario.max">15</span> scénarios</b> avec la voix de votre navigateur</li>
                   <li><b>QCM illimités</b></li>
                 </ul>
                 <p class="acc-petit">Les compteurs repartent à zéro à minuit. Vous les voyez sur votre tableau de bord.</p>
@@ -375,10 +377,10 @@
               <div>
                 <h3>Ce qu'il y a dedans</h3>
                 <ul class="acc-liste">
-                  <li><b>13 scénarios</b> — du parking au parking, plus les quiz de vocabulaire et de nombres</li>
-                  <li><b>43 imprévus</b> tirés au sort, du SIGMET au MAYDAY</li>
-                  <li><b>387 aérodromes</b> français, leurs vraies pistes et leurs vraies fréquences</li>
-                  <li><b>176 appareils</b>, du DR400 à l'Elixir</li>
+                  <li><b><span data-chiffre="scenarios">13</span> scénarios</b> — du parking au parking, plus les quiz de vocabulaire et de nombres</li>
+                  <li><b><span data-chiffre="imprevus">43</span> imprévus</b> tirés au sort, du SIGMET au MAYDAY</li>
+                  <li><b><span data-chiffre="aerodromes">387</span> aérodromes</b> français, leurs vraies pistes et leurs vraies fréquences</li>
+                  <li><b><span data-chiffre="avions">176</span> appareils</b>, du DR400 à l'Elixir</li>
                   <li><b>Mode Réel</b> : le texte du contrôleur est masqué, vous n'avez que l'oreille</li>
                   <li><b>Chaque phrase</b> renvoie à sa page du manuel DSNA</li>
                 </ul>

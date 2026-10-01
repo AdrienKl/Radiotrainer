@@ -117,10 +117,10 @@
 .ct-fab{ position:fixed; right:clamp(14px,2.2vw,26px); bottom:clamp(14px,2.2vw,26px); z-index:300;
   width:52px; height:52px; border-radius:50%; border:0; padding:0; cursor:pointer;
   display:grid; place-items:center; color:#fff; background:var(--violet);
-  box-shadow:0 8px 22px rgba(60,45,160,.38), 0 2px 6px rgba(20,16,40,.18);
+  box-shadow:0 8px 22px rgba(10,12,15,.32), 0 2px 6px rgba(10,12,15,.18);
   transition:transform .15s ease, box-shadow .15s ease, background .15s ease; }
-.ct-fab:hover{ transform:translateY(-2px); background:#5849c9;
-  box-shadow:0 12px 28px rgba(60,45,160,.45), 0 3px 8px rgba(20,16,40,.2); }
+.ct-fab:hover{ transform:translateY(-2px); background:var(--violet);
+  box-shadow:0 12px 28px rgba(10,12,15,.4), 0 3px 8px rgba(10,12,15,.2); }
 .ct-fab:focus-visible{ outline:3px solid var(--violet-soft); outline-offset:3px; }
 .ct-fab svg{ width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.9;
   stroke-linecap:round; stroke-linejoin:round; }

@@ -229,6 +229,22 @@
      « Stampe » « étape », « CAP10 » « cap » — et le type annoncé, pourtant
      juste, était compté faux. noyau/2-texte.js › protegerMots. */
   if(typeof protegerMots==='function') AIRCRAFT.forEach(function(a){ protegerMots([a.nom, a.abbr, a.fam]); });
+  /* LES CHIFFRES DE L'ACCUEIL (01/10/2026). Ils étaient écrits en dur dans
+     index.html (387, 176, 13, 43) et ne suivaient pas les données : un
+     aérodrome, un avion ou un imprévu de plus, et la vitrine mentait. Ils sont
+     comptés ici — le seul fichier qui voit AIRCRAFT —, sur les mêmes tableaux
+     que l'application ; le HTML ne garde que la valeur de repli. */
+  (function(){
+    var n = {
+      aerodromes: typeof AERODROMES!=='undefined' ? AERODROMES.length : 0,
+      avions:     AIRCRAFT.length,
+      scenarios:  typeof SCENARIOS!=='undefined' ? SCENARIOS.length : 0,
+      imprevus:   typeof ALEAS_SCEN!=='undefined' ? ALEAS_SCEN.length : 0
+    };
+    document.querySelectorAll('[data-chiffre]').forEach(function(e){
+      var v = n[e.getAttribute('data-chiffre')]; if(v) e.textContent = v;
+    });
+  })();
   // Aucun avion présélectionné : le champ reste vide tant que l'élève n'a pas choisi.
   var acChoice=null;
 

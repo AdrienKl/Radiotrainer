@@ -76,7 +76,7 @@
     background:var(--ink-2); opacity:.45; }
   .tb-jauge i.nav{ background:#5f7a99; }
   .tb-lancement{ margin-left:8px; font-size:11px; font-weight:700; letter-spacing:.02em; vertical-align:middle;
-    padding:2px 8px; border-radius:var(--pill); background:rgba(91,75,206,.12); color:var(--violet-dark); }   /* --violet-dark en TEXTE, jamais en fond (INSCRIPTION.md § 8 ter) */
+    padding:2px 8px; border-radius:var(--pill); background:var(--violet-soft); color:var(--violet-dark); }   /* --violet-dark en TEXTE, jamais en fond (INSCRIPTION.md § 8 ter) */
 
   .tb-vide{ font-size:13px; color:var(--ink-2); }
   .tb-ligne{ display:flex; align-items:center; gap:12px; padding:10px 0;

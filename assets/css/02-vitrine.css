@@ -24,19 +24,19 @@
   .btn:active{transform:translateY(0)}
   .btn:disabled{opacity:.45; cursor:not-allowed; transform:none; box-shadow:none}
   .btn.small{padding:9px 15px; font-size:13.5px; min-height:40px}
-  .cta{background:var(--violet); color:#fff; border:none; padding:14px 26px; font-size:15.5px; font-weight:700; box-shadow:0 10px 26px rgba(91,75,206,.4)}
-  .cta:hover{background:var(--violet-dark); box-shadow:0 14px 32px rgba(74,59,184,.48); transform:translateY(-2px)}
+  .cta{background:var(--violet); color:#fff; border:none; padding:14px 26px; font-size:15.5px; font-weight:700; box-shadow:0 10px 26px rgba(15,18,22,.28)}
+  .cta:hover{background:var(--violet-dark); box-shadow:0 14px 32px rgba(15,18,22,.34); transform:translateY(-2px)}
   .cta-ghost{background:rgba(255,255,255,.12); color:#fff; border:1.5px solid rgba(255,255,255,.6); backdrop-filter:blur(6px); padding:14px 26px; font-size:15.5px; font-weight:700}
   .cta-ghost:hover{background:rgba(255,255,255,.22); border-color:#fff}
   .btn.primary{background:var(--violet); color:#fff; border:none}
   .btn.primary:hover{background:var(--violet-dark)}
 
   /* PTT = action principale (menthe) */
-  .ptt{background:var(--violet); color:#fff; border:none; font-weight:700; min-width:210px; box-shadow:0 6px 18px rgba(91,75,206,.34)}
-  .ptt:hover{background:var(--violet-dark); box-shadow:0 10px 24px rgba(74,59,184,.42)}
+  .ptt{background:var(--violet); color:#fff; border:none; font-weight:700; min-width:210px; box-shadow:0 6px 18px rgba(15,18,22,.26)}
+  .ptt:hover{background:var(--violet-dark); box-shadow:0 10px 24px rgba(15,18,22,.32)}
   .ptt.listening{background:#e05a4d; color:#fff; animation:pulse 1s ease-in-out infinite}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,90,77,.5)} 50%{box-shadow:0 0 0 12px rgba(224,90,77,0)}}
-  .valider{background:var(--violet-soft); border-color:#cfc8f2; color:var(--violet-dark)}
+  .valider{background:var(--violet-soft); border-color:#c9ced6; color:var(--violet-dark)}
   .valider:hover{border-color:var(--violet)}
 
   .reveal{opacity:0; transform:translateY(20px); transition:opacity .6s ease, transform .6s cubic-bezier(.22,.61,.36,1)}
@@ -113,13 +113,23 @@
      section suivante : pas de couture entre la photo et la page. */
   .acc-hero{position:relative; isolation:isolate; display:flex; flex-direction:column; justify-content:flex-end;
     min-height:max(640px, 100svh); padding:110px 0 clamp(28px,4vw,44px); overflow:hidden; background:var(--acc-nuit)}
-  .acc-hero__photo{position:absolute; inset:0; z-index:-2; width:100%; height:100%; object-fit:cover; object-position:50% 42%;
+  /* DÉZOOMÉE (01/10/2026, demande du développeur). En `cover`, la photo
+     remplissait l'écran et on n'en voyait qu'une partie — sur téléphone, à
+     peine un tiers de la largeur. Elle est désormais calée sur la HAUTEUR du
+     hero : on voit tout le cadre, et sur un écran plus large que la photo, les
+     côtés se fondent dans le fond par un masque au lieu de s'arrêter net. */
+  .acc-hero__photo{position:absolute; top:0; left:50%; z-index:-2; height:86%; width:auto; max-width:none;
+    aspect-ratio:2400/1601; transform:translateX(-50%);
+    -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%), linear-gradient(180deg, #000 70%, transparent 100%);
+    -webkit-mask-composite:source-in;
+            mask-image:linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%), linear-gradient(180deg, #000 70%, transparent 100%);
+            mask-composite:intersect;
     animation:acPhoto 1.6s cubic-bezier(.22,.61,.36,1) both}
   .acc-hero::before{content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
     background:
       linear-gradient(180deg, rgba(11,13,16,.55) 0%, rgba(11,13,16,0) 18%, rgba(11,13,16,0) 38%, rgba(11,13,16,.72) 66%, #0b0d10 100%),
       linear-gradient(90deg, rgba(11,13,16,.62) 0%, rgba(11,13,16,0) 62%)}
-  @keyframes acPhoto{from{transform:scale(1.06)} to{transform:none}}
+  @keyframes acPhoto{from{opacity:0} to{opacity:1}}
   .acc-hero__in{width:min(1180px, 100% - 2*clamp(18px,4vw,40px)); margin:0 auto; animation:acMonte .9s .15s cubic-bezier(.22,.61,.36,1) both}
   @keyframes acMonte{from{opacity:0; transform:translateY(18px)} to{opacity:1; transform:none}}
   .acc-hero__titre{margin:18px 0 0; max-width:15ch; font-size:clamp(38px,6.2vw,76px); font-weight:800; line-height:1.02;
@@ -254,7 +264,11 @@
     /* Le téléphone en portrait : la photo se recadre sur la piste et
        l'écran de vol, le texte occupe le bas. */
     .acc-hero{min-height:max(600px, 100svh); padding-top:96px}
-    .acc-hero__photo{object-position:52% 50%}
+    /* Plus haute que large sur téléphone : la photo garde toute sa hauteur
+       sur les deux tiers haut du hero (on en voit ainsi la moitié de la
+       largeur, au lieu d'un tiers), le bas se fond dans le texte. */
+    .acc-hero__photo{height:66%; left:52%;
+      -webkit-mask-image:linear-gradient(180deg, #000 72%, transparent 100%); mask-image:linear-gradient(180deg, #000 72%, transparent 100%)}
     .acc-hero::before{background:linear-gradient(180deg, rgba(11,13,16,.5) 0%, rgba(11,13,16,.12) 14%, rgba(11,13,16,.5) 34%, rgba(11,13,16,.86) 56%, #0b0d10 100%)}
     .acc-hero .acc-boutons{flex-direction:column}
     .acc-hero .acc-btn{width:100%}

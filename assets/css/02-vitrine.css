@@ -153,6 +153,27 @@
   .acc-deux{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:clamp(28px,6vw,96px); align-items:start}
   .acc-deux .acc-h{max-width:14ch}
 
+  /* ---------- Le DR400 et les six bénéfices (01/10/2026) ----------
+     L'avion détouré à gauche, posé sur une ombre douce au sol ; les six
+     points à droite, en deux colonnes. Sur écran étroit, l'avion passe
+     au-dessus. */
+  .acc-benef__grille{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:clamp(28px,5vw,72px); align-items:center}
+  .acc-benef__avion{position:relative}
+  .acc-benef__avion::after{content:""; position:absolute; left:12%; right:12%; bottom:-4%; height:12%; z-index:0;
+    background:radial-gradient(50% 50% at 50% 50%, rgba(22,25,30,.18), transparent 70%)}
+  .acc-benef__avion img{position:relative; z-index:1; display:block; width:100%; height:auto;
+    filter:drop-shadow(0 18px 22px rgba(22,25,30,.16))}
+  .acc-benef__liste{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(22px,2.6vw,34px) clamp(20px,2.6vw,36px)}
+  .acc-benef__liste li{padding-top:16px; border-top:1px solid var(--acc-filet)}
+  .acc-benef__liste .ic-svg{width:24px; height:24px; fill:none; stroke:var(--acc-encre); stroke-width:1.6}
+  .acc-benef__liste h3{margin:12px 0 6px; font-size:17px; font-weight:800; color:var(--acc-encre); letter-spacing:-.01em}
+  .acc-benef__liste p{margin:0; font-size:14.5px; line-height:1.6; color:var(--acc-gris)}
+  @media (max-width:900px){
+    .acc-benef__grille{grid-template-columns:minmax(0,1fr)}
+    .acc-benef__avion{max-width:520px; margin:0 auto; width:100%}
+  }
+  @media (max-width:560px){ .acc-benef__liste{grid-template-columns:minmax(0,1fr)} }
+
   /* ---------- Les avis (composants de 16-avis.css, jetons redéfinis plus haut) ---------- */
   #page-accueil .av-grille{margin-top:clamp(28px,3.6vw,40px)}
   #page-accueil .av-accueil__pied{margin:26px 0 0}

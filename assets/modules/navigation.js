@@ -1936,9 +1936,11 @@
                    {label:'Votre indicatif',ref:'callsign'},
                    {label:'Nature du problème',variantes:e.cause.split(' ').filter(function(w){return w.length>3;})},
                    {label:'Vos intentions',variantes:['assistance','je me pose','pose','deroute','deroutement','atterrissage','descends','priorite']} ],
+        /* Manuel DSNA p. 238, mot pour mot. « reçu », « vous êtes prioritaire »
+           et « maintenez l'écoute » retirés le 01/10/2026 : absents du manuel. */
         atcAfter: g==='MAYDAY'
-          ? '{CALL}, '+g+' reçu, transpondeur 7700, vous êtes prioritaire.'
-          : '{CALL}, '+g+' reçu, maintenez l\'écoute.' },
+          ? '{CALL}, Mayday Roger, transpondeur 7700.'
+          : '{CALL}, Pan Pan Roger.' },
       { ph:'Collationnement '+(g==='MAYDAY'?'détresse':'urgence'), src:'p. 238', stn:stn, freq:freq, leg:leg, majeur:true,
         reel:'Collationnez.',
         consigne: g==='MAYDAY' ? 'Collationnez le transpondeur.' : 'Accusez réception.',

@@ -470,7 +470,8 @@ const SCENARIOS = [
                          {label:"Position",variantes:["verticale","milles","mille","sud","nord","est","ouest","travers","dessus","au dessus","romeo","terrain","du terrain"]},
                          {label:"Altitude",variantes:["pieds","pied","niveau"]} ] },
               { stn:'tour', station:"{ADRM} {STN}",                               // Manuel DSNA p.238 « Pan Pan Roger »
-                atc:"{CALL}, Pan Pan Roger, maintenez l'écoute.",
+                // « maintenez l'écoute » retiré le 01/10/2026 : absent de la p. 238.
+                atc:"{CALL}, Pan Pan Roger.",
                 consigne:"Accusez réception (Roger), puis votre indicatif.",
                 attendu:"Roger, {CALL}.",
                 motsCles:[ {label:"Accusé de réception",variantes:["roger","recu","bien recu","wilco"]},

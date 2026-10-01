@@ -296,8 +296,12 @@ function aleaUrgence(kind){
                {label:"Intention",variantes:["pose","je me pose","poser","atterr","retour","deroute","descend","descente","assistance","priorite"]} ] };
   const ack = { stn:'tour', station:"{ADRM} {STN}",
     xpdrAssign: g==='MAYDAY' ? '7700' : null,
-    atc: g==='MAYDAY' ? "{CALL}, "+g+" reçu, transpondeur 7700, terrain dégagé, vous êtes prioritaire."
-                      : "{CALL}, "+g+" reçu, maintenez l'écoute.",
+    /* Manuel DSNA p. 238, mot pour mot : « Mayday Roger, transpondeur 7700 » /
+       « Pan Pan Roger ». Jusqu'au 01/10/2026, ces deux lignes disaient « reçu »
+       au lieu de « Roger », et ajoutaient « terrain dégagé, vous êtes
+       prioritaire » ou « maintenez l'écoute » — rien de cela n'est au manuel. */
+    atc: g==='MAYDAY' ? "{CALL}, Mayday Roger, transpondeur 7700."
+                      : "{CALL}, Pan Pan Roger.",
     consigne: g==='MAYDAY' ? "Collationnez le transpondeur." : "Accusez réception (Roger).",
     attendu: g==='MAYDAY' ? "Transpondeur 7700, {CALL}." : "Roger, {CALL}.",
     motsCles: g==='MAYDAY'

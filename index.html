@@ -203,7 +203,12 @@
            qui le lit — avis, liens — ne peut pas le faire réapparaître).
            La tour découpée et la carte OACI ont quitté le hero : la photo du
            cockpit en finale les remplace. Les textes sont ceux choisis par le
-           développeur les 29 et 30/09/2026 ; seule la mise en page change. -->
+           développeur les 29 et 30/09/2026 ; seule la mise en page change.
+           Le 01/10/2026 au soir, le développeur repart de zéro sous le hero :
+           seuls restent les avis et les questions. « Avant de partir »,
+           « Comment ça marche » (et l'échange radio), les six bénéfices, les
+           imprévus, l'offre et l'appel final sont retirés ; les nouvelles
+           sections viendront étape par étape. -->
 
       <!-- ---- Le hero : un cockpit en courte finale ----
            <img> et non un fond CSS : srcset laisse le téléphone charger la petite
@@ -238,95 +243,6 @@
         </div>
       </div>
 
-      <!-- ---- Avant de partir ---- -->
-      <section class="acc-sec" id="accSuite">
-        <div class="acc-in acc-deux">
-          <div>
-            <span class="acc-panneau">Avant de partir</span>
-            <h2 class="acc-h">Vous préparez le vol, puis vous le faites de A à Z.</h2>
-          </div>
-          <div class="acc-texte">
-            <p>Départ, arrivée, dégagement, altitude, passagers à bord, type d'appareil. La carte OACI et les espaces aériens sont sous vos yeux pendant que vous parlez.</p>
-            <p>Ensuite, c'est vous qui parlez. Mise en route, décollage, croisière, panne…</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ---- Comment ça marche : trois étapes (une vraie suite, d'où les
-           numéros) et un vrai échange ---- -->
-      <section class="acc-sec acc-sec--ardoise">
-        <div class="acc-in">
-          <span class="acc-panneau">Comment ça marche</span>
-          <h2 class="acc-h">Vous parlez. On vous répond. On vous corrige.</h2>
-
-          <ol class="acc-etapes">
-            <li class="reveal"><span class="acc-etapes__n">1</span><h3>Vous choisissez</h3><p>Un aérodrome de départ, une destination, un avion et votre niveau. En mode débutant, les consignes vous guident. En mode réel, c'est à vous de gérer la situation.</p></li>
-            <li class="reveal"><span class="acc-etapes__n">2</span><h3>Le contrôleur vous répond</h3><p>Vous faites votre annonce, et le contrôleur vous répond avec une voix réaliste. Chaque contrôleur a sa propre voix : la tour, le sol et l'information de vol ne parlent pas pareil.</p></li>
-            <li class="reveal"><span class="acc-etapes__n">3</span><h3>Voyez ce qui n'allait pas</h3><p>Le contrôleur vous répond, puis votre message est analysé. Les erreurs et les éléments oubliés apparaissent immédiatement, avec la formulation attendue.</p></li>
-          </ol>
-
-          <!-- Extrait littéral : ces phrases sont celles que l'application
-               attend vraiment (scénario Décollage puis aléa « panne moteur »),
-               reprises du manuel DSNA. Ne pas les retoucher pour la mise en page. -->
-          <div class="acc-radio reveal">
-            <div class="acc-radio__tete"><span class="acc-radio__voyant"></span>LFOR · Chartres-Métropole tour · scénario Décollage · mode Réel</div>
-            <div class="acc-radio__corps">
-              <div class="acc-radio__l acc-radio__l--moi"><span class="acc-radio__qui">Vous</span><span class="acc-radio__t">Chartres-Métropole tour, F-BYFO, point d'attente piste 27, prêt au départ.</span></div>
-              <div class="acc-radio__l"><span class="acc-radio__qui">Contrôle</span><span class="acc-radio__t">F-BYFO, alignez-vous et attendez piste 27.</span></div>
-              <div class="acc-radio__l acc-radio__l--moi"><span class="acc-radio__qui">Vous</span><span class="acc-radio__t">Je m'aligne et j'attends piste 27, F-BYFO.</span></div>
-              <div class="acc-radio__l acc-radio__l--alea"><span class="acc-radio__qui">Imprévu</span><span class="acc-radio__t">En montée initiale, le moteur perd sa puissance.</span></div>
-              <div class="acc-radio__l acc-radio__l--moi"><span class="acc-radio__qui">Vous</span><span class="acc-radio__t">MAYDAY MAYDAY MAYDAY, Chartres-Métropole tour, F-BYFO, panne moteur, je me pose.</span></div>
-              <div class="acc-radio__l"><span class="acc-radio__qui">Contrôle</span><span class="acc-radio__t">F-BYFO, MAYDAY reçu, transpondeur 7700, terrain dégagé, vous êtes prioritaire.</span></div>
-              <div class="acc-radio__l acc-radio__l--moi"><span class="acc-radio__qui">Vous</span><span class="acc-radio__t">Transpondeur 7700, F-BYFO.</span></div>
-            </div>
-            <div class="acc-radio__pied">Ces phrases sont celles que l'exercice attend, mot pour mot, d'après le manuel de phraséologie de la DSNA. Chaque élément est vérifié à part&nbsp;: l'appel, l'organisme, l'indicatif, la nature, l'intention, le code.</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ---- Ce que vous travaillez : six bénéfices (texte du développeur, 01/10) ---- -->
-      <section class="acc-sec">
-        <div class="acc-in">
-          <span class="acc-panneau">Ce que vous travaillez</span>
-          <ul class="acc-benef">
-            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/></svg><h3>Prenez confiance à la radio</h3><p>Entraînez-vous autant que nécessaire avant votre prochain vol. Vous arrivez plus à l'aise sur la fréquence.</p></li>
-            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><h3>Soyez plus à l'aise en vol</h3><p>Répétez les situations que vous pouvez rencontrer en vol pour être plus à l'aise quand elles arrivent vraiment.</p></li>
-            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.2l2.4 2.4 4.6-4.9"/></svg><h3>Apprenez de vos erreurs</h3><p>Voyez rapidement ce qui n'allait pas dans vos messages et comprenez ce qu'il faut améliorer.</p></li>
-            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><h3>Gagnez en réactivité</h3><p>Apprenez à écouter, réfléchir et répondre rapidement sans avoir besoin de préparer chaque phrase à l'avance.</p></li>
-            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 13.5h4.5"/></svg><h3>Améliorez votre phraséologie</h3><p>Entraînez-vous à utiliser les bons mots et les bonnes formulations pour vos communications radio.</p></li>
-            <li class="reveal"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 4-6"/></svg><h3>Suivez votre progression</h3><p>Voyez vos résultats au fil des exercices et identifiez les points sur lesquels vous devez encore travailler.</p></li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- ---- Les imprévus ----
-           Neuf entrées sur les quarante-trois d'ALEAS_SCEN, choisies pour
-           couvrir le sol, la piste et la croisière. Les références de page
-           sont celles du champ `src` de chaque aléa : si un aléa change de
-           page dans le code, celle-ci devient fausse — c'est la seule chose
-           à vérifier en touchant ce bloc. -->
-      <section class="acc-sec acc-sec--ardoise">
-        <div class="acc-in">
-          <span class="acc-panneau">Ce qui peut arriver</span>
-          <h2 class="acc-h">En vol, tout ne se passe pas comme prévu.</h2>
-          <p class="acc-lede">Le vent tourne, le contrôleur vous donne un cap, un avion vous est signalé. <b><span data-chiffre="imprevus">43</span> situations comme celles-ci</b> peuvent arriver pendant un exercice, au hasard. En voici neuf.</p>
-
-          <ul class="acc-impr">
-            <li class="reveal"><span class="acc-impr__ref">Manuel p. 148</span><h3>Le vent a tourné</h3><p>La piste change pendant que vous arrivez. Vous reprenez votre arrivée avec la nouvelle piste.</p></li>
-            <li class="reveal"><span class="acc-impr__ref">Manuel p. 150</span><h3>Attente en vent arrière</h3><p>On vous fait attendre dans le circuit. Vous accusez réception, puis vous laissez la fréquence libre.</p></li>
-            <li class="reveal"><span class="acc-impr__ref">Manuel p. 195</span><h3>Changement de cap</h3><p>Le contrôleur vous donne un cap. Vous le répétez exactement.</p></li>
-            <li class="reveal"><span class="acc-impr__ref">Manuel p. 211</span><h3>Information de trafic</h3><p>On vous signale un avion. Vous répondez «&nbsp;Roger&nbsp;» ou «&nbsp;Trafic en vue&nbsp;», et ça ne veut pas dire la même chose.</p></li>
-            <li class="reveal"><span class="acc-impr__ref">Manuel p. 159</span><h3>Remise de gaz</h3><p>On vous fait remettre les gaz en finale. Vous refaites un tour de piste et vous vous annoncez à nouveau.</p></li>
-            <li class="reveal"><span class="acc-impr__ref">Manuel p. 46</span><h3>Traversée de piste</h3><p>Au sol, on vous fait attendre avant une piste ou la traverser. Attention au mot «&nbsp;piste&nbsp;»&nbsp;: il n'est employé que dans un cas précis.</p></li>
-            <li class="reveal"><span class="acc-impr__ref">Manuel p. 205</span><h3>Renseignement SIGMET</h3><p>Un phénomène météo est signalé sur votre route. Vous accusez réception et vous dites ce que vous allez faire.</p></li>
-            <li class="reveal"><span class="acc-impr__ref">Manuel p. 208</span><h3>Zone réglementée active</h3><p>Une zone s'active devant vous. Vous changez de route et vous l'annoncez.</p></li>
-            <li class="reveal"><span class="acc-impr__ref">Manuel p. 238</span><h3>Malaise à bord</h3><p>Un passager fait un malaise. C'est une urgence, pas une détresse&nbsp;: on dit PAN PAN, pas MAYDAY.</p></li>
-          </ul>
-
-          <p class="acc-note">En mode Réel, <b>vous ne savez pas quand ça arrive</b>, et le texte du contrôleur est caché&nbsp;: vous n'avez que votre oreille, comme en vol. Ensuite, vous voyez ce que vous avez dit à côté de la phrase attendue.</p>
-        </div>
-      </section>
-
       <!-- ---- Les avis mis en avant (29/09/2026, assets/modules/avis.js) ----
            Masquée tant qu'aucun avis n'est publié : une section vide, ou des avis
            inventés pour la remplir, seraient pires que pas de section. -->
@@ -336,61 +252,6 @@
           <h2 class="acc-h">Ce qu'en disent les élèves.</h2>
           <div class="av-grille" id="avAccueilListe"></div>
           <p class="av-accueil__pied"><button class="acc-btn acc-btn--creux" type="button" data-page="avis">Voir tous les avis</button></p>
-        </div>
-      </section>
-
-      <!-- ---- L'offre ----
-           Le tarif, la durée d'essai et l'exigence d'une carte ne sont PAS
-           écrits ici : ils viennent de RT_OFFRE (routeur.js, un seul endroit).
-           Tant que le prix n'est pas fixé, la page n'en invente aucun. Les
-           valeurs ci-dessous sont celles de repli, d'aujourd'hui. -->
-      <section class="acc-sec offre">
-        <div class="acc-in">
-          <span class="acc-panneau">L'offre</span>
-          <h2 class="acc-h">Gratuit pendant la phase de lancement.</h2>
-          <p class="acc-lede">Créez un compte, faites un vol complet, et jugez par vous-même.</p>
-
-          <div class="acc-offre reveal">
-            <div class="acc-offre__tete">
-              <span>Albatros VFR</span>
-              <span class="acc-offre__kind" data-offre="kind">Essai</span>
-            </div>
-            <dl class="acc-offre__cases">
-              <div><dt>Prix</dt><dd data-offre="duree">Gratuit<small>pendant le lancement</small></dd></div>
-              <div><dt>Accès</dt><dd>Tout<small>aucun exercice bloqué</small></dd></div>
-              <div><dt>Carte bancaire</dt><dd data-offre="carte">Non<small>rien à saisir</small></dd></div>
-              <div><dt>Ensuite</dt><dd data-offre="prix">Abonnement<small>prix annoncé ici</small></dd></div>
-            </dl>
-            <div class="acc-offre__deux">
-              <!-- Les limites de la phase de lancement (29/09/2026). Les nombres
-                   sont ceux de assets/modules/lancement.js (LIMITES) : les changer
-                   là-bas sans les changer ici ferait mentir la vitrine. -->
-              <div>
-                <h3>Chaque jour, pendant le lancement</h3>
-                <ul class="acc-liste">
-                  <li><b><span data-limite="vol.google">3</span> vols et <span data-limite="scenario.google">5</span> scénarios</b> avec la voix réaliste du contrôleur</li>
-                  <li>puis <b>jusqu'à <span data-limite="vol.max">10</span> vols et <span data-limite="scenario.max">15</span> scénarios</b> avec la voix de votre navigateur</li>
-                  <li><b>QCM illimités</b></li>
-                </ul>
-                <p class="acc-petit">Les compteurs repartent à zéro à minuit. Vous les voyez sur votre tableau de bord.</p>
-              </div>
-              <div>
-                <h3>Ce qu'il y a dedans</h3>
-                <ul class="acc-liste">
-                  <li><b><span data-chiffre="scenarios">13</span> scénarios</b> — du parking au parking, plus les quiz de vocabulaire et de nombres</li>
-                  <li><b><span data-chiffre="imprevus">43</span> imprévus</b> tirés au sort, du SIGMET au MAYDAY</li>
-                  <li><b><span data-chiffre="aerodromes">387</span> aérodromes</b> français, leurs vraies pistes et leurs vraies fréquences</li>
-                  <li><b><span data-chiffre="avions">176</span> appareils</b>, du DR400 à l'Elixir</li>
-                  <li><b>Mode Réel</b> : le texte du contrôleur est masqué, vous n'avez que l'oreille</li>
-                  <li><b>Chaque phrase</b> renvoie à sa page du manuel DSNA</li>
-                </ul>
-              </div>
-            </div>
-            <div class="acc-offre__pied">
-              <button class="acc-btn acc-btn--plein" type="button" data-page="signup">Commencer l'essai gratuit</button>
-              <span class="acc-petit">Deux minutes pour créer votre compte. <span data-offre="foot">Aucune carte demandée, aucun prélèvement automatique.</span></span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -432,18 +293,6 @@
         </div>
       </section>
 
-      <!-- ---- L'appel final ---- -->
-      <section class="acc-final">
-        <div class="acc-in">
-          <h2>Lors d'une panne en vol, vous n'aurez pas le temps de chercher vos mots. Entraînez-vous ici.</h2>
-          <p>Créez votre compte et faites votre premier vol en quelques minutes.</p>
-          <div class="acc-boutons">
-            <button class="acc-btn acc-btn--plein" type="button" data-page="signup">Commencer l'essai gratuit</button>
-            <button class="acc-btn acc-btn--creux" type="button" data-page="login">Se connecter</button>
-          </div>
-          <p class="acc-petit">Outil pédagogique — il ne remplace pas la formation avec un instructeur.</p>
-        </div>
-      </section>
     </section>
 
     <!-- ==================== CONNEXION ==================== -->

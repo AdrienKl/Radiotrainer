@@ -101,16 +101,26 @@ test('le tableau de bord dit les compteurs du jour et la phase de lancement', as
   await expect(page.locator('#tbQuotaNote')).toContainText('QCM ne comptent pas');
 });
 
-test('la vitrine annonce la phase de lancement et ses limites', async ({ page }) => {
+/* La section Offre de l'accueil a été RETIRÉE le 01/10/2026 (le développeur
+   repart de zéro sous le hero). La phase de lancement reste dite sur le
+   tableau de bord (test ci-dessus). Ce qui reste de l'accueil : le hero, ses
+   chiffres recalculés depuis les données, les avis et les questions. */
+test('accueil : hero, chiffres recalculés, questions — et plus de section Offre', async ({ page }) => {
   await ouvrir(page);
-  const offre = page.locator('#page-accueil .offre');
-  await expect(offre).toContainText('Gratuit pendant la phase de lancement');
-  await expect(offre).toContainText('3 vols et 5 scénarios');
-  await expect(offre).toContainText('jusqu\'à 10 vols et 15 scénarios');
-  await expect(offre).toContainText('QCM illimités');
-  await expect(page.locator('[data-offre="kind"]')).toHaveText('Phase de lancement');
-  // La phrase du hero (« Phase de lancement : gratuit… ») a été retirée le
-  // 01/10/2026, à la demande : la section Offre ci-dessus suffit à l'annoncer.
+  await expect(page.locator('#page-accueil .acc-hero')).toBeVisible();
+  await expect(page.locator('#page-accueil .offre')).toHaveCount(0);
+  await expect(page.locator('#page-accueil .acc-qa details')).toHaveCount(6);
+  const chiffres = await page.evaluate(() => ({
+    aerodromes: document.querySelector('[data-chiffre="aerodromes"]').textContent,
+    attendu: String(AERODROMES.length),
+    scenarios: document.querySelector('[data-chiffre="scenarios"]').textContent,
+    attenduS: String(SCENARIOS.length),
+    imprevus: document.querySelector('[data-chiffre="imprevus"]').textContent,
+    attenduI: String(ALEAS_SCEN.length)
+  }));
+  expect(chiffres.aerodromes).toBe(chiffres.attendu);
+  expect(chiffres.scenarios).toBe(chiffres.attenduS);
+  expect(chiffres.imprevus).toBe(chiffres.attenduI);
 });
 
 test('Paramètres : un onglet à la fois, lu et écrit dans l\'adresse', async ({ page }) => {

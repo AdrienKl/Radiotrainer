@@ -150,81 +150,13 @@
   .acc-sec--ardoise{background:var(--acc-ardoise); border-top:1px solid var(--acc-filet); border-bottom:1px solid var(--acc-filet)}
   .acc-h{margin:18px 0 0; max-width:22ch; font-size:clamp(28px,3.6vw,46px); font-weight:800; line-height:1.08; letter-spacing:-.03em;
     color:#fff; text-wrap:balance}
-  .acc-lede{margin:18px 0 0; max-width:64ch; font-size:clamp(15.5px,1.4vw,17.5px); line-height:1.65; color:var(--acc-gris)}
-  .acc-lede b, .acc-note b{color:var(--acc-brume); font-weight:700}
-  .acc-note{margin:28px 0 0; max-width:74ch; font-size:15px; line-height:1.65; color:var(--acc-gris)}
-  .acc-petit{font-size:13.5px; line-height:1.55; color:var(--acc-gris)}
   /* Deux colonnes : le titre à gauche, le contenu à droite. */
   .acc-deux{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:clamp(28px,6vw,96px); align-items:start}
   .acc-deux .acc-h{max-width:14ch}
-  .acc-texte p{margin:0; font-size:clamp(17px,1.7vw,20px); line-height:1.6; color:var(--acc-gris)}
-  .acc-texte p + p{margin-top:18px; color:var(--acc-brume)}
-  .acc-texte{padding-top:6px}
-
-  /* ---------- Comment ça marche ---------- */
-  .acc-etapes{list-style:none; margin:clamp(34px,4.4vw,52px) 0 0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(20px,3vw,40px)}
-  .acc-etapes li{padding-top:20px; border-top:1px solid var(--acc-filet)}
-  .acc-etapes__n{display:block; font-family:var(--mono); font-size:15px; font-weight:700; color:var(--acc-balise)}
-  .acc-etapes h3{margin:12px 0 8px; font-size:19px; color:#fff; letter-spacing:-.01em}
-  .acc-etapes p{margin:0; font-size:15px; line-height:1.62; color:var(--acc-gris)}
-
-  /* L'échange radio : un panneau d'instrument, le texte de l'exercice tel quel. */
-  .acc-radio{margin-top:clamp(36px,4.6vw,56px); border:1px solid var(--acc-filet); border-radius:12px; overflow:hidden; background:var(--acc-nuit)}
-  .acc-radio__tete{display:flex; align-items:center; gap:10px; padding:13px 20px; border-bottom:1px solid var(--acc-filet);
-    font-size:13.5px; font-weight:600; color:var(--acc-gris)}
-  .acc-radio__voyant{flex:none; width:8px; height:8px; border-radius:50%; background:#3ecf7a; box-shadow:0 0 10px rgba(62,207,122,.7)}
-  .acc-radio__corps{display:flex; flex-direction:column; gap:14px; padding:20px}
-  .acc-radio__l{display:grid; grid-template-columns:96px minmax(0,1fr); gap:14px; align-items:baseline}
-  .acc-radio__qui{font-size:13px; font-weight:700; color:var(--acc-gris)}
-  .acc-radio__t{font-size:15.5px; line-height:1.55; color:var(--acc-brume)}
-  .acc-radio__l--moi .acc-radio__qui{color:var(--acc-balise)}
-  .acc-radio__l--moi .acc-radio__t{color:#fff; font-weight:600}
-  .acc-radio__l--alea .acc-radio__qui, .acc-radio__l--alea .acc-radio__t{color:#f08a7a; font-weight:700}
-  .acc-radio__pied{padding:14px 20px; border-top:1px dashed var(--acc-filet); font-size:13.5px; line-height:1.6; color:var(--acc-gris)}
-
-  /* ---------- Les six bénéfices : une grille à filets, sans cartes ---------- */
-  .acc-benef{list-style:none; margin:clamp(28px,3.6vw,40px) 0 0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:1px; background:var(--acc-filet); border:1px solid var(--acc-filet); border-radius:12px; overflow:hidden}
-  .acc-benef li{padding:clamp(22px,2.6vw,32px); background:var(--acc-nuit); transition:background .25s}
-  .acc-benef li:hover{background:var(--acc-ardoise)}
-  .acc-benef .ic-svg{width:26px; height:26px; fill:none; stroke:var(--acc-balise); stroke-width:1.6}
-  .acc-benef h3{margin:18px 0 8px; font-size:18px; color:#fff; letter-spacing:-.01em}
-  .acc-benef p{margin:0; font-size:15px; line-height:1.6; color:var(--acc-gris)}
-
-  /* ---------- Les imprévus ---------- */
-  .acc-impr{list-style:none; margin:clamp(30px,4vw,46px) 0 0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px}
-  .acc-impr li{display:flex; flex-direction:column; gap:8px; padding:22px; border:1px solid var(--acc-filet); border-radius:12px; background:var(--acc-nuit);
-    transition:border-color .2s}
-  .acc-impr li:hover{border-color:#3a4049}
-  .acc-impr__ref{font-family:var(--mono); font-size:12.5px; color:var(--acc-balise)}
-  .acc-impr h3{margin:0; font-size:17px; color:#fff}
-  .acc-impr p{margin:0; font-size:14.5px; line-height:1.6; color:var(--acc-gris)}
 
   /* ---------- Les avis (composants de 16-avis.css, jetons redéfinis plus haut) ---------- */
   #page-accueil .av-grille{margin-top:clamp(28px,3.6vw,40px)}
   #page-accueil .av-accueil__pied{margin:26px 0 0}
-
-  /* ---------- L'offre ---------- */
-  .acc-offre{margin-top:clamp(30px,4vw,46px); border:1px solid var(--acc-filet); border-radius:12px; background:var(--acc-ardoise); overflow:hidden}
-  .acc-offre__tete{display:flex; justify-content:space-between; align-items:center; gap:14px; padding:16px 24px; border-bottom:1px solid var(--acc-filet);
-    font-weight:700; color:#fff}
-  .acc-offre__kind{font-size:13px; font-weight:700; color:var(--acc-balise)}
-  .acc-offre__cases{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin:0}
-  .acc-offre__cases > div{padding:20px 24px; min-width:0}
-  .acc-offre__cases > div + div{border-left:1px solid var(--acc-filet)}
-  .acc-offre__cases dt{font-size:13.5px; color:var(--acc-gris)}
-  .acc-offre__cases dd{margin:6px 0 0; font-size:clamp(20px,2vw,24px); font-weight:700; color:#fff}
-  .acc-offre__cases dd small{display:block; margin-top:4px; font-size:13px; font-weight:400; color:var(--acc-gris)}
-  .acc-offre__deux{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-top:1px solid var(--acc-filet)}
-  .acc-offre__deux > div{padding:22px 24px}
-  .acc-offre__deux > div + div{border-left:1px solid var(--acc-filet)}
-  .acc-offre__deux h3{margin:0 0 12px; font-size:15px; color:#fff}
-  .acc-liste{list-style:none; margin:0 0 10px; padding:0; display:flex; flex-direction:column; gap:8px}
-  .acc-liste li{position:relative; padding-left:20px; font-size:14.5px; line-height:1.55; color:var(--acc-gris)}
-  .acc-liste li::before{content:""; position:absolute; left:2px; top:.62em; width:8px; height:2px; background:var(--acc-balise)}
-  .acc-liste b{color:var(--acc-brume)}
-  .acc-offre__pied{display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:20px 24px; border-top:1px solid var(--acc-filet); background:var(--acc-nuit)}
-  .acc-offre__pied .acc-petit{max-width:52ch}
 
   /* ---------- Les questions ---------- */
   .acc-qa{border-bottom:1px solid var(--acc-filet)}
@@ -241,24 +173,10 @@
   .acc-qa details[open] > .acc-qa__r{animation:acMonte .4s cubic-bezier(.22,.61,.36,1)}
   @media (prefers-reduced-motion:reduce){ .acc-qa details[open] > .acc-qa__r{animation:none} }
 
-  /* ---------- L'appel final ---------- */
-  .acc-final{padding:clamp(72px,9vw,128px) 0}
-  .acc-final h2{margin:0; max-width:24ch; font-size:clamp(28px,3.8vw,48px); font-weight:800; line-height:1.1; letter-spacing:-.03em; color:#fff; text-wrap:balance}
-  .acc-final h2 + p{margin:18px 0 0; font-size:clamp(16px,1.5vw,18px); color:var(--acc-gris)}
-  .acc-final .acc-boutons{margin-top:30px}
-  .acc-final .acc-petit{margin:26px 0 0}
-
   /* ---------- Écrans étroits ---------- */
   @media (max-width:900px){
     .acc-deux{grid-template-columns:minmax(0,1fr)}
     .acc-deux .acc-h{max-width:20ch}
-    .acc-etapes{grid-template-columns:minmax(0,1fr)}
-    .acc-benef, .acc-impr{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .acc-offre__cases{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .acc-offre__cases > div:nth-child(3){border-left:none}
-    .acc-offre__cases > div:nth-child(n+3){border-top:1px solid var(--acc-filet)}
-    .acc-offre__deux{grid-template-columns:minmax(0,1fr)}
-    .acc-offre__deux > div + div{border-left:none; border-top:1px solid var(--acc-filet)}
   }
   @media (max-width:640px){
     /* Le téléphone en portrait : la photo se recadre sur la piste et
@@ -274,11 +192,6 @@
     .acc-hero .acc-btn{width:100%}
     .acc-chiffres{grid-template-columns:repeat(2,minmax(0,1fr))}
     .acc-chiffres > div:nth-child(3){padding-left:0; border-left:none}
-    .acc-benef, .acc-impr{grid-template-columns:minmax(0,1fr)}
-    .acc-radio__l{grid-template-columns:minmax(0,1fr); gap:3px}
-    .acc-offre__cases{grid-template-columns:minmax(0,1fr)}
-    .acc-offre__cases > div + div{border-left:none; border-top:1px solid var(--acc-filet)}
-    .acc-offre__pied .acc-btn{width:100%}
   }
 
   /* ---------- Contact, ouvert depuis l'accueil ----------

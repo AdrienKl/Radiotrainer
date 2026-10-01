@@ -83,6 +83,9 @@
     :root[data-theme="dark"] .btn.primary:hover,
     :root[data-theme="dark"] .ptt:not(.listening):hover,
     :root[data-theme="dark"] .vf-ptt:not(.listening):hover{ background:#5a6370; }
+    /* Sauf les boutons jaunes des cartes de connexion (06-coquille.css) : texte
+       encre, ils s'éclaircissent au survol, ils ne passent pas au graphite. */
+    :root[data-theme="dark"] .auth-card .cta:hover{ background:#f3c95f; }
 
     /* Blocs à couleurs figées (avertissements) : variante sombre lisible. */
     :root[data-theme="dark"] .nav-warn{ background:#2e2114; border-color:#5c4426; border-left-color:#d9873c; color:#f0c99b; }

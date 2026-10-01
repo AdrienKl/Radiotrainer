@@ -46,44 +46,41 @@
 /* =============================================================================
    L'ACCUEIL (01/10/2026)
    -----------------------------------------------------------------------------
-   Palette — regardée chez les constructeurs et les écoles (Pilatus, Cirrus,
-   Daher, Airbus) : du sombre, du blanc cassé, presque rien d'autre.
-     nuit     #0b0d10   le fond
-     ardoise  #13161a   une section sur deux, les panneaux
-     filet    #262b32   les traits
-     brume    #eceef1   le texte                 (17,4:1 sur nuit)
-     gris     #a2a9b3   le texte secondaire      (8,2:1 sur nuit, 7,6:1 sur ardoise)
-     balise   #e9b949   LA couleur d'accent      (10,9:1 sur nuit)
+   DEUXIÈME VERSION, le même soir. La première était entièrement noire ; le
+   développeur : « trop de noir… et quand on passe à l'inscription, ça change
+   complètement de design ». Donc :
+     · la photo du hero en plein cadre, SANS AUCUN VOILE — le texte se pose
+       sur le tableau de bord, déjà sombre, et ne tient que par une ombre
+       portée autour des lettres ;
+     · sous le hero, des sections CLAIRES, comme les cartes de connexion et
+       d'inscription : on passe de l'un à l'autre sans changer de monde ;
+     · les quatre chiffres SOUS la photo, dans une bande blanche, pour ne
+       plus la cacher.
+   Palette :
+     encre    #16191e   le texte                 (16,9:1 sur blanc)
+     gris     #4d5562   le texte secondaire      (7,5:1 sur blanc, 7,0:1 sur papier)
+     papier   #f4f5f7   le fond
+     filet    #dfe2e7   les traits
+     balise   #e9b949   LA couleur d'accent : bouton principal, panneaux
    La « balise » est le jaune des panneaux de position des voies de
-   circulation (lettres jaunes sur fond noir) : c'est le seul signe distinctif
-   de la page, porté par .acc-panneau et par le bouton principal. Ailleurs,
-   rien que du gris.
+   circulation (lettres jaunes sur fond noir) : .acc-panneau en est la copie.
 
    POURQUOI LES JETONS SONT REDÉFINIS SUR TOUTE LA PAGE. Des composants
-   partagés vivent dans l'accueil (les cartes d'avis de 16-avis.css, le lien
-   .auth-link de 06-coquille.css) et lisent --violet, --surface, --ink…
-   Les redéfinir ici les fait passer au sombre et à la balise sans toucher à
-   leur feuille — et garantit qu'AUCUN violet ne peut réapparaître sur
-   l'accueil par un composant qu'on aurait oublié.
-   Couleurs écrites en dur, identiques dans les deux thèmes : la vitrine ne
+   partagés vivent dans l'accueil (cartes d'avis de 16-avis.css, .auth-link de
+   06-coquille.css) et lisent --violet, --surface, --ink… Les redéfinir ici
+   garantit qu'aucun violet — ni aucun gris du thème sombre — ne peut
+   réapparaître sur l'accueil. Identiques dans les deux thèmes : la vitrine ne
    suit pas le réglage de thème (décision du 27/09/2026).
    ========================================================================== */
-  #page-accueil, body:has(#page-accueil.active) footer{
-    --acc-nuit:#0b0d10; --acc-ardoise:#13161a; --acc-filet:#262b32;
-    --acc-brume:#eceef1; --acc-gris:#a2a9b3; --acc-balise:#e9b949; --acc-balise-2:#f3c95f;
-    --bg:var(--acc-nuit); --surface:var(--acc-ardoise); --surface-2:#1a1e23; --border:var(--acc-filet);
-    --ink:var(--acc-brume); --ink-2:var(--acc-gris); --ink-2-fort:#b9bfc8;
-    --violet:var(--acc-balise); --violet-dark:var(--acc-balise); --violet-soft:rgba(233,185,73,.12); --violet-tint:#1a1e23;
-    background:var(--acc-nuit); color:var(--acc-brume);
+  #page-accueil{
+    --acc-encre:#16191e; --acc-gris:#4d5562; --acc-papier:#f4f5f7; --acc-blanc:#fff; --acc-filet:#dfe2e7;
+    --acc-balise:#e9b949; --acc-balise-2:#f3c95f;
+    --bg:var(--acc-papier); --surface:var(--acc-blanc); --surface-2:#eef0f3; --border:var(--acc-filet);
+    --ink:var(--acc-encre); --ink-2:var(--acc-gris); --ink-2-fort:#3d444f;
+    --violet:#1f242b; --violet-dark:#1f242b; --violet-soft:rgba(31,36,43,.07); --violet-tint:#eef0f3;
+    background:var(--acc-papier); color:var(--acc-encre);
   }
-  #page-accueil ::selection{background:rgba(233,185,73,.32); color:#fff}
-  #page-accueil :focus-visible{outline:2px solid var(--acc-balise); outline-offset:3px}
-  /* Le fond de la page entière : sans lui, le rebond du défilement (Safari)
-     et la bande au-dessus de la barre flottante montrent le gris clair. */
-  body:has(#page-accueil.active){background:#0b0d10}
-  body:has(#page-accueil.active) footer{border-top-color:var(--acc-filet); margin-top:0; color:var(--acc-gris)}
-  body:has(#page-accueil.active) footer .disclaimer{background:var(--acc-ardoise); border-color:var(--acc-filet); color:var(--acc-gris)}
-  body:has(#page-accueil.active) footer .disclaimer strong{color:var(--acc-brume)}
+  #page-accueil :focus-visible{outline:2px solid var(--acc-encre); outline-offset:3px}
 
   /* La largeur commune : 1 180 px, une seule pour toutes les sections. */
   .acc-in{width:min(1180px, 100% - 2*clamp(18px,4vw,40px)); margin:0 auto}
@@ -93,63 +90,57 @@
     background:#000; color:var(--acc-balise); font-size:13px; font-weight:700; letter-spacing:.02em; line-height:1.3}
 
   /* ---------- Les boutons de l'accueil ----------
-     Rectangles à coins doux plutôt que pilules : la pilule était la signature
-     de l'ancienne charte. Le plein porte la balise, texte NUIT (10,9:1) — du
-     blanc sur du jaune tomberait à 1,9:1. */
+     Rectangles à coins doux. Le plein porte la balise, texte ENCRE (10,1:1) —
+     du blanc sur du jaune tomberait à 1,9:1. Les mêmes boutons sont posés sur
+     les cartes de connexion et d'inscription (06-coquille.css). */
   .acc-boutons{display:flex; flex-wrap:wrap; gap:12px}
   .acc-btn{font:inherit; font-size:15.5px; font-weight:700; padding:14px 24px; min-height:50px; border-radius:8px; cursor:pointer;
     transition:background .18s, border-color .18s, color .18s, transform .12s}
   .acc-btn:active{transform:translateY(1px)}
-  .acc-btn--plein{background:var(--acc-balise); color:var(--acc-nuit); border:1.5px solid var(--acc-balise)}
+  .acc-btn--plein{background:var(--acc-balise); color:var(--acc-encre); border:1.5px solid var(--acc-balise)}
   .acc-btn--plein:hover{background:var(--acc-balise-2); border-color:var(--acc-balise-2)}
-  .acc-btn--creux{background:rgba(11,13,16,.35); color:var(--acc-brume); border:1.5px solid rgba(236,238,241,.42);
+  .acc-btn--creux{background:rgba(16,18,22,.28); color:#fff; border:1.5px solid rgba(255,255,255,.7);
     -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px)}
-  .acc-btn--creux:hover{border-color:var(--acc-brume); background:rgba(236,238,241,.08)}
+  .acc-btn--creux:hover{background:rgba(16,18,22,.45); border-color:#fff}
+  /* Hors de la photo (avis), le bouton creux reprend l'encre. */
+  .acc-sec .acc-btn--creux{background:transparent; color:var(--acc-encre); border-color:var(--acc-encre);
+    -webkit-backdrop-filter:none; backdrop-filter:none}
+  .acc-sec .acc-btn--creux:hover{background:var(--acc-encre); color:#fff}
 
   /* ---------- Le hero ----------
-     La photo plein cadre, et deux voiles DÉGRADÉS — pas un voile uniforme :
-     le haut reste lumineux (la piste, le ciel), et ne s'assombrit que le bas
-     à gauche, là où se pose le texte. Le dégradé finit sur la couleur de la
-     section suivante : pas de couture entre la photo et la page. */
+     La photo en plein cadre (`cover`), sans voile ni dégradé. Le texte se pose
+     en bas à gauche, sur le tableau de bord de l'avion — la zone la plus
+     sombre de la photo — et une ombre portée AUTOUR DES LETTRES suffit à le
+     détacher des écrans allumés. Ce n'est pas un voile : rien ne recouvre la
+     photo entre les lignes. */
   .acc-hero{position:relative; isolation:isolate; display:flex; flex-direction:column; justify-content:flex-end;
-    min-height:max(640px, 100svh); padding:110px 0 clamp(28px,4vw,44px); overflow:hidden; background:var(--acc-nuit)}
-  /* DÉZOOMÉE (01/10/2026, demande du développeur). En `cover`, la photo
-     remplissait l'écran et on n'en voyait qu'une partie — sur téléphone, à
-     peine un tiers de la largeur. Elle est désormais calée sur la HAUTEUR du
-     hero : on voit tout le cadre, et sur un écran plus large que la photo, les
-     côtés se fondent dans le fond par un masque au lieu de s'arrêter net. */
-  .acc-hero__photo{position:absolute; top:0; left:50%; z-index:-2; height:86%; width:auto; max-width:none;
-    aspect-ratio:2400/1601; transform:translateX(-50%);
-    -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%), linear-gradient(180deg, #000 70%, transparent 100%);
-    -webkit-mask-composite:source-in;
-            mask-image:linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%), linear-gradient(180deg, #000 70%, transparent 100%);
-            mask-composite:intersect;
-    animation:acPhoto 1.6s cubic-bezier(.22,.61,.36,1) both}
-  .acc-hero::before{content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
-    background:
-      linear-gradient(180deg, rgba(11,13,16,.55) 0%, rgba(11,13,16,0) 18%, rgba(11,13,16,0) 38%, rgba(11,13,16,.72) 66%, #0b0d10 100%),
-      linear-gradient(90deg, rgba(11,13,16,.62) 0%, rgba(11,13,16,0) 62%)}
+    min-height:max(560px, calc(100svh - 96px)); padding:110px 0 clamp(30px,4.4vw,56px); overflow:hidden; background:#1b1f25}
+  .acc-hero__photo{position:absolute; inset:0; z-index:-1; width:100%; height:100%; object-fit:cover; object-position:50% 46%;
+    animation:acPhoto 1.4s ease both}
   @keyframes acPhoto{from{opacity:0} to{opacity:1}}
   .acc-hero__in{width:min(1180px, 100% - 2*clamp(18px,4vw,40px)); margin:0 auto; animation:acMonte .9s .15s cubic-bezier(.22,.61,.36,1) both}
   @keyframes acMonte{from{opacity:0; transform:translateY(18px)} to{opacity:1; transform:none}}
-  .acc-hero__titre{margin:18px 0 0; max-width:15ch; font-size:clamp(38px,6.2vw,76px); font-weight:800; line-height:1.02;
-    letter-spacing:-.035em; color:#fff; text-wrap:balance}
-  .acc-hero__sub{margin:20px 0 0; max-width:56ch; font-size:clamp(16px,1.6vw,18.5px); line-height:1.6; color:#d5d9df}
-  .acc-hero .acc-boutons{margin-top:30px}
-  /* Les quatre nombres : une ligne discrète sous un filet, pas des tuiles. */
-  .acc-chiffres{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin:clamp(34px,5vw,56px) 0 0;
-    border-top:1px solid rgba(236,238,241,.18)}
-  .acc-chiffres > div{display:flex; flex-direction:column-reverse; gap:2px; padding:16px 16px 0 0}
-  .acc-chiffres > div + div{padding-left:18px; border-left:1px solid rgba(236,238,241,.12)}
-  .acc-chiffres dd{margin:0; font-size:clamp(24px,2.6vw,32px); font-weight:700; letter-spacing:-.02em; color:#fff; font-variant-numeric:tabular-nums}
-  .acc-chiffres dt{font-size:14px; color:var(--acc-gris)}
+  .acc-hero__titre{text-shadow:0 1px 2px rgba(0,0,0,.55), 0 2px 18px rgba(0,0,0,.65), 0 0 42px rgba(0,0,0,.45)}
+  .acc-hero__titre{margin:0; max-width:16ch; font-size:clamp(32px,4.4vw,56px); font-weight:800; line-height:1.04;
+    letter-spacing:-.03em; color:#fff; text-wrap:balance}
+  .acc-hero .acc-boutons{margin-top:26px}
   @media (prefers-reduced-motion:reduce){ .acc-hero__photo, .acc-hero__in{animation:none} }
 
+  /* Les quatre nombres, SOUS la photo : une bande blanche à filets. */
+  .acc-chiffres-bande{background:var(--acc-blanc); border-bottom:1px solid var(--acc-filet)}
+  .acc-intro{margin:0; padding:clamp(26px,3.4vw,40px) 0 clamp(18px,2.4vw,26px); max-width:68ch;
+    font-size:clamp(16.5px,1.5vw,19px); line-height:1.6; color:var(--acc-encre)}
+  .acc-chiffres{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin:0; border-top:1px solid var(--acc-filet)}
+  .acc-chiffres > div{display:flex; flex-direction:column-reverse; gap:2px; padding:22px 18px 22px 0}
+  .acc-chiffres > div + div{padding-left:22px; border-left:1px solid var(--acc-filet)}
+  .acc-chiffres dd{margin:0; font-size:clamp(24px,2.6vw,32px); font-weight:800; letter-spacing:-.02em; color:var(--acc-encre); font-variant-numeric:tabular-nums}
+  .acc-chiffres dt{font-size:14px; color:var(--acc-gris)}
+
   /* ---------- Les sections ---------- */
-  .acc-sec{padding:clamp(64px,8vw,112px) 0}
-  .acc-sec--ardoise{background:var(--acc-ardoise); border-top:1px solid var(--acc-filet); border-bottom:1px solid var(--acc-filet)}
-  .acc-h{margin:18px 0 0; max-width:22ch; font-size:clamp(28px,3.6vw,46px); font-weight:800; line-height:1.08; letter-spacing:-.03em;
-    color:#fff; text-wrap:balance}
+  .acc-sec{padding:clamp(56px,7vw,100px) 0}
+  .acc-sec--blanc{background:var(--acc-blanc); border-top:1px solid var(--acc-filet); border-bottom:1px solid var(--acc-filet)}
+  .acc-h{margin:16px 0 0; max-width:22ch; font-size:clamp(28px,3.4vw,42px); font-weight:800; line-height:1.1; letter-spacing:-.03em;
+    color:var(--acc-encre); text-wrap:balance}
   /* Deux colonnes : le titre à gauche, le contenu à droite. */
   .acc-deux{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:clamp(28px,6vw,96px); align-items:start}
   .acc-deux .acc-h{max-width:14ch}
@@ -162,14 +153,13 @@
   .acc-qa{border-bottom:1px solid var(--acc-filet)}
   .acc-qa details{border-top:1px solid var(--acc-filet)}
   .acc-qa summary{display:flex; justify-content:space-between; align-items:center; gap:16px; padding:20px 2px; cursor:pointer; list-style:none;
-    font-size:17px; font-weight:700; color:var(--acc-brume); transition:color .18s}
+    font-size:17px; font-weight:700; color:var(--acc-encre)}
   .acc-qa summary::-webkit-details-marker{display:none}
   .acc-qa summary::after{content:"+"; flex:none; font-size:24px; font-weight:400; line-height:1; color:var(--acc-gris); transition:transform .25s}
-  .acc-qa details[open] > summary::after{transform:rotate(45deg); color:var(--acc-balise)}
-  .acc-qa summary:hover{color:#fff}
+  .acc-qa details[open] > summary::after{transform:rotate(45deg); color:var(--acc-encre)}
   .acc-qa__r{margin:0 0 22px; max-width:64ch; font-size:15px; line-height:1.65; color:var(--acc-gris)}
-  .acc-qa__r b{color:var(--acc-brume)}
-  .acc-qa__r .auth-link{font-size:inherit; color:var(--acc-balise); text-decoration:underline; text-underline-offset:3px}
+  .acc-qa__r b{color:var(--acc-encre)}
+  .acc-qa__r .auth-link{font-size:inherit; color:var(--acc-encre); text-decoration:underline; text-underline-offset:3px}
   .acc-qa details[open] > .acc-qa__r{animation:acMonte .4s cubic-bezier(.22,.61,.36,1)}
   @media (prefers-reduced-motion:reduce){ .acc-qa details[open] > .acc-qa__r{animation:none} }
 
@@ -179,19 +169,15 @@
     .acc-deux .acc-h{max-width:20ch}
   }
   @media (max-width:640px){
-    /* Le téléphone en portrait : la photo se recadre sur la piste et
-       l'écran de vol, le texte occupe le bas. */
-    .acc-hero{min-height:max(600px, 100svh); padding-top:96px}
-    /* Plus haute que large sur téléphone : la photo garde toute sa hauteur
-       sur les deux tiers haut du hero (on en voit ainsi la moitié de la
-       largeur, au lieu d'un tiers), le bas se fond dans le texte. */
-    .acc-hero__photo{height:66%; left:52%;
-      -webkit-mask-image:linear-gradient(180deg, #000 72%, transparent 100%); mask-image:linear-gradient(180deg, #000 72%, transparent 100%)}
-    .acc-hero::before{background:linear-gradient(180deg, rgba(11,13,16,.5) 0%, rgba(11,13,16,.12) 14%, rgba(11,13,16,.5) 34%, rgba(11,13,16,.86) 56%, #0b0d10 100%)}
+    /* Téléphone en portrait : la photo, recadrée sur la piste et le tableau
+       de bord, garde la plus grande part de l'écran ; le texte en bas. */
+    .acc-hero{min-height:max(560px, calc(100svh - 140px)); padding-top:96px}
+    .acc-hero__photo{object-position:50% 50%}
     .acc-hero .acc-boutons{flex-direction:column}
     .acc-hero .acc-btn{width:100%}
     .acc-chiffres{grid-template-columns:repeat(2,minmax(0,1fr))}
     .acc-chiffres > div:nth-child(3){padding-left:0; border-left:none}
+    .acc-chiffres > div:nth-child(n+3){border-top:1px solid var(--acc-filet)}
   }
 
   /* ---------- Contact, ouvert depuis l'accueil ----------

@@ -45,9 +45,19 @@
      page. Les url() partent de assets/css/, d'où le ../ (CLAUDE.md § 6.2). */
   .auth-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 18px;
     position:relative; isolation:isolate; background:var(--bg); }
-  .auth-wrap::before{ content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-    background:url("../images/carte-oaci-hero.webp") 50% 46%/cover no-repeat; }
-  :root[data-theme="dark"] .auth-wrap::before{ filter:brightness(.30) saturate(.72) contrast(1.06); }
+  /* 01/10/2026 : LA PHOTO DU HERO DE L'ACCUEIL remplace la carte OACI. Le
+     développeur : « quand on passe à l'inscription, ça change complètement de
+     design ». Même photo que l'accueil, légèrement floutée (la carte se lit
+     mieux sur un fond calme), agrandie de 6 % pour que le flou ne laisse pas
+     de liseré sur les bords. */
+  .auth-wrap::before{ content:""; position:fixed; inset:-3%; z-index:-1; pointer-events:none;
+    background:url("../images/cockpit-finale-1300.webp") 50% 46%/cover no-repeat; filter:blur(3px); }
+  :root[data-theme="dark"] .auth-wrap::before{ filter:blur(3px) brightness(.45); }
+  /* Les boutons principaux des cartes : ceux de l'accueil — jaune balise,
+     texte encre (10,1:1), coins doux. */
+  .auth-card .cta{ background:#e9b949; color:#16191e; border-radius:8px; box-shadow:none; }
+  .auth-card .cta:hover{ background:#f3c95f; box-shadow:none; }
+  .auth-card{ border-radius:14px; }
   .auth-card{ width:100%; max-width:424px; box-sizing:border-box; background:var(--surface);
     border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:30px 28px 26px; }
   .auth-brand{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; color:var(--ink); margin-bottom:20px; }

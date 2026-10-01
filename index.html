@@ -198,7 +198,8 @@
     <section id="page-accueil" class="page">
 
       <!-- ==== L'ACCUEIL, REPARTI DE ZÉRO (01/10/2026, demande du développeur) ====
-           Fond sombre et simple, AUCUN violet (02-vitrine.css redéfinit les jetons
+           Photo sans voile, sections claires comme les cartes de connexion,
+           AUCUN violet (02-vitrine.css redéfinit les jetons
            de couleur sur toute la page, --violet compris : un composant partagé
            qui le lit — avis, liens — ne peut pas le faire réapparaître).
            La tour découpée et la carte OACI ont quitté le hero : la photo du
@@ -219,17 +220,20 @@
              srcset="assets/images/cockpit-finale-1300.webp 1300w, assets/images/cockpit-finale.webp 2400w"
              sizes="100vw" width="2400" height="1601" alt="" decoding="async" fetchpriority="high">
         <div class="acc-hero__in">
-          <!-- Le « panneau » : noir, cadre et lettres jaunes — les panneaux de
-               position des voies de circulation. C'est le seul signe distinctif
-               de la page ; il revient en tête de chaque section. -->
-          <span class="acc-panneau">Phraséologie radio VFR · en français</span>
-          <h1 class="acc-hero__titre">Maîtrisez la phraséologie VFR comme un vrai pilote.</h1>
-          <p class="acc-hero__sub">Créé par un élève pilote, Albatros VFR est né d'un constat simple&nbsp;: à la radio, on progresse en parlant. Ici, vous répétez chaque échange autant de fois qu'il le faut — du roulage à l'atterrissage, jusqu'à la panne moteur ou radio.</p>
+          <h1 class="acc-hero__titre">Maîtrisez la radio comme un vrai pilote.</h1>
           <div class="acc-boutons">
             <button class="acc-btn acc-btn--plein" type="button" data-page="signup">Commencer l'essai gratuit</button>
             <button class="acc-btn acc-btn--creux" type="button" data-page="login">Se connecter</button>
           </div>
+        </div>
+      </div>
 
+      <!-- Sous la photo (01/10/2026) : la phrase d'introduction et les quatre
+           chiffres. Posés sur le tableau de bord, ils cachaient l'image et se
+           lisaient mal sur ses écrans allumés. -->
+      <div class="acc-chiffres-bande">
+        <div class="acc-in">
+          <p class="acc-intro">Créé par un élève pilote, Albatros VFR est né d'un constat simple&nbsp;: à la radio, on progresse en parlant. Ici, vous répétez chaque échange autant de fois qu'il le faut — du roulage à l'atterrissage, jusqu'à la panne moteur ou radio.</p>
           <!-- Les nombres marqués data-chiffre sont recomptés au chargement
                (navigation.js) sur AERODROMES, AIRCRAFT, SCENARIOS et ALEAS_SCEN ;
                data-limite vient de lancement.js › LIMITES. Le texte ici n'est
@@ -258,7 +262,7 @@
       <!-- ---- Les questions qu'on nous pose ----
            Repliées : <details> plutôt qu'un script — le clavier, le lecteur
            d'écran et la recherche dans la page marchent d'office. -->
-      <section class="acc-sec acc-sec--ardoise">
+      <section class="acc-sec acc-sec--blanc">
         <div class="acc-in acc-deux">
           <div>
             <span class="acc-panneau">Avant de vous lancer</span>

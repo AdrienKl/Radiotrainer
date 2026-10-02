@@ -132,15 +132,15 @@ test('accueil : la section des pannes et son exemple tiré du manuel', async ({ 
   const demo = page.locator('#page-accueil .acc-demo');
   await expect(page.locator('#page-accueil .acc-pannes')).toContainText('À vous de gérer la situation');
   await expect(page.locator('#page-accueil .acc-pannes')).toContainText('Et si quelque chose tournait mal');
-  /* Le compteur et le mur des situations suivent ALEAS_SCEN : même nombre,
-     mêmes libellés. Un imprévu ajouté dans le moteur sans l'être ici rougit. */
+  /* Le compteur suit ALEAS_SCEN, et le cadran porte une graduation par
+     situation. */
   const mur = await page.evaluate(() => ({
     compteur: document.querySelector('.acc-compteur__n').textContent,
-    affiches: [...document.querySelectorAll('.acc-mur [data-alea]')].map(e => e.dataset.alea).sort(),
-    moteur: ALEAS_SCEN.map(a => a.label).sort()
+    graduations: document.querySelectorAll('.acc-cadran line').length,
+    moteur: ALEAS_SCEN.length
   }));
-  expect(mur.compteur).toBe(String(mur.moteur.length));
-  expect(mur.affiches).toEqual(mur.moteur);
+  expect(mur.compteur).toBe(String(mur.moteur));
+  expect(mur.graduations).toBe(mur.moteur);
   await expect(page.locator('#page-accueil .acc-pannes')).toContainText('Chaque panne est une nouvelle situation à gérer.');
   await expect(demo).toContainText('Démonstration');
   await expect(demo).toContainText('p.\u00a0238');

@@ -276,10 +276,6 @@
            dans une image.
            LE 43 est recompté au chargement (data-chiffre="imprevus", navigation.js)
            sur ALEAS_SCEN — les imprévus des Scénarios en mode Réel.
-           LE MUR des 43 situations reprend les libellés de ALEAS_SCEN
-           (scenarios/moteur.js), rangés selon leur champ `ou` (sol, partout,
-           vol, piste). En rouge, les vraies pannes. Un imprévu ajouté là-bas
-           doit l'être ici : tests/parcours/lancement.spec.js compare les deux.
            L'EXEMPLE RADIO est une DÉMONSTRATION VISUELLE, à faire vérifier avant
            validation définitive. Il reprend mot pour mot le scénario « Urgence »
            (phraseologie-scenarios.js) :
@@ -295,79 +291,65 @@
               <h2 class="acc-h acc-pannes__titre">Et si quelque chose tournait mal&nbsp;?</h2>
               <p class="acc-pannes__intro">Pendant un vol, tout ne se passe pas toujours comme prévu. Avec Albatros VFR, des pannes et situations inhabituelles peuvent survenir en cours d'exercice et vous obliger à réagir.</p>
             </div>
+            <!-- Le compteur : un cadran d'instrument à 43 graduations, une par
+                 situation, qui s'allument l'une après l'autre à l'arrivée. Le
+                 nombre et les textes sont du HTML (le nombre est recompté par
+                 navigation.js) ; le SVG ne porte que les traits. -->
             <div class="acc-compteur reveal">
-              <b class="acc-compteur__n" data-chiffre="imprevus">43</b>
-              <span class="acc-compteur__lib">pannes et situations inhabituelles possibles</span>
-              <p class="acc-compteur__phrase">Chaque situation vous demande de réfléchir, de vous adapter et de prendre les bonnes décisions.</p>
+              <div class="acc-cadran">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                  <circle cx="100" cy="100" r="70"/>
+                  <line x1="100.0" y1="20.0" x2="100.0" y2="6.0" style="--i:0"/>
+                  <line x1="111.6" y1="20.9" x2="113.7" y2="7.0" style="--i:1"/>
+                  <line x1="123.0" y1="23.4" x2="127.1" y2="10.0" style="--i:2"/>
+                  <line x1="134.0" y1="27.6" x2="139.9" y2="14.9" style="--i:3"/>
+                  <line x1="144.1" y1="33.3" x2="151.9" y2="21.6" style="--i:4"/>
+                  <line x1="153.4" y1="40.4" x2="162.7" y2="30.0" style="--i:5"/>
+                  <line x1="161.5" y1="48.8" x2="172.3" y2="39.9" style="--i:6"/>
+                  <line x1="168.3" y1="58.3" x2="180.2" y2="51.0" style="--i:7"/>
+                  <line x1="173.6" y1="68.7" x2="186.5" y2="63.2" style="--i:8"/>
+                  <line x1="177.4" y1="79.8" x2="190.9" y2="76.2" style="--i:9"/>
+                  <line x1="179.5" y1="91.3" x2="193.4" y2="89.7" style="--i:10"/>
+                  <line x1="179.9" y1="102.9" x2="193.9" y2="103.4" style="--i:11"/>
+                  <line x1="178.7" y1="114.5" x2="192.4" y2="117.1" style="--i:12"/>
+                  <line x1="175.7" y1="125.8" x2="189.0" y2="130.4" style="--i:13"/>
+                  <line x1="171.1" y1="136.6" x2="183.6" y2="143.0" style="--i:14"/>
+                  <line x1="165.1" y1="146.5" x2="176.4" y2="154.7" style="--i:15"/>
+                  <line x1="157.6" y1="155.5" x2="167.7" y2="165.2" style="--i:16"/>
+                  <line x1="148.9" y1="163.3" x2="157.5" y2="174.4" style="--i:17"/>
+                  <line x1="139.2" y1="169.8" x2="146.0" y2="182.0" style="--i:18"/>
+                  <line x1="128.6" y1="174.7" x2="133.6" y2="187.8" style="--i:19"/>
+                  <line x1="117.4" y1="178.1" x2="120.4" y2="191.8" style="--i:20"/>
+                  <line x1="105.8" y1="179.8" x2="106.9" y2="193.7" style="--i:21"/>
+                  <line x1="94.2" y1="179.8" x2="93.1" y2="193.7" style="--i:22"/>
+                  <line x1="82.6" y1="178.1" x2="79.6" y2="191.8" style="--i:23"/>
+                  <line x1="71.4" y1="174.7" x2="66.4" y2="187.8" style="--i:24"/>
+                  <line x1="60.8" y1="169.8" x2="54.0" y2="182.0" style="--i:25"/>
+                  <line x1="51.1" y1="163.3" x2="42.5" y2="174.4" style="--i:26"/>
+                  <line x1="42.4" y1="155.5" x2="32.3" y2="165.2" style="--i:27"/>
+                  <line x1="34.9" y1="146.5" x2="23.6" y2="154.7" style="--i:28"/>
+                  <line x1="28.9" y1="136.6" x2="16.4" y2="143.0" style="--i:29"/>
+                  <line x1="24.3" y1="125.8" x2="11.0" y2="130.4" style="--i:30"/>
+                  <line x1="21.3" y1="114.5" x2="7.6" y2="117.1" style="--i:31"/>
+                  <line x1="20.1" y1="102.9" x2="6.1" y2="103.4" style="--i:32"/>
+                  <line x1="20.5" y1="91.3" x2="6.6" y2="89.7" style="--i:33"/>
+                  <line x1="22.6" y1="79.8" x2="9.1" y2="76.2" style="--i:34"/>
+                  <line x1="26.4" y1="68.7" x2="13.5" y2="63.2" style="--i:35"/>
+                  <line x1="31.7" y1="58.3" x2="19.8" y2="51.0" style="--i:36"/>
+                  <line x1="38.5" y1="48.8" x2="27.7" y2="39.9" style="--i:37"/>
+                  <line x1="46.6" y1="40.4" x2="37.3" y2="30.0" style="--i:38"/>
+                  <line x1="55.9" y1="33.3" x2="48.1" y2="21.6" style="--i:39"/>
+                  <line x1="66.0" y1="27.6" x2="60.1" y2="14.9" style="--i:40"/>
+                  <line x1="77.0" y1="23.4" x2="72.9" y2="10.0" style="--i:41"/>
+                  <line x1="88.4" y1="20.9" x2="86.3" y2="7.0" style="--i:42"/>
+                </svg>
+                <b class="acc-compteur__n" data-chiffre="imprevus">43</b>
+              </div>
+              <div class="acc-compteur__txt">
+                <span class="acc-compteur__lib">pannes et situations inhabituelles possibles</span>
+                <p class="acc-compteur__phrase">Chaque situation vous demande de réfléchir, de vous adapter et de prendre les bonnes décisions.</p>
+              </div>
             </div>
-          </div>
-
-          <!-- Les 43, rangées par moment du vol. -->
-          <div class="acc-mur reveal">
-              <div class="acc-mur__groupe">
-                <h3>Au sol <span>5</span></h3>
-                <ul>
-                  <li data-alea="maintien de position">Maintien de position</li>
-                  <li data-alea="maintien avant point d'attente">Maintien avant point d'attente</li>
-                  <li data-alea="traversée de piste">Traversée de piste</li>
-                  <li data-alea="remontée de piste">Remontée de piste</li>
-                  <li data-alea="itinéraire de roulage">Itinéraire de roulage</li>
-                </ul>
-              </div>
-              <div class="acc-mur__groupe">
-                <h3>À tout moment <span>9</span></h3>
-                <ul>
-                  <li data-alea="information de trafic">Information de trafic</li>
-                  <li data-alea="standby">Standby</li>
-                  <li data-alea="message annulé">Message annulé</li>
-                  <li data-alea="code transpondeur">Code transpondeur</li>
-                  <li data-alea="transpondeur ident">Transpondeur ident</li>
-                  <li data-alea="fréquence à veiller">Fréquence à veiller</li>
-                  <li data-alea="rappel demandé">Rappel demandé</li>
-                  <li data-alea="délai annoncé">Délai annoncé</li>
-                  <li data-alea="pas de délai">Pas de délai</li>
-                </ul>
-              </div>
-              <div class="acc-mur__groupe">
-                <h3>En vol <span>21</span></h3>
-                <ul>
-                  <li data-alea="changement de cap">Changement de cap</li>
-                  <li class="acc-mur__panne" data-alea="panne radio">Panne radio</li>
-                  <li class="acc-mur__panne" data-alea="panne moteur">Panne moteur</li>
-                  <li class="acc-mur__panne" data-alea="fumée en cabine">Fumée en cabine</li>
-                  <li class="acc-mur__panne" data-alea="malaise passager">Malaise passager</li>
-                  <li data-alea="guidage radar">Guidage radar</li>
-                  <li data-alea="reprise de navigation">Reprise de navigation</li>
-                  <li data-alea="maintien de cap">Maintien de cap</li>
-                  <li data-alea="montée demandée">Montée demandée</li>
-                  <li data-alea="descente demandée">Descente demandée</li>
-                  <li data-alea="renseignement SIGMET">Renseignement SIGMET</li>
-                  <li data-alea="turbulence signalée">Turbulence signalée</li>
-                  <li class="acc-mur__panne" data-alea="aide à la navigation en panne">Aide à la navigation en panne</li>
-                  <li data-alea="activité aviaire">Activité aviaire</li>
-                  <li data-alea="zone réglementée active">Zone réglementée active</li>
-                  <li data-alea="météo en route">Météo en route</li>
-                  <li data-alea="conditions défavorables signalées">Conditions défavorables signalées</li>
-                  <li data-alea="manœuvre suggérée">Manœuvre suggérée</li>
-                  <li data-alea="séparation à assurer">Séparation à assurer</li>
-                  <li data-alea="dégagé du trafic">Dégagé du trafic</li>
-                  <li data-alea="VFR spécial à destination">VFR spécial à destination</li>
-                </ul>
-              </div>
-              <div class="acc-mur__groupe">
-                <h3>Dans le circuit <span>8</span></h3>
-                <ul>
-                  <li data-alea="le vent a tourné">Le vent a tourné</li>
-                  <li data-alea="attente en vent arrière">Attente en vent arrière</li>
-                  <li data-alea="remise de gaz">Remise de gaz</li>
-                  <li data-alea="numéro dans le circuit">Numéro dans le circuit</li>
-                  <li data-alea="rappel en finale demandé">Rappel en finale demandé</li>
-                  <li data-alea="vent arrière signalé en finale">Vent arrière signalé en finale</li>
-                  <li data-alea="piste non inspectée">Piste non inspectée</li>
-                  <li data-alea="eau stagnante sur la piste">Eau stagnante sur la piste</li>
-                </ul>
-              </div>
-            <p class="acc-mur__legende"><span class="acc-mur__point" aria-hidden="true"></span>En rouge&nbsp;: les pannes.</p>
           </div>
 
           <div class="acc-pannes__grille">

@@ -157,6 +157,23 @@ test('accueil : la section des pannes et son exemple tiré du manuel', async ({ 
   expect(deborde).toBe(false);
 });
 
+/* « Entraînez-vous où vous voulez » (02/10/2026) : le Mac + iPad partout,
+   l'iPhone SUR ORDINATEUR SEULEMENT (demande du développeur), et pas de
+   débordement horizontal. */
+test('accueil : la section des appareils, iPhone sur ordinateur seulement', async ({ page }) => {
+  await ouvrir(page);
+  const sec = page.locator('#page-accueil .acc-app');
+  await expect(sec).toContainText('Entraînez-vous où vous voulez');
+  await expect(sec).toContainText('Votre entraînement vous suit partout.');
+  await sec.scrollIntoViewIfNeeded();
+  await expect(page.locator('.acc-app__mac')).toBeVisible();
+  const large = page.viewportSize().width > 1000;
+  if (large) await expect(page.locator('.acc-app__iphone')).toBeVisible();
+  else await expect(page.locator('.acc-app__iphone')).toBeHidden();
+  const deborde = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  expect(deborde).toBe(false);
+});
+
 test('Paramètres : un onglet à la fois, lu et écrit dans l\'adresse', async ({ page }) => {
   await ouvrir(page);
   await entrer(page, 'parametres/voix');

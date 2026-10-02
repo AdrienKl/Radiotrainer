@@ -419,6 +419,53 @@
         </div>
       </section>
 
+      <!-- ---- Sur tous vos appareils (02/10/2026, demande du développeur) ----
+           Textes du développeur, tous ici dans le HTML ; les images ne portent
+           aucun texte important (ce sont des captures de l'application).
+           Images fournies par le développeur (dossier « photo avion ») :
+             · appareils-mac-ipad*.webp : le visuel principal, à gauche ;
+             · appareils-iphone.webp : détouré au ras du téléphone, il flotte
+               devant le Mac — SUR ORDINATEUR SEULEMENT (demande du
+               développeur), il disparaît sous 1 000 px.
+           Le fond de la section reprend la couleur du fond des deux images
+           (#333b3f) : elles s'y fondent sans cadre. -->
+      <section class="acc-app">
+        <div class="acc-in acc-app__grille">
+          <div class="acc-app__visuel reveal">
+            <img class="acc-app__mac" src="assets/images/appareils-mac-ipad.webp"
+                 srcset="assets/images/appareils-mac-ipad-1200.webp 1200w, assets/images/appareils-mac-ipad.webp 2000w"
+                 sizes="(max-width:1000px) 100vw, 60vw" width="2000" height="943"
+                 alt="Albatros VFR ouvert sur un Mac (page Navigation) et sur un iPad (tableau de bord)" decoding="async" loading="lazy">
+            <img class="acc-app__iphone" src="assets/images/appareils-iphone.webp" width="404" height="827"
+                 alt="Albatros VFR ouvert sur un iPhone (tableau de bord)" decoding="async" loading="lazy">
+          </div>
+
+          <div class="acc-app__texte">
+            <span class="acc-panneau">Sur tous vos appareils</span>
+            <h2 class="acc-h acc-app__titre">Entraînez-vous où vous voulez</h2>
+            <p>Albatros VFR est accessible depuis votre ordinateur, votre tablette ou votre téléphone.</p>
+            <p>Continuez votre entraînement où que vous soyez, sans être limité à un seul appareil.</p>
+
+            <ul class="acc-app__liste">
+              <li><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M1.5 19.5h21"/></svg>
+                <div><b>Ordinateur</b><span>Pour des sessions d'entraînement complètes</span></div></li>
+              <li><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M11 18.5h2"/></svg>
+                <div><b>Tablette</b><span>Une expérience confortable et immersive</span></div></li>
+              <li><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>
+                <div><b>Mobile</b><span>Pour vous entraîner où que vous soyez</span></div></li>
+            </ul>
+
+            <div class="acc-app__suit">
+              <svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.5 3v4.2h-4.2M5.5 21v-4.2h4.2"/></svg>
+              <div>
+                <b>Votre entraînement vous suit partout.</b>
+                <span>Ouvrez Albatros VFR depuis l'appareil de votre choix et continuez à progresser.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ---- Les avis mis en avant (29/09/2026, assets/modules/avis.js) ----
            Masquée tant qu'aucun avis n'est publié : une section vide, ou des avis
            inventés pour la remplir, seraient pires que pas de section. -->

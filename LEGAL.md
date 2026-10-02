@@ -99,6 +99,12 @@ l'auteur**. Aucune licence tierce, aucune attribution due.
 page). Les deux pilotes sont de dos, casque sur la tête : aucun visage n'est
 visible. Elle remplace la tour découpée (rawpixel, CC0) et la carte OACI.
 
+**Les visuels « Sur tous vos appareils »** (`assets/images/appareils-*.webp`, depuis
+le 02/10/2026) : captures d'Albatros VFR mises en scène sur un Mac, un iPad et un
+iPhone, **fournies par le développeur**. Si les cadres d'appareils viennent d'un
+modèle de maquette tiers, sa licence est à vérifier (usage commercial). Les noms
+Mac, iPad et iPhone ne sont pas écrits dans la page.
+
 **Le ciel du tableau de bord en thème clair** (`assets/images/tableau-ciel-jour*.webp`,
 depuis le 01/10/2026) : Sam Schooler, licence Unsplash. Aucune personne, aucune
 marque. Il remplace le hall d'embarquement (`tableau-hall-jour`), retiré.

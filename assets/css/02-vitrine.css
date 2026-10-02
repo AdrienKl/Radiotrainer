@@ -299,6 +299,49 @@
     .acc-demo__alerte, .acc-demo__instru{margin-left:14px; margin-right:14px}
   }
 
+  /* ---------- Sur tous vos appareils (02/10/2026) ----------
+     Une bande de la couleur du fond des deux images (#333b3f) : le Mac, l'iPad
+     et l'iPhone y sont posés sans cadre. Les bords de l'image principale se
+     fondent par un masque — son fond s'assombrit vers le bas, une couleur
+     unie ne le rattraperait pas.
+     Contrastes sur #333b3f : blanc 11,4:1, gris #c5cbd0 8,0:1, balise 6,6:1. */
+  .acc-app{--app-fond:#333b3f; padding:clamp(56px,7vw,104px) 0; background:var(--app-fond); color:#fff; overflow:hidden}
+  .acc-app__grille{display:grid; grid-template-columns:minmax(0,7.4fr) minmax(0,4.6fr); gap:clamp(28px,4vw,64px); align-items:center}
+  .acc-app__visuel{position:relative; margin-left:clamp(-60px,-4vw,0px)}
+  .acc-app__mac{display:block; width:100%; height:auto;
+    -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%), linear-gradient(180deg, transparent 0, #000 4%, #000 90%, transparent 100%);
+    -webkit-mask-composite:source-in;
+            mask-image:linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%), linear-gradient(180deg, transparent 0, #000 4%, #000 90%, transparent 100%);
+            mask-composite:intersect}
+  /* L'iPhone flotte devant le Mac, en bas à droite. Ordinateur seulement. */
+  .acc-app__iphone{position:absolute; right:-5%; bottom:-10%; width:19%; height:auto;
+    filter:drop-shadow(0 24px 30px rgba(0,0,0,.45)) drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+  .acc-app__visuel.in .acc-app__iphone{animation:accTelephone 1s .35s cubic-bezier(.22,.61,.36,1) both}
+  @keyframes accTelephone{from{opacity:0; transform:translateY(28px)} to{opacity:1; transform:none}}
+  @media (prefers-reduced-motion:reduce){ .acc-app__visuel.in .acc-app__iphone{animation:none} }
+
+  .acc-app .acc-panneau{background:#000}
+  .acc-app__titre{color:#fff; max-width:13ch}
+  .acc-app__texte > p{margin:16px 0 0; max-width:46ch; font-size:16.5px; line-height:1.6; color:#c5cbd0}
+  .acc-app__liste{list-style:none; margin:26px 0 0; padding:0; border-top:1px solid rgba(255,255,255,.12)}
+  .acc-app__liste li{display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,.12)}
+  .acc-app__liste .ic-svg, .acc-app__suit .ic-svg{flex:none; width:26px; height:26px; fill:none; stroke:var(--acc-balise); stroke-width:1.6}
+  .acc-app__liste b, .acc-app__suit b{display:block; font-size:15.5px; color:#fff}
+  .acc-app__liste span, .acc-app__suit span{display:block; margin-top:2px; font-size:14.5px; line-height:1.5; color:#c5cbd0}
+  .acc-app__suit{display:flex; gap:14px; align-items:flex-start; margin-top:24px; padding:18px 20px; border-radius:14px;
+    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14)}
+
+  @media (max-width:1000px){
+    .acc-app__grille{grid-template-columns:minmax(0,1fr)}
+    .acc-app__visuel{margin-left:0}
+    .acc-app__iphone{display:none}
+    .acc-app__titre{max-width:none}
+  }
+  /* Téléphone : l'image va jusqu'aux bords de l'écran, pour rester lisible. */
+  @media (max-width:640px){
+    .acc-app__visuel{margin:0 calc(-1 * clamp(18px,4vw,40px))}
+  }
+
   /* ---------- Les avis (composants de 16-avis.css, jetons redéfinis plus haut) ---------- */
   #page-accueil .av-grille{margin-top:clamp(28px,3.6vw,40px)}
   #page-accueil .av-accueil__pied{margin:26px 0 0}

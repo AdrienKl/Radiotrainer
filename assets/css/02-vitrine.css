@@ -181,8 +181,14 @@
      l'ordre d'un vrai échange quand le bloc entre à l'écran (.reveal.in). */
   /* Le haut : le titre et l'introduction à gauche, LE COMPTEUR à droite —
      la première chose qu'on voit en arrivant (demande du développeur). */
-  .acc-pannes__haut{display:grid; grid-template-columns:minmax(0,6fr) minmax(0,6fr); gap:clamp(28px,5vw,72px); align-items:center}
-  .acc-pannes__titre{max-width:16ch; font-size:clamp(32px,4.4vw,56px)}
+  /* LA MÊME GRILLE pour le haut (titre + compteur) et le bloc « À vous de
+     gérer » (texte + démonstration) : 5 / 7, même écart. Avec deux grilles
+     différentes (6/6 puis 5/7), le compteur et la démonstration ne
+     commençaient pas au même endroit, et les deux blocs l'un sous l'autre
+     faisaient bancal (02/10/2026, retour du développeur). */
+  .acc-pannes__haut, .acc-pannes__grille{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr);
+    gap:clamp(28px,5vw,72px); align-items:center}
+  .acc-pannes__titre{max-width:14ch; font-size:clamp(30px,3.8vw,48px)}
   .acc-pannes__intro{margin:18px 0 0; max-width:56ch; font-size:clamp(17px,1.6vw,20px); line-height:1.55;
     color:var(--acc-gris); text-wrap:pretty}
   /* LE COMPTEUR, deuxième version (02/10/2026, demande du développeur — le
@@ -210,8 +216,9 @@
   }
   .acc-pannes__h{margin:0; max-width:14ch; font-size:clamp(26px,3vw,38px); font-weight:800; line-height:1.1; letter-spacing:-.03em; color:var(--acc-encre)}
 
-  .acc-pannes__grille{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:clamp(28px,5vw,72px);
-    align-items:center; margin-top:clamp(48px,6vw,84px)}
+  /* Un filet sépare les deux blocs, comme la conclusion plus bas : trois
+     temps lisibles au lieu de deux blocs tassés. */
+  .acc-pannes__grille{margin-top:clamp(48px,6vw,80px); padding-top:clamp(48px,6vw,80px); border-top:1px solid var(--acc-filet)}
   .acc-pannes__texte p{margin:16px 0 0; max-width:52ch; font-size:15.5px; line-height:1.65; color:var(--acc-gris)}
   .acc-pannes__etapes{list-style:none; margin:26px 0 0; padding:0; display:grid; gap:10px}
   .acc-pannes__etapes li{display:flex; align-items:center; gap:12px; font-size:15px; font-weight:700; color:var(--acc-encre)}

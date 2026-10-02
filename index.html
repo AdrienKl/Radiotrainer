@@ -271,29 +271,110 @@
         </div>
       </section>
 
-      <!-- ---- Les pannes (01/10/2026, demande du développeur) ----
-           Textes du développeur (orthographe corrigée). TOUT le texte est ici,
-           dans le HTML : aucun mot dans une image.
+      <!-- ---- Pannes et situations inhabituelles (01/10/2026, demande du développeur) ----
+           Textes du développeur. TOUT le texte est ici, dans le HTML : aucun mot
+           dans une image.
+           LE 43 est recompté au chargement (data-chiffre="imprevus", navigation.js)
+           sur ALEAS_SCEN — les imprévus des Scénarios en mode Réel.
+           LE MUR des 43 situations reprend les libellés de ALEAS_SCEN
+           (scenarios/moteur.js), rangés selon leur champ `ou` (sol, partout,
+           vol, piste). En rouge, les vraies pannes. Un imprévu ajouté là-bas
+           doit l'être ici : tests/parcours/lancement.spec.js compare les deux.
            L'EXEMPLE RADIO est une DÉMONSTRATION VISUELLE, à faire vérifier avant
-           validation définitive. Il reprend mot pour mot les phrases que le
-           scénario « Urgence » attend déjà (phraseologie-scenarios.js) :
-             · message de détresse : structure SERA.14095, Manuel DSNA p. 238
-               (MAYDAY ×3, A organisme, B identification, C nature, D intentions,
-               E position et niveau) ;
+           validation définitive. Il reprend mot pour mot le scénario « Urgence »
+           (phraseologie-scenarios.js) :
+             · message de détresse : structure SERA.14095, Manuel DSNA p. 238 ;
              · accusé du contrôleur : « Mayday Roger, transpondeur 7700 », p. 238 ;
-             · collationnement du code : « Transpondeur 5423, …, Rapidair 3245 »,
-               p. 34-35 (collationnement).
+             · collationnement du code : p. 34-35.
            Indicatif, terrain et altitude sont des valeurs d'exemple. -->
       <section class="acc-sec acc-sec--blanc acc-pannes">
         <div class="acc-in">
-          <span class="acc-panneau">Les pannes</span>
-          <p class="acc-pannes__intro">Pendant un vol, tout ne se passe pas toujours comme prévu&nbsp;: une panne peut vite arriver. Avec Albatros VFR, on vous met face à ces pannes pour que vous soyez préparé le jour où ça arrive.</p>
+          <div class="acc-pannes__haut">
+            <div>
+              <span class="acc-panneau">Pannes et imprévus</span>
+              <h2 class="acc-h acc-pannes__titre">Et si quelque chose tournait mal&nbsp;?</h2>
+              <p class="acc-pannes__intro">Pendant un vol, tout ne se passe pas toujours comme prévu. Avec Albatros VFR, des pannes et situations inhabituelles peuvent survenir en cours d'exercice et vous obliger à réagir.</p>
+            </div>
+            <div class="acc-compteur reveal">
+              <b class="acc-compteur__n" data-chiffre="imprevus">43</b>
+              <span class="acc-compteur__lib">pannes et situations inhabituelles possibles</span>
+              <p class="acc-compteur__phrase">Chaque situation vous demande de réfléchir, de vous adapter et de prendre les bonnes décisions.</p>
+            </div>
+          </div>
+
+          <!-- Les 43, rangées par moment du vol. -->
+          <div class="acc-mur reveal">
+              <div class="acc-mur__groupe">
+                <h3>Au sol <span>5</span></h3>
+                <ul>
+                  <li data-alea="maintien de position">Maintien de position</li>
+                  <li data-alea="maintien avant point d'attente">Maintien avant point d'attente</li>
+                  <li data-alea="traversée de piste">Traversée de piste</li>
+                  <li data-alea="remontée de piste">Remontée de piste</li>
+                  <li data-alea="itinéraire de roulage">Itinéraire de roulage</li>
+                </ul>
+              </div>
+              <div class="acc-mur__groupe">
+                <h3>À tout moment <span>9</span></h3>
+                <ul>
+                  <li data-alea="information de trafic">Information de trafic</li>
+                  <li data-alea="standby">Standby</li>
+                  <li data-alea="message annulé">Message annulé</li>
+                  <li data-alea="code transpondeur">Code transpondeur</li>
+                  <li data-alea="transpondeur ident">Transpondeur ident</li>
+                  <li data-alea="fréquence à veiller">Fréquence à veiller</li>
+                  <li data-alea="rappel demandé">Rappel demandé</li>
+                  <li data-alea="délai annoncé">Délai annoncé</li>
+                  <li data-alea="pas de délai">Pas de délai</li>
+                </ul>
+              </div>
+              <div class="acc-mur__groupe">
+                <h3>En vol <span>21</span></h3>
+                <ul>
+                  <li data-alea="changement de cap">Changement de cap</li>
+                  <li class="acc-mur__panne" data-alea="panne radio">Panne radio</li>
+                  <li class="acc-mur__panne" data-alea="panne moteur">Panne moteur</li>
+                  <li class="acc-mur__panne" data-alea="fumée en cabine">Fumée en cabine</li>
+                  <li class="acc-mur__panne" data-alea="malaise passager">Malaise passager</li>
+                  <li data-alea="guidage radar">Guidage radar</li>
+                  <li data-alea="reprise de navigation">Reprise de navigation</li>
+                  <li data-alea="maintien de cap">Maintien de cap</li>
+                  <li data-alea="montée demandée">Montée demandée</li>
+                  <li data-alea="descente demandée">Descente demandée</li>
+                  <li data-alea="renseignement SIGMET">Renseignement SIGMET</li>
+                  <li data-alea="turbulence signalée">Turbulence signalée</li>
+                  <li class="acc-mur__panne" data-alea="aide à la navigation en panne">Aide à la navigation en panne</li>
+                  <li data-alea="activité aviaire">Activité aviaire</li>
+                  <li data-alea="zone réglementée active">Zone réglementée active</li>
+                  <li data-alea="météo en route">Météo en route</li>
+                  <li data-alea="conditions défavorables signalées">Conditions défavorables signalées</li>
+                  <li data-alea="manœuvre suggérée">Manœuvre suggérée</li>
+                  <li data-alea="séparation à assurer">Séparation à assurer</li>
+                  <li data-alea="dégagé du trafic">Dégagé du trafic</li>
+                  <li data-alea="VFR spécial à destination">VFR spécial à destination</li>
+                </ul>
+              </div>
+              <div class="acc-mur__groupe">
+                <h3>Dans le circuit <span>8</span></h3>
+                <ul>
+                  <li data-alea="le vent a tourné">Le vent a tourné</li>
+                  <li data-alea="attente en vent arrière">Attente en vent arrière</li>
+                  <li data-alea="remise de gaz">Remise de gaz</li>
+                  <li data-alea="numéro dans le circuit">Numéro dans le circuit</li>
+                  <li data-alea="rappel en finale demandé">Rappel en finale demandé</li>
+                  <li data-alea="vent arrière signalé en finale">Vent arrière signalé en finale</li>
+                  <li data-alea="piste non inspectée">Piste non inspectée</li>
+                  <li data-alea="eau stagnante sur la piste">Eau stagnante sur la piste</li>
+                </ul>
+              </div>
+            <p class="acc-mur__legende"><span class="acc-mur__point" aria-hidden="true"></span>En rouge&nbsp;: les pannes.</p>
+          </div>
 
           <div class="acc-pannes__grille">
             <div class="acc-pannes__texte">
-              <h2 class="acc-h">À vous de gérer la situation</h2>
+              <h3 class="acc-pannes__h">À vous de gérer la situation</h3>
               <p>Une panne peut apparaître pendant votre vol. Vous devez identifier le problème, évaluer la situation, prendre une décision et adapter votre communication avec le contrôle.</p>
-              <p>On ne vous donne pas automatiquement la réponse&nbsp;: vous devez gérer la situation comme vous le feriez en vol.</p>
+              <p>Albatros ne vous donne pas automatiquement la réponse&nbsp;: vous devez gérer la situation comme vous le feriez en vol.</p>
               <ol class="acc-pannes__etapes">
                 <li><span>1</span>Identifier le problème</li>
                 <li><span>2</span>Évaluer la situation</li>

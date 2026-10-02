@@ -123,7 +123,7 @@ test('accueil : hero, chiffres recalculés, questions — et plus de section Off
   expect(chiffres.imprevus).toBe(chiffres.attenduI);
 });
 
-/* La section « Les pannes » (01/10/2026). L'exemple radio reprend MOT POUR MOT
+/* La section « Pannes et imprévus » (01/10/2026). L'exemple radio reprend MOT POUR MOT
    les phrases du scénario Urgence (Manuel DSNA p. 238 et p. 34-35) : si l'un
    change, l'autre doit suivre — d'où la comparaison avec SCENARIOS. Et la
    démonstration ne doit pas élargir la page sur téléphone. */
@@ -131,6 +131,16 @@ test('accueil : la section des pannes et son exemple tiré du manuel', async ({ 
   await ouvrir(page);
   const demo = page.locator('#page-accueil .acc-demo');
   await expect(page.locator('#page-accueil .acc-pannes')).toContainText('À vous de gérer la situation');
+  await expect(page.locator('#page-accueil .acc-pannes')).toContainText('Et si quelque chose tournait mal');
+  /* Le compteur et le mur des situations suivent ALEAS_SCEN : même nombre,
+     mêmes libellés. Un imprévu ajouté dans le moteur sans l'être ici rougit. */
+  const mur = await page.evaluate(() => ({
+    compteur: document.querySelector('.acc-compteur__n').textContent,
+    affiches: [...document.querySelectorAll('.acc-mur [data-alea]')].map(e => e.dataset.alea).sort(),
+    moteur: ALEAS_SCEN.map(a => a.label).sort()
+  }));
+  expect(mur.compteur).toBe(String(mur.moteur.length));
+  expect(mur.affiches).toEqual(mur.moteur);
   await expect(page.locator('#page-accueil .acc-pannes')).toContainText('Chaque panne est une nouvelle situation à gérer.');
   await expect(demo).toContainText('Démonstration');
   await expect(demo).toContainText('p.\u00a0238');

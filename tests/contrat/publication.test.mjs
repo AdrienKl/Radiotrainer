@@ -61,7 +61,8 @@ test('les fichiers nommés en dur dans le JavaScript sont publiés (dont le manu
       if (!chemins.has(m[1])) manquants.push(chemin + ' → ' + m[1]);
   }
   assert.deepEqual(manquants, []);
-  assert.ok(chemins.has('Manuel_Phraseologie.pdf'), 'la page Cours ouvre le manuel');
+  // Le manuel n'est plus publié (02/10/2026) : la page Cours ne l'affiche plus.
+  assert.ok(!chemins.has('Manuel_Phraseologie.pdf'), 'le manuel PDF ne part plus en ligne');
 });
 
 test('rien d\'interne n\'est publié', () => {

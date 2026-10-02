@@ -45,7 +45,9 @@ export const PUBLIC = [
   '404.html',               // servie par Cloudflare pour toute adresse inconnue (not_found_handling)
   'robots.txt',
   'sitemap.xml',
-  'Manuel_Phraseologie.pdf', // page Cours (assets/modules/epellation-cours.js › MANUEL_PDF)
+  /* Manuel_Phraseologie.pdf n'est plus publié depuis le 02/10/2026 : le cours
+     qui l'affichait a été retiré (demande du développeur). Il reste dans le
+     dépôt, source de vérité de la phraséologie (CLAUDE.md § 2). */
   'assets'
 ];
 

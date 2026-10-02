@@ -57,58 +57,75 @@
     LETTERS.forEach(function(L){ ag.appendChild(el('div','alpha-card',
       '<span class="ltr">'+L+'</span><span class="wrd">'+(PHON[L]||'')+'</span>')); });
     host.appendChild(ag);
-    host.appendChild(el('h3','cours-h','Chiffres'));
-    host.appendChild(el('p','cours-note','En français, les chiffres se prononcent comme dans la vie courante. En anglais radio, certains diffèrent (colonne « Anglais radio »).'));
-    var dg=el('div','digit-grid');
-    DIGITS.forEach(function(d){ dg.appendChild(el('div','digit-card',
-      '<span class="num">'+d.n+'</span><span class="say"><span class="fr">'+d.fr+'</span><span class="en">Anglais radio : '+d.en+'</span></span>')); });
-    host.appendChild(dg);
+    /* La partie « Chiffres » (prononciation française et anglaise) a été
+       retirée le 02/10/2026, à la demande du développeur. DIGITS reste plus
+       haut : l'épellation s'en sert. */
   }
 
   var ALPHA_ICON='<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18l3.4-9 3.4 9"/><path d="M4.3 14.6h5"/><path d="M13.5 18V10a2.5 2.5 0 0 1 5 0v8"/><path d="M13.5 14h5"/></svg>';
   var BOOK_ICON='<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M9 7.5h6M9 11h6"/></svg>';
 
-  /* ---- Manuel officiel, intégré tel quel ----
-     C'est la source unique de toute la phraséologie du simulateur : les échanges
-     y renvoient déjà par numéro de page (« Manuel p. 39-44 »). Le lire ailleurs
-     que dans l'application obligeait à jongler entre deux fenêtres.
-     Réutilisation : document produit par la DSNA, administration de l'État. Les
-     informations publiques sont librement réutilisables (code des relations entre
-     le public et l'administration, art. L321-1 et suivants), y compris à titre
-     commercial, à condition de ne pas en altérer le sens et d'en mentionner la
-     source et la date — ce que fait l'encart ci-dessous. Le document lui-même ne
-     porte aucune mention de restriction de reproduction. */
-  var MANUEL_PDF='Manuel_Phraseologie.pdf';
-  function renderManuel(host){
-    host.innerHTML=
-      '<div class="pdf-bar">'+
-        '<a class="btn small primary" href="'+MANUEL_PDF+'" target="_blank" rel="noopener">Ouvrir en plein écran</a>'+
-        '<a class="btn small" href="'+MANUEL_PDF+'" download>Télécharger le PDF</a>'+
-        '<span class="pdf-hint">281 pages · recherche par mots-clés avec Ctrl+F (Cmd+F sur Mac)</span>'+
-      '</div>'+
-      '<div class="pdf-frame">'+
-        '<iframe src="'+MANUEL_PDF+'#view=FitH" title="Manuel de phraséologie DSNA" loading="lazy"></iframe>'+
-        '<p class="pdf-fallback">Votre navigateur n\'affiche pas les PDF dans la page. '+
-          '<a href="'+MANUEL_PDF+'" target="_blank" rel="noopener">Ouvrez le manuel dans un nouvel onglet</a>.</p>'+
-      '</div>'+
-      '<p class="pdf-src"><b>Source</b> — <i>Manuel de phraséologie à l\'usage de la circulation aérienne '+
-        'générale</i>, DGAC — Direction des services de la navigation aérienne (DSNA), Direction des '+
-        'Opérations, avec l\'ENAC, '+
-        '10<sup>e</sup> édition, à jour au 15 avril 2023. Document reproduit intégralement et sans '+
-        'modification. Les renvois de page cités dans les exercices sont les pages imprimées du manuel.</p>';
+  /* ---- Les mots de la radio (02/10/2026, demande du développeur) ----
+     Les expressions conventionnelles les plus utiles, avec leur sens MOT POUR
+     MOT tel que le manuel le donne (Manuel DSNA p. 19-20, tableau S14-4 du
+     SERA.14045), et, quand le manuel en donne une, la règle d'emploi (p. 21).
+     MAYDAY et PAN PAN : définitions de la p. 238 (SERA.14095).
+     RIEN N'EST REFORMULÉ (CLAUDE.md § 2) : pour ajouter un mot, recopier sa
+     ligne du manuel avec sa page — ne jamais l'écrire de mémoire. */
+  var MOTS=[
+    { mot:'Roger', sens:'« ai reçu en entier votre dernière transmission »', p:'p. 20',
+      regle:"En aucun cas, cette expression ne doit être utilisée pour répondre à une question qui appelle un collationnement ou qui appelle une réponse directe positive (AFFIRME) ou négative (NÉGATIF).", pr:'p. 21' },
+    { mot:'Wilco', sens:'(abréviation de « we will comply with ») « Votre message a été compris et sera exécuté »', p:'p. 20' },
+    { mot:'Affirm', sens:'« Oui »', p:'p. 19' },
+    { mot:'Négatif', en:'Negative', sens:'« Non » ou « Autorisation refusée » ou « Cela n\'est pas exact » ou « Impossible de »', p:'p. 19' },
+    { mot:'Collationnez', en:'Read back', sens:'« Répétez tout ce message, ou la partie spécifiée, exactement comme vous l\'avez reçu »', p:'p. 20' },
+    { mot:'Répétez', en:'Say again', sens:'« Répétez votre dernière transmission ou la partie spécifiée »', p:'p. 20' },
+    { mot:'Je répète', en:'I say again', sens:'« Je répète pour être plus clair ou pour insister »', p:'p. 19' },
+    { mot:'Correction', sens:'« Une erreur a été commise dans ce message, le texte correct est … »', p:'p. 19' },
+    { mot:'Standby', sens:'« Attendez que je vous rappelle »', p:'p. 20',
+      regle:"Normalement, le demandeur rappellera si l'attente est longue. L'expression « ATTENDEZ » n'est ni une approbation, ni un refus.", pr:'p. 21' },
+    { mot:'Impossible', en:'Unable', sens:'« Je ne peux pas acquiescer à votre demande ou me conformer à votre instruction ou autorisation »', p:'p. 20',
+      regle:"L'expression « IMPOSSIBLE » est normalement suivie d'une raison.", pr:'p. 21' },
+    { mot:'Approuvé', en:'Approved', sens:'« Permission accordée pour la mesure demandée »', p:'p. 19' },
+    { mot:'Autorisé', en:'Cleared', sens:'« Autorisé à poursuivre dans les conditions spécifiées »', p:'p. 19' },
+    { mot:'Confirmez', en:'Confirm', sens:'« Confirmez-moi que vous avez bien reçu… / Confirmez-moi que j\'ai bien compris… » (clairance, instruction, mesure, information)', p:'p. 19' },
+    { mot:'Ignorez', en:'Disregard', sens:'« Considérez que ce message n\'a pas été envoyé »', p:'p. 19' },
+    { mot:'Veillez', en:'Monitor', sens:'« Écoutez la fréquence … »', p:'p. 19' },
+    { mot:'Contactez', en:'Contact', sens:'« Établissez le contact radio avec… »', p:'p. 19' },
+    { mot:'Mayday', sens:"Détresse : « état caractérisé par la menace d'un danger grave et imminent et par la nécessité d'une assistance immédiate ». Prononcé de préférence trois fois.", p:'p. 238' },
+    { mot:'Pan Pan', sens:"Urgence : « état concernant la sécurité d'un aéronef ou de tout autre véhicule, ou celle d'une personne se trouvant à bord ou en vue, mais qui n'est pas caractérisé par la nécessité d'une assistance immédiate ». Prononcé de préférence trois fois.", p:'p. 238' }
+  ];
+  // Espaces insécables dans les guillemets : sinon un « ou un » reste seul en bout de ligne.
+  function insecable(t){ return String(t).replace(/« /g,'«\u00a0').replace(/ »/g,'\u00a0»'); }
+  function renderMots(host){
+    host.innerHTML='';
+    var g=el('div','mots-grid');
+    MOTS.forEach(function(m){
+      g.appendChild(el('div','mot-card',
+        '<span class="mot-t">'+m.mot+(m.en?' <i>('+m.en+')</i>':'')+'</span>'+
+        '<span class="mot-s">'+insecable(m.sens)+'</span>'+
+        (m.regle?'<span class="mot-r">'+insecable(m.regle)+' <em>'+m.pr+'</em></span>':'')+
+        '<span class="mot-p">Manuel DSNA '+m.p+'</span>'));
+    });
+    host.appendChild(g);
   }
+  var MOTS_ICON='<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 13.5h4.5"/></svg>';
+
+  /* Le cours « Manuel de phraséologie (DSNA) » — le PDF complet dans la page —
+     a été RETIRÉ le 02/10/2026 (demande du développeur). Le PDF reste dans le
+     dépôt, source de vérité ; il n'est plus publié (outils/construire-site.mjs). */
 
   var COURSES=[
     { id:'alphabet',
       icon:ALPHA_ICON,
-      title:'Alphabet phonétique',
-      desc:"Les 26 lettres de l'alphabet OACI (Alpha…Zulu) et la prononciation des chiffres 0-9 en radiotéléphonie.",
+      title:'Alphabet aéronautique',
+      desc:'',
       render:renderAlphabet },
-    { id:'manuel',
-      icon:BOOK_ICON,
-      title:'Manuel de phraséologie (DSNA)',
-      desc:"Le manuel officiel complet, 281 pages : c'est la source de tous les échanges du simulateur. Consultable ici, page par page.",
-      render:renderManuel }
+    { id:'mots',
+      icon:MOTS_ICON,
+      title:'Les mots de la radio',
+      desc:'Roger, Wilco, Standby… ce que chaque mot veut dire, tel que l\'écrit le manuel de phraséologie de la DSNA.',
+      render:renderMots }
     // → pour un nouveau cours, ajouter ici : { id:'…', icon:'…', title:'…', desc:'…', render:function(host){…} }
   ];
 
@@ -119,7 +136,7 @@
     if(!grid) return; grid.innerHTML='';
     COURSES.forEach(function(c){
       var card=el('button','course-card',
-        '<span class="cic">'+(c.icon||'')+'</span><span class="ctxt"><span class="ctitle">'+c.title+'</span><span class="cdesc">'+c.desc+'</span></span>');
+        '<span class="cic">'+(c.icon||'')+'</span><span class="ctxt"><span class="ctitle">'+c.title+'</span>'+(c.desc?'<span class="cdesc">'+c.desc+'</span>':'')+'</span>');
       card.type='button';
       card.addEventListener('click', function(){ openCourse(c.id); });
       grid.appendChild(card);

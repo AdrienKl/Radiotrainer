@@ -342,6 +342,29 @@
     .acc-app__visuel{margin:0 calc(-1 * clamp(18px,4vw,40px))}
   }
 
+  /* ---------- Gratuit : s'inscrire ou se connecter (02/10/2026) ----------
+     Après la bande sombre des appareils, une respiration claire : une carte
+     centrée, le jaune réservé au bouton principal. */
+  .acc-gratuit{background:var(--acc-papier)}
+  .acc-gratuit__carte{max-width:820px; margin:0 auto; text-align:center; padding:clamp(34px,4.6vw,56px) clamp(22px,4vw,56px);
+    border-radius:22px; background:#fff; border:1px solid var(--acc-filet); box-shadow:0 24px 50px rgba(16,18,22,.08)}
+  .acc-gratuit__titre{margin-left:auto; margin-right:auto; max-width:none}
+  .acc-gratuit__texte{margin:16px auto 0; max-width:54ch; font-size:clamp(16px,1.5vw,18px); line-height:1.6; color:var(--acc-gris)}
+  .acc-gratuit__points{list-style:none; margin:26px 0 0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:10px}
+  .acc-gratuit__points li{display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px;
+    background:var(--acc-papier); border:1px solid var(--acc-filet); font-size:14.5px; font-weight:600; color:var(--acc-encre)}
+  .acc-gratuit__points .ic-svg{width:17px; height:17px; fill:none; stroke:#2a8a57; stroke-width:2.4}
+  .acc-gratuit__boutons{justify-content:center; margin-top:30px}
+  .acc-gratuit .acc-btn--creux{background:transparent; color:var(--acc-encre); border-color:var(--acc-encre); -webkit-backdrop-filter:none; backdrop-filter:none}
+  .acc-gratuit .acc-btn--creux:hover{background:var(--acc-encre); color:#fff}
+  .acc-gratuit__note{margin:18px auto 0; max-width:60ch; font-size:13.5px; line-height:1.55; color:var(--acc-gris)}
+  @media (max-width:560px){
+    .acc-gratuit__points{flex-direction:column; align-items:stretch}
+    .acc-gratuit__points li{border-radius:12px; text-align:left}
+    .acc-gratuit__boutons{flex-direction:column}
+    .acc-gratuit__boutons .acc-btn{width:100%}
+  }
+
   /* ---------- Les avis (composants de 16-avis.css, jetons redéfinis plus haut) ---------- */
   #page-accueil .av-grille{margin-top:clamp(28px,3.6vw,40px)}
   #page-accueil .av-accueil__pied{margin:26px 0 0}

@@ -466,6 +466,33 @@
         </div>
       </section>
 
+      <!-- ---- Gratuit : s'inscrire ou se connecter (02/10/2026, demande du développeur) ----
+           Tout ce qui est écrit ici doit rester VRAI (CLAUDE.md § 15) :
+             · gratuit pendant la phase de lancement, sans carte : RT_OFFRE
+               (routeur.js : lancement, carte:false) et les CGU ;
+             · les limites du jour viennent de lancement.js › LIMITES
+               (data-limite, recopiées au chargement). Si la phase de lancement
+               se ferme ou si un prix est fixé, ce bloc change avec. -->
+      <section class="acc-sec acc-gratuit">
+        <div class="acc-in">
+          <div class="acc-gratuit__carte reveal">
+            <span class="acc-panneau">Gratuit</span>
+            <h2 class="acc-h acc-gratuit__titre">Commencez gratuitement</h2>
+            <p class="acc-gratuit__texte">Albatros VFR est gratuit pendant la phase de lancement. Créez votre compte et faites votre premier vol en quelques minutes.</p>
+            <ul class="acc-gratuit__points">
+              <li><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg><span>Aucune carte bancaire demandée</span></li>
+              <li><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg><span>Tous les exercices accessibles</span></li>
+              <li><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg><span>Chaque jour, <span data-limite="vol.google">3</span>&nbsp;vols et <span data-limite="scenario.google">5</span>&nbsp;scénarios avec la voix réaliste du contrôleur</span></li>
+            </ul>
+            <div class="acc-boutons acc-gratuit__boutons">
+              <button class="acc-btn acc-btn--plein" type="button" data-page="signup">S'inscrire gratuitement</button>
+              <button class="acc-btn acc-btn--creux" type="button" data-page="login">Se connecter</button>
+            </div>
+            <p class="acc-gratuit__note">Ensuite, jusqu'à <span data-limite="vol.max">10</span>&nbsp;vols et <span data-limite="scenario.max">15</span>&nbsp;scénarios par jour avec la voix de votre navigateur. Les compteurs repartent à zéro à minuit.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- ---- Les avis mis en avant (29/09/2026, assets/modules/avis.js) ----
            Masquée tant qu'aucun avis n'est publié : une section vide, ou des avis
            inventés pour la remplir, seraient pires que pas de section. -->

@@ -174,6 +174,23 @@ test('accueil : la section des appareils, iPhone sur ordinateur seulement', asyn
   expect(deborde).toBe(false);
 });
 
+/* « Commencez gratuitement » (02/10/2026) : les limites affichées sont celles
+   de lancement.js — sinon la vitrine promettrait autre chose que l'application. */
+test('accueil : le bloc gratuit annonce les vraies limites du jour', async ({ page }) => {
+  await ouvrir(page);
+  const sec = page.locator('#page-accueil .acc-gratuit');
+  await expect(sec).toContainText('Commencez gratuitement');
+  await expect(sec.locator('[data-page="signup"]')).toBeVisible();
+  await expect(sec.locator('[data-page="login"]')).toBeVisible();
+  const l = await page.evaluate(() => ({
+    affiche: [...document.querySelectorAll('.acc-gratuit [data-limite]')].map(e => e.dataset.limite + '=' + e.textContent),
+    L: RTLancement.LIMITES
+  }));
+  expect(l.affiche).toEqual([
+    'vol.google=' + l.L.vol.google, 'scenario.google=' + l.L.scenario.google,
+    'vol.max=' + l.L.vol.max, 'scenario.max=' + l.L.scenario.max ]);
+});
+
 test('Paramètres : un onglet à la fois, lu et écrit dans l\'adresse', async ({ page }) => {
   await ouvrir(page);
   await entrer(page, 'parametres/voix');

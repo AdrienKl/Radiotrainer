@@ -2154,14 +2154,23 @@
      s'était passé. Une urgence déclarée ne se referme pas : elle vous suit
      jusqu'au parking, et c'est cela qu'on apprend.
 
-     On réécrit donc les étapes SUIVANTES. Trois conséquences, toutes réelles :
+     On réécrit donc les étapes SUIVANTES. Deux conséquences, qui sont des
+     RÈGLES DU SIMULATEUR et non des phrases :
        - le code transpondeur ne change plus (on garde 7700 / 7000) ;
-       - la priorité à l'atterrissage, donc numéro 1 dans le circuit ;
-       - les secours annoncés à l'arrivée pour une détresse (MAYDAY), pas pour une
-         simple urgence (PAN PAN), où l'on ne déclenche pas le plan.
+       - l'avion en urgence passe numéro 1 dans le circuit. Le contrôleur le dit
+         en vent arrière, avec la phrase normale « numéro {NUM} » (p. 151-152).
+
+     LES PHRASES, ELLES, RESTENT CELLES DU MANUEL (01/10/2026). Cette fonction
+     réécrivait aussi l'intégration (« reçu, vous êtes prioritaire… numéro 1…
+     Les services de secours sont en place »), la finale (« Secours en bord de
+     piste ») et la piste dégagée (« les secours vous rejoignent », « une
+     assistance vous attend »). Le manuel ne contient NULLE PART de phrase sur
+     la priorité ni sur les secours (cherché dans les 281 pages) : c'étaient
+     des phrases inventées, apprises par l'élève. Elles sont retirées ;
+     intégration, finale et piste dégagée gardent leurs phrases normales
+     (p. 149, 151, 160-161).
      Le déroutement (terrain fermé) avait déjà sa propre suite, plus bas. */
   function consequencesUrgence(S, C, kind, apres){
-    var detresse = (kind==='moteur' || kind==='fumee');   // MAYDAY ; malaise = PAN PAN
     C.urgenceEnCours = kind;
     for(var i=apres; i<S.length; i++){
       var st=S[i];
@@ -2170,22 +2179,10 @@
       if(st.xpdrAssign) st.xpdrAssign=null;
       if(st.xpdrReq)    st.xpdrReq=null;
       if(st.ph==='Intégration'){
-        st.atcAfter='{CALL}, reçu, vous êtes prioritaire. Entrez vent arrière piste {PISTE}, '+
-                    'QNH {QNH}, numéro 1, rappelez vent arrière'+
-                    (detresse?'. Les services de secours sont en place.':'.');
-        // Prioritaire veut dire numéro 1 : on force le tirage du circuit.
+        // Numéro 1 dans le circuit : on force le tirage, la phrase ne change pas.
         st.onEnter=(function(precedent){
           return function(){ if(precedent) precedent(); state.numCircuit=1; };
         })(st.onEnter);
-      }
-      else if(st.ph==='Finale' && detresse){
-        st.atcAfter='{CALL}, piste {PISTE}, autorisé atterrissage, vent {VENT}. '+
-                    'Secours en bord de piste.';
-      }
-      else if(st.ph==='Piste dégagée'){
-        st.atcAfter= detresse
-          ? '{CALL}, roulez parking aviation générale, les secours vous rejoignent.'
-          : '{CALL}, roulez parking aviation générale, une assistance vous attend.';
       }
     }
   }

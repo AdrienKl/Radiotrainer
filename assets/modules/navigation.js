@@ -1351,6 +1351,521 @@
     });
   }
 
+  /* ======================================================================
+     LE PILOTE CHOISIT (03/10/2026, demande du développeur : « laisser beaucoup
+     plus de choix au pilote, comme le tour de piste qui propose complet ou
+     touch-and-go, surtout dans les vols locaux »).
+     Une étape peut porter un `choix` : { id, question, options:[{ key, label,
+     desc, etapes:function(){ return [...]; } }] }. Le clic insère les étapes de
+     l'option juste après (choisirNav). Les étapes ne sont donc pas toutes
+     connues au décollage : un vol local s'écrit au fil des décisions.
+     Chaque décision est gardée (F.choixFaits) et rejouée à la reprise d'un vol,
+     avec la même graine de hasard : le vol repris est le même vol.
+
+     LES SOURCES, sans exception :
+     - terrain contrôlé : manuel DSNA (2023) ;
+     - terrain AFIS : « Manuel d'information pour l'utilisation de la
+       phraséologie lorsqu'un service AFIS est rendu » (UAF & FA, élaboré avec
+       la DGAC, édition novembre 2022 ; deux lignes reprises de l'édition 2019,
+       où l'édition 2022 a recopié par erreur la phrase de l'agent dans la
+       bouche du pilote) ;
+     - auto-information : l'arrêté du 12 juillet 2019 (JO du 2 août 2019,
+       procédures pour l'utilisation des aérodromes) fixe QUAND le pilote
+       transmet et QUOI (position, intentions) — aucun texte officiel ne donne
+       la formulation. Les comptes rendus reprennent donc ceux, identiques, que
+       le pilote fait à un agent AFIS (« vent arrière piste 24 », « roulons point
+       d'attente piste 24 »…), précédés du nom de la station.
+     ====================================================================== */
+  function rng(C){ return C.rng ? C.rng() : Math.random(); }
+  // Hasard à graine (mulberry32) : rejouer les mêmes décisions redonne le même vol.
+  function graineVers(seed){
+    var a=seed>>>0;
+    return function(){
+      a|=0; a=a+0x6D2B79F5|0;
+      var t=Math.imul(a^a>>>15, 1|a);
+      t=t+Math.imul(t^t>>>7, 61|t)^t;
+      return ((t^t>>>14)>>>0)/4294967296;
+    };
+  }
+  function mcCall(){ return {label:'Votre indicatif',ref:'callsign'}; }
+  function mcPiste(){ return {label:'Numéro de piste',ref:'piste'}; }
+  function mcStn(T){ return {label:'Organisme appelé',variantes:stnVars(T.stn,T.k)}; }
+  function mcMots(label, v){ return {label:label, variantes:v}; }
+  function terrainDep(C){ return { nat:C.depNat, stn:C.depStn, freq:C.depF.f, k:C.depF.k, nom:C.dep.nom, arr:false }; }
+  function terrainArr(C){ return { nat:C.arrNat, stn:C.arrStn, freq:C.arrF.f, k:C.arrF.k, nom:C.arr.nom, arr:true }; }
+  /* Position de l'avion sur la carte pendant le circuit : à l'arrivée, près du
+     terrain d'arrivée ; en vol local, le terrain de départ est l'unique point. */
+  function posCircuit(T, part){ return T.arr ? { leg:0.92+0.07*part, nmArr:Math.max(0.3, 2-1.7*part) } : { leg:0.4 }; }
+  function etape(T, part, o){
+    var p=posCircuit(T, part), e={ stn:T.stn, freq:T.freq, leg:p.leg };
+    if(p.nmArr!=null) e.nmArr=p.nmArr;
+    for(var k in o) e[k]=o[k];
+    /* Auto-information : une DIFFUSION. Chaque message porte le nom de la
+       station, du premier au dernier — on ne l'enlève pas hors premier contact. */
+    if(T.nat==='aa') e.diffusion=true;
+    return e;
+  }
+
+  /* ---- DÉPART D'UN TERRAIN AFIS (manuel AFIS p. 32-33, départ VFR de Bourges)
+     ou EN AUTO-INFORMATION (arrêté du 12/07/2019 : sur l'aire de trafic avant de
+     se déplacer, au point d'attente avant de pénétrer sur la piste, une fois
+     aligné, en quittant la circulation d'aérodrome). Aucune clairance : on
+     annonce, à la première personne du pluriel, comme le manuel AFIS. */
+  function departNonControle(C){
+    var T=terrainDep(C), out=[], afis=(T.nat==='afis');
+    function e(o){ var x={ stn:T.stn, freq:T.freq, leg:0 }; for(var k in o) x[k]=o[k]; if(!afis) x.diffusion=true; out.push(x); }
+    var dest = C.arr ? ', destination '+C.arr.nom : '';
+    if(afis){
+      e({ ph:'Premier contact', src:'AFIS p. 32', reel:'Appelez '+T.stn+'.',
+          consigne:'Premier contact : organisme, bonjour, votre indicatif.',
+          attendu:T.stn+', bonjour, {CALL}.',
+          motsCles:[ mcStn(T), mcCall() ],
+          atcAfter:'{CALL}, bonjour, '+T.stn+', j\'écoute.' });
+      e({ ph:'Paramètres', src:'AFIS p. 32', reel:'Demandez les paramètres.',
+          consigne:'Annonce : indicatif, type d\'avion, position, VFR sans plan de vol'+(C.arr?', destination '+C.arr.nom:'')+', et demandez les paramètres pour le départ.',
+          attendu:'{CALL}, '+C.acShort+', au parking, VFR sans plan de vol'+dest+', demandons paramètres pour le départ.',
+          motsCles:[ mcCall(), mcMots('Type d\'avion',acVars(C.acShort)), mcMots('VFR',['vfr','v f r']),
+                     mcMots('Demandons paramètres pour le départ',['parametres pour le depart','demandons parametres','parametres']) ]
+                   .concat(C.arr?[mcMots('Destination',destVars(C.arr))]:[]),
+          atcAfter:'{CALL}, piste {PISTE}, vent {VENT}, QNH {QNH}, rappeler pour rouler.' });
+      e({ ph:'Collationnement paramètres', src:'AFIS p. 32', reel:'Collationnez.',
+          consigne:'Accusez réception : la piste et le QNH, puis votre indicatif.',
+          attendu:'Roger, piste {PISTE}, QNH {QNH}, {CALL}.',
+          motsCles:[ mcPiste(), {label:'QNH',ref:'qnh'}, mcCall() ] });
+      e({ ph:'Roulage', src:'AFIS p. 32', reel:'Annoncez votre roulage.',
+          consigne:'Annoncez que vous roulez vers le point d\'attente de la piste {PISTE}.',
+          attendu:T.stn+', {CALL}, roulons point d\'attente piste {PISTE}.',
+          motsCles:[ mcMots('Roulons',['roulons']), mcMots('Point d\'attente',['point d attente']), mcPiste(), mcCall() ],
+          atcAfter:'{CALL}, rappelez point d\'attente piste {PISTE}.' });
+      e({ ph:'Accusé de réception', src:'AFIS p. 33', reel:'Accusez réception.',
+          consigne:'Accusez réception, puis votre indicatif.',
+          attendu:'Roger, {CALL}.', motsCles:[ mcMots('Roger',['roger']), mcCall() ] });
+      var trafic = rng(C) < 0.4;
+      e({ ph:'Prêt au départ', src:'AFIS p. 33', reel:'Annoncez-vous prêt au départ.',
+          consigne:'Au point d\'attente : annoncez-vous prêt au départ.',
+          attendu:T.stn+', {CALL}, point d\'attente piste {PISTE}, prêt au départ.',
+          motsCles:[ mcMots('Point d\'attente',['point d attente']), mcPiste(), mcMots('Prêt au départ',['pret au depart']), mcCall() ],
+          atcAfter: trafic ? '{CALL}, {TRAFICTYPE} en finale, vos intentions.' : null });
+      if(trafic)
+      e({ ph:'Trafic en finale', src:'AFIS p. 33 (éd. 2019)', reel:'Répondez.',
+          consigne:'Le trafic en vue, vous maintenez avant la piste : dites-le.',
+          attendu:'Roger, {TRAFICTYPE} en vue, maintenons avant piste {PISTE}, {CALL}.',
+          motsCles:[ mcMots('En vue',['en vue']), mcMots('Maintenons avant piste',['maintenons avant piste','maintenons avant','maintenons']), mcPiste(), mcCall() ] });
+      e({ ph:'Alignement', src:'AFIS p. 33', reel:'Annoncez votre alignement.',
+          situation: trafic ? 'Le trafic a atterri et dégagé la piste.' : null,
+          consigne:'Annoncez que vous vous alignez.',
+          attendu:'{CALL}, nous alignons piste {PISTE}.',
+          motsCles:[ mcMots('Nous alignons',['nous alignons','alignons']), mcPiste(), mcCall() ],
+          atcAfter:'{CALL}, rappelez aligné prêt piste {PISTE}.' });
+      e({ ph:'Décollage', src:'AFIS p. 33', leg:0.03, nmDep:0.5, reel:'Annoncez votre décollage.',
+          consigne:'Aligné et prêt : annoncez que vous décollez.',
+          attendu:'Décollons piste {PISTE}, {CALL}.',
+          motsCles:[ mcMots('Décollons',['decollons']), mcPiste(), mcCall() ],
+          atcAfter:'{CALL}, vent {VENT}, rappelez quittant la fréquence.' });
+    } else {
+      e({ ph:'Roulage', src:'arrêté 12/07/2019', reel:'Annoncez-vous à '+T.stn+'.',
+          consigne:'Auto-information, avant de rouler : la station, votre indicatif, et que vous roulez vers le point d\'attente de la piste {PISTE}.',
+          attendu:T.stn+', {CALL}, roulons point d\'attente piste {PISTE}.',
+          motsCles:[ mcStn(T), mcCall(), mcMots('Roulons',['roulons']), mcMots('Point d\'attente',['point d attente']), mcPiste() ] });
+      e({ ph:'Alignement', src:'arrêté 12/07/2019', reel:'Annoncez votre alignement.',
+          consigne:'Au point d\'attente, avant d\'entrer sur la piste : annoncez que vous vous alignez.',
+          attendu:T.stn+', {CALL}, nous alignons piste {PISTE}.',
+          motsCles:[ mcStn(T), mcCall(), mcMots('Nous alignons',['nous alignons','alignons']), mcPiste() ] });
+      e({ ph:'Décollage', src:'arrêté 12/07/2019', leg:0.03, nmDep:0.5, reel:'Annoncez votre décollage.',
+          consigne:'Une fois aligné, avant de décoller : annoncez que vous décollez.',
+          attendu:T.stn+', {CALL}, décollons piste {PISTE}.',
+          motsCles:[ mcStn(T), mcCall(), mcMots('Décollons',['decollons']), mcPiste() ] });
+    }
+    return out;
+  }
+
+  /* ---- SORTIE DU CIRCUIT : p. 153 (tour), manuel AFIS p. 33, arrêté 2019. */
+  function etapeSortie(C, T, apres){
+    var x={ ph:'Sortie de circuit', stn:T.stn, freq:T.freq, leg:0.12, nmDep:4, reel:'Quittez la fréquence de '+T.stn+'.' };
+    if(T.nat==='twr'){
+      x.src='p. 153'; x.atcBefore='{CALL}, rappelez quittant la fréquence.';
+      x.consigne='Annoncez votre sortie de circuit et que vous quittez la fréquence.';
+      x.attendu='Sortie de circuit, je quitte la fréquence, {CALL}.';
+      x.motsCles=[ mcMots('Sortie de circuit',['sortie de circuit','sortie']), mcMots('Je quitte la fréquence',['quitte la frequence','je quitte','quitte']), mcCall() ];
+    } else {
+      x.src = T.nat==='afis' ? 'AFIS p. 33' : 'arrêté 12/07/2019';
+      x.consigne='En quittant le circuit : annoncez votre sortie de circuit et que vous quittez la fréquence.';
+      x.attendu=T.stn+', {CALL}, sortie de circuit, quittons la fréquence.';
+      x.motsCles=[ mcStn(T), mcCall(), mcMots('Sortie de circuit',['sortie de circuit']), mcMots('Quittons la fréquence',['quittons la frequence','quittons']) ];
+      if(T.nat==='afis') x.atcAfter='{CALL}, roger, au revoir.';
+      else x.diffusion=true;
+    }
+    if(apres) for(var k in apres) x[k]=apres[k];
+    return x;
+  }
+
+  /* ---- UN TOUR DE PISTE, de la vent arrière à la décision en finale.
+     o.premier : premier circuit après l'intégration (pas de choix de départ de
+     tour) ; o.n : rang du tour, pour nommer les décisions de façon stable. */
+  function etapesCircuit(C, T, o){
+    o=o||{}; var n=o.n||1, out=[];
+    function e(part, x){ out.push(etape(T, part, x)); }
+    var twr=(T.nat==='twr'), afis=(T.nat==='afis');
+    var pre = (T.nat==='aa') ? T.stn+', ' : '';     // diffusion : la station à chaque message
+
+    /* Tour : avant la vent arrière, le pilote peut demander un circuit basse
+       hauteur ou annoncer un exercice d'encadrement (manuel p. 164). */
+    if(twr && !o.premier) out.push({ ph:'Décision', stn:T.stn, freq:T.freq, leg:posCircuit(T,0).leg,
+      choix:{ id:'tour-'+n, question:'Ce tour de piste : que demandez-vous ?', options:[
+        { key:'normal', label:'Tour de piste normal', desc:'Vent arrière, base, finale.', etapes:function(){ return []; } },
+        { key:'encadrement', label:'Exercice d\'encadrement', desc:'Moteur réduit, vous visez la piste en plané (manuel p. 164).',
+          etapes:function(){ return [ etape(T, 0.05, { ph:'Demande d\'exercice', src:'p. 164', reel:'Faites votre demande.',
+            consigne:'Demandez un exercice d\'encadrement.',
+            attendu:'{CALL}, demande exercice d\'encadrement.',
+            motsCles:[ mcMots('Demande exercice d\'encadrement',['demande exercice d encadrement','exercice d encadrement']), mcCall() ],
+            atcAfter:'{CALL}, exercice d\'encadrement approuvé.' }) ]; } },
+        { key:'bassehauteur', label:'Circuit basse hauteur', desc:'Un tour de piste plus bas que la hauteur publiée (manuel p. 164).',
+          etapes:function(){ return [ etape(T, 0.05, { ph:'Demande de circuit', src:'p. 164', reel:'Faites votre demande.',
+            consigne:'Demandez un circuit basse hauteur.',
+            attendu:'{CALL}, demande circuit basse hauteur.',
+            motsCles:[ mcMots('Demande circuit basse hauteur',['demande circuit basse hauteur','circuit basse hauteur']), mcCall() ],
+            atcAfter:'{CALL}, circuit basse hauteur approuvé.' }) ]; } } ] } });
+
+    // Vent arrière (p. 151 ; manuel AFIS p. 40 ; arrêté 2019 « en vent arrière »).
+    e(0.1, { ph:'Vent arrière', src: twr?'p. 151':(afis?'AFIS p. 40':'arrêté 12/07/2019'), reel:'Annoncez votre position.',
+      consigne:'Annoncez votre position en vent arrière pour la piste {PISTE}.',
+      attendu:pre+'{CALL}, vent arrière piste {PISTE}.',
+      motsCles:[ mcCall(), mcMots('Vent arrière',['vent arriere']), mcPiste() ].concat(pre?[mcStn(T)]:[]),
+      atcAfter: twr ? '{CALL}, numéro {NUM}{SUIVEZ}, rappelez base piste {PISTE}.'
+              : afis ? '{CALL}, rappelez finale piste {PISTE}.' : null });
+    if(twr){
+      e(0.2, { ph:'Collationnement numéro', src:'p. 151', reel:'Collationnez.',
+        consigne:'Collationnez : votre numéro, le trafic en vue, et vous rappellerez en base.',
+        attendu:'Numéro {NUM}{TRAFICVU}, je rappelle base piste {PISTE}, {CALL}.',
+        motsCles:[ {label:'Numéro dans le circuit',ref:'num'} ]
+                 .concat(C.urgenceEnCours?[]:[{label:'Trafic en vue',variantes:['trafic en vue'], traficSuivi:true}])
+                 .concat([ mcMots('Je rappelle base',['je rappelle base','rappelle base']), mcPiste(), mcCall() ]) });
+      /* Une fois sur cinq, la tour fait faire un 360 (p. 150 « Faites un 360 par
+         la droite » ; collationnement sur le modèle de la p. 132 « Je fais un
+         360 à gauche, Rapidair 3245 »). */
+      if(!C.urgenceEnCours && rng(C) < 0.2)
+      e(0.3, { ph:'360', src:'p. 150, p. 132', atcBefore:'{CALL}, faites un 360 par la droite.', reel:'Collationnez.',
+        consigne:'Collationnez l\'instruction.',
+        attendu:'Je fais un 360 par la droite, {CALL}.',
+        motsCles:[ mcMots('Je fais un 360',['je fais un 360','360','trois cent soixante']), mcMots('Par la droite',['par la droite','droite']), mcCall() ] });
+    } else if(afis){
+      e(0.2, { ph:'Rappel finale', src:'AFIS p. 40', reel:'Répondez.',
+        consigne:'Dites que vous rappellerez en finale.',
+        attendu:'Rappellerons finale piste {PISTE}, {CALL}.',
+        motsCles:[ mcMots('Rappellerons finale',['rappellerons finale','rappellerons']), mcPiste(), mcCall() ] });
+    }
+    // Base (p. 151 ; arrêté 2019 « en base » — aussi sur un terrain AFIS, non contrôlé).
+    e(0.5, { ph:'Base', src: twr?'p. 151':'arrêté 12/07/2019', reel:'Annoncez votre position.',
+      consigne:'Annoncez que vous êtes en base pour la piste {PISTE}.',
+      attendu:pre+'{CALL}, base piste {PISTE}.',
+      motsCles:[ mcCall(), mcMots('En base',['base','en base']), mcPiste() ].concat(pre?[mcStn(T)]:[]),
+      atcAfter: twr ? '{CALL}, rappelez finale piste {PISTE}.' : null });
+    if(twr)
+    e(0.6, { ph:'Collationnement base', src:'p. 151', reel:'Collationnez.',
+      consigne:'Collationnez : vous rappellerez en finale.',
+      attendu:'Je rappelle finale piste {PISTE}, {CALL}.',
+      motsCles:[ mcMots('Je rappelle finale',['je rappelle finale','rappelle finale']), mcPiste(), mcCall() ] });
+    out.push(choixFinale(C, T, n));
+    return out;
+  }
+
+  /* ---- LA DÉCISION EN FINALE.
+     Tour (manuel DSNA) : atterrissage complet ; toucher (« Demande toucher » /
+     « Piste 28, autorisé toucher », p. 164 — collationné en répétant la
+     clairance : la p. 164 ne donne pas la réponse du pilote, la p. 34 range le
+     toucher parmi les éléments de piste qui SE COLLATIONNENT) ; remise de gaz
+     (« Je remets les gaz », p. 159 ; « Roger », p. 147) ; passage bas (« Demande
+     passage bas » / « Passage bas approuvé », p. 164). Une fois sur sept, la tour
+     refuse le toucher : « Faites un atterrissage complet » / « Atterrissage
+     complet » (p. 164).
+     AFIS : la finale, puis — une fois sur trois — la piste engagée par un
+     autre avion, et la décision du pilote (manuel AFIS p. 41). Ni toucher ni
+     passage bas : le manuel AFIS n'en a pas.
+     Auto-information : complet ou remise de gaz (« remettons les gaz », la
+     forme du manuel AFIS au présent ; l'arrêté demande d'annoncer tout
+     changement d'intention). */
+  function choixFinale(C, T, n){
+    var twr=(T.nat==='twr'), afis=(T.nat==='afis'), pre=(T.nat==='aa') ? T.stn+', ' : '';
+    function suite(){ return etapesCircuit(C, T, { n:n+1 }); }
+    var opts=[];
+    opts.push({ key:'complet', label:'Atterrissage complet', desc:'Vous vous posez et rejoignez le parking.',
+      etapes:function(){ return finaleEtAtterrissage(C, T); } });
+    if(twr){
+      opts.push({ key:'toucher', label:'Toucher (touch-and-go)', desc:'Vous touchez la piste et repartez pour un tour.',
+        etapes:function(){
+          var refus = rng(C) < 1/7;
+          var a=[ etape(T, 0.8, { ph:'Finale — toucher', src:'p. 151, p. 164', reel:'Annoncez la finale et demandez un toucher.',
+            consigne:'Annoncez la finale et demandez un toucher.',
+            attendu:'{CALL}, finale piste {PISTE}, demande toucher.',
+            motsCles:[ mcCall(), mcMots('En finale',['finale','en finale']), mcPiste(), mcMots('Demande toucher',['demande toucher','demande un toucher']) ],
+            atcAfter: refus ? '{CALL}, faites un atterrissage complet.' : '{CALL}, piste {PISTE}, autorisé toucher.' }) ];
+          if(refus){
+            a.push(etape(T, 0.85, { ph:'Atterrissage complet imposé', src:'p. 164', reel:'Collationnez.',
+              consigne:'La tour refuse le toucher : collationnez.',
+              attendu:'Atterrissage complet, {CALL}.',
+              motsCles:[ mcMots('Atterrissage complet',['atterrissage complet']), mcCall() ],
+              atcAfter:'{CALL}, piste {PISTE}, autorisé atterrissage, vent {VENT}.' }));
+            return a.concat(atterrissageComplet(C, T));
+          }
+          a.push(etape(T, 0.9, { ph:'Collationnement toucher', src:'p. 34, p. 164', reel:'Collationnez.',
+            consigne:'Collationnez l\'autorisation de toucher.',
+            attendu:'Piste {PISTE}, autorisé toucher, {CALL}.',
+            motsCles:[ mcMots('Autorisé toucher',['autorise toucher']), mcPiste(), mcCall() ] }));
+          return a.concat(suite());
+        } });
+    }
+    if(twr || T.nat==='aa'){
+      opts.push({ key:'remise', label:'Remise de gaz', desc:'Vous interrompez l\'approche et repartez pour un tour.',
+        etapes:function(){
+          return [ etape(T, 0.8, twr
+            ? { ph:'Remise de gaz', src:'p. 159, p. 147', reel:'Annoncez la remise de gaz.',
+                consigne:'Annoncez votre remise de gaz.',
+                attendu:'{CALL}, je remets les gaz.',
+                motsCles:[ mcCall(), mcMots('Je remets les gaz',['je remets les gaz','remets les gaz']) ],
+                atcAfter:'{CALL}, roger.' }
+            : { ph:'Remise de gaz', src:'arrêté 12/07/2019', reel:'Annoncez la remise de gaz.',
+                consigne:'Annoncez votre remise de gaz.',
+                attendu:pre+'{CALL}, remettons les gaz piste {PISTE}.',
+                motsCles:[ mcStn(T), mcCall(), mcMots('Remettons les gaz',['remettons les gaz','remettons']), mcPiste() ] }) ].concat(suite());
+        } });
+    }
+    if(twr){
+      opts.push({ key:'passagebas', label:'Passage bas', desc:'Vous passez bas au-dessus de la piste, sans la toucher, puis un nouveau tour.',
+        etapes:function(){
+          return [ etape(T, 0.8, { ph:'Finale — passage bas', src:'p. 151, p. 164', reel:'Annoncez la finale et demandez un passage bas.',
+            consigne:'Annoncez la finale et demandez un passage bas.',
+            attendu:'{CALL}, finale piste {PISTE}, demande passage bas.',
+            motsCles:[ mcCall(), mcMots('En finale',['finale','en finale']), mcPiste(), mcMots('Demande passage bas',['demande passage bas','demande un passage bas']) ],
+            atcAfter:'{CALL}, passage bas approuvé.' }) ].concat(suite());
+        } });
+    }
+    return { ph:'Décision', stn:T.stn, freq:T.freq, leg:posCircuit(T,0.7).leg,
+             choix:{ id:'finale-'+n, question:'En finale, que faites-vous ?', options:opts } };
+  }
+
+  /* ---- La finale ordinaire et l'atterrissage complet. */
+  function finaleEtAtterrissage(C, T){
+    var twr=(T.nat==='twr'), afis=(T.nat==='afis'), pre=(T.nat==='aa') ? T.stn+', ' : '';
+    if(afis){
+      var engagee = rng(C) < 1/3;
+      var f=etape(T, 0.8, { ph:'Finale', src:'AFIS p. 41', reel:'Annoncez la finale.',
+        consigne:'Annoncez que vous êtes en finale pour la piste {PISTE}.',
+        attendu:'{CALL}, finale piste {PISTE}.',
+        motsCles:[ mcCall(), mcMots('En finale',['finale','en finale']), mcPiste() ],
+        atcAfter: engagee ? '{CALL}, piste engagée par {TRAFICTYPE}, assurez votre séparation. Quelles sont vos intentions ?'
+                          : '{CALL}, vent {VENT}, rappelez piste dégagée.' });
+      if(!engagee) return [ f, etape(T, 0.9, { ph:'Accusé de réception', src:'AFIS p. 41', reel:'Accusez réception.',
+          consigne:'Accusez réception, puis votre indicatif.', attendu:'Roger, {CALL}.',
+          motsCles:[ mcMots('Roger',['roger']), mcCall() ] }) ].concat(atterrissageComplet(C, T));
+      return [ f, etape(T, 0.85, { ph:'Piste engagée', src:'AFIS p. 41', reel:'Répondez.',
+          consigne:'Le trafic en vue, vous annoncez une remise de gaz.',
+          attendu:'{TRAFICTYPE} en vue, remettrons les gaz piste {PISTE}, {CALL}.',
+          motsCles:[ mcMots('En vue',['en vue']), mcMots('Remettrons les gaz',['remettrons les gaz','remettrons']), mcPiste(), mcCall() ] }),
+        { ph:'Décision', stn:T.stn, freq:T.freq, leg:posCircuit(T,0.85).leg,
+          choix:{ id:'engagee-'+(C.nEngagee=(C.nEngagee||0)+1), question:'La piste est encore occupée. Que faites-vous ?', options:[
+            { key:'remise', label:'Remettre les gaz', desc:'Vous repartez pour un tour de piste.',
+              etapes:function(){ return etapesCircuit(C, T, { n:(C.nCircuit=(C.nCircuit||10)+1) }); } },
+            { key:'attendre', label:'Attendre que la piste se dégage', desc:'Si elle se libère à temps, vous atterrissez.',
+              etapes:function(){ return [ etape(T, 0.9, { ph:'Piste dégagée', src:'AFIS p. 41',
+                  atcBefore:'{CALL}, '+T.stn+', piste dégagée par le {TRAFICTYPE}.', reel:'Répondez.',
+                  consigne:'La piste est libre : annoncez que vous atterrissez.',
+                  attendu:'Roger, atterrissons piste {PISTE}, {CALL}.',
+                  motsCles:[ mcMots('Atterrissons',['atterrissons']), mcPiste(), mcCall() ],
+                  atcAfter:'{CALL}, vent {VENT}, rappelez piste dégagée.' }),
+                etape(T, 0.95, { ph:'Accusé de réception', src:'AFIS p. 41', reel:'Accusez réception.',
+                  consigne:'Accusez réception, puis votre indicatif.', attendu:'Roger, {CALL}.',
+                  motsCles:[ mcMots('Roger',['roger']), mcCall() ] }) ].concat(atterrissageComplet(C, T)); } } ] } } ];
+    }
+    var f2=etape(T, 0.8, { ph:'Finale', src: twr?'p. 151':'arrêté 12/07/2019', reel:'Annoncez la finale.',
+      consigne:'Annoncez que vous êtes en finale pour la piste {PISTE}.',
+      attendu:pre+'{CALL}, finale piste {PISTE}.',
+      motsCles:[ mcCall(), mcMots('En finale',['finale','en finale']), mcPiste() ].concat(pre?[mcStn(T)]:[]),
+      atcAfter: twr ? '{CALL}, piste {PISTE}, autorisé atterrissage, vent {VENT}.' : null });
+    return [ f2 ].concat(atterrissageComplet(C, T));
+  }
+
+  /* ---- Après l'autorisation (tour) ou la finale : la piste, le parking.
+     Tour : p. 154, 160-161, 45. AFIS : manuel AFIS p. 41 (« piste dégagée »,
+     « rappelez parking », « au parking, quittons la fréquence »). Auto-
+     information : arrêté 2019 (« lorsque la piste est dégagée », « sur l'aire de
+     trafic »). */
+  function atterrissageComplet(C, T){
+    var out=[], twr=(T.nat==='twr'), afis=(T.nat==='afis'), pre=(T.nat==='aa') ? T.stn+', ' : '';
+    if(twr){
+      out.push(etape(T, 0.97, { ph:'Atterrissage', src:'p. 154', reel:'Collationnez l\'autorisation d\'atterrissage.',
+        consigne:'Collationnez. Le pilote dit « j\'atterris » — « autorisé atterrissage » est réservé au contrôleur.',
+        attendu:'Piste {PISTE}, j\'atterris, {CALL}.',
+        motsCles:[ mcPiste(), mcMots('J\'atterris',['j atterris','atterris','jatterris']), mcCall() ],
+        atcAfter:'{CALL}, rappelez piste dégagée.' }));
+      out.push(etape(T, 1, { ph:'Piste dégagée', src:'p. 160-161', reel:'Annoncez la piste dégagée.',
+        consigne:'Annoncez que la piste est dégagée.', attendu:'Piste dégagée, {CALL}.',
+        motsCles:[ mcMots('Piste dégagée',['piste degagee','degagee']), mcCall() ],
+        atcAfter:'{CALL}, roulez parking aviation générale.' }));
+      out.push(etape(T, 1, { ph:'Roulage au parking', src:'p. 160', reel:'Collationnez.',
+        consigne:'Collationnez la dernière instruction : vous roulez au parking aviation générale.',
+        attendu:'Je roule parking aviation générale, {CALL}.',                    // p. 160, mot pour mot
+        motsCles:[ mcMots('Je roule',['je roule','roule']), mcMots('Parking',['parking','aviation generale','parking aviation generale']), mcCall() ] }));
+    } else {
+      out.push(etape(T, 1, { ph:'Piste dégagée', src: afis?'AFIS p. 41':'arrêté 12/07/2019', reel:'Annoncez la piste dégagée.',
+        consigne:'Annoncez que la piste est dégagée.',
+        attendu:(afis?T.stn+', ':pre)+'{CALL}, piste dégagée.',
+        motsCles:[ mcCall(), mcMots('Piste dégagée',['piste degagee','degagee']) ],
+        atcAfter: afis ? '{CALL}, rappelez parking.' : null }));
+      out.push(etape(T, 1, { ph:'Au parking', src: afis?'AFIS p. 41':'arrêté 12/07/2019', reel:'Annoncez votre arrivée au parking.',
+        consigne:'Au parking : annoncez-le et quittez la fréquence.',
+        attendu:(afis?T.stn+', ':pre)+'{CALL}, au parking, quittons la fréquence.',
+        motsCles:[ mcCall(), mcMots('Au parking',['au parking','parking']), mcMots('Quittons la fréquence',['quittons la frequence','quittons']) ],
+        atcAfter: afis ? '{CALL}, au revoir.' : null }));
+    }
+    return out;
+  }
+
+  /* ---- VOL LOCAL (refait le 03/10/2026). Après le décollage, le pilote choisit :
+     des tours de piste (avec, à chaque finale, toucher, remise de gaz, passage
+     bas ou complet), ou une sortie vers la zone de travail et un retour —
+     « pour un atterrissage » ou « pour un toucher » (p. 149). */
+  function choixVolLocal(C){
+    var T=terrainDep(C);
+    return { ph:'Décision', stn:T.stn, freq:T.freq, leg:0.4,
+      choix:{ id:'local', question:'Vol local : que faites-vous ?', options:[
+        { key:'circuits', label:'Des tours de piste', desc:'Vous restez dans le circuit. À chaque finale, vous choisissez : toucher, remise de gaz, passage bas ou atterrissage complet.',
+          etapes:function(){ return etapesCircuit(C, T, { n:1, premier:true }); } },
+        { key:'zone', label:'Sortie en zone de travail, puis retour', desc:'Vous quittez le circuit pour vos exercices, puis vous revenez vous intégrer.',
+          etapes:function(){
+            return [ etapeSortie(C, T, { leg:0.3, nmDep:undefined }), choixRetourLocal(C, T) ];
+          } } ] } };
+  }
+  function choixRetourLocal(C, T){
+    var opts=[ { key:'atterrissage', label:'Revenir pour un atterrissage', desc:'Intégration, circuit, atterrissage complet.',
+                 etapes:function(){ return retourLocal(C, T, 'pour un atterrissage'); } } ];
+    if(T.nat==='twr') opts.push({ key:'toucher', label:'Revenir pour des tours de piste', desc:'Vous annoncez un toucher : intégration, puis circuits.',
+                 etapes:function(){ return retourLocal(C, T, 'pour un toucher'); } });
+    return { ph:'Décision', stn:T.stn, freq:T.freq, leg:0.3,
+      situation:'Vous êtes en zone de travail : virages, décrochages, maniabilité. Il est temps de rentrer.',
+      choix:{ id:'retour', question:'Exercices terminés : comment revenez-vous ?', options:opts } };
+  }
+  /* L'annonce du retour reprend celle de la p. 149 (« … VFR … pour un toucher
+     (atterrissage/remise de gaz), 1500 pieds, … information I »), sans « de A à
+     B » : on revient au terrain d'où l'on est parti. AFIS : p. 40 sans plan de
+     vol ni estimée. Auto-information : avant de s'intégrer (arrêté 2019). */
+  function retourLocal(C, T, intention){
+    var out=[], twr=(T.nat==='twr'), afis=(T.nat==='afis');
+    function e(x){ var y={ stn:T.stn, freq:T.freq, leg:0.35 }; for(var k in x) y[k]=x[k]; if(T.nat==='aa') y.diffusion=true; out.push(y); }
+    if(T.nat!=='aa')
+      e({ ph:'Contact retour', src: twr?'p. 149':'AFIS p. 40', reel:'Appelez '+T.stn+'.', nouveauContact:true,
+          situation:'Vous revenez vers le terrain.',
+          consigne:'Premier contact : organisme, bonjour, votre indicatif.',
+          attendu:T.stn+', bonjour, {CALL}.', motsCles:[ mcStn(T), mcCall() ],
+          atcAfter: twr ? '{CALL}, bonjour, j\'écoute.' : '{CALL}, bonjour, '+T.stn+', j\'écoute.' });
+    if(twr){
+      e({ ph:'Intégration', src:'p. 149', reel:'Faites votre annonce.',
+          consigne:'Annonce : indicatif, type d\'avion, VFR, '+intention+', votre altitude'+(C.atis?', puis la lettre d\'information':'')+'.',
+          attendu:'{CALL}, '+C.acShort+', VFR, '+intention+', {ALT} pieds'+(C.atis?', information {ATIS}':'')+'.',
+          motsCles:[ mcCall(), mcMots('Type d\'avion',acVars(C.acShort)), mcMots('VFR',['vfr','v f r']),
+                     (intention==='pour un toucher' ? mcMots('Pour un toucher',['pour un toucher','pour toucher'])
+                                                    : mcMots('Pour un atterrissage',['pour un atterrissage','pour atterrissage'])),
+                     {label:'Altitude',ref:'alt'} ].concat(C.atis?[mcMots('Lettre d\'information',atisVars(C.atis))]:[]),
+          atcAfter: C.atis ? '{CALL}, entrez vent arrière piste {PISTE}, rappelez vent arrière.'
+                           : '{CALL}, piste {PISTE}, vent {VENT}, QNH {QNH}, entrez vent arrière piste {PISTE}, rappelez vent arrière.' });
+      e({ ph:'Collationnement intégration', src:'p. 149', reel:'Collationnez.',
+          consigne: C.atis ? 'Collationnez : vous rappellerez en vent arrière.' : 'Collationnez : la piste, le QNH, puis vous rappellerez en vent arrière.',
+          attendu: C.atis ? 'Je rappelle vent arrière piste {PISTE}, {CALL}.' : 'Piste {PISTE}, QNH {QNH}, je rappelle vent arrière piste {PISTE}, {CALL}.',
+          motsCles:[ mcPiste() ].concat(C.atis?[]:[{label:'QNH',ref:'qnh'}])
+                   .concat([ mcMots('Je rappelle vent arrière',['je rappelle vent arriere','rappelle vent arriere']), mcCall() ]) });
+    } else if(afis){
+      e({ ph:'Annonce', src:'AFIS p. 40', reel:'Faites votre annonce.',
+          consigne:'Annonce : indicatif, type d\'avion, VFR.',
+          attendu:'{CALL}, '+C.acShort+', VFR.',
+          motsCles:[ mcCall(), mcMots('Type d\'avion',acVars(C.acShort)), mcMots('VFR',['vfr','v f r']) ],
+          atcAfter:'{CALL}, piste {PISTE} en service, vent {VENT}, QNH {QNH}, rappelez en vue de l\'aérodrome.' });
+      e({ ph:'Collationnement', src:'AFIS p. 40', reel:'Collationnez.',
+          consigne:'Collationnez le QNH et dites que vous rappellerez en vue de l\'aérodrome.',
+          attendu:'QNH {QNH}, rappellerons en vue de l\'aérodrome, {CALL}.',
+          motsCles:[ {label:'QNH',ref:'qnh'}, mcMots('Rappellerons en vue de l\'aérodrome',['rappellerons en vue','en vue de l aerodrome','rappellerons']), mcCall() ] });
+      e({ ph:'En vue du terrain', src:'AFIS p. 40', reel:'Annoncez-vous en vue du terrain.',
+          consigne:'Annoncez que vous êtes en vue de l\'aérodrome.',
+          attendu:'{CALL}, en vue de l\'aérodrome.',
+          motsCles:[ mcCall(), mcMots('En vue de l\'aérodrome',['en vue de l aerodrome','en vue']) ],
+          atcAfter:'{CALL}, rappelez vent arrière piste {PISTE}.' });
+      e({ ph:'Rappel vent arrière', src:'AFIS p. 40', reel:'Répondez.',
+          consigne:'Dites que vous rappellerez en vent arrière.',
+          attendu:'Rappellerons vent arrière piste {PISTE}, {CALL}.',
+          motsCles:[ mcMots('Rappellerons vent arrière',['rappellerons vent arriere','rappellerons']), mcPiste(), mcCall() ] });
+    } else {
+      e({ ph:'Intégration', src:'arrêté 12/07/2019', reel:'Annoncez-vous à '+T.stn+'.', nouveauContact:true,
+          situation:'Vous revenez vers le terrain.',
+          consigne:'Auto-information, avant de vous intégrer : la station, votre indicatif, type d\'avion, VFR, pour un atterrissage, votre altitude.',
+          attendu:T.stn+', {CALL}, '+C.acShort+', VFR, pour un atterrissage, {ALT} pieds.',
+          motsCles:[ mcStn(T), mcCall(), mcMots('Type d\'avion',acVars(C.acShort)), mcMots('VFR',['vfr','v f r']),
+                     mcMots('Pour un atterrissage',['pour un atterrissage','pour atterrissage']), {label:'Altitude',ref:'alt'} ] });
+    }
+    return out.concat(etapesCircuit(C, T, { n:(C.nCircuit=(C.nCircuit||10)+1), premier:true }));
+  }
+
+  /* Premier échange sur une fréquence = indicatif COMPLET et organisme nommé ;
+     ensuite forme abrégée et organisme omis (manuel DSNA p. 18). Tiré de
+     buildFlight pour servir aussi aux étapes insérées par une décision
+     (choisirNav) : `depuis` = premier indice à marquer, `freqPrec` = la
+     fréquence de l'étape d'avant. Les étapes de DÉCISION n'ont pas de
+     fréquence propre et ne coupent pas la continuité. Une DIFFUSION
+     (auto-information) garde le nom de la station à chaque message. */
+  function sansOrganisme(txt, stn){
+    if(!txt || !stn) return txt;
+    var t=String(txt).replace(/^\s+/,'');
+    return (t.toLowerCase().indexOf(stn.toLowerCase()+',')===0)
+           ? t.slice(stn.length+1).replace(/^\s+/,'') : txt;
+  }
+  function marquerContacts(S, depuis, freqPrec){
+    for(var i=depuis||0; i<S.length; i++){
+      var st=S[i];
+      if(st.choix) continue;
+      /* `nouveauContact` : on a quitté la fréquence (sortie en zone) et on y
+         revient — c'est un premier contact, même sur la même fréquence. */
+      st.premierContact = (st.freq!==freqPrec) || !!st.nouveauContact;
+      freqPrec = st.freq;
+      if(!st.premierContact && !st.diffusion){
+        st.motsCles = (st.motsCles||[]).filter(function(mc){ return mc.label!=='Organisme appelé'; });
+        st.attendu  = sansOrganisme(st.attendu, st.stn);
+      }
+    }
+  }
+  function freqAvant(S, i){
+    for(var k=i-1; k>=0; k--) if(!S[k].choix) return S[k].freq;
+    return null;
+  }
+  /* Le pilote décide : les étapes de l'option s'insèrent juste après la
+     décision, puis on y passe. `rejeu` : reprise d'un vol, on reconstruit sans
+     avancer ni journaliser. */
+  function appliquerChoix(i, key, rejeu){
+    var st=F.steps[i]; if(!st || !st.choix) return false;
+    var opt=st.choix.options.filter(function(o){ return o.key===key; })[0];
+    if(!opt) return false;
+    var ins=opt.etapes()||[];
+    F.steps.splice.apply(F.steps, [i+1, 0].concat(ins));
+    marquerContacts(F.steps, i+1, freqAvant(F.steps, i+1));
+    st.choisi=key;
+    if(!rejeu){ (F.choixFaits=F.choixFaits||[]).push({ id:st.choix.id, key:key }); vfLog('sys','Décision : '+opt.label+'.'); }
+    return true;
+  }
+  function choisirNav(key){
+    if(!appliquerChoix(F.i, key, false)) return;
+    $v('vfChoix').classList.add('hidden');
+    nextStep();
+  }
+  function rendreChoix(s){
+    var box=$v('vfChoix'), opts=$v('vfChoixOpts');
+    $v('vfChoixQ').textContent=s.choix.question;
+    opts.innerHTML='';
+    s.choix.options.forEach(function(o){
+      var b=document.createElement('button');
+      b.className='opt'; b.type='button';
+      b.innerHTML='<b>'+esc(o.label)+'</b>'+esc(o.desc||'');
+      b.addEventListener('click', function(){ choisirNav(o.key); });
+      opts.appendChild(b);
+    });
+    box.classList.remove('hidden');
+  }
+
   function buildFlight(){
     var dep=BY[sel.dep], arr=(mode==='voyage')?BY[sel.arr]:null;
     var cruise=ftOf($v('navFl').value)||3500;
@@ -1398,6 +1913,12 @@
        tirée une seule fois par vol : c'est elle que le pilote annonce ensuite. */
     state.atis = buildAtis(dep);
     F.ctx.atis = state.atis;
+    /* Graine du hasard des décisions (trafic, 360, refus de toucher…) : gardée à
+       la reprise, pour que les mêmes choix redonnent les mêmes étapes. */
+    F.ctx.seed = (typeof graineReprise==='number') ? graineReprise : Math.floor(Math.random()*4294967296);
+    graineReprise = null;
+    F.ctx.rng = graineVers(F.ctx.seed);
+    F.choixFaits = [];
 
     var S=[], C=F.ctx;
     function push(o){ S.push(o); }
@@ -1417,10 +1938,18 @@
         consigne:'Affichez la fréquence ATIS ('+C.atis.freq.toFixed(3)+') et écoutez le message. '+
                  'Notez la piste en service, le QNH et la lettre d\'information — '+
                  'c\'est elle que vous donnerez au contrôleur dans votre demande de roulage. '+
-                 'Passez à la suite quand vous avez tout noté.',
+                 '« Suivant » s\'ouvre quand vous avez entendu le message en entier.',
         atisStep:true });
     }
 
+    /* Départ d'un terrain AFIS ou en auto-information : un autre enchaînement,
+       sans aucune clairance (manuel AFIS p. 32-33 ; arrêté du 12/07/2019). Les
+       étapes 1 à 7 ci-dessous ne valent que face à une TOUR. Jusqu'au
+       03/10/2026, elles servaient aussi aux autres terrains, avec des phrases
+       qu'aucune source ne donnait (« je mets en route », « j'entre au point
+       d'attente », un agent AFIS qui disait « roulez et entrez aire d'attente »). */
+    if(C.depNat!=='twr') S.push.apply(S, departNonControle(C));
+    else {
     /* 1 — PREMIER CONTACT (p. 45), à la place de la mise en route (03/10/2026,
        décision du développeur). Le départ VFR du manuel, étiqueté « Cas d'un vol
        VFR » : « Chavenay tour, F-BX, bonjour » / « F-BX, Chavenay tour, bonjour »,
@@ -1432,15 +1961,6 @@
        roulage, où la p. 45 la place.
        En auto-information, rien ne change : personne n'est là pour répondre, et
        le manuel DSNA ne traite pas ce cas (il ne couvre pas l'auto-information). */
-    if(C.depNat==='aa')
-    push({ ph:'Mise en route', src:'—', stn:C.depStn, freq:C.depF.f, leg:0,
-      reel:'Annoncez-vous à '+C.depStn+'.',
-      consigne:'Terrain sans organisme : en auto-information, annoncez-vous à '+C.depStn+' — indicatif et intention de mise en route.',
-      attendu: C.depStn+', {CALL}, bonjour, '+C.acShort+' au parking, je mets en route.',
-      motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.depStn,C.depF.k)},
-                 {label:'Votre indicatif',ref:'callsign'},
-                 {label:'Mise en route',variantes:['mise en route','je mets en route']} ] });
-    else
     push({ ph:'Premier contact', src:'p. 45', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Appelez '+C.depStn+'.',
       consigne:'Premier contact : organisme, votre indicatif, bonjour.',
@@ -1593,6 +2113,8 @@
       motsCles:[ {label:'Cap de la piste',variantes:['cap de la piste','dans l axe','axe de piste','je continue au cap']},
                  {label:'Votre indicatif',ref:'callsign'} ] });
 
+    }  // fin du départ face à une tour
+
     if(C.arr){
       /* Vers QUI part-on en quittant le circuit ? Normalement le premier secteur
          en route. Mais la chaîne en route peut être VIDE — vol court qui ne sort
@@ -1605,7 +2127,14 @@
                   : (C.arrF && C.arrF.f && !memeFreq(C.arrF.f, C.depF.f)
                        ? {stn:C.arrStn, f:C.arrF.f, k:C.arrF.k} : null);
 
-      // 8 — Sortie de circuit (p. 153)
+      /* 8 — Sortie de circuit (p. 153). D'un terrain AFIS ou en auto-information,
+         personne ne transfère le pilote (« contactez … ») : il annonce sa sortie
+         (manuel AFIS p. 33 ; arrêté 2019), puis affiche lui-même la fréquence
+         suivante — d'où le tuneTo, et pas d'étape « Changement de fréquence ». */
+      var depNC = (C.depNat!=='twr');
+      var cible = C.infoF ? {stn:C.infoStn, freq:C.infoF.f} : (suivant ? {stn:suivant.stn, freq:suivant.f} : null);
+      if(depNC) push(etapeSortie(C, terrainDep(C), { tuneTo:cible }));
+      else
       push({ ph:'Sortie de circuit', src:'p. 153', stn:C.depStn, freq:C.depF.f, leg:0.12, nmDep:4,
         atcBefore:'{CALL}, rappelez quittant la fréquence.',
         reel:'Quittez la fréquence de '+C.depStn+'.',
@@ -1617,7 +2146,7 @@
         atcAfter: suivant ? ('{CALL}, contactez '+suivant.stn+' '+fq(suivant.f)+'.') : null });
 
       /* Pas de segment en route : le transfert se fait d'un bloc vers l'arrivée. */
-      if(!C.infoF && suivant){
+      if(!C.infoF && suivant && !depNC){
         push({ ph:'Changement de fréquence', src:'p. 182', stn:C.depStn, freq:C.depF.f, leg:0.2, nmDep:8,
           reel:'Collationnez la fréquence.',
           consigne:'Collationnez : le nom de l\'organisme, la fréquence, puis votre indicatif.',
@@ -1629,7 +2158,8 @@
       }
 
       if(C.infoF){
-        // 9 — Changement de fréquence (p. 182)
+        // 9 — Changement de fréquence (p. 182) — seulement si une tour vous transfère
+        if(!depNC)
         push({ ph:'Changement de fréquence', src:'p. 182', stn:C.depStn, freq:C.depF.f, leg:0.16, nmDep:8,
           reel:'Collationnez la fréquence.',
       consigne:'Collationnez : le nom de l\'organisme, la fréquence, puis votre indicatif.',
@@ -1800,7 +2330,7 @@
         reel:'Affichez '+atisArrFreq.toFixed(3)+' et écoutez l\'ATIS de '+C.arr.nom+'.',
         consigne:'Avant d\'appeler '+C.arrStn+', affichez la fréquence ATIS ('+atisArrFreq.toFixed(3)+') et écoutez le message. '+
                  'Notez la piste en service, le QNH et la lettre d\'information : vous la donnerez dans votre appel. '+
-                 'Passez à la suite quand vous avez tout noté.',
+                 '« Suivant » s\'ouvre quand vous avez entendu le message en entier.',
         atisStep:true, debutArrivee:true });
 
       /* 14 — L'ARRIVÉE VFR DE LA P. 149, mot pour mot (03/10/2026) :
@@ -1824,14 +2354,15 @@
         attendu:C.arrStn+', bonjour, {CALL}.',
         motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.arrStn,C.arrF.k)},
                    {label:'Votre indicatif',ref:'callsign'} ],
-        atcAfter:'{CALL}, bonjour, j\'écoute.' });
+        atcAfter: C.arrNat==='afis' ? '{CALL}, bonjour, '+C.arrStn+', j\'écoute.'   // manuel AFIS p. 40
+                                    : '{CALL}, bonjour, j\'écoute.' });
 
       /* La réponse à l'annonce. Avec ATIS : l'instruction seule (p. 149). Sans
          ATIS : piste, vent, QNH d'abord, DANS CET ORDRE (p. 148). Le QNH se
          glissait au milieu de l'instruction. En AFIS : de l'information, jamais
          une instruction — un agent AFIS n'intègre personne dans le circuit. */
       var repInteg = arrAA ? null
-        : (C.arrNat!=='twr') ? '{CALL}, piste {PISTE} en service, vent {VENT}, QNH {QNH}.'
+        : (C.arrNat!=='twr') ? '{CALL}, piste {PISTE} en service, vent {VENT}, QNH {QNH}, rappelez en vue de l\'aérodrome.'
         : C.atisArrive ? '{CALL}, entrez vent arrière piste {PISTE}, rappelez vent arrière.'
         : '{CALL}, piste {PISTE}, vent {VENT}, QNH {QNH}, entrez vent arrière piste {PISTE}, rappelez vent arrière.';
       push({ ph:'Intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.84, nmArr:9,
@@ -1840,14 +2371,20 @@
         reel: arrAA ? 'Annoncez-vous à '+C.arrStn+'.' : 'Faites votre annonce.',
         consigne:(arrAA?'Annonce en auto-information : ':'Annonce complète : ')+'indicatif, type d\'avion, VFR de '+C.dep.nom+' à '+C.arr.nom+
                  ' pour un atterrissage, votre altitude'+(C.atisArrive?', en terminant par la lettre d\'information':'')+'.',
-        attendu:(arrAA?C.arrStn+', ':'')+'{CALL}, '+C.acShort+', VFR de '+C.dep.nom+' à '+C.arr.nom+' pour un atterrissage, {ALT} pieds'+
-                (C.atisArrive?', information {ATIS}':'')+'.',
+        /* AFIS : « F-BGBX, PA28, VFR avec plan de vol, de Limoges à Bourges estimé
+           à 12 » (manuel AFIS p. 40), sans plan de vol ni estimée. */
+        attendu: (C.arrNat==='afis')
+          ? '{CALL}, '+C.acShort+', VFR, de '+C.dep.nom+' à '+C.arr.nom+'.'
+          : (arrAA?C.arrStn+', ':'')+'{CALL}, '+C.acShort+', VFR de '+C.dep.nom+' à '+C.arr.nom+' pour un atterrissage, {ALT} pieds'+
+            (C.atisArrive?', information {ATIS}':'')+'.',
+        diffusion: arrAA,
         motsCles:[ {label:'Votre indicatif',ref:'callsign'},
                    {label:'Type d\'avion',variantes:acVars(C.acShort)},
                    {label:'En VFR',variantes:['vfr','en vfr','v f r']},
                    {label:'Provenance',variantes:destVars(C.dep)},
+                 ].concat(C.arrNat==='afis' ? [] : [
                    {label:'Pour un atterrissage',variantes:['pour un atterrissage','pour atterrissage']},
-                   {label:'Altitude',ref:'alt'} ]
+                   {label:'Altitude',ref:'alt'} ])
                  .concat(arrAA?[{label:'Organisme appelé',variantes:stnVars(C.arrStn,C.arrF.k)}]:[])
                  .concat(C.atisArrive?[{label:'Lettre d\'information',variantes:[], atisArrivee:true}]:[]),
         atcAfter:repInteg });
@@ -1856,118 +2393,44 @@
       if(!arrAA)
       push({ ph:'Collationnement intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.88, nmArr:8,
         reel:'Collationnez.',
-        consigne: (C.arrNat!=='twr') ? 'Accusez réception : la piste en service et le QNH.'
+        consigne: (C.arrNat!=='twr') ? 'Collationnez le QNH et dites que vous rappellerez en vue de l\'aérodrome.'
                 : C.atisArrive ? 'Collationnez : vous rappellerez en vent arrière de la piste {PISTE}.'
                 : 'Collationnez : la piste, le QNH, puis vous rappellerez en vent arrière.',
         /* « Je rappelle vent arrière… » (p. 149) et non « J'entre vent arrière…,
            je rappelle vent arrière » : « J'entre vent arrière » répond à « Entrez
            vent arrière » SANS demande de rappel (p. 148). */
-        attendu: (C.arrNat!=='twr') ? 'Piste {PISTE}, QNH {QNH}, {CALL}.'
+        attendu: (C.arrNat!=='twr') ? 'QNH {QNH}, rappellerons en vue de l\'aérodrome, {CALL}.'      // manuel AFIS p. 40
                : C.atisArrive ? 'Je rappelle vent arrière piste {PISTE}, {CALL}.'
                : 'Piste {PISTE}, QNH {QNH}, je rappelle vent arrière piste {PISTE}, {CALL}.',
-        motsCles:[ {label:'Numéro de piste',ref:'piste'} ]
+        motsCles:(C.arrNat!=='twr' ? [ mcMots('Rappellerons en vue de l\'aérodrome',['rappellerons en vue','en vue de l aerodrome','rappellerons']) ] : [ mcPiste() ])
                  .concat((C.arrNat!=='twr' || !C.atisArrive)?[{label:'QNH',ref:'qnh'}]:[])
                  .concat(C.arrNat==='twr'?[{label:'Je rappelle vent arrière',variantes:['je rappelle vent arriere','rappelle vent arriere']}]:[])
                  .concat([{label:'Votre indicatif',ref:'callsign'}]) });
     }
 
-    /* --- Circuit (p. 151), commun voyage & vol local ---
-       « Blagnac Tour, F-BX, vent arrière main droite piste 33 droite. »
-       « F-BX, numéro 3, suivez un Cessna 172, en base, rappelez base … »
-       « Numéro 3, trafic en vue, je rappelle base …, F-BX. »
-       « Blagnac Tour, F-BX, base … » / « F-BX, rappelez finale piste 33 droite. »
-       « Je rappelle finale piste 33 droite, F-BX. »
-       Les deux collationnements manquaient : on annonçait la base sans avoir
-       collationné le numéro, la finale sans avoir collationné « rappelez finale ».
-       Numéro et rappels sont des INSTRUCTIONS : seule une tour les donne. */
-    var circStn = C.arr?C.arrStn:C.depStn, circF = C.arr?C.arrF.f:C.depF.f;
-    var circTwr = (C.arr?C.arrNat:C.depNat)==='twr';
-    push({ ph:'Vent arrière', src:'p. 151', stn:circStn, freq:circF, leg:C.arr?0.92:0.4, nmArr:C.arr?2:undefined,
-      reel:'Annoncez votre position.',
-      consigne:'Annoncez votre position en vent arrière pour la piste {PISTE}.',
-      attendu:'{CALL}, vent arrière piste {PISTE}.',
-      motsCles:[ {label:'Votre indicatif',ref:'callsign'},
-                 {label:'Vent arrière',variantes:['vent arriere','vent arrière']},
-                 {label:'Numéro de piste',ref:'piste'} ],
-      atcAfter: circTwr ? '{CALL}, numéro {NUM}{SUIVEZ}, rappelez base piste {PISTE}.' : null });
-    if(circTwr)
-    push({ ph:'Collationnement numéro', src:'p. 151', stn:circStn, freq:circF, leg:C.arr?0.93:0.42, nmArr:C.arr?1.8:undefined,
-      reel:'Collationnez.',
-      consigne:'Collationnez : votre numéro, le trafic en vue, et vous rappellerez en base.',
-      attendu:'Numéro {NUM}{TRAFICVU}, je rappelle base piste {PISTE}, {CALL}.',
-      motsCles:[ {label:'Numéro dans le circuit',ref:'num'},
-                 {label:'Trafic en vue',variantes:['trafic en vue'], traficSuivi:true},
-                 {label:'Je rappelle base',variantes:['je rappelle base','rappelle base']},
-                 {label:'Numéro de piste',ref:'piste'},
-                 {label:'Votre indicatif',ref:'callsign'} ] });
-    var lastStn=C.arr?C.arrStn:C.depStn, lastF=C.arr?C.arrF.f:C.depF.f;
+    /* AFIS, à l'arrivée (manuel AFIS p. 40) : « en vue de l'aérodrome », puis
+       « rappelez vent arrière » — « rappellerons vent arrière ». */
+    if(C.arr && C.arrNat==='afis'){
+      C.Tarr = C.Tarr || terrainArr(C);
+      push(etape(C.Tarr, 0, { ph:'En vue du terrain', src:'AFIS p. 40', reel:'Annoncez-vous en vue du terrain.',
+        consigne:'Annoncez que vous êtes en vue de l\'aérodrome.',
+        attendu:'{CALL}, en vue de l\'aérodrome.',
+        motsCles:[ mcCall(), mcMots('En vue de l\'aérodrome',['en vue de l aerodrome','en vue']) ],
+        atcAfter:'{CALL}, rappelez vent arrière piste {PISTE}.' }));
+      push(etape(C.Tarr, 0.05, { ph:'Rappel vent arrière', src:'AFIS p. 40', reel:'Répondez.',
+        consigne:'Dites que vous rappellerez en vent arrière.',
+        attendu:'Rappellerons vent arrière piste {PISTE}, {CALL}.',
+        motsCles:[ mcMots('Rappellerons vent arrière',['rappellerons vent arriere','rappellerons']), mcPiste(), mcCall() ] }));
+    }
 
-    // 16 — Base (p. 151)
-    push({ ph:'Base', src:'p. 151', stn:lastStn, freq:lastF, leg:0.95, nmArr:1.5,
-      reel:'Annoncez votre position.',
-      consigne:'Annoncez que vous êtes en base pour la piste {PISTE}.',
-      attendu:'{CALL}, base piste {PISTE}.',
-      motsCles:[ {label:'Votre indicatif',ref:'callsign'},
-                 {label:'En base',variantes:['base','en base']},
-                 {label:'Numéro de piste',ref:'piste'} ],
-      atcAfter: circTwr ? '{CALL}, rappelez finale piste {PISTE}.' : null });
-    if(circTwr)
-    push({ ph:'Collationnement base', src:'p. 151', stn:lastStn, freq:lastF, leg:0.96, nmArr:1.2,
-      reel:'Collationnez.',
-      consigne:'Collationnez : vous rappellerez en finale.',
-      attendu:'Je rappelle finale piste {PISTE}, {CALL}.',
-      motsCles:[ {label:'Je rappelle finale',variantes:['je rappelle finale','rappelle finale']},
-                 {label:'Numéro de piste',ref:'piste'},
-                 {label:'Votre indicatif',ref:'callsign'} ] });
-
-    // 17 — Finale (p. 151-154)
-    push({ ph:'Finale', src:'p. 151', stn:lastStn, freq:lastF, leg:0.97, nmArr:1,
-      reel:'Annoncez votre position.',
-      consigne:'Annoncez que vous êtes en finale pour la piste {PISTE}.',
-      attendu:'{CALL}, finale piste {PISTE}.',
-      motsCles:[ {label:'Votre indicatif',ref:'callsign'},
-                 {label:'En finale',variantes:['finale','en finale','final']},
-                 {label:'Numéro de piste',ref:'piste'} ],
-      atcAfter: (C.arrNat==='twr') ? '{CALL}, piste {PISTE}, autorisé atterrissage, vent {VENT}.'
-              : '{CALL}, piste {PISTE} en service, vent {VENT}, pas de trafic connu.' });
-
-    // 18 — Atterrissage (p. 154) — le pilote dit « j'atterris »
-    push({ ph:'Atterrissage', src:'p. 154', stn:lastStn, freq:lastF, leg:0.99, nmArr:0.3,
-      reel:'Collationnez l\'autorisation d\'atterrissage.',
-      consigne: (C.arrNat==='twr')
-        ? 'Collationnez. Le pilote dit « j\'atterris » — « autorisé atterrissage » est réservé au contrôleur.'
-        : 'Sans organisme de contrôle, annoncez simplement que vous atterrissez sur la piste en service.',
-      attendu:'Piste {PISTE}, j\'atterris, {CALL}.',
-      motsCles:[ {label:'Numéro de piste',ref:'piste'},
-                 {label:'J\'atterris',variantes:["j atterris","atterris","jatterris"]},
-                 {label:'Votre indicatif',ref:'callsign'} ],
-      atcAfter:'{CALL}, rappelez piste dégagée.' });
-
-    // 19 — Piste dégagée (p. 160-161)
-    push({ ph:'Piste dégagée', src:'p. 160-161', stn:lastStn, freq:lastF, leg:1,
-      reel:'Annoncez la piste dégagée.',
-      consigne:'Annoncez que la piste est dégagée.',
-      attendu:'Piste dégagée, {CALL}.',
-      motsCles:[ {label:'Piste dégagée',variantes:['piste degagee','degagee','degage']},
-                 {label:'Votre indicatif',ref:'callsign'} ],
-      atcAfter:'{CALL}, roulez parking aviation générale.' });
-
-    /* 20 — COLLATIONNEMENT DU ROULAGE AU PARKING (p. 45).
-       Le vol s'arrêtait sur « roulez parking aviation générale » : le contrôleur
-       donnait une dernière instruction, et le débriefing s'ouvrait par-dessus sans
-       qu'on ait pu répondre. C'est pourtant une instruction de roulage comme une
-       autre, et elle se collationne. Le vol se termine donc après NOTRE mot, pas
-       après celui du contrôleur. */
-    push({ ph:'Roulage au parking', src:'p. 45', stn:lastStn, freq:lastF, leg:1,
-      reel:'Collationnez.',
-      consigne: (C.arrNat==='twr')
-        ? 'Collationnez la dernière instruction : vous roulez au parking aviation générale.'
-        : 'Annoncez que vous roulez au parking.',
-      attendu:'Je roule au parking aviation générale, {CALL}.',
-      motsCles:[ {label:'Je roule',variantes:['je roule','roule','roulons','je rejoins']},
-                 {label:'Parking',variantes:['parking','aviation generale','parking aviation generale',
-                                             'aire de stationnement','stationnement']},
-                 {label:'Votre indicatif',ref:'callsign'} ] });
+    /* --- Circuit et atterrissage (03/10/2026) ---
+       Voyage : un tour de piste à l'arrivée, puis la décision en finale (complet,
+       toucher, remise de gaz, passage bas — selon le terrain). Vol local : la
+       décision vient dès le décollage (tours de piste ou sortie en zone), et
+       le vol s'écrit ensuite au fil des choix. Les étapes d'après une décision
+       n'existent pas encore ici : choisirNav les insère. */
+    if(C.arr){ C.Tarr = C.Tarr || terrainArr(C); S.push.apply(S, etapesCircuit(C, C.Tarr, { n:1, premier:true })); }
+    else S.push(choixVolLocal(C));
 
     insererAleaMajeur(S, C);
 
@@ -1985,21 +2448,7 @@
        Un retour sur une fréquence déjà quittée redevient un premier contact :
        la comparaison ne porte que sur l'étape PRÉCÉDENTE, ce qui donne
        exactement ce comportement. */
-    function sansOrganisme(txt, stn){
-      if(!txt || !stn) return txt;
-      var t=String(txt).replace(/^\s+/,'');
-      return (t.toLowerCase().indexOf(stn.toLowerCase()+',')===0)
-             ? t.slice(stn.length+1).replace(/^\s+/,'') : txt;
-    }
-    var freqPrec=null;
-    S.forEach(function(st){
-      st.premierContact = (st.freq!==freqPrec);
-      freqPrec = st.freq;
-      if(!st.premierContact){
-        st.motsCles = (st.motsCles||[]).filter(function(mc){ return mc.label!=='Organisme appelé'; });
-        st.attendu  = sansOrganisme(st.attendu, st.stn);
-      }
-    });
+    marquerContacts(S, 0, null);
     /* Une assignation de code n'a de valeur que si le code est ensuite AFFICHÉ.
        On l'exige donc sur l'échange suivant : au-delà, on ne bloque plus, pour ne
        pas transformer un oubli en impasse. */
@@ -2358,6 +2807,10 @@
         S[j].stn=nstn; S[j].freq=nf?nf.f:null;
       }
       C.arrReelle=alt;
+      /* Les étapes encore à écrire (après une décision en finale) visent elles
+         aussi le terrain de déroutement : etape() lit C.Tarr au moment de les
+         fabriquer. */
+      if(C.Tarr){ C.Tarr.stn=nstn; C.Tarr.freq=nf?nf.f:null; C.Tarr.nom=alt.nom; }
     }
   }
 
@@ -2416,7 +2869,7 @@
   var atisBoucle=null;
   function arreterAtis(){
     if(!atisBoucle) return;
-    atisBoucle.actif=false; clearTimeout(atisBoucle.t); atisBoucle=null;
+    atisBoucle.actif=false; clearTimeout(atisBoucle.t); clearTimeout(atisBoucle.garde); atisBoucle=null;
     Voix.stop();          // arret franc : aucune reprise en attente ne survit
   }
   VOIX_ARRETS.push(function(){ arreterAtis(); });
@@ -2424,10 +2877,17 @@
      desormais assures par le moteur de parole (voir Voix, section 5). Ici on ne
      s'occupe plus que de la BOUCLE : on redit le message apres une courte pause,
      tant qu'on reste cale sur la frequence. */
+  function atisEntendu(st){
+    if(!st || st._atisEntendu) return;
+    st._atisEntendu=true;
+    if(F.steps[F.i]===st) $v('vfNext').disabled=false;
+  }
   function lancerAtis(texte){
     if(atisBoucle) return;                       // deja en diffusion
     var b={actif:true,t:null}; atisBoucle=b;
-    if(!window.speechSynthesis) return;
+    var etape=F.steps[F.i];
+    if(!window.speechSynthesis){ atisEntendu(etape); return; }
+    b.garde=setTimeout(function(){ atisEntendu(etape); }, dureeLectureAtis(texte));
     // L'ATIS a sa propre voix, comme toute station (5-voix.js › une voix par contrôleur).
     var st=F.steps[F.i], nom=(st && st.stn) || 'ATIS';
     function tour(){
@@ -2439,6 +2899,7 @@
         onFin:function(){
           stopRadioNoise();
           if(!b.actif || atisBoucle!==b) return;
+          atisEntendu(etape);                    // une diffusion complète : c'est entendu
           b.t=setTimeout(tour, 2600);            // pause entre deux diffusions
         }
       });
@@ -2937,13 +3398,37 @@
     /* Étape d'écoute pure (ATIS) : rien à transmettre, donc pas de micro ni de zone
        de réponse — et « Suivant » disponible tout de suite. Sans ça on restait
        bloqué, le bouton n'étant débloqué que par une réponse validée. */
+    /* Une DÉCISION : ni micro ni réponse, des options. S'il n'y en a qu'une, il
+       n'y a rien à décider — on la suit sans l'afficher. */
+    $v('vfChoix').classList.add('hidden');
+    if(s.choix){
+      if(s.choix.options.length===1){ appliquerChoix(F.i, s.choix.options[0].key, false); F.i++; return renderStep(); }
+      $v('vfTransWrap').classList.add('hidden');
+      $v('vfPtt').classList.add('hidden');
+      $v('vfHint').classList.add('hidden');
+      $v('vfSkip').classList.add('hidden');
+      $v('vfRepeat').classList.add('hidden');
+      $v('vfAtc').innerHTML='';
+      var sitc=$v('vfSituation');
+      if(s.situation){ sitc.innerHTML=ICONS.warn+'<span>'+esc(fillDisplay(s.situation))+'</span>'; sitc.classList.remove('hidden'); }
+      else sitc.classList.add('hidden');
+      $v('vfConsigne').textContent='';
+      F.accueilDit=false;
+      rendreChoix(s);
+      return;
+    }
+    $v('vfSkip').classList.remove('hidden');
+    $v('vfRepeat').classList.remove('hidden');
     var ecoute = !!s.atisStep;
     /* On ne masque plus tout le bloc : « Suivant » s'y trouve aussi. */
     $v('vfTransWrap').classList.remove('hidden');
     $v('vfTransWrap').classList.toggle('ecoute', ecoute);
     $v('vfPtt').classList.toggle('hidden', ecoute);
     $v('vfHint').classList.toggle('hidden', ecoute);
-    $v('vfNext').disabled = !ecoute;
+    /* L'ATIS doit avoir été ENTENDU pour continuer (03/10/2026) : « Suivant »
+       s'ouvre à la fin de la première diffusion complète — même règle que les
+       Scénarios (moteur.js › atisDejaEntendu). Il était ouvert d'emblée. */
+    $v('vfNext').disabled = ecoute ? !atisDejaEntendu(s) : true;
     $v('vfTransText').value=''; $v('vfValider').disabled=true;
     movePlane(avancementEtape(s));
     var atc=$v('vfAtc');
@@ -3224,6 +3709,7 @@
      jamais sérialisé. */
   var VOL_KEY='rt-vol-en-cours';
   var immediatRepris=null;   // départ immédiat (p. 60) du vol repris — lu par buildFlight
+  var graineReprise=null;    // graine du hasard du vol repris — lue par buildFlight
   function sauverVol(){
     if(!F.running||!F.ctx) return;
     try{
@@ -3231,6 +3717,7 @@
         dep:sel.dep, arr:sel.arr, alt:sel.alt, mode:mode, level:level,
         acft:acChoice?acChoice.nom:null, fl:$v('navFl').value, pax:$v('navPax').value,
         i:F.i, results:F.results, call:state.call, immediat:!!F.ctx.immediat,
+        graine:F.ctx.seed, choix:F.choixFaits||[],
         meteo:state.meteo, rwy:state.rwy, ventPhrase:state.ventPhrase, altCruise:state.altCruise,
         date:new Date().toISOString()
       }));
@@ -3264,7 +3751,17 @@
     if(v.call) state.call=v.call;
     if(window.RTLancement) RTLancement.reprise('vol');   // pas de nouveau décompte
     immediatRepris = (typeof v.immediat==='boolean') ? v.immediat : false;
+    graineReprise = (typeof v.graine==='number') ? v.graine : null;
     startFlight();
+    /* Les décisions déjà prises sont rejouées, dans l'ordre : sans elles, le vol
+       repris n'aurait pas les étapes où l'on s'était arrêté. */
+    (v.choix||[]).forEach(function(c){
+      for(var k=0;k<F.steps.length;k++){
+        var st=F.steps[k];
+        if(st.choix && st.choix.id===c.id && !st.choisi){ appliquerChoix(k, c.key, true); break; }
+      }
+    });
+    F.choixFaits = (v.choix||[]).slice();
     // Restaurer la météo tirée au sort et la position dans le déroulé.
     if(v.meteo) state.meteo=v.meteo;
     if(v.rwy) state.rwy=v.rwy;
@@ -3379,7 +3876,7 @@
     var mk=Object.keys(manques).sort(function(a,b){return manques[b]-manques[a];}).slice(0,6);
     var C=F.ctx;
     var rows=[['Vol', C.arr?(C.dep.icao+' → '+(C.arrReelle?C.arrReelle.icao:C.arr.icao)):(C.dep.icao+' — vol local')],
-              ['Échanges', F.results.filter(Boolean).length+' / '+F.steps.length],
+              ['Échanges', F.results.filter(Boolean).length+' / '+F.steps.filter(function(st){ return !st.choix; }).length],
               ['Score', tot?(ok+' / '+tot+' éléments — <b>'+pct+' % de réussite</b>'):'—'],
               ['Altitude', C.cruise+' ft'+(C.altDemandee&&C.altDemandee!==C.cruise
                   ? ' <span class="rz">(demandé '+C.altDemandee+' ft — ajusté pour éviter la classe A)</span>':'')],
@@ -3397,7 +3894,9 @@
     body.innerHTML='<dl>'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>';}).join('')+'</dl>';
     /* Trace du vol : on garde, pour chaque échange, la phrase attendue, ce qui a été
        dit et les éléments manqués — de quoi revoir ses erreurs plus tard. */
-    var lignes=F.steps.map(function(st,i){
+    /* Les décisions ne sont pas des échanges radio : elles restent dans le vol
+       (F.choixFaits, et le libellé de l'étape suivante), pas dans le détail. */
+    var lignes=F.steps.map(function(st,i){ return st.choix ? null : (function(){
       var r=F.results[i];
       return { ph:st.ph, stn:st.stn, freq:st.freq,
                attendu:F.attendus[i]||fillDisplay(st.attendu||''),
@@ -3410,7 +3909,7 @@
                   que deux entiers par ligne. */
                ok:(r||[]).filter(function(x){return x.found;}).length,
                total:(r||[]).length };
-    });
+    })(); }).filter(Boolean);
     var LIBH={moteur:'panne moteur (MAYDAY)', fumee:'fumée en cabine (MAYDAY)',
               malaise:'passager malade (PAN PAN)', cap:'changement de cap imposé',
               radio:'panne radio', ferme:'terrain d\'arrivée fermé'};
@@ -3551,7 +4050,34 @@
     /* Se placer sur une étape du vol en cours, par le chemin de la reprise
        (F.i puis renderStep, qui joue son onEnter). */
     allerA:      function(i){ if(!F.running) return false; F.i=i; renderStep(); return true; },
-    forcerImmediat:function(b){ immediatRepris = (typeof b==='boolean') ? b : null; }
+    /* L'étape en cours, telle que l'élève la voit : phase, décision proposée,
+       phrase attendue résolue. */
+    etat:        function(){ var s=F.steps[F.i]; if(!F.running || !s) return null;
+                   return { i:F.i, ph:s.ph, choix: s.choix ? s.choix.options.map(function(o){ return o.key; }) : null,
+                            attendu: s.choix ? null : fillDisplay(s.attendu||''), ecoute:!!s.atisStep,
+                            suivant: !$v('vfNext').disabled }; },
+    choisir:     function(k){ var s=F.steps[F.i]; if(!s || !s.choix) return false; choisirNav(k); return true; },
+    /* Répondre JUSTE, par le chemin de l'élève : poste et transpondeur réglés
+       comme demandé, la phrase attendue dans la transcription, « Valider ».
+       Rend les éléments manquants (tableau vide = échange parfait). */
+    repondreJuste: function(){
+      var s=F.steps[F.i]; if(!s || s.choix || !s.attendu) return null;
+      if(s.freq!=null) radio.act=Number(s.freq);
+      if(xpdr.attendu!=null) xpdr.code=xpdr.attendu;
+      if(s.xpdrReq) xpdr.code=s.xpdrReq;
+      if(s.identReq) xpdr.ident=true;
+      $v('vfTransText').value = F.attendus[F.i] || fillDisplay(s.attendu);
+      $v('vfValider').disabled=false; $v('vfValider').click();
+      var r=F.results[F.i]; if(!r) return ['(pas noté)'];
+      return r.filter(function(x){ return !x.found; }).map(function(x){ return x.label; });
+    },
+    suivant:     function(){ if(!$v('vfNext').disabled){ nextStep(); return true; } return false; },
+    /* Un terrain de chaque nature (tour, AFIS, auto-information), pour les tests. */
+    unTerrain:   function(nat){ for(var k in BY){ if(natureTerrain(BY[k])===nat && /^LF[A-Z]{2}$/.test(k)) return k; } return null; },
+    forcerImmediat:function(b){ immediatRepris = (typeof b==='boolean') ? b : null; },
+    /* Graine du hasard des décisions imposée au PROCHAIN vol (refus de toucher,
+       360, trafic…) : un test qui joue une suite de choix doit être reproductible. */
+    forcerGraine:function(n){ graineReprise = (typeof n==='number') ? n : null; }
   };
 
   /* ---- Commandes de la radio ---- */

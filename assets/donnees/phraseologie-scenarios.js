@@ -110,6 +110,16 @@ function tourNumeroATC(){ return {
              {label:"Je rappelle base",variantes:["je rappelle base","rappelle base"]},
              {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ]
 };}
+/* AFIS, manuel AFIS p. 40 : en vent arrière, l'agent demande de rappeler en
+   finale — « rappellerons finale piste 24 ». Pas de numéro, pas de « suivez ». */
+function tourRappelFinaleAfis(){ return {
+  stn:'tour', station:"{ADRM} {STN}", afisSeul:true,
+  atc:"{CALL}, rappelez finale piste {PISTE}.",                                     // Manuel AFIS (UAF & FA / DGAC) p.40
+  consigne:"Dites que vous rappellerez en finale.",
+  attendu:"Rappellerons finale piste {PISTE}, {CALL}.",                             // Manuel AFIS p.40
+  motsCles:[ {label:"Rappellerons finale",variantes:["rappellerons finale","rappellerons"]},
+             {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ]
+};}
 function tourBase(){ return {
   role:'pilote', stn:'tour', situation:"Vous passez en étape de base.",
   consigne:"Annoncez l'étape de base.",
@@ -138,6 +148,12 @@ function tourFinale(){ return {
 };}
 function tourAtterrissage(){ return {
   stn:'tour', station:"{ADRM} {STN}",
+  /* AFIS : PAS d'autorisation d'atterrissage — l'agent donnait « autorisé
+     atterrissage », qu'un agent AFIS ne délivre jamais. Manuel AFIS p. 41. */
+  afis:{ atc:"{CALL}, vent {VENT}, rappelez piste dégagée.",          // Manuel AFIS (UAF & FA / DGAC) p.41
+         consigne:"Accusez réception, puis votre indicatif.",
+         attendu:"Roger, {CALL}.",                                    // Manuel AFIS p.41
+         motsCles:[ {label:"Roger",variantes:["roger"]}, {label:"Votre indicatif",ref:'callsign'} ] },
   atc:"{CALL}, piste {PISTE}, autorisé atterrissage, vent {VENT}.",   // Manuel DSNA p.154
   consigne:"Collationnez l'autorisation d'atterrissage (le pilote annonce « j'atterris »).",
   attendu:"Piste {PISTE}, j'atterris, {CALL}.",                       // Manuel DSNA p.154 « Piste 33 droite, j'atterris »
@@ -146,7 +162,7 @@ function tourAtterrissage(){ return {
              {label:"Votre indicatif",ref:'callsign'} ]
 };}
 function tourDegagement(){ return {
-  stn:'tour', station:"{ADRM} {STN}",
+  stn:'tour', station:"{ADRM} {STN}", twrSeul:true,
   atc:"{CALL}, dégagez première à gauche, rappelez piste dégagée.",   // Manuel DSNA p.160-161
   consigne:"Collationnez : dégagement, rappel piste dégagée, puis indicatif.",
   attendu:"Je dégage première à gauche et rappelle piste dégagée, {CALL}.",
@@ -163,7 +179,7 @@ function tourPisteDegagee(){ return {
              {label:"Piste dégagée",variantes:["piste degagee","degagee","degage","piste libre","piste liberee"]} ]
 };}
 function tourParkingATC(){ return {
-  stn:'tour', station:"{ADRM} {STN}",                                 // Manuel DSNA p.160 « Roulez parking aviation générale »
+  stn:'tour', station:"{ADRM} {STN}", twrSeul:true,                                 // Manuel DSNA p.160 « Roulez parking aviation générale »
   atc:"{CALL}, roulez parking aviation générale.",
   consigne:"Collationnez le roulage au parking, puis votre indicatif.",
   attendu:"Je roule parking aviation générale, {CALL}.",
@@ -171,26 +187,93 @@ function tourParkingATC(){ return {
              {label:"Votre indicatif",ref:'callsign'} ]
 };}
 
-// Le "choix" en fin de circuit (touch-and-go boucle un tour de plus / atterrissage complet termine)
+/* Un tour de piste, de la vent arrière à la décision en finale. Sert au tour de
+   piste, à l'intégration et à chaque reprise après un toucher, une remise de gaz
+   ou un passage bas. Les échanges de tour seulement / AFIS seulement sont triés
+   à la construction (buildQueue, chooseBranch). La boucle des Scénarios oubliait
+   « rappelez finale » (03/10/2026) : une seule liste désormais. */
+function toursCircuit(o){
+  o = o || {};
+  const t = [ tourVentArriere(), tourNumeroATC(), tourRappelFinaleAfis(), tourBase(),
+              tourRappelFinale(), tourFinale() ];
+  if(o.choix!==false) t.push(circuitChoiceStep());
+  return t;
+}
+/* L'atterrissage complet, du collationnement au parking. AFIS (manuel AFIS
+   p. 41) : « Roger » à l'information, « piste dégagée », puis « au parking,
+   quittons la fréquence » — l'agent ne fait rouler personne. */
+function toursAtterrissageComplet(){
+  return [ tourAtterrissage(), tourDegagement(), tourPisteDegagee(),
+    { stn:'tour', station:"{ADRM} {STN}", afisSeul:true,
+      atc:"{CALL}, rappelez parking.",                                             // Manuel AFIS p.41
+      consigne:"Au parking : annoncez-le et quittez la fréquence.",
+      attendu:"{ADRM} {STN}, {CALL}, au parking, quittons la fréquence.",          // Manuel AFIS p.41
+      motsCles:[ {label:"Au parking",variantes:["au parking","parking"]},
+                 {label:"Quittons la fréquence",variantes:["quittons la frequence","quittons"]},
+                 {label:"Votre indicatif",ref:'callsign'} ] },
+    tourParkingATC() ];
+}
+
+/* LE CHOIX EN FINALE (03/10/2026, demande du développeur : « laisser beaucoup
+   plus de choix au pilote »). Chaque option est une phrase du manuel DSNA :
+   - toucher : « Demande toucher » / « Piste 28, autorisé toucher » (p. 164) ;
+   - remise de gaz : « Je remets les gaz » (p. 159) / « Roger » (p. 147) ;
+   - passage bas : « Demande passage bas » / « Passage bas approuvé » (p. 164) ;
+   - atterrissage complet : la finale ordinaire (p. 151, 154).
+   Les trois premières n'existent que face à une TOUR : le manuel AFIS n'a ni
+   toucher, ni remise de gaz annoncée d'elle-même, ni passage bas. En AFIS il ne
+   reste qu'une option — le choix s'efface alors (renderChoice).
+   Le collationnement du toucher, « Piste X, autorisé toucher », répète la
+   clairance : la p. 164 ne donne pas la réponse du pilote, et la p. 34 range le
+   « toucher/option » parmi les éléments de piste QUI SE COLLATIONNENT — répéter
+   la clairance est alors la règle générale du collationnement (p. 34). */
 function circuitChoiceStep(){ return {
   type:'choice',
-  question:"En finale, que demandez-vous ?",
+  question:"En finale, que faites-vous ?",
   options:[
-    { key:'touchgo', label:"Toucher (touch-and-go)", desc:"Vous demandez un toucher et repartez pour un tour de piste.",
-      // Manuel DSNA p.164 : pilote « Demande toucher » → ATC « Piste 28, autorisé toucher ».
+    { key:'complet', label:"Atterrissage complet", desc:"Vous vous posez, dégagez la piste et rejoignez le parking.",
+      tours: toursAtterrissageComplet(), loop:false },
+    { key:'touchgo', label:"Toucher (touch-and-go)", desc:"Vous demandez un toucher et repartez pour un tour de piste.", twrSeul:true,
       tours:[{
+        role:'pilote', stn:'tour',
+        situation:"Vous voulez faire un toucher.",
+        consigne:"Demandez un toucher.",
+        attendu:"{CALL}, demande toucher.",                           // Manuel DSNA p.164 « Demande toucher »
+        motsCles:[ {label:"Demande toucher",variantes:["demande toucher","demande un toucher"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      {
         stn:'tour', station:"{ADRM} {STN}",
         atc:"{CALL}, piste {PISTE}, autorisé toucher.",              // Manuel DSNA p.164
         consigne:"Collationnez l'autorisation de toucher.",
-        attendu:"Piste {PISTE}, autorisé toucher, {CALL}.",
-        motsCles:[ {label:"Autorisé toucher",variantes:["autorise toucher","toucher","je touche","touch and go","touchandgo","toucher decoller"]},
-                   {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
+        attendu:"Piste {PISTE}, autorisé toucher, {CALL}.",           // Manuel DSNA p.34 (collationnement) et p.164
+        motsCles:[ {label:"Autorisé toucher",variantes:["autorise toucher"]},
+                   {label:"Numéro de piste",ref:'piste'},
                    {label:"Votre indicatif",ref:'callsign'} ]
       }],
-      loop:true
-    },
-    { key:'complet', label:"Atterrissage complet", desc:"Vous vous posez, dégagez la piste et roulez au parking.",
-      tours:[ tourAtterrissage(), tourDegagement(), tourPisteDegagee(), tourParkingATC() ], loop:false }
+      loop:true },
+    { key:'remise', label:"Remise de gaz", desc:"Vous interrompez l'approche et repartez pour un tour de piste.", twrSeul:true,
+      tours:[{
+        role:'pilote', stn:'tour',
+        situation:"L'approche ne vous convient pas : vous remettez les gaz.",
+        consigne:"Annoncez votre remise de gaz.",
+        attendu:"{CALL}, je remets les gaz.",                          // Manuel DSNA p.159 « Je remets les gaz »
+        motsCles:[ {label:"Je remets les gaz",variantes:["je remets les gaz","remets les gaz"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] }],
+      loop:true },
+    { key:'passagebas', label:"Passage bas", desc:"Vous demandez un passage bas au-dessus de la piste, puis un nouveau tour.", twrSeul:true,
+      tours:[{
+        role:'pilote', stn:'tour',
+        situation:"Vous voulez faire un passage bas au-dessus de la piste.",
+        consigne:"Demandez un passage bas.",
+        attendu:"{CALL}, demande passage bas.",                        // Manuel DSNA p.164 « Demande passage bas »
+        motsCles:[ {label:"Demande passage bas",variantes:["demande passage bas","demande un passage bas"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      {
+        stn:'tour', station:"{ADRM} {STN}",
+        atc:"{CALL}, passage bas approuvé.",                           // Manuel DSNA p.164
+        consigne:"Rien à collationner : un passage bas approuvé n'est pas une clairance de piste. Passez à la suite.",
+        attendu:null }],
+      loop:true }
   ]
 };}
 
@@ -218,7 +301,7 @@ function departImmediat(){
                  {label:"Je décolle",variantes:["je decolle","decolle"]},
                  {label:"Numéro de piste",ref:'piste'},
                  {label:"Votre indicatif",ref:'callsign'} ] }
-  ].concat(ordinaire.slice(3));          // cap de départ, puis sortie de fréquence
+  ].concat(ordinaire.filter(t => t.suiteDepart));   // cap de départ, puis sortie de fréquence
 }
 
 const SCENARIOS = [
@@ -239,10 +322,22 @@ const SCENARIOS = [
         situation:"Vous êtes au parking, prêt à rouler. Premier appel à l'organisme.",
         consigne:"Premier contact : organisme, votre indicatif, bonjour.",
         attendu:"{ADRM} {STN}, {CALL}, bonjour.",                                       // Manuel DSNA p.45 « Chavenay tour, F-BX, bonjour »
+        afis:{ attendu:"{ADRM} {STN}, bonjour, {CALL}." },                              // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.32 « Bourges Information bonjour, F B X »
         motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
                    {label:"Votre indicatif",ref:'callsign'} ] },
       { stn:'sol', station:"{ADRM} {STN}",
         atc:["{CALL}, {ADRM} {STN}, bonjour."],                                          // Manuel DSNA p.45 « F-BX, Chavenay tour, bonjour »
+        /* AFIS (03/10/2026) : le départ VFR de Bourges, manuel AFIS p. 32. L'agent ne
+           délivre aucune consigne de roulage : on lui demande les PARAMÈTRES, et il
+           répond « rappeler pour rouler ». La phrase « demande consignes de roulage »
+           adressée à un agent AFIS était fausse. « Destination » : forme du manuel. */
+        afis:{ atc:["{CALL}, bonjour, {ADRM} {STN}, j'écoute."],                        // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.32
+               consigne:"Annonce : indicatif, type d'avion, position, VFR sans plan de vol, destination {DEST}, et demandez les paramètres pour le départ.",
+               attendu:"{CALL}, {TYPE}, au parking, VFR sans plan de vol, destination {DEST}, demandons paramètres pour le départ.", // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.32
+               atisMot:false,
+               motsCles:[ {label:"Votre indicatif",ref:'callsign'}, {label:"Type d'avion",ref:'type'},
+                          {label:"VFR",variantes:["vfr","v f r"]}, {label:"Destination",ref:'dest'},
+                          {label:"Demandons paramètres pour le départ",variantes:["parametres pour le depart","demandons parametres","parametres"]} ] },
         situation:"{TYPE} au parking. Vous demandez le roulage pour un vol à destination de {DEST}.",
         /* L'ANNONCE COMPLÈTE de la p. 45 : « F-BGBX, TB10, parking club, demande
            consignes de roulage pour vol à destination de Guéret, information B ».
@@ -259,10 +354,27 @@ const SCENARIOS = [
         atc:["{CALL}, roulez et entrez aire d'attente {PISTE} et rappelez prêt."],
         consigne:"Collationnez : vous roulez et entrez dans l'aire d'attente {PISTE}, et vous rappellerez prêt.",
         attendu:"Je roule et entre dans l'aire d'attente {PISTE} et rappelle prêt, {CALL}.", // Manuel DSNA p.45
+        afis:{ atc:["{CALL}, piste {PISTE}, vent {VENT}, QNH {QNH}, rappeler pour rouler."], // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.32
+               consigne:"Accusez réception : la piste et le QNH, puis votre indicatif.",
+               attendu:"Roger, piste {PISTE}, QNH {QNH}, {CALL}.",                       // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.32
+               motsCles:[ {label:"Numéro de piste",ref:'piste'}, {label:"QNH",variantes:["qnh"]},
+                          {label:"Valeur QNH",ref:'qnh'}, {label:"Votre indicatif",ref:'callsign'} ] },
         motsCles:[ {label:"Je roule",variantes:["je roule","roule"]},
                    {label:"Aire d'attente",variantes:["aire d attente","point d attente","aire dattente"]},
                    {label:"Numéro de piste",ref:'piste'},
-                   {label:"Votre indicatif",ref:'callsign'} ] }
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      // AFIS seulement : on annonce qu'on roule, l'agent demande de rappeler au point d'attente.
+      { role:'pilote', stn:'sol', afisSeul:true,
+        situation:"Paramètres notés, vous êtes prêt à rouler.",
+        consigne:"Annoncez que vous roulez vers le point d'attente de la piste {PISTE}.",
+        attendu:"{ADRM} {STN}, {CALL}, roulons point d'attente piste {PISTE}.",          // Manuel AFIS (UAF & FA / DGAC, éd. 2022) éd. 2019 p.32 (l'éd. 2022 a perdu « roulons » ; sa colonne anglaise dit « taxiing »)
+        motsCles:[ {label:"Roulons",variantes:["roulons"]}, {label:"Point d'attente",variantes:["point d attente"]},
+                   {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ] },
+      { stn:'sol', station:"{ADRM} {STN}", afisSeul:true,
+        atc:"{CALL}, rappelez point d'attente piste {PISTE}.",                             // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.33
+        consigne:"Accusez réception, puis votre indicatif.",
+        attendu:"Roger, {CALL}.",                                                          // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.33
+        motsCles:[ {label:"Roger",variantes:["roger"]}, {label:"Votre indicatif",ref:'callsign'} ] }
     ]
   },
   {
@@ -270,7 +382,9 @@ const SCENARIOS = [
     /* Une fois sur trois, la tour prend l'initiative : « êtes-vous prêt pour un
        départ immédiat ? » (p. 60). Tiré au LANCEMENT, par buildQueue. Le tour de
        piste, lui, réemploie toujours `tours` (le départ ordinaire). */
-    buildTours: function(){ return Math.random() < 1/3 ? departImmediat() : this.tours; },
+    buildTours: function(){
+      return (ctrlOf(state.activeSide) && Math.random() < 1/3) ? departImmediat() : this.tours;
+    },
     tours:[
       { role:'pilote', stn:'tour', situation:"Vous êtes au point d'attente de la piste {PISTE}, prêt à partir.",
         consigne:"Annoncez-vous prêt au départ.",
@@ -289,15 +403,48 @@ const SCENARIOS = [
            « je suis prêt », « prêt » seul…) l'ont été aussi : accepter une
            formulation, c'est l'enseigner (CLAUDE.md § 2). */
         attendu:"{ADRM} {STN}, {CALL}, prêt au départ.",
+        /* AFIS : là, le point d'attente est bien dans l'annonce (manuel AFIS p. 33). */
+        afis:{ attendu:"{ADRM} {STN}, {CALL}, point d'attente piste {PISTE}, prêt au départ." }, // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.33
         motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
                    {label:"Votre indicatif",ref:'callsign'}, {label:"Prêt au départ",variantes:["pret au depart"]} ] },
-      { stn:'tour', station:"{ADRM} {STN}", atc:"{CALL}, alignez-vous et attendez piste {PISTE}.", // Manuel DSNA p.53
+      /* AFIS (03/10/2026), manuel AFIS p. 33 : l'agent signale un trafic en finale et
+         demande les intentions ; on attend, on s'annonce aligné, on décolle. Aucune
+         clairance : « nous alignons », « décollons », à la première personne du
+         pluriel, comme dans le manuel. La 2e ligne est celle de l'édition 2019 :
+         l'édition 2022 y recopie par erreur la phrase de l'agent (« F B X, DR 400 en
+         finale, vos intentions » dans la bouche du pilote) — sa colonne anglaise,
+         elle, dit bien « Roger, DR 400 in sight, holding short of runway 24 ». */
+      { stn:'tour', station:"{ADRM} {STN}", afisSeul:true,
+        atc:"{CALL}, {TRAFICTYPE} en finale, vos intentions.",                            // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.33
+        consigne:"Répondez : le trafic en vue, et vous maintenez avant la piste.",
+        attendu:"Roger, {TRAFICTYPE} en vue, maintenons avant piste {PISTE}, {CALL}.",      // Manuel AFIS (UAF & FA / DGAC, éd. 2022) éd. 2019 p.33
+        motsCles:[ {label:"Trafic en vue",variantes:["en vue"]}, {label:"Maintenons avant piste",variantes:["maintenons avant piste","maintenons avant","maintenons"]},
+                   {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ] },
+      { role:'pilote', stn:'tour', afisSeul:true,
+        situation:"Le trafic a atterri et dégagé la piste.",
+        consigne:"Annoncez que vous vous alignez.",
+        attendu:"{ADRM} {STN}, {CALL}, nous alignons piste {PISTE}.",                       // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.33
+        motsCles:[ {label:"Nous alignons",variantes:["nous alignons","alignons"]},
+                   {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ] },
+      { stn:'tour', station:"{ADRM} {STN}", afisSeul:true,
+        atc:"{CALL}, rappelez aligné prêt piste {PISTE}.",                                  // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.33
+        consigne:"Aligné et prêt : annoncez que vous décollez.",
+        attendu:"Décollons piste {PISTE}, {CALL}.",                                         // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.33
+        motsCles:[ {label:"Décollons",variantes:["decollons"]},
+                   {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ] },
+      { stn:'tour', station:"{ADRM} {STN}", afisSeul:true, quitteFrequence:true,
+        atc:"{CALL}, vent {VENT}, rappelez quittant la fréquence.",                          // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.33
+        consigne:"Plus tard, en quittant le circuit : annoncez la sortie de circuit et que vous quittez la fréquence.",
+        attendu:"{ADRM} {STN}, {CALL}, sortie de circuit, quittons la fréquence.",           // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.33
+        motsCles:[ {label:"Sortie de circuit",variantes:["sortie de circuit"]}, {label:"Quittons la fréquence",variantes:["quittons la frequence","quittons"]},
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      { stn:'tour', station:"{ADRM} {STN}", twrSeul:true, atc:"{CALL}, alignez-vous et attendez piste {PISTE}.", // Manuel DSNA p.53
         consigne:"Collationnez l'instruction d'alignement.",
         attendu:"Je m'aligne et j'attends piste {PISTE}, {CALL}.",                     // Manuel DSNA p.53
         motsCles:[ {label:"Je m'aligne et j'attends",variantes:["je m aligne et j attends","je m aligne et attends","je m aligne","m aligne","aligne et attends","alignons et attendons","alignons"]},
                    {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
                    {label:"Votre indicatif",ref:'callsign'} ] },
-      { stn:'tour', station:"{ADRM} {STN}",                                           // Manuel DSNA p.59
+      { stn:'tour', station:"{ADRM} {STN}", twrSeul:true,                             // Manuel DSNA p.59
         atc:["{CALL}, piste {PISTE}, autorisé décollage, vent {VENT}.",
              "{CALL}, alignez-vous piste {PISTE}, autorisé décollage, vent {VENT}."],
         consigne:"Collationnez l'autorisation de décollage (le pilote annonce « je décolle »).",
@@ -305,7 +452,7 @@ const SCENARIOS = [
         motsCles:[ {label:"Je décolle",variantes:["je decolle","decolle","decollons","je m aligne et je decolle","aligne et je decolle"]},
                    {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
                    {label:"Votre indicatif",ref:'callsign'} ] },
-      { stn:'tour', station:"{ADRM} {STN}",                                           // Manuel DSNA p.63 ; cap de départ tiré au sort.
+      { stn:'tour', station:"{ADRM} {STN}", twrSeul:true, suiteDepart:true,           // Manuel DSNA p.63 ; cap de départ tiré au sort.
         atc:"{CALL}, passant 1000 pieds dans l'axe de piste, tournez à droite cap {CAPDEP}.",
         consigne:"Collationnez les instructions de départ.",
         attendu:"Passant 1000 pieds dans l'axe de piste, je tourne à droite cap {CAPDEP}, {CALL}.", // p.63 « …dans l'axe de piste, je tourne à droite... »
@@ -313,10 +460,10 @@ const SCENARIOS = [
                    {label:"Tourne à droite",variantes:["tourne a droite","je tourne a droite","a droite","tournons a droite","droite"]},
                    {label:"Cap",variantes:["cap","au cap"]}, {label:"Valeur de cap",ref:'capdep'},
                    {label:"Votre indicatif",ref:'callsign'} ] },
-      { stn:'tour', station:"{ADRM} {STN}",                                           // Manuel DSNA p.153 « Rappelez quittant la fréquence »
+      { stn:'tour', station:"{ADRM} {STN}", twrSeul:true, suiteDepart:true, quitteFrequence:true, // Manuel DSNA p.153 « Rappelez quittant la fréquence »
         atc:"{CALL}, rappelez quittant la fréquence.",
-        consigne:"Annoncez que vous quittez la fréquence, puis votre indicatif.",
-        attendu:"Je quitte la fréquence, {CALL}.",
+        consigne:"Annoncez votre sortie de circuit et que vous quittez la fréquence, puis votre indicatif.",
+        attendu:"Sortie de circuit, je quitte la fréquence, {CALL}.",                    // Manuel DSNA p.153 (« je quitte la fréquence » seul n'y est pas)
         motsCles:[ {label:"Quitte la fréquence",variantes:["je quitte la frequence","quitte la frequence","quitte","sortie de circuit","je quitte"]},
                    {label:"Votre indicatif",ref:'callsign'} ] }
     ]
@@ -344,6 +491,16 @@ const SCENARIOS = [
         consigne:"Annonce complète : indicatif, type d'avion, VFR de {PROV} à {ADRM} pour un atterrissage, votre altitude{ATISCONS}.",
         attendu:"{CALL}, {TYPE}, VFR de {PROV} à {ADRM} pour un atterrissage, {ALT} pieds{ATISPART}.", // Manuel DSNA p.149
         atisMot:true,
+        /* AFIS : l'arrivée VFR de Bourges (manuel AFIS p. 40) — « F-BGBX, PA28, VFR
+           avec plan de vol, de Limoges à Bourges estimé à 12 ». Sans plan de vol ni
+           estimée dans le simulateur : « VFR, de … à … ». */
+        afis:{ atc:"{CALL}, bonjour, {ADRM} {STN}, j'écoute.",                          // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.40
+               consigne:"Annonce : indicatif, type d'avion, VFR, de {PROV} à {ADRM}.",
+               attendu:"{CALL}, {TYPE}, VFR, de {PROV} à {ADRM}.",                       // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.40
+               atisMot:false,
+               motsCles:[ {label:"Votre indicatif",ref:'callsign'}, {label:"Type d'avion",ref:'type'},
+                          {label:"VFR",variantes:["vfr","v f r"]}, {label:"Provenance",ref:'prov'},
+                          {label:"Terrain d'arrivée",ref:'terrain'} ] },
         motsCles:[ {label:"Votre indicatif",ref:'callsign'}, {label:"Type d'avion",ref:'type'},
                    {label:"VFR",variantes:["vfr","v f r"]},
                    {label:"Provenance",ref:'prov'},
@@ -362,23 +519,29 @@ const SCENARIOS = [
                    motsCles:[ {label:"Numéro de piste",ref:'piste'}, {label:"QNH",variantes:["qnh"]}, {label:"Valeur QNH",ref:'qnh'},
                               {label:"Je rappelle vent arrière",variantes:["je rappelle vent arriere","rappelle vent arriere"]},
                               {label:"Votre indicatif",ref:'callsign'} ] },
-        // AFIS : pas de clairance d'intégration ; l'agent donne l'information piste.
-        afis:{ atc:["{CALL}, {ADRM} {STN}, piste {PISTE} en service, vent {VENT}, QNH {QNH}."],
-               consigne:"Accusez réception de l'information piste et QNH, puis votre indicatif.",
-               attendu:"Piste {PISTE}, QNH {QNH}, {CALL}.",
+        // AFIS : aucune clairance d'intégration ; l'agent informe et demande de rappeler (p. 40).
+        afis:{ atc:["{CALL}, piste {PISTE} en service, vent {VENT}, QNH {QNH}, rappelez en vue de l'aérodrome."], // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.40
+               consigne:"Collationnez le QNH et dites que vous rappellerez en vue de l'aérodrome.",
+               attendu:"QNH {QNH}, rappellerons en vue de l'aérodrome, {CALL}.",           // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.40
                sansAtis:null,
-               motsCles:[ {label:"Numéro de piste",ref:'piste'}, {label:"QNH",variantes:["qnh"]}, {label:"Valeur QNH",ref:'qnh'},
+               motsCles:[ {label:"QNH",variantes:["qnh"]}, {label:"Valeur QNH",ref:'qnh'},
+                          {label:"Rappellerons en vue de l'aérodrome",variantes:["rappellerons en vue","en vue de l aerodrome","rappellerons"]},
                           {label:"Votre indicatif",ref:'callsign'} ] },
         motsCles:[ {label:"Je rappelle vent arrière",variantes:["je rappelle vent arriere","rappelle vent arriere"]},
                    {label:"Numéro de piste",ref:'piste'},
                    {label:"Votre indicatif",ref:'callsign'} ] },
-      tourVentArriere(),
-      tourNumeroATC(),
-      tourBase(),
-      tourRappelFinale(),
-      tourFinale(),
-      tourAtterrissage(),
-      tourDegagement()
+      { role:'pilote', stn:'tour', afisSeul:true,
+        situation:"Vous avez le terrain en vue.",
+        consigne:"Annoncez que vous êtes en vue de l'aérodrome.",
+        attendu:"{ADRM} {STN}, {CALL}, en vue de l'aérodrome.",                              // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.40
+        motsCles:[ {label:"En vue de l'aérodrome",variantes:["en vue de l aerodrome","en vue"]}, {label:"Votre indicatif",ref:'callsign'} ] },
+      { stn:'tour', station:"{ADRM} {STN}", afisSeul:true,
+        atc:"{CALL}, rappelez vent arrière piste {PISTE}.",                                  // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.40
+        consigne:"Dites que vous rappellerez en vent arrière.",
+        attendu:"Rappellerons vent arrière piste {PISTE}, {CALL}.",                          // Manuel AFIS (UAF & FA / DGAC, éd. 2022) p.40
+        motsCles:[ {label:"Rappellerons vent arrière",variantes:["rappellerons vent arriere","rappellerons"]},
+                   {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ] },
+      ...toursCircuit()          // finale : complet, toucher, remise de gaz, passage bas
     ]
   },
   {

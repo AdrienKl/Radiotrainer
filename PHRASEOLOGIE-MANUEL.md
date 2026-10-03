@@ -220,3 +220,118 @@ F) autres renseignements utiles.
 6. **Remise de gaz** : pas de vent dans l'instruction.
 7. **Toucher** (touch-and-go) : annoncé « pour un toucher » à l'intégration.
 8. **Urgence** : structure MAYDAY/PAN PAN complète (organisme, identification, nature, intentions, position/niveau/cap) ; accusé « Mayday Roger, transpondeur 7700 ».
+
+---
+
+## 8. Manœuvres en finale — Chapitre 5, K.6 (p. 164-165) et remise de gaz (p. 159)
+
+| Contrôleur | Pilote |
+|---|---|
+| — | « Demande toucher. » |
+| « Piste 28, autorisé toucher. » | *(non donné par le manuel)* |
+| « Faites un atterrissage complet. » | « Atterrissage complet. » |
+| « Circuit basse hauteur approuvé. » | « Demande circuit basse hauteur. » |
+| « Exercice d'encadrement approuvé. » | « Demande exercice d'encadrement. » |
+| « Passage bas approuvé. » | « Demande passage bas. » |
+| « Piste 28, autorisé option. » (écolage) | « Demande option. » |
+| « Remettez les gaz, rappelez vent arrière … » | « Je remets les gaz et rappelle vent arrière …, F-BX. » |
+| — | « Je remets les gaz. » (p. 159) |
+
+> **Le collationnement du toucher** (03/10/2026). La p. 164 ne donne pas la réponse
+> du pilote. La p. 34 range « toucher/option » parmi les éléments de PISTE qui se
+> collationnent, et définit le collationnement comme la répétition de tout ou
+> partie du message. Pour le décollage et l'atterrissage, le manuel remplace
+> « autorisé … » par « je décolle » / « j'atterris » ; pour le toucher, il ne donne
+> aucune forme de ce genre. Le simulateur attend donc la règle générale :
+> **« Piste 28, autorisé toucher, F-BX »** — et ne l'invente pas autrement.
+
+---
+
+## 9. Terrain AFIS — « Manuel d'information pour l'utilisation de la phraséologie lorsqu'un service AFIS est rendu »
+
+> **Source** : UAF & FA (Union des Aéroports Français & Francophones Associés),
+> élaboré avec l'aide de la DGAC, **édition novembre 2022** (106 p.) ; première
+> édition mai 2019. La DGAC a précisé (courrier du 25/03/2019, reproduit en tête)
+> qu'il ne s'agit que d'une **préconisation**, sans valeur juridique — c'est
+> néanmoins la seule phraséologie AFIS publiée depuis que la DGAC a retiré les
+> chapitres AFIS de son manuel (2017). Le PDF n'est PAS dans le dépôt (publication
+> de l'UAF) ; l'URL d'origine (ecologie.gouv.fr › Manuel_phraseo_afis.pdf) renvoie
+> désormais une 404 — copie archivée sur web.archive.org.
+>
+> **Deux coquilles de l'édition 2022** (p. 32-33), où le pilote répète la phrase de
+> l'agent : le simulateur prend la ligne de l'édition 2019, que la colonne anglaise
+> de l'édition 2022 confirme (« taxiing holding point », « Roger, DR 400 in sight,
+> holding short of runway 24 »).
+
+### Départ VFR (Bourges, p. 32-33)
+```
+Pilote : Bourges Information, bonjour, F-BX.
+AFIS   : F-BX, bonjour, Bourges Information, j'écoute.
+Pilote : F-BGBX, PA28, parking club, VFR sans plan de vol, destination Limoges,
+         demandons paramètres pour le départ.
+AFIS   : F-BX, piste 24, vent 230 degrés 10 nœuds, QNH 1012, température 18, … Rappeler pour rouler.
+Pilote : Roger, piste 24, QNH 1012, F-BX.
+Pilote : Bourges Information, F-BX, roulons point d'attente piste 24.
+AFIS   : F-BX, rappelez point d'attente piste 24, [trafic], assurez votre séparation.
+Pilote : Roger, F-BX.
+Pilote : Bourges Information, F-BX, point d'attente piste 24, prêt au départ.
+AFIS   : F-BX, DR400 en finale, vos intentions.
+Pilote : Roger, DR400 en vue, maintenons avant piste 24, F-BX.
+Pilote : Bourges Information, F-BX, nous alignons piste 24.
+AFIS   : F-BX, rappelez aligné prêt piste 24.
+Pilote : Décollons piste 24, F-BX.
+AFIS   : F-BX, vent 260 degrés 10 nœuds, rappelez quittant la fréquence.
+Pilote : Bourges Information, F-BX, sortie de circuit, quittons la fréquence.
+AFIS   : F-BX, roger, au revoir.
+```
+### Arrivée VFR (Bourges, p. 40-41)
+```
+Pilote : Bourges Information, bonjour, F-BX.
+AFIS   : F-BX, bonjour, Bourges Information, j'écoute.
+Pilote : F-BGBX, PA28, VFR avec plan de vol, de Limoges à Bourges estimé à 12.
+AFIS   : F-BX, piste 24 en service, vent 350 degrés 10 nœuds, QNH 1015, rappelez en vue de l'aérodrome.
+Pilote : QNH 1015, rappellerons en vue de l'aérodrome, F-BX.
+Pilote : Bourges Information, F-BX, en vue de l'aérodrome.
+AFIS   : F-BX, [parachutage en cours,] rappelez vent arrière piste 24.
+Pilote : [Parachutage en cours,] rappellerons vent arrière piste 24, F-BX.
+Pilote : Bourges Information, F-BX, vent arrière piste 24.
+AFIS   : F-BX, [un DR400 remonte la piste,] rappelez finale piste 24.
+Pilote : [DR400 en vue,] rappellerons finale piste 24, F-BX.
+Pilote : Bourges Information, F-BX, finale piste 24.
+AFIS   : F-BX, piste engagée par DR400, assurez votre séparation. Quelles sont vos intentions ?
+Pilote : DR400 en vue, remettrons les gaz piste 24, F-BX.
+AFIS   : F-BX, Bourges Information, piste dégagée par le DR400.
+Pilote : Roger, atterrissons piste 24, F-BX.
+AFIS   : F-BX, vent 260 degrés 10 nœuds, rappelez piste dégagée.
+Pilote : Roger, F-BX.
+Pilote : Bourges Information, F-BX, piste dégagée.
+AFIS   : F-BX, rappelez parking.
+Pilote : Bourges Information, F-BX, au parking, quittons la fréquence.
+AFIS   : F-BX, au revoir.
+```
+> Aucune clairance : l'agent informe et demande de rappeler. Pas de toucher, pas
+> de passage bas, pas de remise de gaz annoncée d'elle-même dans ce manuel — le
+> simulateur ne les propose donc pas sur un terrain AFIS.
+
+---
+
+## 10. Auto-information — arrêté du 12 juillet 2019
+
+> **Source** : arrêté du 12 juillet 2019 relatif aux procédures générales de
+> circulation aérienne pour l'utilisation des aérodromes par les aéronefs (JO du
+> 2 août 2019, en vigueur le 2 septembre 2019 ; il remplace l'arrêté du 17 juillet
+> 1992). Il fixe **quand** le pilote transmet et **quoi** — « des comptes rendus de
+> position, indique ses intentions et transmet toutes modifications ultérieures » :
+> - à l'arrivée : avant de s'intégrer dans la circulation d'aérodrome, en vent
+>   arrière, en base, en finale, lorsque la piste est dégagée, sur l'aire de trafic ;
+> - au départ : sur l'aire de trafic avant de se déplacer, aux points d'attente
+>   avant de pénétrer sur une piste, une fois aligné avant de décoller, lorsqu'il
+>   quitte la circulation d'aérodrome.
+>
+> **Aucun texte officiel ne donne la formulation.** Le simulateur reprend les
+> comptes rendus que le pilote adresse à un agent AFIS (§ 9), identiques, précédés
+> du nom de la station à chaque message : « … auto-information, F-BX, roulons point
+> d'attente piste 24 », « nous alignons piste 24 », « décollons piste 24 », « vent
+> arrière piste 24 », « base piste 24 », « finale piste 24 », « piste dégagée »,
+> « au parking, quittons la fréquence ». Remise de gaz : « remettons les gaz piste
+> 24 » (forme du manuel AFIS, au présent : un changement d'intention s'annonce).

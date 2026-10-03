@@ -45,6 +45,7 @@ export const PUBLIC = [
   'index.html',
   '404.html',               // servie par Cloudflare pour toute adresse inconnue (not_found_handling)
   'robots.txt',
+  'favicon.ico',            // cherché à la racine par Google (icône des résultats) et par les navigateurs
   'sitemap.xml',
   /* Manuel_Phraseologie.pdf n'est plus publié depuis le 02/10/2026 : le cours
      qui l'affichait a été retiré (demande du développeur). Il reste dans le

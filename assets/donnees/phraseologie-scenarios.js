@@ -78,38 +78,63 @@
 
 // Fabriques de tours réutilisées (tour de piste, intégration, branches).
 // stn:'sol'|'tour' → le placeholder {STN} devient "Sol"/"Tour" (contrôlé) ou "Info" (AFIS).
+/* LE CIRCUIT DE LA P. 151, mot pour mot (03/10/2026) :
+     « Blagnac Tour, F-BX, vent arrière main droite piste 33 droite. »
+     « F-BX, numéro 3, suivez un Cessna 172, en base, rappelez base main droite piste 33 droite. »
+     « Numéro 3, trafic en vue, je rappelle base main droite piste 33 droite, F-BX. »
+     « Blagnac Tour, F-BX, base main droite piste 33 droite. »
+     « F-BX, rappelez finale piste 33 droite. » / « Je rappelle finale piste 33 droite, F-BX. »
+   Ce qui a changé : l'indicatif passe DEVANT la position dans les comptes rendus
+   (« Vent arrière piste 27, F-ABCD » mettait l'indicatif à la fin, comme un
+   collationnement) ; le numéro vient avec le trafic à suivre et « rappelez
+   base », et se collationne avec « trafic en vue » ; « rappelez finale » et son
+   collationnement existent enfin. « Main droite / main gauche » manque : les
+   données du simulateur n'ont pas le sens du circuit de chaque terrain, et il ne
+   s'invente pas — la p. 148 admet « Entrez vent arrière piste 04 » sans lui. */
 function tourVentArriere(){ return {
   role:'pilote', stn:'tour', situation:"Vous êtes établi en vent arrière, piste {PISTE}.",
   consigne:"Annoncez votre position en vent arrière.",
-  attendu:"Vent arrière piste {PISTE}, {CALL}.",   // Manuel DSNA p.150-151 (« vent arrière [main droite/gauche] piste XX »)
-  motsCles:[ {label:"Vent arrière",variantes:["vent arriere","en vent arriere","vent ariere","etape vent arriere","vent arriere main gauche","vent arriere main droite","main gauche","main droite"]},
-             {label:"Piste",variantes:["piste"]},
-             {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ]
+  attendu:"{ADRM} {STN}, {CALL}, vent arrière piste {PISTE}.",   // Manuel DSNA p.151
+  motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
+             {label:"Votre indicatif",ref:'callsign'},
+             {label:"Vent arrière",variantes:["vent arriere","vent arriere main gauche","vent arriere main droite"]},
+             {label:"Numéro de piste",ref:'piste'} ]
 };}
 function tourNumeroATC(){ return {
-  stn:'tour', station:"{ADRM} {STN}",
-  // réf §3.9 : le contrôleur annonce le numéro dans le circuit.
-  // À VÉRIFIER avec le manuel DGAC / mon instructeur : en AFIS, l'info de trafic n'est pas une clairance de séquence.
-  atc:"{CALL}, numéro {NUM}.",                       // Manuel DSNA p.151 (« numéro 3, suivez… »)
-  consigne:"Collationnez votre numéro dans le circuit.",
-  attendu:"Numéro {NUM}, {CALL}.",
-  motsCles:[ {label:"Numéro dans le circuit",ref:'num'}, {label:"Votre indicatif",ref:'callsign'} ]
+  stn:'tour', station:"{ADRM} {STN}", twrSeul:true,
+  atc:"{CALL}, numéro {NUM}{SUIVEZ}, rappelez base piste {PISTE}.",   // Manuel DSNA p.151
+  consigne:"Collationnez : votre numéro, le trafic en vue, et vous rappellerez en base.",
+  attendu:"Numéro {NUM}{TRAFICVU}, je rappelle base piste {PISTE}, {CALL}.", // Manuel DSNA p.151
+  motsCles:[ {label:"Numéro dans le circuit",ref:'num'},
+             {label:"Trafic en vue",variantes:["trafic en vue"]},
+             {label:"Je rappelle base",variantes:["je rappelle base","rappelle base"]},
+             {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ]
 };}
 function tourBase(){ return {
   role:'pilote', stn:'tour', situation:"Vous passez en étape de base.",
   consigne:"Annoncez l'étape de base.",
-  attendu:"Base piste {PISTE}, {CALL}.",   // Manuel DSNA p.150-151 (« base [main droite/gauche] piste XX »)
-  motsCles:[ {label:"Base",variantes:["etape de base","base","en base","etape base","branche de base","base main gauche","base main droite","main gauche","main droite"]},
-             {label:"Piste",variantes:["piste"]},
+  attendu:"{ADRM} {STN}, {CALL}, base piste {PISTE}.",   // Manuel DSNA p.151
+  motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
+             {label:"Votre indicatif",ref:'callsign'},
+             {label:"Base",variantes:["base","base main gauche","base main droite"]},
+             {label:"Numéro de piste",ref:'piste'} ]
+};}
+function tourRappelFinale(){ return {
+  stn:'tour', station:"{ADRM} {STN}", twrSeul:true,
+  atc:"{CALL}, rappelez finale piste {PISTE}.",                       // Manuel DSNA p.151
+  consigne:"Collationnez : vous rappellerez en finale.",
+  attendu:"Je rappelle finale piste {PISTE}, {CALL}.",                 // Manuel DSNA p.151
+  motsCles:[ {label:"Je rappelle finale",variantes:["je rappelle finale","rappelle finale"]},
              {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ]
 };}
 function tourFinale(){ return {
   role:'pilote', stn:'tour', situation:"Vous virez en finale.",
   consigne:"Annoncez que vous êtes en finale.",
-  attendu:"Finale piste {PISTE}, {CALL}.",          // Manuel DSNA p.150-151 (« finale piste XX »)
-  motsCles:[ {label:"Finale",variantes:["finale","en finale","longue finale","courte finale","derniere"]},
-             {label:"Piste",variantes:["piste"]},
-             {label:"Numéro de piste",ref:'piste'}, {label:"Votre indicatif",ref:'callsign'} ]
+  attendu:"{ADRM} {STN}, {CALL}, finale piste {PISTE}.",          // Manuel DSNA p.150-151 (« finale piste XX »)
+  motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
+             {label:"Votre indicatif",ref:'callsign'},
+             {label:"Finale",variantes:["finale"]},
+             {label:"Numéro de piste",ref:'piste'} ]
 };}
 function tourAtterrissage(){ return {
   stn:'tour', station:"{ADRM} {STN}",
@@ -299,36 +324,58 @@ const SCENARIOS = [
   {
     id:"integration", titre:"Intégration + atterrissage", station:"{ADRM} {STN}", defaultTerrain:'arr', controllable:true, alea:true,
     tours:[
+      /* L'ARRIVÉE VFR DE LA P. 149 (Blagnac, PA28), mot pour mot (03/10/2026) :
+           « Blagnac Tour, bonjour, F-BX. » / « F-BX, bonjour, j'écoute. »
+           « F-BGBX, PA28, VFR d'Albi à Blagnac pour un toucher (atterrissage/remise
+             de gaz), 1500 pieds, estimé E à 05, information I. »
+         Retirés : « 5 milles au sud », position qu'aucune page ne donne. Le manuel
+         passe par un POINT D'ENTRÉE et son heure estimée (« estimé E à 05 » puis
+         « roger, rappelez E ») ; nos données n'ont pas les points des cartes VAC,
+         donc ni point ni estimée plutôt qu'un point inventé.
+         Sans ATIS, le contrôleur donne d'abord piste, vent et QNH, DANS CET ORDRE,
+         puis l'entrée dans le circuit (p. 148). */
       { role:'pilote', stn:'tour', situation:"De retour vers le terrain, vous approchez pour l'atterrissage.",
-        consigne:"Contactez la tour : indicatif, VFR, position, altitude, pour atterrissage.",
-        // Manuel DSNA p.149 (exemple VFR : « F-BGBX, PA28, VFR d'Albi à Blagnac …, 1500 pieds, estimé E à 05, information I »).
-        // Position « 5 milles au sud » = donnée d'illustration (pas de point de report réel par terrain) ; phraséologie du manuel.
-        attendu:"{ADRM} {STN}, {CALL}, VFR, 5 milles au sud, {ALT} pieds, pour atterrissage.",
-        afis:{ consigne:"Auto-information : station, indicatif, VFR, position, altitude, pour atterrissage.",
-               attendu:"{ADRM} {STN}, {CALL}, VFR, 5 milles au sud, {ALT} pieds, pour atterrissage, piste {PISTE} en service.",
-               motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
-                          {label:"Votre indicatif",ref:'callsign'},
-                          {label:"Position / distance",variantes:["mille","milles","sud","nord","est","ouest","verticale","travers"]},
-                          {label:"Pour atterrissage",variantes:["atterrissage","atterrir","pour atterrir"]},
-                          {label:"Piste en service",variantes:["piste","en service"]}, {label:"Numéro de piste",ref:'piste'} ] },
+        consigne:"Premier contact : organisme, bonjour, votre indicatif.",
+        attendu:"{ADRM} {STN}, bonjour, {CALL}.",                                       // Manuel DSNA p.149 « Blagnac Tour, bonjour, F-BX »
         motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
-                   {label:"Votre indicatif",ref:'callsign'},
-                   {label:"Position / distance",variantes:["mille","milles","sud","nord","est","ouest","verticale","travers","au sud","cinq milles"]},
-                   {label:"Pour atterrissage",variantes:["atterrissage","atterrir","pour atterrir","pour l atterrissage"]} ] },
-      { stn:'tour', station:"{ADRM} {STN}",                                           // Manuel DSNA p.149 « entrez vent arrière … rappelez vent arrière »
-        atc:"{CALL}, entrez vent arrière piste {PISTE}, rappelez vent arrière.",
+                   {label:"Votre indicatif",ref:'callsign'} ] },
+      { stn:'tour', station:"{ADRM} {STN}",
+        atc:"{CALL}, bonjour, j'écoute.",                                               // Manuel DSNA p.149
+        consigne:"Annonce complète : indicatif, type d'avion, VFR de {PROV} à {ADRM} pour un atterrissage, votre altitude{ATISCONS}.",
+        attendu:"{CALL}, {TYPE}, VFR de {PROV} à {ADRM} pour un atterrissage, {ALT} pieds{ATISPART}.", // Manuel DSNA p.149
+        atisMot:true,
+        motsCles:[ {label:"Votre indicatif",ref:'callsign'}, {label:"Type d'avion",ref:'type'},
+                   {label:"VFR",variantes:["vfr","v f r"]},
+                   {label:"Provenance",ref:'prov'},
+                   {label:"Pour un atterrissage",variantes:["pour un atterrissage","pour atterrissage"]},
+                   {label:"Altitude",ref:'alt'} ] },
+      { stn:'tour', station:"{ADRM} {STN}",
+        /* Avec ATIS : l'instruction seule (p. 149). Sans ATIS : piste, vent, QNH
+           d'abord (p. 148), collationnés comme à la p. 38 (« Piste 36 droite,
+           QNH 1020, Rapidair 3245 »). Choisi par atisSeul / sansAtis. */
+        atc:"{CALL}, entrez vent arrière piste {PISTE}, rappelez vent arrière.",          // Manuel DSNA p.149
         consigne:"Collationnez l'instruction d'intégration, puis votre indicatif.",
-        attendu:"Je rappelle vent arrière piste {PISTE}, {CALL}.",
+        attendu:"Je rappelle vent arrière piste {PISTE}, {CALL}.",                       // Manuel DSNA p.149
+        sansAtis:{ atc:"{CALL}, piste {PISTE}, vent {VENT}, QNH {QNH}, entrez vent arrière piste {PISTE}, rappelez vent arrière.", // p.148 + p.149
+                   consigne:"Collationnez la piste, le QNH, puis l'instruction d'intégration et votre indicatif.",
+                   attendu:"Piste {PISTE}, QNH {QNH}, je rappelle vent arrière piste {PISTE}, {CALL}.",
+                   motsCles:[ {label:"Numéro de piste",ref:'piste'}, {label:"QNH",variantes:["qnh"]}, {label:"Valeur QNH",ref:'qnh'},
+                              {label:"Je rappelle vent arrière",variantes:["je rappelle vent arriere","rappelle vent arriere"]},
+                              {label:"Votre indicatif",ref:'callsign'} ] },
         // AFIS : pas de clairance d'intégration ; l'agent donne l'information piste.
-        afis:{ atc:["{CALL}, {ADRM} {STN}, piste {PISTE} en service."],
-               consigne:"Accusez réception de l'information piste, puis votre indicatif.",
-               attendu:"Piste {PISTE} en service, {CALL}.",
-               motsCles:[ {label:"Piste en service",variantes:["piste","en service"]}, {label:"Numéro de piste",ref:'piste'},
+        afis:{ atc:["{CALL}, {ADRM} {STN}, piste {PISTE} en service, vent {VENT}, QNH {QNH}."],
+               consigne:"Accusez réception de l'information piste et QNH, puis votre indicatif.",
+               attendu:"Piste {PISTE}, QNH {QNH}, {CALL}.",
+               sansAtis:null,
+               motsCles:[ {label:"Numéro de piste",ref:'piste'}, {label:"QNH",variantes:["qnh"]}, {label:"Valeur QNH",ref:'qnh'},
                           {label:"Votre indicatif",ref:'callsign'} ] },
-        motsCles:[ {label:"Vent arrière",variantes:["vent arriere","en vent arriere","entrons vent arriere","j entre vent arriere","rappelle vent arriere","je rappelle vent arriere","main gauche","main droite"]},
-                   {label:"Piste",variantes:["piste"]}, {label:"Numéro de piste",ref:'piste'},
+        motsCles:[ {label:"Je rappelle vent arrière",variantes:["je rappelle vent arriere","rappelle vent arriere"]},
+                   {label:"Numéro de piste",ref:'piste'},
                    {label:"Votre indicatif",ref:'callsign'} ] },
       tourVentArriere(),
+      tourNumeroATC(),
+      tourBase(),
+      tourRappelFinale(),
       tourFinale(),
       tourAtterrissage(),
       tourDegagement()

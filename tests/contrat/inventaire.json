@@ -125,6 +125,13 @@
       ]
     },
     {
+      "nom": "atisFreqOf",
+      "declare": "assets/scenarios/moteur.js",
+      "lu_par": [
+        "assets/modules/navigation.js"
+      ]
+    },
+    {
       "nom": "atisVars",
       "declare": "assets/scenarios/moteur.js",
       "lu_par": [
@@ -567,13 +574,6 @@
       ]
     },
     {
-      "nom": "runwayInService",
-      "declare": "assets/scenarios/moteur.js",
-      "lu_par": [
-        "assets/modules/navigation.js"
-      ]
-    },
-    {
       "nom": "sansAccent",
       "declare": "assets/noyau/1-alphabet-nombres.js",
       "lu_par": [
@@ -724,6 +724,13 @@
       ]
     },
     {
+      "nom": "tourRappelFinale",
+      "declare": "assets/donnees/phraseologie-scenarios.js",
+      "lu_par": [
+        "assets/scenarios/moteur.js"
+      ]
+    },
+    {
       "nom": "tourVentArriere",
       "declare": "assets/donnees/phraseologie-scenarios.js",
       "lu_par": [
@@ -848,8 +855,8 @@
     {
       "id": "integration",
       "titre": "Intégration + atterrissage",
-      "attendus": 4,
-      "refs_manuel": 2
+      "attendus": 5,
+      "refs_manuel": 5
     },
     {
       "id": "tourdepiste",

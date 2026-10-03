@@ -656,7 +656,7 @@ const state = {
   call:"F-ABCD",
   depAd:null, arrAd:null, activeAd:null, activeSide:'dep',
   meteo:{windDir:0, windForce:0, qnh:0}, ventPhrase:"", rwy:{id:"", cap:0}, atis:null,
-  capDep:0, numCircuit:1, voiceRate:1.0, voiceName:null, noiseEnabled:true,
+  capDep:0, numCircuit:2, traficCircuit:'un Cessna 172', voiceRate:1.0, voiceName:null, noiseEnabled:true,
   controlled:{dep:true, arr:true}, altCruise:3000, cause:"",  // contrôlé/AFIS PAR CÔTÉ (départ/arrivée)
   difficulty:'debutant', callForm:'full',                    // C1 / C2  (aléas = automatiques en mode Réel)
   scenarioIndex:-1, queue:[], stepIndex:0, results:[]
@@ -689,7 +689,22 @@ function fillDisplay(raw){
             .replace(/\{ATISCONS\}/g, state.atis ? ", puis la lettre d'information reçue à l'ATIS" : '')
             .replace(/\{DEPSTN\}/g, state.depStn||'')
             .replace(/\{TYPE\}/g, state.scType||'')
-            .replace(/\{DEST\}/g, state.scDest ? state.scDest.nom : '');
+            .replace(/\{DEST\}/g, state.scDest ? state.scDest.nom : '')
+            .replace(/\{PROV\}/g, provenance() ? provenance().nom : '')
+            .replace(/\{SUIVEZ\}/g, suivezTrafic())
+            .replace(/\{TRAFICVU\}/g, state.numCircuit>1 ? ', trafic en vue' : '');
+}
+/* Le trafic à suivre dans le circuit (p. 151 : « numéro 3, suivez un Cessna 172,
+   en base »). Numéro 1 = personne devant, donc rien à suivre ni à voir : c'est le
+   cas de l'avion en urgence (navigation.js › consequencesUrgence). */
+function suivezTrafic(){
+  return state.numCircuit>1 ? ', suivez '+state.traficCircuit+', en base' : '';
+}
+/* D'où vient-on, pour l'appel d'arrivée « VFR d'Albi à Blagnac » (p. 149) : le
+   terrain de départ choisi s'il diffère du terrain actif, sinon le terrain tiré
+   au sort pour la destination du roulage — jamais le terrain où l'on arrive. */
+function provenance(){
+  return (state.depAd && state.depAd!==state.activeAd) ? state.depAd : state.scDest;
 }
 function fillSpeech(raw){
   let t = (raw||"")
@@ -707,7 +722,10 @@ function fillSpeech(raw){
     .replace(/\{ATISCONS\}/g, '')
     .replace(/\{DEPSTN\}/g, state.depStn||'')
     .replace(/\{TYPE\}/g, state.scType||'')
-    .replace(/\{DEST\}/g, state.scDest ? state.scDest.nom : '');
+    .replace(/\{DEST\}/g, state.scDest ? state.scDest.nom : '')
+    .replace(/\{PROV\}/g, provenance() ? provenance().nom : '')
+    .replace(/\{SUIVEZ\}/g, suivezTrafic())
+    .replace(/\{TRAFICVU\}/g, state.numCircuit>1 ? ', trafic en vue' : '');
   /* Prononciation d'abord (elle travaille sur des MOTS), nombres ensuite. */
   return spokenDigits(prononciationRadio(t));
 }
@@ -717,6 +735,7 @@ function resolveVariants(mc){
     case 'callsign': return callsignVariants(state.call);
     case 'terrain':  return terrainVariants(state.activeAd);
     case 'dest':     return terrainVariants(state.scDest);
+    case 'prov':     return terrainVariants(provenance());
     case 'type':     return state.scType ? typeVariants(state.scType) : [];
     case 'piste':    return numVariants(state.rwy.id);
     case 'qnh':      return numVariants(String(state.meteo.qnh));
@@ -789,6 +808,9 @@ function finalizeStep(t){
   if(s.type) return s;                                   // choice / quiz : pas de résolution
   const controlled = ctrlOf(state.activeSide);           // contrôlé/AFIS selon le côté actif
   if(s.afis && !controlled) s = {...s, ...s.afis};       // override AFIS complet
+  /* Sans ATIS, le contrôleur donne piste, vent et QNH avant l'entrée dans le
+     circuit (p. 148) : variante du tour, propre au terrain sans ATIS. */
+  if(s.sansAtis && !state.atis) s = {...s, ...s.sansAtis};
   const stn = s.stn || 'tour';
   const word = controlled ? (stn==='sol' ? 'Sol' : 'Tour') : 'Info';
   const sub = v => (typeof v==='string') ? v.replace(/\{STN\}/g, word) : v;
@@ -850,7 +872,10 @@ function drawMeteo(){
   state.meteo.windForce = 3 + Math.floor(Math.random()*13);  // 3..15 kt
   state.meteo.qnh       = 995 + Math.floor(Math.random()*36);// 995..1030 hPa
   state.capDep          = (1 + Math.floor(Math.random()*36))*10; // 10..360
-  state.numCircuit      = 1 + Math.floor(Math.random()*3);    // 1..3
+  /* 2 ou 3 : il y a toujours un trafic devant, que le contrôleur fait suivre
+     (p. 151). Le numéro 1 est réservé à l'urgence (consequencesUrgence). */
+  state.numCircuit      = 2 + Math.floor(Math.random()*2);    // 2..3
+  state.traficCircuit   = pick(TRAFICS_CIRCUIT);
   state.altCruise       = (2000 + Math.floor(Math.random()*26)*100); // 2000..4500 par 100 (B1/B3)
   state.cause           = CAUSES[Math.floor(Math.random()*CAUSES.length)];           // B3
   // « vent 0 degré » n'existe pas : le nord se dit 360 (ici comme dans l'ATIS).
@@ -870,6 +895,9 @@ function drawMeteo(){
    de l'exemple p. 149. La destination est le terrain d'arrivée s'il a été choisi,
    sinon un autre terrain français au hasard — jamais le terrain de départ. */
 const TYPES_SCENARIO = ['DR400','CESSNA 172','PIPER PA28','TB10'];
+/* L'avion à suivre dans le circuit : « un Cessna 172 » est celui de la p. 151,
+   les deux autres sont des types légers courants (une DONNÉE, pas une phrase). */
+const TRAFICS_CIRCUIT = ['un Cessna 172','un PA28','un DR400'];
 function drawTypeEtDestination(){
   state.scType = TYPES_SCENARIO[Math.floor(Math.random()*TYPES_SCENARIO.length)];
   const ici = state.activeAd;
@@ -1281,7 +1309,7 @@ function buildQueue(sc){
        jour où l'on insère un scénario avant. Le tour de piste se serait alors
        construit sur les échanges d'un autre exercice, sans rien signaler. */
     raw = [ ...scParId('roulage').tours, ...scParId('decollage').tours.slice(0,4),
-            tourVentArriere(), tourNumeroATC(), tourBase(), tourFinale(), circuitChoiceStep() ];
+            tourVentArriere(), tourNumeroATC(), tourBase(), tourRappelFinale(), tourFinale(), circuitChoiceStep() ];
   } else if(typeof sc.buildTours==='function'){
     // Scénario dont les échanges dépendent de l'espace aérien réel du terrain choisi.
     raw = sc.buildTours() || sc.tours;
@@ -1291,7 +1319,14 @@ function buildQueue(sc){
   /* Écoute de l'ATIS avant le premier appel, sur les scénarios qui débutent au
      parking (contact et roulage, tour de piste). Rien n'est inséré si le terrain ne
      publie pas d'ATIS : c'est le cas de la grande majorité des terrains VFR. */
-  if(state.atis && (sc.id==='roulage' || sc.isCircuit)) raw = [tourAtis()].concat(raw);
+  /* …et sur l'intégration : on écoute l'ATIS du terrain d'ARRIVÉE avant de
+     l'appeler (p. 214 « Informez Mérignac dès le premier contact que vous avez
+     reçu l'information F » ; p. 149 « …estimé E à 05, information I »). */
+  if(state.atis && (sc.id==='roulage' || sc.id==='integration' || sc.isCircuit)) raw = [tourAtis()].concat(raw);
+  /* Les échanges marqués `twrSeul` n'existent que face à une TOUR : un agent AFIS
+     ne donne ni numéro dans le circuit ni « rappelez finale » — ce ne sont pas
+     des informations, ce sont des instructions. */
+  if(!ctrlOf(state.activeSide)) raw = raw.filter(t => !t.twrSeul);
   return marquerPremierContact(raw.map(finalizeStep));   // A + B2 : résolution ATC aléatoire / AFIS / {STN}
 }
 

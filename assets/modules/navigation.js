@@ -1328,6 +1328,29 @@
     return base+' auto-information';
   }
 
+  /* Météo et ATIS du terrain d'ARRIVÉE, tirés UNE fois, à la première étape de
+     l'arrivée (écoute de l'ATIS, ou premier contact s'il n'y en a pas). Sur
+     plusieurs centaines de kilomètres, garder le vent et le QNH du départ n'a
+     aucun sens. drawMeteo() tire aussi visibilité, nuages, températures — ce que
+     l'ATIS annonce — mais également l'altitude de croisière, qu'on rend telle
+     que l'élève l'a choisie. La lettre tirée ici est celle que l'appel
+     d'arrivée doit porter : son mot-clé est complété maintenant. */
+  function meteoArrivee(C){
+    if(C.meteoArrFaite) return;
+    C.meteoArrFaite = true;
+    state.activeAd=C.arr; state.activeSide='arr';
+    var alt=state.altCruise;
+    drawMeteo();
+    state.altCruise=alt;
+    state.atis = C.atisArrive ? buildAtis(C.arr) : null;
+    C.atis = state.atis;
+    (F.steps||[]).forEach(function(st){
+      (st.motsCles||[]).forEach(function(mc){
+        if(mc.atisArrivee) mc.variantes = state.atis ? atisVars(state.atis) : [];
+      });
+    });
+  }
+
   function buildFlight(){
     var dep=BY[sel.dep], arr=(mode==='voyage')?BY[sel.arr]:null;
     var cruise=ftOf($v('navFl').value)||3500;
@@ -1763,60 +1786,120 @@
           tuneTo:{stn:C.arrStn, freq:C.arrF.f} });
       }
 
-      // 14 — Intégration : appel initial complet (p. 149)
-      push({ ph:'Intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.82, nmArr:10,
-        /* Météo propre à l'arrivée : sur plusieurs centaines de kilomètres, garder le
-           vent et le QNH du départ n'a aucun sens. On retire un vent à destination
-           et on en déduit la piste en service et le QNH annoncés à l'intégration. */
-        onEnter:function(){
-          state.activeAd=C.arr; state.activeSide='arr';
-          state.meteo.windDir  = Math.floor(Math.random()*36)*10;
-          state.meteo.windForce= 3 + Math.floor(Math.random()*13);
-          state.meteo.qnh      = 995 + Math.floor(Math.random()*36);
-          state.ventPhrase     = state.meteo.windDir+' degrés, '+state.meteo.windForce+' nœuds';
-          state.rwy = runwayInService(C.arr, state.meteo.windDir);
-        },
-        reel:'Appelez '+C.arrStn+'.',
-      consigne:'Appel initial à '+C.arrStn+' : indicatif complet, type d\'avion, VFR de '+C.dep.nom+' à '+C.arr.nom+', votre altitude.',
-        attendu:C.arrStn+', {CALL}, '+C.acShort+', VFR de '+C.dep.nom+' à '+C.arr.nom+', {ALT} pieds.',
-        motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.arrStn,C.arrF.k)},
-                   {label:'Votre indicatif',ref:'callsign'},
-                   {label:'En VFR',variantes:['vfr','en vfr','v f r']},
-                   {label:'Altitude',ref:'alt'} ],
-        atcAfter:'{CALL}, entrez vent arrière piste {PISTE}, QNH {QNH}, rappelez vent arrière.' });
+      /* 13 bis — ÉCOUTE DE L'ATIS D'ARRIVÉE (p. 214 : « Informez Mérignac dès le
+         premier contact que vous avez reçu l'information F » ; p. 149 : l'appel
+         d'arrivée se termine par « information I »). On l'écoute après avoir
+         quitté le service en route, avant d'appeler la tour. Le message n'existe
+         qu'à l'entrée de l'étape : il porte la météo de l'ARRIVÉE, tirée là. */
+      var atisArrFreq = (typeof atisFreqOf==='function') ? atisFreqOf(C.arr) : null;
+      C.atisArrive = !!atisArrFreq;
+      if(atisArrFreq)
+      push({ ph:'Écoute ATIS', src:'p. 214', stn:C.arr.nom+' ATIS', freq:atisArrFreq, leg:0.8, nmArr:14,
+        onEnter:function(){ meteoArrivee(C); this.atcBefore = state.atis ? state.atis.texte : ''; },
+        atcBefore:'',
+        reel:'Affichez '+atisArrFreq.toFixed(3)+' et écoutez l\'ATIS de '+C.arr.nom+'.',
+        consigne:'Avant d\'appeler '+C.arrStn+', affichez la fréquence ATIS ('+atisArrFreq.toFixed(3)+') et écoutez le message. '+
+                 'Notez la piste en service, le QNH et la lettre d\'information : vous la donnerez dans votre appel. '+
+                 'Passez à la suite quand vous avez tout noté.',
+        atisStep:true, debutArrivee:true });
 
-      // 15 — Collationnement intégration (p. 149)
+      /* 14 — L'ARRIVÉE VFR DE LA P. 149, mot pour mot (03/10/2026) :
+           « Blagnac Tour, bonjour, F-BX. » / « F-BX, bonjour, j'écoute. »
+           « F-BGBX, PA28, VFR d'Albi à Blagnac pour un toucher (atterrissage/
+             remise de gaz), 1500 pieds, estimé E à 05, information I. »
+         L'appel était d'un seul bloc, sans « bonjour / j'écoute », sans « pour
+         un atterrissage » ni la lettre d'information. Le point d'entrée et son
+         heure estimée (« estimé E à 05 », puis « roger, rappelez E ») restent
+         absents : nos données n'ont pas les points des cartes VAC, et un point
+         ne s'invente pas.
+         En auto-information, personne ne répond : une seule annonce, comme avant
+         (le manuel DSNA ne traite pas ce cas). */
+      var arrAA = (C.arrNat==='aa');
+      if(!arrAA)
+      push({ ph:'Contact arrivée', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.82, nmArr:10,
+        debutArrivee:!atisArrFreq,
+        onEnter:function(){ meteoArrivee(C); },
+        reel:'Appelez '+C.arrStn+'.',
+        consigne:'Premier contact : organisme, bonjour, votre indicatif.',
+        attendu:C.arrStn+', bonjour, {CALL}.',
+        motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.arrStn,C.arrF.k)},
+                   {label:'Votre indicatif',ref:'callsign'} ],
+        atcAfter:'{CALL}, bonjour, j\'écoute.' });
+
+      /* La réponse à l'annonce. Avec ATIS : l'instruction seule (p. 149). Sans
+         ATIS : piste, vent, QNH d'abord, DANS CET ORDRE (p. 148). Le QNH se
+         glissait au milieu de l'instruction. En AFIS : de l'information, jamais
+         une instruction — un agent AFIS n'intègre personne dans le circuit. */
+      var repInteg = arrAA ? null
+        : (C.arrNat!=='twr') ? '{CALL}, piste {PISTE} en service, vent {VENT}, QNH {QNH}.'
+        : C.atisArrive ? '{CALL}, entrez vent arrière piste {PISTE}, rappelez vent arrière.'
+        : '{CALL}, piste {PISTE}, vent {VENT}, QNH {QNH}, entrez vent arrière piste {PISTE}, rappelez vent arrière.';
+      push({ ph:'Intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.84, nmArr:9,
+        debutArrivee: arrAA && !atisArrFreq,
+        onEnter:function(){ meteoArrivee(C); },
+        reel: arrAA ? 'Annoncez-vous à '+C.arrStn+'.' : 'Faites votre annonce.',
+        consigne:(arrAA?'Annonce en auto-information : ':'Annonce complète : ')+'indicatif, type d\'avion, VFR de '+C.dep.nom+' à '+C.arr.nom+
+                 ' pour un atterrissage, votre altitude'+(C.atisArrive?', en terminant par la lettre d\'information':'')+'.',
+        attendu:(arrAA?C.arrStn+', ':'')+'{CALL}, '+C.acShort+', VFR de '+C.dep.nom+' à '+C.arr.nom+' pour un atterrissage, {ALT} pieds'+
+                (C.atisArrive?', information {ATIS}':'')+'.',
+        motsCles:[ {label:'Votre indicatif',ref:'callsign'},
+                   {label:'Type d\'avion',variantes:acVars(C.acShort)},
+                   {label:'En VFR',variantes:['vfr','en vfr','v f r']},
+                   {label:'Provenance',variantes:destVars(C.dep)},
+                   {label:'Pour un atterrissage',variantes:['pour un atterrissage','pour atterrissage']},
+                   {label:'Altitude',ref:'alt'} ]
+                 .concat(arrAA?[{label:'Organisme appelé',variantes:stnVars(C.arrStn,C.arrF.k)}]:[])
+                 .concat(C.atisArrive?[{label:'Lettre d\'information',variantes:[], atisArrivee:true}]:[]),
+        atcAfter:repInteg });
+
+      // 15 — Collationnement de l'intégration (p. 149 ; QNH comme à la p. 38)
+      if(!arrAA)
       push({ ph:'Collationnement intégration', src:'p. 149', stn:C.arrStn, freq:C.arrF.f, leg:0.88, nmArr:8,
         reel:'Collationnez.',
-      consigne:'Collationnez : vent arrière piste {PISTE}, le QNH, et vous rappellerez vent arrière.',
-        attendu:'J\'entre vent arrière piste {PISTE}, QNH {QNH}, je rappelle vent arrière, {CALL}.',
-        motsCles:[ {label:'Vent arrière',variantes:['vent arriere','vent arrière']},
-                   {label:'Numéro de piste',ref:'piste'},
-                   {label:'QNH',ref:'qnh'},
-                   {label:'Votre indicatif',ref:'callsign'} ] });
+        consigne: (C.arrNat!=='twr') ? 'Accusez réception : la piste en service et le QNH.'
+                : C.atisArrive ? 'Collationnez : vous rappellerez en vent arrière de la piste {PISTE}.'
+                : 'Collationnez : la piste, le QNH, puis vous rappellerez en vent arrière.',
+        /* « Je rappelle vent arrière… » (p. 149) et non « J'entre vent arrière…,
+           je rappelle vent arrière » : « J'entre vent arrière » répond à « Entrez
+           vent arrière » SANS demande de rappel (p. 148). */
+        attendu: (C.arrNat!=='twr') ? 'Piste {PISTE}, QNH {QNH}, {CALL}.'
+               : C.atisArrive ? 'Je rappelle vent arrière piste {PISTE}, {CALL}.'
+               : 'Piste {PISTE}, QNH {QNH}, je rappelle vent arrière piste {PISTE}, {CALL}.',
+        motsCles:[ {label:'Numéro de piste',ref:'piste'} ]
+                 .concat((C.arrNat!=='twr' || !C.atisArrive)?[{label:'QNH',ref:'qnh'}]:[])
+                 .concat(C.arrNat==='twr'?[{label:'Je rappelle vent arrière',variantes:['je rappelle vent arriere','rappelle vent arriere']}]:[])
+                 .concat([{label:'Votre indicatif',ref:'callsign'}]) });
     }
 
-    // --- Circuit + atterrissage (commun voyage & vol local) ---
-    if(!C.arr){
-      // Vol local : on reste sur le terrain de départ, en tours de piste.
-      push({ ph:'Vent arrière', src:'p. 150', stn:C.depStn, freq:C.depF.f, leg:0.4,
-        reel:'Annoncez votre position.',
+    /* --- Circuit (p. 151), commun voyage & vol local ---
+       « Blagnac Tour, F-BX, vent arrière main droite piste 33 droite. »
+       « F-BX, numéro 3, suivez un Cessna 172, en base, rappelez base … »
+       « Numéro 3, trafic en vue, je rappelle base …, F-BX. »
+       « Blagnac Tour, F-BX, base … » / « F-BX, rappelez finale piste 33 droite. »
+       « Je rappelle finale piste 33 droite, F-BX. »
+       Les deux collationnements manquaient : on annonçait la base sans avoir
+       collationné le numéro, la finale sans avoir collationné « rappelez finale ».
+       Numéro et rappels sont des INSTRUCTIONS : seule une tour les donne. */
+    var circStn = C.arr?C.arrStn:C.depStn, circF = C.arr?C.arrF.f:C.depF.f;
+    var circTwr = (C.arr?C.arrNat:C.depNat)==='twr';
+    push({ ph:'Vent arrière', src:'p. 151', stn:circStn, freq:circF, leg:C.arr?0.92:0.4, nmArr:C.arr?2:undefined,
+      reel:'Annoncez votre position.',
       consigne:'Annoncez votre position en vent arrière pour la piste {PISTE}.',
-        attendu:'{CALL}, vent arrière piste {PISTE}.',
-        motsCles:[ {label:'Votre indicatif',ref:'callsign'},
-                   {label:'Vent arrière',variantes:['vent arriere','vent arrière']},
-                   {label:'Numéro de piste',ref:'piste'} ],
-        atcAfter:'{CALL}, numéro {NUM}, rappelez base piste {PISTE}.' });
-    } else {
-      push({ ph:'Vent arrière', src:'p. 150', stn:C.arrStn, freq:C.arrF.f, leg:0.92, nmArr:2,
-        reel:'Annoncez votre position.',
-      consigne:'Annoncez votre position en vent arrière pour la piste {PISTE}.',
-        attendu:'{CALL}, vent arrière piste {PISTE}.',
-        motsCles:[ {label:'Votre indicatif',ref:'callsign'},
-                   {label:'Vent arrière',variantes:['vent arriere','vent arrière']},
-                   {label:'Numéro de piste',ref:'piste'} ],
-        atcAfter:'{CALL}, numéro {NUM}, rappelez base piste {PISTE}.' });
-    }
+      attendu:'{CALL}, vent arrière piste {PISTE}.',
+      motsCles:[ {label:'Votre indicatif',ref:'callsign'},
+                 {label:'Vent arrière',variantes:['vent arriere','vent arrière']},
+                 {label:'Numéro de piste',ref:'piste'} ],
+      atcAfter: circTwr ? '{CALL}, numéro {NUM}{SUIVEZ}, rappelez base piste {PISTE}.' : null });
+    if(circTwr)
+    push({ ph:'Collationnement numéro', src:'p. 151', stn:circStn, freq:circF, leg:C.arr?0.93:0.42, nmArr:C.arr?1.8:undefined,
+      reel:'Collationnez.',
+      consigne:'Collationnez : votre numéro, le trafic en vue, et vous rappellerez en base.',
+      attendu:'Numéro {NUM}{TRAFICVU}, je rappelle base piste {PISTE}, {CALL}.',
+      motsCles:[ {label:'Numéro dans le circuit',ref:'num'},
+                 {label:'Trafic en vue',variantes:['trafic en vue'], traficSuivi:true},
+                 {label:'Je rappelle base',variantes:['je rappelle base','rappelle base']},
+                 {label:'Numéro de piste',ref:'piste'},
+                 {label:'Votre indicatif',ref:'callsign'} ] });
     var lastStn=C.arr?C.arrStn:C.depStn, lastF=C.arr?C.arrF.f:C.depF.f;
 
     // 16 — Base (p. 151)
@@ -1827,7 +1910,15 @@
       motsCles:[ {label:'Votre indicatif',ref:'callsign'},
                  {label:'En base',variantes:['base','en base']},
                  {label:'Numéro de piste',ref:'piste'} ],
-      atcAfter:'{CALL}, rappelez finale piste {PISTE}.' });
+      atcAfter: circTwr ? '{CALL}, rappelez finale piste {PISTE}.' : null });
+    if(circTwr)
+    push({ ph:'Collationnement base', src:'p. 151', stn:lastStn, freq:lastF, leg:0.96, nmArr:1.2,
+      reel:'Collationnez.',
+      consigne:'Collationnez : vous rappellerez en finale.',
+      attendu:'Je rappelle finale piste {PISTE}, {CALL}.',
+      motsCles:[ {label:'Je rappelle finale',variantes:['je rappelle finale','rappelle finale']},
+                 {label:'Numéro de piste',ref:'piste'},
+                 {label:'Votre indicatif',ref:'callsign'} ] });
 
     // 17 — Finale (p. 151-154)
     push({ ph:'Finale', src:'p. 151', stn:lastStn, freq:lastF, leg:0.97, nmArr:1,
@@ -2186,6 +2277,10 @@
          en détresse d'aller tourner ses roues de transpondeur. */
       if(st.xpdrAssign) st.xpdrAssign=null;
       if(st.xpdrReq)    st.xpdrReq=null;
+      /* Numéro 1 : personne devant, donc ni trafic à suivre ni « trafic en vue »
+         à collationner (les phrases le suivent d'elles-mêmes, {SUIVEZ}/{TRAFICVU}). */
+      if(st.ph==='Collationnement numéro')
+        st.motsCles=(st.motsCles||[]).filter(function(mc){ return !mc.traficSuivi; });
       if(st.ph==='Intégration'){
         // Numéro 1 dans le circuit : on force le tirage, la phrase ne change pas.
         st.onEnter=(function(precedent){
@@ -2200,9 +2295,12 @@
     if(impose==='aucun') return;                        // « aucun imprévu », à la demande
     if(!C.arr) return;                                  // vol local : pas de déroutement
     if(!impose && Math.random() >= 0.5) return;         // environ un vol sur deux
-    // Point d'insertion : juste avant l'intégration.
+    /* Point d'insertion : juste avant l'ARRIVÉE — l'écoute de l'ATIS d'arrivée,
+       ou le premier contact s'il n'y en a pas. Insérer avant « Intégration »
+       tombait, depuis que l'arrivée commence par « bonjour / j'écoute », au milieu
+       de l'appel à la tour. */
     var idx=-1;
-    for(var i=0;i<S.length;i++) if(S[i].ph==='Intégration'){ idx=i; break; }
+    for(var i=0;i<S.length;i++) if(S[i].debutArrivee){ idx=i; break; }
     if(idx<1) return;
     var ref=S[idx-1], stn=ref.stn, freq=ref.freq, leg=Math.min(0.75,(ref.leg||0.6)+0.01);
     /* Tirage parmi TOUS les aléas : les 5 « lourds » (urgences, guidage, panne radio,
@@ -2250,6 +2348,12 @@
     if(kind==='ferme' && alt){
       var nf=freqOf(alt,['TWR','AFIS','APP','A/A','UNIC','CTAF']);
       var nstn=nf?stnName(alt,nf.k):alt.nom+' auto-information';
+      /* L'ATIS d'arrivée était celui du terrain fermé : on ne l'écoute plus. */
+      for(var j=S.length-1;j>=idx+bloc.length;j--) if(S[j].atisStep){ S.splice(j,1); C.atisArrive=false; }
+      for(var j=idx+bloc.length;j<S.length;j++){
+        if(typeof S[j].attendu==='string') S[j].attendu=S[j].attendu.replace(', information {ATIS}','');
+        if(S[j].motsCles) S[j].motsCles=S[j].motsCles.filter(function(mc){ return !mc.atisArrivee; });
+      }
       for(var j=idx+bloc.length;j<S.length;j++){
         S[j].stn=nstn; S[j].freq=nf?nf.f:null;
       }
@@ -2762,8 +2866,12 @@
     var e=$v('vfAtis'); if(!e) return;
     var a=F.ctx && F.ctx.atis;
     if(!a){ e.classList.add('hidden'); e.textContent=''; return; }
+    /* La DERNIÈRE écoute d'ATIS atteinte : celle du départ, puis celle de
+       l'arrivée, dont la lettre remplace la première (meteoArrivee). */
     var idx=-1;
-    for(var k=0;k<F.steps.length;k++){ if(F.steps[k].atisStep){ idx=k; break; } }
+    for(var k=0;k<F.steps.length;k++){
+      if(F.steps[k].atisStep && (idx<0 || k<=F.i)) idx=k;
+    }
     /* Avant l'écoute, la pastille signale seulement qu'un ATIS est diffusé : la
        fréquence se lit sur la carte VAC, elle n'est pas servie d'emblée. Elle
        apparaît ensuite avec la lettre, comme aide-mémoire pour la suite du vol. */
@@ -3437,7 +3545,12 @@
        la reprise, sans rien contourner. */
     etapes:      function(){ return (F.steps||[]).map(function(s){
                    return { ph:s.ph, attendu:s.attendu||null, atcBefore:s.atcBefore||null,
-                            atcAfter:s.atcAfter||null }; }); },
+                            atcAfter:s.atcAfter||null,
+                            motsCles:(s.motsCles||[]).map(function(m){
+                              return { label:m.label, n:(m.variantes||[]).length, ref:m.ref||null }; }) }; }); },
+    /* Se placer sur une étape du vol en cours, par le chemin de la reprise
+       (F.i puis renderStep, qui joue son onEnter). */
+    allerA:      function(i){ if(!F.running) return false; F.i=i; renderStep(); return true; },
     forcerImmediat:function(b){ immediatRepris = (typeof b==='boolean') ? b : null; }
   };
 

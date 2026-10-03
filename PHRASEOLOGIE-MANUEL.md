@@ -118,6 +118,13 @@ Pilote : Je rappelle vent arrière main droite piste 33 droite, F-BX.
 ```
 > En l'absence d'ATIS, avant la clairance d'entrée, l'ATC fournit dans l'ordre :
 > **piste en service, direction/vitesse du vent, QNH** (p. 148).
+> **Ce que le simulateur en garde (03/10/2026)** : tout, sauf le point d'entrée et
+> son heure estimée (« estimé E à 05 », « rappelez E », « passe E ») et « main
+> droite / main gauche » — nos données n'ont ni les points des cartes VAC ni le sens
+> du circuit de chaque terrain, et ils ne s'inventent pas. Sans ATIS : « piste …,
+> vent …, QNH …, entrez vent arrière piste …, rappelez vent arrière », collationné
+> « Piste …, QNH …, je rappelle vent arrière piste … » (QNH collationné comme p. 38).
+> L'ATIS du terrain d'arrivée s'écoute avant le premier contact (p. 214).
 
 ### Reports dans le circuit (p. 150-151)
 Segments officiels : **Montée initiale · Vent traversier · Vent arrière · Travers mi-piste ·

@@ -29,7 +29,7 @@
    ========================================================================== */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, statSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { RACINE, lire, toutLeCode, elementsDuTableau, inventaire } from './_source.mjs';
 
@@ -103,6 +103,18 @@ test('le catalogue de l\'application et la table exercises disent la même chose
   assert.ok(bloc, 'Le bloc d\'insertion des exercices est introuvable dans sql/002.');
   const enBase = [...bloc[0].matchAll(/\(\s*'([a-z]+)'\s*,\s*'((?:[^']|'')*)'/g)]
     .map(m => ({ key: m[1], titre: m[2].replace(/''/g, "'") }));
+  /* Un titre peut changer APRÈS sql/002, par une migration plus récente (sql/014 :
+     « Mise en route + roulage » → « Contact et roulage », 03/10/2026). On rejoue
+     donc, dans l'ordre des numéros, les « update public.exercises set title »
+     des fichiers suivants — sans quoi ce test exigeait de réécrire sql/002, qui
+     est posé et ne se réécrit pas. */
+  readdirSync(join(RACINE, 'sql')).filter(f => /^\d{3}-[^ ]+\.sql$/.test(f) && f > '002').sort()
+    .forEach(f => {
+      for (const m of lire('sql/' + f).matchAll(/update\s+public\.exercises\s+set\s+title\s*=\s*'((?:[^']|'')*)'\s+where\s+key\s*=\s*'([a-z]+)'/gi)) {
+        const e = enBase.find(x => x.key === m[2]);
+        if (e) e.titre = m[1].replace(/''/g, "'");
+      }
+    });
 
   const manquants = lus.filter(s => !enBase.some(e => e.key === s.id)).map(s => s.id);
   assert.deepEqual(manquants, [],

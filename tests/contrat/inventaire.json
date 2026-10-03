@@ -54,6 +54,7 @@
     "assets/admin/pages/errors.js",
     "assets/admin/pages/voix.js",
     "assets/admin/pages/avis.js",
+    "assets/admin/pages/questionnaire.js",
     "assets/admin/pages/test.js"
   ],
   "ordre_styles": [

@@ -75,17 +75,43 @@ existant ne se voit redemander son accord, par décision du développeur (voir
 > l'éditeur choisit l'anonymat du non-professionnel (LCEN 6-III-2), c'est à
 > **Cloudflare** qu'il doit avoir communiqué son identité.
 
-## 2. Le point qui ne se règle pas en écrivant du texte
+## 2. La carte OACI — Licence Ouverte du SIA (établi le 03/10/2026)
 
 `assets/oaci/` et `assets/oaci2/` contiennent **116 Mo de tuiles de la carte
-OACI-VFR 1:500 000** (SIA / DGAC, édition 2026), servies depuis le site.
+OACI 1:500 000**, édition 2026 en vigueur le 16 avril 2026, découpées à partir
+des **quatre PDF téléchargés gratuitement** sur le site du SIA (« Produits
+numériques en libre disposition › Cartes SIA 1/500.000 »).
 
-Consulter une carte est une chose ; en **rediffuser les images depuis son propre
-serveur** en est une autre, et cela relève du droit du producteur de bases de
-données et du droit d'auteur. Rien dans ce dépôt ne dit sous quel titre ces
-tuiles s'y trouvent. À vérifier auprès du SIA et de l'IGN **avant toute ouverture
-au public** — c'est le seul risque juridique de ce dossier que je ne peux pas
-lever depuis le code.
+**Le titre** : le SIA publie un *Contrat de licence d'utilisation* qui est une
+**Licence Ouverte** (`sia.aviation-civile.gouv.fr/pub/media/news/file//l/i/licenceopendata-vf_1.pdf`) :
+réutilisation gratuite, commerciale ou non, reproduction, adaptation,
+transformation et redistribution permises, sous deux conditions :
+
+1. **mentionner la paternité** — au moins le nom du SIA et la date de dernière
+   mise à jour : faite dans l'attribution des deux cartes Leaflet (carte.js,
+   navigation.js), dans les mentions légales et dans le pied de page ;
+2. **ne pas altérer l'information ni en dénaturer le sens**, et ne pas laisser
+   croire à une caution du SIA : les mentions le disent (« aucun caractère
+   officiel… seules les cartes publiées par le SIA font foi »). Le découpage en
+   tuiles et le géoréférencement sont une transformation permise.
+
+**Ce qui reste à confirmer** : la page de téléchargement des cartes ne cite pas
+cette licence en toutes lettres. Une demande de confirmation au SIA est
+préparée — à n'envoyer qu'avec l'accord du développeur.
+
+**À chaque nouvelle édition** (en principe chaque année) : refaire les tuiles
+ET changer la date dans les quatre mentions — une mention d'édition périmée
+contreviendrait à la condition n° 1 et induirait en erreur sur la date.
+
+**Erreur à ne pas refaire** : le 03/10/2026, la carte a été retirée quelques
+heures sur la foi des conditions du « SCAN OACI » de l'**IGN** (licence
+spécifique pour un usage grand public). C'est un AUTRE produit : nos tuiles
+viennent des PDF du SIA, qui a repris la carte à partir de l'édition 2026.
+
+**À surveiller** : le serveur de tuiles public d'OpenStreetMap
+(`tile.openstreetmap.org`), chargé sous la carte, a une politique d'usage qui
+tolère un petit site, pas un fort trafic. À l'ouverture au public, passer par
+un fournisseur de tuiles.
 
 Les autres sources sont claires : OurAirports (domaine public), espaces aériens
 SIA/DGAC via data.gouv.fr (Licence Ouverte 2.0), OpenStreetMap (ODbL), Leaflet

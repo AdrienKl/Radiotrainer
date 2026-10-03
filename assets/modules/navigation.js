@@ -433,7 +433,9 @@
          qu'on zoome assez pour la déchiffrer. */
       minNativeZoom:5, maxNativeZoom:11,
       minZoom:5, maxZoom:17, errorTileUrl:TRANSPARENT,
-      attribution:'Carte OACI 1:500 000 &mdash; SIA / DGAC, édition 2026'
+      /* Mention exigée par la Licence Ouverte du SIA : nom du SIA et date de mise
+         à jour (LEGAL.md § 2). */
+      attribution:'Carte OACI 1:500 000 &mdash; <a href="https://www.sia.aviation-civile.gouv.fr" target="_blank" rel="noopener">Service de l’Information Aéronautique</a>, édition 2026 en vigueur le 16/04/2026'
     });
     /* Si les tuiles OACI ne sont pas publiées (téléversement incomplet), Leaflet
        n'affiche rien et l'utilisateur croit à un bug. On sonde UNE tuile de référence

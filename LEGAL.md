@@ -13,11 +13,11 @@ tant que ça ne l'est pas.
 | Où | Champ | Pourquoi il est obligatoire |
 |---|---|---|
 | Mentions § 1 | Nom ou dénomination | LCEN art. 6-III : identifier l'éditeur |
-| Mentions § 1 | Statut (particulier / auto-entrepreneur / société) | Détermine les champs suivants |
+| Mentions § 1 | ~~Statut~~ — **particulier, éditeur non professionnel** (rempli le 03/10/2026) | Détermine les champs suivants |
 | Mentions § 1 | Adresse | idem |
 | Mentions § 1 | Adresse de contact | Recevoir les demandes RGPD et les signalements |
 | Mentions § 1 | Directeur de la publication | LCEN art. 6-III-1 |
-| Mentions § 1 | Forme, capital, RCS, TVA | **Seulement si société** |
+| Mentions § 1 | ~~Forme, capital, RCS, TVA~~ — sans objet pour un particulier (ligne retirée de la page le 03/10/2026) | **Seulement si société** |
 | Mentions § 2 | Région d'hébergement Supabase | Dit si les données quittent l'UE |
 | Confidentialité § 1 | Responsable du traitement | RGPD art. 13.1.a — reprend le § 1 des mentions |
 | Confidentialité § 6 | Région (rappel) | idem |

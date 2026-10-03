@@ -833,15 +833,15 @@ function tourAtis(){
      sur cette fréquence — une faute de phraséologie enseignée par l'exercice — et,
      comme elle portait des mots-clés, elle comptait de surcroît comme un échange
      raté dans le débriefing puisqu'on ne peut pas y répondre. La lettre reçue se
-     donne au PREMIER APPEL à l'organisme, où elle est bien notée (atisMot).
+     donne dans la DEMANDE DE ROULAGE (p. 45), où elle est bien notée (atisMot).
      Même correction que celle déjà faite dans le vol Navigation. */
   return { stn:'sol', station:a.nom+' ATIS', freq:a.freq, premierContact:true,
     atisStep:true,                      // diffusion en boucle, calée sur SA fréquence
     atc:[a.texte],
     situation:"Avant tout appel, vous écoutez l'ATIS de "+a.nom+".",
     consigne:"Affichez la fréquence ATIS ("+a.freq.toFixed(3)+") sur le poste et écoutez le "+
-             "message. Retenez la lettre d'information : vous l'annoncerez à votre premier "+
-             "appel au contrôle. N'émettez rien sur cette fréquence." };
+             "message. Retenez la lettre d'information : vous l'annoncerez dans votre "+
+             "demande de roulage. N'émettez rien sur cette fréquence." };
 }
 
 /* Météo + piste en service (section B & G) */
@@ -1223,8 +1223,8 @@ el.noiseToggle.addEventListener('change', ()=>{
    allait devoir tenir ni ce que l'exercice demandait comme terrain. Les renvois
    sont ceux déjà cités dans les échanges eux-mêmes. */
 const SC_DESC={
-  roulage:     "Du parking au point d'attente : demande de mise en route, puis de roulage. Manuel p. 39-44.",
-  decollage:   "Alignement, clairance de décollage et collationnement. Manuel p. 53-59.",
+  roulage:     "Du parking au point d'attente, en VFR : premier contact, puis demande de roulage. Manuel p. 44-45.",
+  decollage:   "Prêt au départ, alignement, clairance de décollage et collationnement. Manuel p. 50-60.",
   integration: "Arrivée sur un terrain : verticale, circuit, finale et atterrissage. Manuel p. 150-160.",
   tourdepiste: "Un tour complet : vent arrière, base, finale, puis touch-and-go ou complet.",
   navigation:  "En croisière avec un organisme d'information : contact, position, transit.",
@@ -1270,7 +1270,7 @@ function buildQueue(sc){
   let raw;
   if(sc.isCircuit){
     // Point 4 : tour de piste COMPLET, départ = arrivée = même terrain (activeAd).
-    // 1-2) Mise en route + roulage (§3.3/§3.4). 3-4) Alignement + décollage + montée (§3.5/§3.6),
+    // 1-2) Contact et roulage (§3.3/§3.4). 3-4) Alignement + décollage + montée (§3.5/§3.6),
     //      sans le changement de fréquence (hors sujet en circuit). 5-8) vent arrière → n° →
     //      base → finale → choix (touch-and-go boucle / atterrissage complet).
     // À VÉRIFIER avec le manuel DGAC / mon instructeur : en tour de piste la clairance de départ
@@ -1289,15 +1289,15 @@ function buildQueue(sc){
     raw = sc.tours;
   }
   /* Écoute de l'ATIS avant le premier appel, sur les scénarios qui débutent au
-     parking (mise en route, tour de piste). Rien n'est inséré si le terrain ne
+     parking (contact et roulage, tour de piste). Rien n'est inséré si le terrain ne
      publie pas d'ATIS : c'est le cas de la grande majorité des terrains VFR. */
   if(state.atis && (sc.id==='roulage' || sc.isCircuit)) raw = [tourAtis()].concat(raw);
   return marquerPremierContact(raw.map(finalizeStep));   // A + B2 : résolution ATC aléatoire / AFIS / {STN}
 }
 
 /* Même règle que dans le vol Navigation : l'organisme ne se nomme qu'au PREMIER
-   échange sur une fréquence — « Orléans Tour, F-BXYZ, demande mise en route »,
-   puis « F-BXYZ, demande roulage ». Le répéter à chaque fois encombre la fréquence.
+   échange sur une fréquence — « Orléans Tour, F-BXYZ, bonjour »,
+   puis « F-BXYZ, DR400, au parking, demande consignes de roulage… ». Le répéter à chaque fois encombre la fréquence.
    finalizeStep vient de poser s.freq (freqScenario), on compare donc directement
    les fréquences : passer du Sol à la Tour rouvre un premier contact.
    Hors premier contact, la station sort des éléments EXIGÉS et disparaît de la
@@ -1505,7 +1505,7 @@ function renderMeteo(){
   el.meteo.innerHTML=h;
   if(el.scFicheNote){
     el.scFicheNote.textContent = state.atis
-      ? "Ce terrain diffuse un ATIS : affichez sa fréquence pour l'écouter, puis annoncez la lettre reçue à votre premier appel."
+      ? "Ce terrain diffuse un ATIS : affichez sa fréquence pour l'écouter, puis annoncez la lettre reçue dans votre demande de roulage."
       : (ad && !ctrlOf(state.activeSide) && sc && sc.controllable
           ? "Terrain non contrôlé : vous vous auto-informez, l'agent AFIS ne délivre pas de clairance."
           : '');

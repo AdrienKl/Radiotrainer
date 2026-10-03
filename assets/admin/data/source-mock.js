@@ -78,7 +78,7 @@
   }
   function refScenarios(){
     if (typeof SCENARIOS === 'undefined')
-      return [{ id:'roulage', titre:'Mise en route + roulage' }];
+      return [{ id:'roulage', titre:'Contact et roulage' }];
     return SCENARIOS;
   }
   /* Les VRAIS types sélectionnables sont ceux du formulaire de Navigation (58
@@ -131,7 +131,7 @@
     return _labels;
   }
 
-  var PHASES_VOL = ['Écoute ATIS','Mise en route','Collationnement roulage','Roulage',
+  var PHASES_VOL = ['Écoute ATIS','Premier contact','Collationnement roulage','Roulage',
     'Prêt au départ','Décollage','Montée initiale','Changement de fréquence',
     'Identification','Code transpondeur','Transit VFR','Information de trafic',
     'Intégration','Vent arrière','Finale','Piste dégagée','Roulage parking'];

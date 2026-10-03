@@ -69,7 +69,7 @@ test('un scénario se joue du début au récapitulatif', async ({ page }) => {
   await entrer(page, 'exercices');
 
   const lance = await page.evaluate(() => window.rtRelancerScenario(0, 'LFBD'));
-  expect(lance, 'Le scénario 0 (mise en route + roulage) n\'a pas démarré').toBe(true);
+  expect(lance, 'Le scénario 0 (contact et roulage) n\'a pas démarré').toBe(true);
   await page.waitForTimeout(300);
 
   const rendus = await jouerParfaitement(page);

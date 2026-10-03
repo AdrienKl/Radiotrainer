@@ -1389,90 +1389,70 @@
         reel:'Affichez '+C.atis.freq.toFixed(3)+' et écoutez l\'ATIS.',
         /* On n'ÉMET RIEN sur la fréquence ATIS : c'est une diffusion en boucle,
            personne n'écoute en face. Annoncer la lettre ici n'a aucun sens — elle
-           se donne au contrôleur, plus tard, au premier appel. L'étape n'a donc ni
+           se donne au contrôleur, plus tard, dans la demande de roulage (p. 45). L'étape n'a donc ni
            phrase attendue ni mots-clés : on écoute, on note, on passe à la suite. */
         consigne:'Affichez la fréquence ATIS ('+C.atis.freq.toFixed(3)+') et écoutez le message. '+
                  'Notez la piste en service, le QNH et la lettre d\'information — '+
-                 'c\'est elle que vous donnerez au contrôleur à votre premier appel. '+
+                 'c\'est elle que vous donnerez au contrôleur dans votre demande de roulage. '+
                  'Passez à la suite quand vous avez tout noté.',
         atisStep:true });
     }
 
-    // 1 — Mise en route (p. 39)
-    push({ ph:'Mise en route', src:'p. 39', stn:C.depStn, freq:C.depF.f, leg:0,
-      reel:'Appelez '+C.depStn+'.',
-      consigne: (C.depNat==='aa')
-        ? 'Terrain sans organisme : en auto-information, annoncez-vous à '+C.depStn+' — indicatif et intention de mise en route.'
-        : 'Appelez '+C.depStn+' : organisme, votre indicatif, puis demandez la mise en route'+
-          (C.atis?', en terminant par la lettre d\'information reçue à l\'ATIS.':'.'),
-      /* La lettre d'information se donne dès la demande de mise en route :
-         « Mérignac Prévol, Rapidair 3245, en D 8, demande mise en route pour Lyon,
-         information L » (manuel DSNA p. 39). */
-      /* Organisme, indicatif, demande, lettre d'information : l'ordre du manuel
-         (p. 39 ; sans position, p. 40 « Saint-Étienne Tour, Rapidair 3245, demande
-         mise en route »). « bonjour, au parking » retirés le 27/09/2026 à la demande
-         du développeur : la position revient dans l'annonce de roulage, où la p. 45
-         la place. Même phrase que le scénario « Mise en route + roulage » — deux
-         exercices, UNE phrase attendue pour le même échange. */
-      attendu: C.depNat==='aa'
-        ? C.depStn+', {CALL}, bonjour, '+C.acShort+' au parking, je mets en route.'
-        : C.depStn+', {CALL}, demande mise en route'+(C.atis?', information {ATIS}.':'.'),
+    /* 1 — PREMIER CONTACT (p. 45), à la place de la mise en route (03/10/2026,
+       décision du développeur). Le départ VFR du manuel, étiqueté « Cas d'un vol
+       VFR » : « Chavenay tour, F-BX, bonjour » / « F-BX, Chavenay tour, bonjour »,
+       puis directement la demande de roulage. La mise en route (p. 39-40) est
+       rangée sous « Mise en route – clairance initiale – SID », et ses exemples
+       sont tous IFR : la faire demander, puis collationner, c'était enseigner
+       l'IFR à des pilotes VFR. L'étape « Collationnement mise en route » est
+       partie avec elle, et la lettre d'information est passée dans la demande de
+       roulage, où la p. 45 la place.
+       En auto-information, rien ne change : personne n'est là pour répondre, et
+       le manuel DSNA ne traite pas ce cas (il ne couvre pas l'auto-information). */
+    if(C.depNat==='aa')
+    push({ ph:'Mise en route', src:'—', stn:C.depStn, freq:C.depF.f, leg:0,
+      reel:'Annoncez-vous à '+C.depStn+'.',
+      consigne:'Terrain sans organisme : en auto-information, annoncez-vous à '+C.depStn+' — indicatif et intention de mise en route.',
+      attendu: C.depStn+', {CALL}, bonjour, '+C.acShort+' au parking, je mets en route.',
       motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.depStn,C.depF.k)},
                  {label:'Votre indicatif',ref:'callsign'},
-                 {label:'Mise en route',variantes:['mise en route','demande mise en route','demande la mise en route','je mets en route']} ]
-              .concat(C.atis?[{label:'Lettre d\'information',variantes:atisVars(C.atis)}]:[]),
-      /* PAS de QNH dans l'approbation (retiré le 27/09/2026) : celle de la p. 39
-         n'en porte pas. Au départ, le manuel ne donne le QNH qu'en réponse à
-         « demande paramètres pour le départ » (p. 38), ce que l'ATIS remplace. Le
-         commentaire qui était ici affirmait le contraire. */
-      atcAfter: (C.depNat==='twr') ? '{CALL}, mise en route approuvée.'
-              : (C.depNat==='afis') ? '{CALL}, {DEPSTN}, roger, piste {PISTE} en service, QNH {QNH}.'
-              : null });
-
-    /* 1 bis — COLLATIONNEMENT DE LA MISE EN ROUTE (p. 39).
-       « Mise en route approuvée » est une CLAIRANCE : elle se collationne, comme
-       toute clairance. L'exercice enchainait directement sur la demande de roulage,
-       ce que le scénario « Mise en route + roulage », lui, faisait déjà correctement.
-       En auto-information il n'y a personne pour approuver : pas d'étape. */
-    if(C.depNat==='twr' || C.depNat==='afis')
-    push({ ph:'Collationnement mise en route', src:'p. 39', stn:C.depStn, freq:C.depF.f, leg:0,
-      reel:'Collationnez.',
-      consigne: (C.depNat==='twr')
-        ? 'Collationnez : la mise en route est approuvée, puis votre indicatif.'
-        : 'Accusez réception : la piste en service et le QNH.',
-      attendu: (C.depNat==='twr')
-        ? 'Mise en route approuvée, {CALL}.'
-        : 'Piste {PISTE}, QNH {QNH}, {CALL}.',
-      motsCles: (C.depNat==='twr')
-        ? [ {label:'Mise en route approuvée',variantes:['mise en route','approuve','approuvee','mise en route approuvee']},
-            {label:'Votre indicatif',ref:'callsign'} ]
-        : [ {label:'Numéro de piste',ref:'piste'},
-            {label:'QNH',variantes:['qnh']},
-            {label:'Valeur QNH',ref:'qnh'},
-            {label:'Votre indicatif',ref:'callsign'} ] });
+                 {label:'Mise en route',variantes:['mise en route','je mets en route']} ] });
+    else
+    push({ ph:'Premier contact', src:'p. 45', stn:C.depStn, freq:C.depF.f, leg:0,
+      reel:'Appelez '+C.depStn+'.',
+      consigne:'Premier contact : organisme, votre indicatif, bonjour.',
+      attendu: C.depStn+', {CALL}, bonjour.',
+      motsCles:[ {label:'Organisme appelé',variantes:stnVars(C.depStn,C.depF.k)},
+                 {label:'Votre indicatif',ref:'callsign'} ],
+      atcAfter:'{CALL}, '+C.depStn+', bonjour.' });                        // p. 45
 
     /* 2 — Demande de roulage : l'annonce complète de l'exemple VFR de Chavenay
        (p. 45) — « F-BGBX, TB10, parking club, demande consignes de roulage pour
        vol à destination de Guéret, information B ».
        Corrigée le 27/09/2026 : elle exigeait « N personnes à bord », qui n'est
        NULLE PART dans le manuel, et disait « demande le roulage pour une
-       navigation vers … » au lieu de la formule du manuel. Pas de lettre
-       d'information : elle vient d'être donnée à la mise en route. Sans
-       destination, la phrase s'arrête à « demande consignes de roulage » — « pour
-       un vol local » n'est pas dans le manuel non plus. */
+       navigation vers … » au lieu de la formule du manuel. Depuis le 03/10/2026,
+       la lettre d'information y est, comme à la p. 45 : la mise en route, qui la
+       portait, n'existe plus en VFR. Sans destination, la phrase s'arrête à
+       « demande consignes de roulage » — « pour un vol local » n'est pas dans le
+       manuel non plus. */
+    var atisRoul = (C.depNat!=='aa' && C.atis);
     push({ ph:'Roulage', src:'p. 44-45', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Demandez le roulage à '+C.depStn+'.',
       consigne:'Annonce complète : indicatif, type d\'avion, position, puis '+
                (C.depNat==='aa'?'votre intention de rouler (personne ne vous autorise ici)':'votre demande de consignes de roulage')+
-               (C.arr?' pour un vol à destination de '+C.arr.nom:'')+'.',
+               (C.arr?' pour un vol à destination de '+C.arr.nom:'')+
+               (atisRoul?', en terminant par la lettre d\'information reçue à l\'ATIS':'')+'.',
       attendu:'{CALL}, '+C.acShort+', au parking, '+
               (C.depNat==='aa'?'je roule piste {PISTE}':'demande consignes de roulage')+
-              (C.arr?' pour vol à destination de '+C.arr.nom:'')+'.',
+              (C.arr?' pour vol à destination de '+C.arr.nom:'')+
+              (atisRoul?', information {ATIS}':'')+'.',
       motsCles:[ {label:'Votre indicatif',ref:'callsign'},
                  {label:'Type d\'avion',variantes:acVars(C.acShort)},
                  {label:'Position (parking)',variantes:['parking','au parking','parking club','aire de stationnement']},
                  {label:'Roulage',variantes:['roulage','consignes de roulage','demande roulage','demande consignes','je roule']} ]
-              .concat(C.arr?[{label:'Destination',variantes:destVars(C.arr)}]:[]),
+              .concat(C.arr?[{label:'Destination',variantes:destVars(C.arr)}]:[])
+              .concat(atisRoul?[{label:'Lettre d\'information',variantes:atisVars(C.atis)}]:[]),
       atcAfter: C.depNat==='aa' ? null : '{CALL}, roulez et entrez aire d\'attente {PISTE} et rappelez prêt.' }); // p. 45
 
     // 3 — Collationnement du roulage (p. 45)
@@ -1509,10 +1489,35 @@
         xpdrAssign:C.codeDep });
     }
 
-    // 4 — Prêt au départ (p. 50)
-    push({ ph:'Prêt au départ', src:'p. 50', stn:C.depStn, freq:C.depF.f, leg:0,
-      atcBefore: C.depNat==='aa' ? null : '{CALL}, rappelez prêt au départ.',
+    /* 4 — Prêt au départ. « Rappelez prêt » a déjà été dit avec le roulage
+       (p. 45) : la tour ne le redemande plus (elle le redisait ici, 03/10/2026).
+       « Prêt au départ, indicatif » N'EST PAS MOT POUR MOT DANS LE MANUEL :
+       déduction validée par le développeur, même raisonnement que dans
+       phraseologie-scenarios.js › decollage (règle « Prêt à …, indicatif » des
+       p. 77, 83 et 222 ; mots de la p. 42). Variantes réduites à « prêt au
+       départ » : « prêt » seul, « paré », « affirme » étaient acceptés.
+       Une fois sur trois, la tour prend l'initiative : départ IMMÉDIAT de la
+       p. 60, mot pour mot — question, « Affirme », puis alignement et décollage
+       en un seul message, sans « alignez-vous et attendez ». */
+    /* Tiré une fois par vol, et GARDÉ à la reprise (sauverVol › immediat) : le
+       retirer au sort en reprenant changerait le nombre d'étapes, et l'élève
+       reprendrait sur un autre échange que celui où il s'était arrêté. */
+    var immediat = C.depNat==='twr' &&
+      (typeof immediatRepris==='boolean' ? immediatRepris : Math.random() < 1/3);
+    immediatRepris = null;
+    C.immediat = immediat;
+    if(immediat)
+    push({ ph:'Départ immédiat', src:'p. 60', stn:C.depStn, freq:C.depF.f, leg:0,
+      atcBefore:'{CALL}, êtes-vous prêt pour un départ immédiat ?',
       reel:'Répondez à '+C.depStn+'.',
+      consigne:'Répondez à la question du contrôleur, puis votre indicatif.',
+      attendu:'Affirme, {CALL}.',
+      motsCles:[ {label:'Affirme',variantes:['affirme']},
+                 {label:'Votre indicatif',ref:'callsign'} ],
+      atcAfter:'{CALL}, alignez-vous piste {PISTE}, autorisé décollage immédiat, vent {VENT}.' });
+    else
+    push({ ph:'Prêt au départ', src:'p. 50', stn:C.depStn, freq:C.depF.f, leg:0,
+      reel:'Annoncez-vous à '+C.depStn+'.',
       consigne: C.depNat==='aa'
         ? 'Annoncez que vous vous alignez et décollez piste {PISTE} — aucune autorisation n\'existe ici.'
         : 'Annoncez que vous êtes prêt au départ.',
@@ -1522,14 +1527,17 @@
       /* Idem : sans contrôleur, on annonce l'alignement et le décollage, pas « prêt au départ ». */
       motsCles:[ (C.depNat==='aa')
                    ? {label:'Je m\'aligne et je décolle',variantes:["je m aligne","aligne","je decolle","decolle"]}
-                   : {label:'Prêt au départ',variantes:['pret au depart','pret','paré','affirme']},
+                   : {label:'Prêt au départ',variantes:['pret au depart']},
                  {label:'Votre indicatif',ref:'callsign'} ],
-      atcAfter: C.depNat==='aa' ? null : '{CALL}, alignez-vous et attendez piste {PISTE}.' });
+      /* Seule une TOUR délivre « alignez-vous et attendez ». En AFIS, l'agent le
+         disait aussi : un agent AFIS ne délivre aucune clairance. */
+      atcAfter: C.depNat==='twr' ? '{CALL}, alignez-vous et attendez piste {PISTE}.' : null });
 
     /* 5 — Alignement (p. 53) : « alignez-vous et attendez » sont indissociables… mais
-       cette instruction n'existe que si un contrôleur la délivre. Sans TWR, l'étape
-       « Prêt au départ » a déjà couvert l'alignement et le décollage. */
-    if(C.depNat==='twr')
+       cette instruction n'existe que si un contrôleur la délivre, et pas dans un
+       départ immédiat. Sans TWR, l'étape « Prêt au départ » a déjà couvert
+       l'alignement et le décollage. */
+    if(C.depNat==='twr' && !immediat)
     push({ ph:'Alignement', src:'p. 53', stn:C.depStn, freq:C.depF.f, leg:0,
       reel:'Collationnez.',
       consigne:'Collationnez l\'alignement : vous vous alignez ET vous attendez.',
@@ -1538,20 +1546,20 @@
                  {label:'J\'attends',variantes:["j attends","attends","et j attends"]},
                  {label:'Numéro de piste',ref:'piste'},
                  {label:'Votre indicatif',ref:'callsign'} ],
-      atcAfter: (C.depNat==='twr')
-        ? '{CALL}, piste {PISTE}, autorisé décollage, vent {VENT}.'
-        : '{CALL}, piste {PISTE} en service, vent {VENT}, QNH {QNH}, pas de trafic connu.' });
+      atcAfter:'{CALL}, piste {PISTE}, autorisé décollage, vent {VENT}.' });
 
-    // 6 — Décollage (p. 59) — le pilote dit « je décolle », JAMAIS « autorisé décollage »
-    push({ ph:'Décollage', src:'p. 59', stn:C.depStn, freq:C.depF.f, leg:0.03, nmDep:0.5,
+    // 6 — Décollage (p. 59-60) — le pilote dit « je décolle », JAMAIS « autorisé décollage »
+    push({ ph:'Décollage', src: immediat ? 'p. 60' : 'p. 59', stn:C.depStn, freq:C.depF.f, leg:0.03, nmDep:0.5,
       reel:'Collationnez l\'autorisation de décollage.',
       consigne: (C.depNat==='twr')
         ? 'Collationnez l\'autorisation. Le pilote dit « je décolle » — « autorisé décollage » est réservé au contrôleur.'
         : 'Sans organisme de contrôle, personne ne vous autorise : annoncez que vous décollez de la piste en service.',
-      attendu:'Piste {PISTE}, je décolle, {CALL}.',
+      attendu: immediat ? 'Je m\'aligne piste {PISTE} et je décolle, {CALL}.'      // p. 60
+                        : 'Piste {PISTE}, je décolle, {CALL}.',                    // p. 59
       motsCles:[ {label:'Numéro de piste',ref:'piste'},
                  {label:'Je décolle',variantes:['je decolle','decolle']},
-                 {label:'Votre indicatif',ref:'callsign'} ] });
+                 {label:'Votre indicatif',ref:'callsign'} ]
+              .concat(immediat ? [{label:'Je m\'aligne',variantes:['je m aligne','m aligne']}] : []) });
 
     // 7 — Montée initiale (p. 63)
     push({ ph:'Montée initiale', src:'p. 63', stn:C.depStn, freq:C.depF.f, leg:0.07, nmDep:2,
@@ -3107,13 +3115,14 @@
      le déroulé, résultats) : le tableau d'étapes est reconstruit par buildFlight(),
      jamais sérialisé. */
   var VOL_KEY='rt-vol-en-cours';
+  var immediatRepris=null;   // départ immédiat (p. 60) du vol repris — lu par buildFlight
   function sauverVol(){
     if(!F.running||!F.ctx) return;
     try{
       localStorage.setItem(VOL_KEY, JSON.stringify({
         dep:sel.dep, arr:sel.arr, alt:sel.alt, mode:mode, level:level,
         acft:acChoice?acChoice.nom:null, fl:$v('navFl').value, pax:$v('navPax').value,
-        i:F.i, results:F.results, call:state.call,
+        i:F.i, results:F.results, call:state.call, immediat:!!F.ctx.immediat,
         meteo:state.meteo, rwy:state.rwy, ventPhrase:state.ventPhrase, altCruise:state.altCruise,
         date:new Date().toISOString()
       }));
@@ -3146,6 +3155,7 @@
     if(v.pax) $v('navPax').value=v.pax;
     if(v.call) state.call=v.call;
     if(window.RTLancement) RTLancement.reprise('vol');   // pas de nouveau décompte
+    immediatRepris = (typeof v.immediat==='boolean') ? v.immediat : false;
     startFlight();
     // Restaurer la météo tirée au sort et la position dans le déroulé.
     if(v.meteo) state.meteo=v.meteo;
@@ -3421,7 +3431,14 @@
       oublierVol();
       try{ $v('navResume').classList.add('hidden'); }catch(e){}
     },
-    enVol:       function(){ return !!F.running; }
+    enVol:       function(){ return !!F.running; },
+    /* Les étapes du vol en cours, telles que construites (phrases non résolues),
+       et le départ immédiat (p. 60) imposé au PROCHAIN vol — même mécanisme que
+       la reprise, sans rien contourner. */
+    etapes:      function(){ return (F.steps||[]).map(function(s){
+                   return { ph:s.ph, attendu:s.attendu||null, atcBefore:s.atcBefore||null,
+                            atcAfter:s.atcAfter||null }; }); },
+    forcerImmediat:function(b){ immediatRepris = (typeof b==='boolean') ? b : null; }
   };
 
   /* ---- Commandes de la radio ---- */

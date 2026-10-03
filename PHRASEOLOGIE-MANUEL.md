@@ -41,12 +41,16 @@ CORRECT, ROGER, WILCO, STANDBY/ATTENDEZ, IMPOSSIBLE (unable), IGNOREZ (disregard
 
 ## 1. Mise en route + roulage — Chapitre 3, A. PRÉVOL / B. CIRCULATION AU SOL (p. 38-45)
 
-### Mise en route (p. 39)
+### Mise en route (p. 39) — IFR, PAS utilisée par le simulateur
 - Pilote : **« Demande mise en route. »**
 - ATC : **« Mise en route approuvée[, C-TOT ….] »** / « Prévoyez mise en route à …. »
 - Collationnement : « Roger, mise en route approuvée, …, <indicatif>. »
+> ⚠ Rangée sous « Mise en route – clairance initiale – **SID** » ; les deux exemples
+> (p. 39-40) sont des vols IFR (Rapidair, C-TOT, SID, niveau). L'exemple VFR de la
+> p. 45 n'en a pas : contact, puis demande de roulage. **Décision du 03/10/2026** :
+> le simulateur (Scénarios et Navigation) ne fait plus demander de mise en route.
 
-### Roulage — exemple **VFR** officiel (Chavenay, p. 45) — le modèle du simulateur
+### Roulage — exemple **VFR** officiel (Chavenay, p. 45, « Cas d'un vol VFR ») — le modèle du simulateur
 ```
 Pilote : Chavenay tour, F-BX, bonjour.
 ATC    : F-BX, Chavenay tour, bonjour.
@@ -68,9 +72,17 @@ Pilote : Je roule et entre dans l'aire d'attente 24 et rappelle prêt, F-BX.
 
 ## 2. Alignement + décollage — Chapitre 3, C. ALIGNEMENT-DÉCOLLAGE (p. 50-63)
 
-### Préparatifs (p. 50)
+### Préparatifs (p. 50, p. 60)
 - ATC : « Rappelez prêt au départ. » / « Êtes-vous prêt pour un départ immédiat ? »
-- Pilote : « Prêt au départ, <indicatif>. » / « Affirme, <indicatif>. »
+- Pilote : « Affirme, <indicatif>. » / « Négatif, <indicatif>. » (p. 50, p. 60)
+> ⚠ **« Prêt au départ, <indicatif> » N'EST PAS dans le manuel** (ce fichier
+> l'attribuait à tort à la p. 50). Aucune page ne donne la réponse du pilote au
+> point d'attente. Le simulateur l'emploie par **déduction validée par le
+> développeur le 03/10/2026** : à chaque « rappelez prêt à … », le manuel fait
+> répondre « Prêt à …, indicatif » (p. 77, 83, 222), et « prêt au départ » est
+> dans la bouche d'un pilote p. 42 (au poste, IFR).
+> Départ immédiat (p. 60) : « alignez-vous piste 05 gauche, autorisé décollage
+> immédiat, vent … » → « Je m'aligne piste 05 gauche et je décolle, <indicatif> ».
 
 ### Alignement (p. 53)
 - ATC : « Alignez-vous et attendez piste 33 droite. »

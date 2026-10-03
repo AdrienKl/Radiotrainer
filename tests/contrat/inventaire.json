@@ -1,6 +1,6 @@
 {
   "_lisezmoi": "Genere par tests/contrat/_geler.mjs. Ne pas modifier a la main : regenerer et lire le diff.",
-  "gele_le": "2026-09-30",
+  "gele_le": "2026-10-03",
   "ordre_scripts": [
     "index.html#1",
     "assets/donnees/aerodromes.js",
@@ -115,6 +115,13 @@
         "assets/admin/data/source-local.js",
         "assets/admin/data/source-supabase.js",
         "assets/admin/pages/test.js"
+      ]
+    },
+    {
+      "nom": "ALEAS_SCEN",
+      "declare": "assets/scenarios/moteur.js",
+      "lu_par": [
+        "assets/modules/navigation.js"
       ]
     },
     {
@@ -287,6 +294,20 @@
       ]
     },
     {
+      "nom": "journalLigne",
+      "declare": "assets/noyau/7-interface.js",
+      "lu_par": [
+        "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "journalVider",
+      "declare": "assets/noyau/7-interface.js",
+      "lu_par": [
+        "assets/modules/navigation.js"
+      ]
+    },
+    {
       "nom": "lev",
       "declare": "assets/noyau/2-texte.js",
       "lu_par": [
@@ -455,6 +476,13 @@
       ]
     },
     {
+      "nom": "protegerMots",
+      "declare": "assets/noyau/2-texte.js",
+      "lu_par": [
+        "assets/modules/navigation.js"
+      ]
+    },
+    {
       "nom": "pttUI",
       "declare": "assets/noyau/6-micro.js",
       "lu_par": [
@@ -558,6 +586,7 @@
       "lu_par": [
         "assets/noyau/5-voix.js",
         "assets/scenarios/moteur.js",
+        "assets/modules/navigation.js",
         "assets/donnees.js",
         "assets/admin/data/source-mock.js",
         "assets/admin/data/source-local.js",
@@ -702,6 +731,14 @@
       ]
     },
     {
+      "nom": "typeAvionVariantes",
+      "declare": "assets/noyau/2-texte.js",
+      "lu_par": [
+        "assets/scenarios/moteur.js",
+        "assets/modules/navigation.js"
+      ]
+    },
+    {
       "nom": "Voix",
       "declare": "assets/noyau/5-voix.js",
       "lu_par": [
@@ -798,15 +835,15 @@
   "scenarios": [
     {
       "id": "roulage",
-      "titre": "Mise en route + roulage",
-      "attendus": 6,
-      "refs_manuel": 9
+      "titre": "Contact et roulage",
+      "attendus": 3,
+      "refs_manuel": 5
     },
     {
       "id": "decollage",
       "titre": "Décollage",
       "attendus": 5,
-      "refs_manuel": 7
+      "refs_manuel": 6
     },
     {
       "id": "integration",

@@ -55,13 +55,24 @@ test('les fichiers nommés en dur dans le JavaScript sont publiés (dont le manu
   for (const { chemin } of publies.filter(f => f.chemin.endsWith('.js'))) {
     const s = lire(chemin);
     for (const m of s.matchAll(/['"]((?:assets\/)[^'"\s{}$]+\.(?:webp|png|jpe?g|svg|pdf|js|css|json|mp3|wav))['"]/g))
-      if (!chemins.has(m[1])) manquants.push(chemin + ' → ' + m[1]);
+      if (!chemins.has(m[1]) && !(OACI_RETIREE && /^assets\/oaci2?\//.test(m[1])))
+        manquants.push(chemin + ' → ' + m[1]);
     for (const m of s.matchAll(/['"]([A-Za-z0-9_-]+\.pdf)['"]/g))
       if (!chemins.has(m[1])) manquants.push(chemin + ' → ' + m[1]);
   }
   assert.deepEqual(manquants, []);
   // Le manuel n'est plus publié (02/10/2026) : la page Cours ne l'affiche plus.
   assert.ok(!chemins.has('Manuel_Phraseologie.pdf'), 'le manuel PDF ne part plus en ligne');
+});
+
+/* La carte OACI a quitté le site le 03/10/2026 (LEGAL.md § 2) : aucun titre pour
+   en rediffuser les tuiles. Tant que tuiles-oaci.js › OACI_PUBLIEE est faux, ses
+   deux sondes nomment des tuiles absentes sans jamais les demander — et AUCUNE
+   tuile ne doit partir en ligne, même remise par erreur dans le dépôt. */
+const OACI_RETIREE = /var OACI_PUBLIEE = false;/.test(lire('assets/modules/tuiles-oaci.js'));
+test('carte OACI retirée : aucune tuile n\'est publiée', () => {
+  assert.ok(OACI_RETIREE, 'OACI_PUBLIEE est repassé à true : licence obtenue ? retirer alors ce test');
+  assert.deepEqual(publies.map(f => f.chemin).filter(c => /^assets\/oaci2?\/.*\.webp$|carte-oaci/.test(c)), []);
 });
 
 test('rien d\'interne n\'est publié', () => {

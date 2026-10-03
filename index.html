@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Albatros VFR — Entraînement à la radio VFR</title>
+<title>Albatros VFR — Simulateur d'ATC VFR</title>
 
 <!-- Favicon : le logo Albatros sur pastille blanche (26/09/2026). Un fichier et
      non plus un data URI : le tracé fait 4 Ko, le recopier dans chaque page
@@ -14,6 +14,11 @@
      tirés du même favicon.svg ; le SVG reste pour les navigateurs d'ordinateur
      qui le prennent. L'icône d'écran d'accueil iOS est PLEINE (sans coins
      transparents) : iOS arrondit lui-même, et peint la transparence en noir. -->
+<!-- 48 × 48 et /favicon.ico (03/10/2026) : Google n'affiche dans ses résultats
+     qu'une icône carrée d'un MULTIPLE de 48 px, et va chercher /favicon.ico à la
+     racine quand il hésite. Ce fichier répondait 404 : le logo avait disparu des
+     résultats au passage de GitHub Pages à Cloudflare. -->
+<link rel="icon" type="image/png" sizes="48x48" href="assets/images/favicon-48.png">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon-192.png">
 <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
@@ -36,18 +41,18 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Albatros VFR">
 <meta property="og:url" content="https://albatrosvfr.fr/">
-<meta property="og:title" content="Albatros VFR — Entraînement à la radio VFR">
+<meta property="og:title" content="Albatros VFR — Simulateur d'ATC VFR">
 <meta property="og:description" content="Élèves pilotes et pilotes : entraînez-vous à la radio VFR comme en vol réel, avec des scénarios, des exercices et la reconnaissance vocale.">
 <meta property="og:image" content="https://albatrosvfr.fr/assets/images/partage.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Albatros VFR — Entraînement à la radio VFR, sur la photo d'un cockpit en courte finale">
+<meta property="og:image:alt" content="Albatros VFR — Simulateur d'ATC VFR, sur la photo d'un cockpit en courte finale">
 <meta property="og:locale" content="fr_FR">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Albatros VFR — Entraînement à la radio VFR">
+<meta name="twitter:title" content="Albatros VFR — Simulateur d'ATC VFR">
 <meta name="twitter:description" content="Élèves pilotes et pilotes : entraînez-vous à la radio VFR comme en vol réel, avec des scénarios, des exercices et la reconnaissance vocale.">
 <meta name="twitter:image" content="https://albatrosvfr.fr/assets/images/partage.jpg">
-<meta name="twitter:image:alt" content="Albatros VFR — Entraînement à la radio VFR, sur la photo d'un cockpit en courte finale">
+<meta name="twitter:image:alt" content="Albatros VFR — Simulateur d'ATC VFR, sur la photo d'un cockpit en courte finale">
 <!-- Données structurées : un WebSite, rien de plus. Pas d'Organization
      (l'éditeur est un particulier), pas de prix (la gratuité de lancement est
      temporaire), pas de FAQPage (Google ne l'affiche plus que pour les sites
@@ -57,7 +62,7 @@
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "Albatros VFR",
-  "alternateName": "Albatros VFR — Entraînement à la radio VFR",
+  "alternateName": "Albatros VFR — Simulateur d'ATC VFR",
   "url": "https://albatrosvfr.fr/",
   "inLanguage": "fr-FR",
   "description": "Élèves pilotes et pilotes : entraînez-vous à la radio VFR comme en vol réel, avec des scénarios, des exercices et la reconnaissance vocale."

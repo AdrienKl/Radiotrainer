@@ -60,12 +60,7 @@ export const EXCLUS = [
   /(^|\/)README\.md$/i,
   /(^|\/)\.DS_Store$/,
   /^assets\/donnees\/phraseologie-manuel\.json$/,
-  /^assets\/oaci\/meta\.json$/,
-  /* Les tuiles de la carte OACI-VFR ont quitté le site le 03/10/2026 : aucun
-     titre pour les rediffuser (LEGAL.md § 2). Ceinture en plus du retrait :
-     une tuile remise par erreur dans le dépôt ne partirait pas en ligne.
-     À retirer le jour où une licence est obtenue (tuiles-oaci.js › OACI_PUBLIEE). */
-  /^assets\/oaci2?\/.*\.webp$/
+  /^assets\/oaci\/meta\.json$/
 ];
 
 // Limite de Cloudflare Workers Static Assets : 25 Mio par fichier.

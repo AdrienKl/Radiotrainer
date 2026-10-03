@@ -439,21 +439,19 @@
        n'affiche rien et l'utilisateur croit à un bug. On sonde UNE tuile de référence
        plutôt que d'écouter 'tileerror' : avec errorTileUrl, Leaflet émet aussi
        'tileload' pour l'image de remplacement, ce qui rendrait le comptage trompeur. */
-    /* Carte absente (le cas depuis le 03/10/2026, tuiles-oaci.js › OACI_PUBLIEE) :
-       le bouton de bascule disparaît, et la couche ne sera jamais posée — posée
-       quand même, elle demanderait ses tuiles et ne recevrait que des 404. */
-    var oaciAbsente=false;
     oaciSonde(oaciLayer, function(){
-      oaciAbsente=true;
       if(map.hasLayer(oaciLayer)) map.removeLayer(oaciLayer);
       var b=document.getElementById('navBasemap');
-      if(b) b.hidden=true;
+      if(b){ b.classList.remove('on'); b.textContent='Fond OpenStreetMap'; b.disabled=true;
+             b.title='Tuiles assets/oaci/ introuvables sur ce serveur'; }
+      var h=$v('navZoomHint');
+      if(h) h.textContent='Carte OACI indisponible ici : le dossier assets/oaci/ n’est pas publié. Fond OpenStreetMap utilisé.';
     });
     // OSM reste toujours dessous (repli hors couverture OACI) ; la carte OACI se
     // retire/remet via le bouton unique sous la carte, pas via un panneau de couches.
     osm.addTo(map); osm.setZIndex(1);
     // Fond par défaut choisi dans les Paramètres.
-    if(rtSettings().basemap!=='osm' && !oaciAbsente){ oaciLayer.addTo(map); oaciLayer.setZIndex(2); }
+    if(rtSettings().basemap!=='osm'){ oaciLayer.addTo(map); oaciLayer.setZIndex(2); }
     else{
       var bb=document.getElementById('navBasemap');
       if(bb){ bb.classList.remove('on'); bb.textContent='Fond OpenStreetMap'; }

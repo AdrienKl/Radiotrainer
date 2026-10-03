@@ -38,6 +38,13 @@ async function doubler(page, options = {}) {
         window.__appels.push(['verifier', email, code]);
         return attendre().then(() => {
           if (code !== '12345678') throw new Error('Token has expired or is invalid');
+          /* Le vrai verifyOtp ouvre la session, et Supabase l'annonce par
+             SIGNED_IN AVANT de répondre. On rejoue cet évènement : c'est lui
+             qui faisait sauter l'étape du nouveau mot de passe. */
+          if (o.annoncerSession && window.RTAuth._surEvenement)
+            /* Session sans utilisateur : avec un id, chargerProfil()
+               interrogerait la base (coupée), et l'attente dépasserait le test. */
+            window.RTAuth._surEvenement('SIGNED_IN', { user: null });
           return { user: { id: 'essai' } };
         });
       };
@@ -184,4 +191,29 @@ test('les deux portes ne s\'ouvrent jamais ensemble', async ({ page }) => {
   await page.locator('#loginId').fill('pilote@exemple.fr');
   await page.locator('#logCodeDemander').click();
   await expect(page.locator('#mdpBloc'), 'ouvrir une porte referme l\'autre').toBeHidden();
+});
+
+test('la session ouverte par le code ne fait pas sauter l\'étape du nouveau mot de passe', async ({ page }) => {
+  await doubler(page, { annoncerSession: true });
+  let entree = 0;
+  await page.exposeFunction('__entree', () => { entree++; });
+  await ouvrir(page);
+  await page.evaluate(() => {
+    const avant = window.rtSessionOuverte;
+    window.rtSessionOuverte = function(){ window.__entree(); return avant && avant.apply(this, arguments); };
+  });
+  await allerAuLogin(page);
+  await page.locator('#mdpOublie').click();
+  await page.locator('#loginId').fill('pilote@exemple.fr');
+  await page.locator('#mdpDemander').click();
+  await page.locator('#mdpCode').fill('12345678');
+  await page.locator('#mdpValider').click();
+  await expect(page.locator('#mdpEtape3')).toBeVisible();
+  await page.waitForTimeout(200);
+  expect(entree, 'on n\'entre pas dans l\'application avant d\'avoir choisi le mot de passe').toBe(0);
+
+  await page.locator('#mdpNouveau').fill('unMotDePasseSolide');
+  await page.locator('#mdpConfirme').fill('unMotDePasseSolide');
+  await page.locator('#mdpEnregistrer').click();
+  await expect.poll(() => entree, { message: 'une fois enregistré, on entre' }).toBeGreaterThan(0);
 });

@@ -579,6 +579,13 @@
       if (code.length < 8) return msg('loginMsg', "Saisissez le code à huit chiffres reçu par e-mail.");
       msg('loginMsg','');
       var libre = occuper(bMdpVal, 'Vérification…');
+      /* Le drapeau est levé AVANT l'appel : verifyOtp ouvre la session et
+         Supabase annonce SIGNED_IN pendant qu'il répond. Sans lui,
+         onAuthStateChange faisait entrer dans l'application aussitôt le code
+         validé, et l'étape 3 n'apparaissait jamais (constaté le 02/10/2026,
+         premier essai avec un vrai e-mail — la doublure des tests n'émettait
+         pas l'évènement). */
+      RTAuth.recuperationEnCours = true;
       RTAuth.recuperationVerifier(email, code)
         .then(function(){
           libre();
@@ -587,7 +594,7 @@
           var n = $('mdpNouveau'); if (n) try{ n.focus(); }catch(e){}
           msg('loginMsg', 'Code vérifié. Choisissez votre nouveau mot de passe.', 'ok');
         })
-        .catch(function(e){ libre(); msg('loginMsg', messageFr(e)); });
+        .catch(function(e){ RTAuth.recuperationEnCours = false; libre(); msg('loginMsg', messageFr(e)); });
     });
 
     if (bMdpEnr) bMdpEnr.addEventListener('click', function(){
@@ -606,6 +613,7 @@
           /* Le mot de passe ne traîne dans aucun des deux champs. */
           $('mdpNouveau').value = ''; $('mdpConfirme').value = '';
           if (mdpBloc) mdpBloc.hidden = true;
+          RTAuth.recuperationEnCours = false;
           annoncer();
           /* La session de récupération EST une session : l'utilisateur est
              déjà entré. rtSessionOuverte plutôt que rtEntrer, pour qu'un
@@ -717,8 +725,16 @@
         if (window.rtSessionOuverte) window.rtSessionOuverte();
       });
     }).catch(function(){});
-    c.auth.onAuthStateChange(function(ev, s){
+    c.auth.onAuthStateChange(RTAuth._surEvenement);
+  }
+
+  /* Exposé pour que les tests puissent rejouer l'évènement de Supabase. */
+  RTAuth._surEvenement = function(ev, s){
       RTAuth._u = s ? s.user : null;
+      /* Mot de passe oublié : la session vient du code de récupération, et
+         l'application attend que le nouveau mot de passe soit enregistré —
+         c'est mdpEnregistrer qui ouvrira, voir plus haut. */
+      if (ev === 'SIGNED_IN' && s && RTAuth.recuperationEnCours) return;
       if (ev === 'SIGNED_IN' && s){
         chargerProfil().then(function(){
           annoncer();
@@ -727,8 +743,7 @@
       } else if (ev === 'SIGNED_OUT'){
         profil = null; annoncer();
       }
-    });
-  }
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer);
   else demarrer();

@@ -85,8 +85,11 @@
       tileSize:2048, zoomOffset:-3,
       minNativeZoom:5, maxNativeZoom:11,
       minZoom:5, maxZoom:17, errorTileUrl:TRANSPARENT,
-      attribution:'Carte OACI 1:500 000 &mdash; SIA / DGAC, édition 2026'
-    });
+      /* Mention exigée par la Licence Ouverte du SIA : nom du SIA et date de mise
+         à jour (LEGAL.md § 2). */
+      attribution:'Carte OACI 1:500 000 &mdash; <a href="https://www.sia.aviation-civile.gouv.fr" target="_blank" rel="noopener">Service de l’Information Aéronautique</a>, édition 2026 en vigueur le 16/04/2026'
+    }).addTo(map);
+    oaci.setZIndex(2);
 
     adLayer=L.layerGroup().addTo(map);
     terrains().forEach(function(a){
@@ -99,17 +102,15 @@
 
     /* Tuiles non publiées (téléversement incomplet) : même sonde que la Navigation.
        Sans elle, la couche resterait blanche sans explication. */
-    /* La couche n'est posée qu'APRÈS la sonde : posée avant, Leaflet demandait
-       ses tuiles tout de suite — des 404 quand la carte n'est pas publiée.
-       Carte absente (le cas depuis le 03/10/2026, tuiles-oaci.js › OACI_PUBLIEE) :
-       le bouton de bascule disparaît, il n'y a plus rien à basculer. */
     oaciSonde(oaci, function(){
       oaciOk=false;
       if(map.hasLayer(oaci)) map.removeLayer(oaci);
       var b=document.getElementById('carteBasemap');
-      if(b) b.hidden=true;
+      if(b){ b.classList.remove('on'); b.textContent='Fond OpenStreetMap'; b.disabled=true;
+             b.title='Tuiles assets/oaci/ introuvables sur ce serveur'; }
+      var h=document.getElementById('carteHint');
+      if(h) h.textContent='Carte OACI indisponible ici : le dossier assets/oaci/ n’est pas publié. Fond OpenStreetMap utilisé.';
     });
-    if(oaciOk){ oaci.addTo(map); oaci.setZIndex(2); }
 
     var bm=document.getElementById('carteBasemap');
     if(bm) bm.addEventListener('click',function(){

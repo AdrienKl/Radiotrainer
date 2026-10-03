@@ -75,41 +75,43 @@ existant ne se voit redemander son accord, par décision du développeur (voir
 > l'éditeur choisit l'anonymat du non-professionnel (LCEN 6-III-2), c'est à
 > **Cloudflare** qu'il doit avoir communiqué son identité.
 
-## 2. La carte OACI — RETIRÉE du site le 03/10/2026
+## 2. La carte OACI — Licence Ouverte du SIA (établi le 03/10/2026)
 
-Jusqu'au 03/10/2026, `assets/oaci/` et `assets/oaci2/` contenaient **116 Mo de
-tuiles de la carte OACI-VFR 1:500 000** (SIA / DGAC, édition 2026), servies
-depuis le site, sans qu'aucun document du dépôt dise à quel titre.
+`assets/oaci/` et `assets/oaci2/` contiennent **116 Mo de tuiles de la carte
+OACI 1:500 000**, édition 2026 en vigueur le 16 avril 2026, découpées à partir
+des **quatre PDF téléchargés gratuitement** sur le site du SIA (« Produits
+numériques en libre disposition › Cartes SIA 1/500.000 »).
 
-Ce qui a été établi :
+**Le titre** : le SIA publie un *Contrat de licence d'utilisation* qui est une
+**Licence Ouverte** (`sia.aviation-civile.gouv.fr/pub/media/news/file//l/i/licenceopendata-vf_1.pdf`) :
+réutilisation gratuite, commerciale ou non, reproduction, adaptation,
+transformation et redistribution permises, sous deux conditions :
 
-- la carte OACI numérique (« SCAN OACI ») **n'est pas libre de droits**. L'IGN
-  la met gratuitement à disposition pour un usage **professionnel ou
-  associatif** ; un usage **numérique grand public** demande une **licence
-  spécifique** (conditions de licence de la Géoplateforme, `cartes.gouv.fr`) ;
-- depuis l'**édition 2026**, la carte est produite par le **SIA** et non plus
-  par l'IGN : c'est au SIA qu'une autorisation se demande.
+1. **mentionner la paternité** — au moins le nom du SIA et la date de dernière
+   mise à jour : faite dans l'attribution des deux cartes Leaflet (carte.js,
+   navigation.js), dans les mentions légales et dans le pied de page ;
+2. **ne pas altérer l'information ni en dénaturer le sens**, et ne pas laisser
+   croire à une caution du SIA : les mentions le disent (« aucun caractère
+   officiel… seules les cartes publiées par le SIA font foi »). Le découpage en
+   tuiles et le géoréférencement sont une transformation permise.
 
-Décision du développeur : **retrait immédiat**, et demande de licence au SIA en
-parallèle. Les tuiles et l'image `carte-oaci-hero.webp` (découpée dans la même
-carte) ont quitté le dépôt ; `outils/construire-site.mjs` refuse en plus de
-publier une tuile qui y reviendrait. La Navigation et la page Carte utilisent le
-fond OpenStreetMap, les espaces aériens (Licence Ouverte) tracés par-dessus.
-`assets/oaci/meta.json` (le géoréférencement) est gardé.
+**Ce qui reste à confirmer** : la page de téléchargement des cartes ne cite pas
+cette licence en toutes lettres. Une demande de confirmation au SIA est
+préparée — à n'envoyer qu'avec l'accord du développeur.
 
-**Si la licence est obtenue** : remettre les tuiles (historique Git, commit
-précédant « Retrait de la carte OACI »), passer `OACI_PUBLIEE` à `true`
-(`assets/modules/tuiles-oaci.js`), retirer l'exclusion de
-`construire-site.mjs` et le test « carte OACI retirée », réafficher le réglage
-« Fond par défaut » des Paramètres, et citer la licence dans les mentions.
+**À chaque nouvelle édition** (en principe chaque année) : refaire les tuiles
+ET changer la date dans les quatre mentions — une mention d'édition périmée
+contreviendrait à la condition n° 1 et induirait en erreur sur la date.
 
-**Restent dans l'historique Git** : si le dépôt GitHub est public, les tuiles y
-sont toujours téléchargeables. Le passer en privé règle ce point.
+**Erreur à ne pas refaire** : le 03/10/2026, la carte a été retirée quelques
+heures sur la foi des conditions du « SCAN OACI » de l'**IGN** (licence
+spécifique pour un usage grand public). C'est un AUTRE produit : nos tuiles
+viennent des PDF du SIA, qui a repris la carte à partir de l'édition 2026.
 
 **À surveiller** : le serveur de tuiles public d'OpenStreetMap
-(`tile.openstreetmap.org`) a une politique d'usage qui tolère un petit site,
-pas un fort trafic. À l'ouverture au public, passer par un fournisseur de
-tuiles.
+(`tile.openstreetmap.org`), chargé sous la carte, a une politique d'usage qui
+tolère un petit site, pas un fort trafic. À l'ouverture au public, passer par
+un fournisseur de tuiles.
 
 Les autres sources sont claires : OurAirports (domaine public), espaces aériens
 SIA/DGAC via data.gouv.fr (Licence Ouverte 2.0), OpenStreetMap (ODbL), Leaflet

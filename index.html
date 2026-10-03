@@ -46,6 +46,7 @@
 <!-- Leaflet 1.9.4 — copie LOCALE (pas de CDN) pour que index.html reste ouvrable en file://. -->
 <!-- La carte du hero est la plus grande image de la première vue : la
      précharger évite qu'elle n'arrive après le texte. -->
+<link rel="preload" as="image" href="assets/images/carte-oaci-hero.webp">
 <!-- La police du site, préchargée : sans cela, le texte s'affiche d'abord dans
      la police système puis saute (font-display:swap). Seul le fichier latin
      droit — celui de presque tout le texte. crossorigin est obligatoire pour
@@ -983,10 +984,15 @@
           <li><b>Espaces aériens</b> — SIA / DGAC via <span class="legal-mono">data.gouv.fr</span>,
             Licence Ouverte 2.0. Conversion communautaire du 11 mars 2020 : non officielle et non à jour.</li>
           <li><b>Fond OpenStreetMap</b> — © les contributeurs OpenStreetMap, licence ODbL.</li>
+          <li><b>Carte OACI 1:500&nbsp;000</b> — Service de l'Information Aéronautique (SIA), édition 2026
+            en vigueur le 16 avril 2026. Données originales téléchargées sur
+            <a href="https://www.sia.aviation-civile.gouv.fr" target="_blank" rel="noopener">sia.aviation-civile.gouv.fr</a>,
+            réutilisées sous la Licence Ouverte du SIA, découpées en tuiles pour l'affichage à l'écran.
+            Cette réutilisation n'a aucun caractère officiel et n'est ni reconnue ni cautionnée par le SIA ;
+            seules les cartes publiées par le SIA font foi pour la préparation d'un vol.</li>
           <li><b>Bibliothèque cartographique</b> — Leaflet, licence BSD 2-clauses.</li>
           <li><b>Photographies</b> — créditées en pied de page (Unsplash, Pixabay).</li>
         </ul>
-        
 
         <h2 class="legal-h2">4. Signalement d'un contenu</h2>
         <p class="legal-p">Toute personne peut signaler un contenu qu'elle estime illicite à l'adresse de
@@ -1339,9 +1345,10 @@
                 <td>Tout ce du § 2 qui est enregistré sur le compte, et l'empreinte du mot de passe.</td></tr>
             <tr><td><b>Cloudflare, Inc.</b> (Cloudflare Workers)</td><td>Sous-traitant : hébergement des fichiers</td>
                 <td>Votre adresse IP et les fichiers que vous chargez. Aucune donnée de compte.</td></tr>
-            <tr><td><b>Fondation OpenStreetMap</b></td><td>Fond de carte des pages Navigation et Carte, chargé
+            <tr><td><b>Fondation OpenStreetMap</b></td><td>Fond de carte des pages Navigation et Carte, chargé sous la carte OACI
                 <b>dès que ces pages s'ouvrent</b></td>
-                <td>Votre adresse IP et la zone que vous regardez.</td></tr>
+                <td>Votre adresse IP et la zone que vous regardez. La carte OACI, elle, est servie depuis
+                    ce site : la consulter n'appelle personne.</td></tr>
             <tr><td><b>Google LLC</b></td><td>Reconnaissance vocale du navigateur Chrome</td>
                 <td>Voir le § 5 — c'est le point le moins évident de cette page.</td></tr>
             <tr><td><b>Microsoft Corporation</b></td><td>Reconnaissance vocale du navigateur Edge</td>
@@ -2171,7 +2178,7 @@
     <section id="page-carte" class="page">
       <div class="container">
         <h2 class="section-title">Carte</h2>
-        <p class="section-sub">Toute la France vue d'en haut. Repérez les terrains avant de partir : les pastilles vous montrent les aérodromes, cliquez-en une pour voir son code, son altitude et ses fréquences.</p>
+        <p class="section-sub">Toute la France vue d'avion, sur la vraie carte des pilotes. Repérez les terrains, les zones et les espaces aériens avant de partir. Les pastilles vous montrent les aérodromes ; masquez-les pour lire la carte comme sur papier.</p>
         <div class="carte-wrap">
           <div id="carteMap" class="carte-map"></div>
           <div class="carte-tools">
@@ -2633,9 +2640,7 @@
 
           <div class="set-card">
             <h3>Carte (Navigation)</h3>
-            <!-- Caché depuis le 03/10/2026 : la carte OACI a quitté le site
-                 (tuiles-oaci.js › OACI_PUBLIEE). Gardé tel quel pour son retour. -->
-            <div class="set-row" hidden>
+            <div class="set-row">
               <div class="set-lbl"><b>Fond par défaut</b><span>Carte OACI officielle ou fond OpenStreetMap.</span></div>
               <div class="seg3 seg2" role="group" aria-label="Fond de carte">
                 <button class="seg3-opt" type="button" data-base="oaci">Carte OACI</button>
@@ -2827,7 +2832,7 @@
          — et ici elle contredisait la politique de confidentialité. -->
     Une fois la page ouverte, un exercice se poursuit sans connexion : la séance est envoyée dès que la connexion revient. Trois choses sortent de votre machine : le <strong>fond de carte</strong> des pages Navigation et Carte, dont une couche vient des serveurs OpenStreetMap — ces requêtes exposent votre adresse IP à OpenStreetMap ; votre <strong>voix</strong>, quand vous parlez au micro, transcrite par le service de reconnaissance de votre navigateur ; votre <strong>compte</strong> et votre <strong>progression</strong>, enregistrés chez notre hébergeur de base de données. S'ajoute, mais seulement si vous appuyez sur « Envoyer », le <strong>message</strong> que vous nous écrivez depuis « Contact / Feedback » ; et, quand la voix réaliste du contrôleur parle (par défaut pendant la phase de lancement, désactivable dans les Paramètres), le <strong>texte que prononce le contrôleur</strong>, synthétisé par Google. Le détail est dans la <button class="auth-link" type="button" data-page="confidentialite">politique de confidentialité</button>.
     <br><button class="auth-link" type="button" data-contact>Contact / Feedback</button> · <button class="auth-link" type="button" data-page="mentions">Mentions légales</button> · <button class="auth-link" type="button" data-page="cgu">Conditions d'utilisation</button> · <button class="auth-link" type="button" data-page="confidentialite">Politique de confidentialité</button>
-    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Photo d'accueil : Oskar Kadaksoo (Unsplash). Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation, de l’Alphabet aéro et du tableau de bord : Unsplash — Rita Candeias, Sam Schooler ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
+    <br>Données aérodromes et fréquences : OurAirports (domaine public). Espaces aériens : SIA / DGAC via data.gouv.fr — Licence Ouverte 2.0, conversion communautaire du 11/03/2020, non officielle et non à jour. Fond de carte : © contributeurs OpenStreetMap. Carte OACI 1:500 000 : Service de l'Information Aéronautique, édition 2026 en vigueur le 16/04/2026 — Licence Ouverte, réutilisation non officielle. Photo d'accueil : Oskar Kadaksoo (Unsplash). Photos d'avion : Dylan Agbagni, winterseitler, Arnaud Girault, Alito McBean. Décors des Scénarios, de la Navigation, de l’Alphabet aéro et du tableau de bord : Unsplash — Rita Candeias, Sam Schooler ; Pixabay — anestiev, benny1900, Kim R. Hunter, noname_13, TheDigitalWay.
   </footer>
 
   <div class="toast" id="toast"></div>

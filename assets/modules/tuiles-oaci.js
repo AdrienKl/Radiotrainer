@@ -51,19 +51,7 @@ var OaciTiles = L.TileLayer.extend({
    - seul le second manque        -> la carte reste parfaitement utilisable jusqu'au
                                      zoom 10, on se contente de rabaisser le plafond
                                      natif au lieu de tout desactiver. */
-/* CARTE OACI RETIRÉE DU SITE le 03/10/2026, décision du développeur.
-   La carte OACI-VFR numérique n'est pas libre de droits : l'IGN la réserve à
-   l'usage professionnel ou associatif, un site GRAND PUBLIC demande une licence
-   spécifique — et depuis l'édition 2026, c'est le SIA qui la produit. Le site
-   rediffusait 116 Mo de ses tuiles sans titre pour le faire (LEGAL.md § 2).
-   Les tuiles ont quitté le dépôt (elles restent dans l'historique Git). Tant
-   que cette constante est fausse, la sonde déclare la carte absente SANS rien
-   demander au serveur : Navigation et Carte prennent leur chemin de repli déjà
-   écrit, fond OpenStreetMap et espaces aériens tracés par-dessus.
-   Le jour où une licence est obtenue : remettre les tuiles, passer à true. */
-var OACI_PUBLIEE = false;
 function oaciSonde(couche, surAbsenceTotale){
-  if(!OACI_PUBLIEE){ surAbsenceTotale(); return; }
   var a=new Image(); a.onerror=surAbsenceTotale; a.src='assets/oaci/4_7_5.webp';
   var b=new Image();
   b.onerror=function(){

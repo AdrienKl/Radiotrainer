@@ -47,6 +47,14 @@ accord sur le texte définitif.
 > pas plus que l'inverse. **Si le passage à `1.0` devait être abandonné**, il
 > faudrait rouvrir la question.
 
+> **Hébergeur des fichiers : Cloudflare depuis le 03/10/2026.** Le site n'est
+> plus servi par GitHub Pages mais par Cloudflare Workers (Cloudflare, Inc.,
+> 101 Townsend Street, San Francisco, CA 94107, États-Unis). Mentions § 2,
+> confidentialité § 4 et § 6 mis à jour le même jour. GitHub reste le dépôt de
+> code, ce qui n'en fait pas un destinataire des données des visiteurs. Si
+> l'éditeur choisit l'anonymat du non-professionnel (LCEN 6-III-2), c'est à
+> **Cloudflare** qu'il doit avoir communiqué son identité.
+
 ## 2. Le point qui ne se règle pas en écrivant du texte
 
 `assets/oaci/` et `assets/oaci2/` contiennent **116 Mo de tuiles de la carte

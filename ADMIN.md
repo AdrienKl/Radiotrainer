@@ -20,7 +20,7 @@ Deux conséquences dimensionnantes, qui ont dicté toutes les décisions ci-dess
    explicitement (ligne 7148). Donc : **pas de modules ES** (`import`/`export`),
    qui échouent en `file://` sur la politique CORS. L'Admin utilise des scripts
    classiques et un namespace global `window.RTAdmin`.
-2. **Le déploiement est GitHub Pages** (`AdrienKl/Radiotrainer`), donc statique :
+2. **Le déploiement est statique** — Cloudflare Workers (Static Assets) sur `albatrosvfr.fr`, construit depuis le dépôt `AdrienKl/Radiotrainer` (GitHub Pages jusqu'au 03/10/2026) :
    il n'y a pas de serveur, pas de rendu côté serveur, pas de middleware. Toute
    « sécurité » d'accès à `/admin` posée dans le navigateur est décorative — d'où
    le parti pris du § 11.
@@ -466,7 +466,7 @@ justification a disparu.
 | Paramètres | La carte a été **retirée**, pas masquée. Un interrupteur qui n'ouvre plus rien ne servirait qu'à faire croire le contraire. La clé `rt-admin-dev` est effacée au chargement. |
 
 Ce que cette garde fait : décider ce que l'interface **montre**. Ce qu'elle ne
-fait pas : protéger une donnée. Un fichier servi par GitHub Pages se lit, l'adresse
+fait pas : protéger une donnée. Un fichier servi par un site statique se lit, l'adresse
 se tape, un navigateur s'instrumente.
 
 **La protection des données a été vérifiée, elle, et elle tient.** Mesuré le

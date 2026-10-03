@@ -37,8 +37,12 @@
 set -eu
 
 PROJET='vbziwjeuzcbvrbrihhrg'
-SITE='https://adrienkl.github.io/Radiotrainer/'
-RETOURS='https://adrienkl.github.io/Radiotrainer/**'
+# Le domaine de production depuis la migration vers Cloudflare (03/10/2026).
+# Ces deux lignes pointaient encore vers GitHub Pages : lancé avec --urls, le
+# script aurait renvoyé le Site URL de Supabase vers l'ancien hébergement, et
+# l'inscription aurait cassé sans le moindre message d'erreur.
+SITE='https://albatrosvfr.fr/'
+RETOURS='https://albatrosvfr.fr/**'
 SUJET='Albatros VFR — votre code de connexion'
 SUJET_RECUP='Albatros VFR — récupération de votre compte'
 ICI=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -47,9 +51,8 @@ GABARIT_RECUP="$ICI/gabarit-recuperation.html"
 
 # ┌─ LES URL NE PARTENT QUE SI ON LE DEMANDE ------------------------------┐
 # │ Ce script posait les gabarits ET le Site URL / la liste blanche d'un   │
-# │ même bloc. Or CLAUDE.md § 9.1 gèle toute configuration de production   │
-# │ liée au domaine tant qu'il n'est pas acheté — et le jour où il le      │
-# │ sera, l'ORDRE des opérations comptera.                                 │
+# │ même bloc. Un Site URL faux casse l'inscription sans prévenir          │
+# │ (CLAUDE.md § 9.1) : il ne se touche que quand on le décide.            │
 # │ Travailler sur les e-mails ne doit pas entraîner les URL avec soi :    │
 # │ par défaut ce script ne touche QUE les gabarits et les sujets.         │
 # │   sh poser-reglages.sh            les e-mails seuls                    │

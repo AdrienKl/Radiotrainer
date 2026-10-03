@@ -23,8 +23,7 @@
   "observability": { "enabled": true },
   "assets": {
     "directory": "./dist",
-    // Une adresse inconnue reçoit 404.html, avec le statut 404 — comme GitHub
-    // Pages. Cette page renvoie albatrosvfr.fr/login vers /#login. PAS
+    // Une adresse inconnue reçoit 404.html, avec le statut 404. Cette page renvoie albatrosvfr.fr/login vers /#login. PAS
     // "single-page-application" : un script ou une tuile manquants
     // répondraient index.html en 200, et la panne deviendrait invisible.
     "not_found_handling": "404-page"

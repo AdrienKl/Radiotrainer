@@ -305,21 +305,17 @@ Supabase Edge Functions → Resend
 
 Ne mélange pas la logique d'authentification avec les emails marketing ou transactionnels personnalisés.
 
-### 9.1 Le domaine n'est pas encore acheté — ne touche pas à la production
+### 9.1 Le domaine et l'hébergement — `albatrosvfr.fr` sur Cloudflare
 
-**Décision du 18/09/2026.** Le domaine définitif d'Albatros VFR est prévu mais pas acquis. **Ne modifie aucune configuration de production liée au domaine** (Site URL Supabase, liste blanche de redirection, `supabase/poser-reglages.sh`, `CNAME`, nom du dépôt GitHub).
+**État au 03/10/2026.** Le domaine `albatrosvfr.fr` est acheté ; ses serveurs DNS sont chez Cloudflare. Le site est servi par **Cloudflare Workers** (Static Assets) : Workers Builds construit `dist/` depuis la branche `main` du dépôt GitHub (`node outils/construire-site.mjs`, puis `npx wrangler deploy`), et `albatrosvfr.fr` est le domaine personnalisé du Worker `radiotrainer`. GitHub reste le dépôt de code ; **GitHub Pages ne sert plus le site** (décision du 18/09/2026 remplacée).
 
-Resend exige un domaine vérifié : le chantier e-mail est donc **bloqué en amont** par cette décision, et c'est normal.
+Ce qui reste de l'ancien hébergement, et l'ordre pour le retirer — une erreur de séquence casse un accès **en silence** :
 
-Quand le domaine sera choisi, l'ordre des opérations compte — une erreur de séquence casse l'inscription **en silence**, sans message d'erreur :
+1. `www.albatrosvfr.fr` est encore un CNAME vers `adrienkl.github.io` : c'est GitHub qui le redirige vers l'apex. Le passer d'abord sur Cloudflare (enregistrement proxifié + règle de redirection, ou second domaine du Worker) ;
+2. **ensuite seulement**, désactiver GitHub Pages sur le dépôt, puis supprimer `CNAME` et `.nojekyll` ;
+3. couper l'adresse `radiotrainer.kermeladrien24.workers.dev` (`"workers_dev": false`) puis la retirer de `ORIGINES_PAR_DEFAUT` (`supabase/functions/voix-atc/logique.ts`) et redéployer la fonction.
 
-1. domaine acheté, DNS posé ;
-2. `CNAME` + GitHub Pages ;
-3. **Site URL et liste blanche de redirection Supabase** ← l'oubli classique ;
-4. Resend (vérification du domaine, expéditeur) ;
-5. gabarits d'e-mail et sujets ;
-6. mentions légales (éditeur, hébergeur) ;
-7. **vérification manuelle d'une inscription réelle de bout en bout, avant de basculer le DNS.**
+Toujours vrai : le **Site URL et la liste blanche de redirection Supabase** (`https://albatrosvfr.fr/`, `https://albatrosvfr.fr/**`) ne se touchent qu'exprès — `supabase/poser-reglages.sh --urls`. Resend demande la vérification du domaine (DNS chez Cloudflare). Après tout changement d'hébergement ou de domaine : **une inscription réelle de bout en bout**.
 
 ---
 
@@ -434,7 +430,7 @@ Lorsque Git est utilisé, privilégie des commits cohérents et faciles à compr
 
 - **Dès la première vraie phase de restructuration** : une branche par étape importante, fusionnée **uniquement lorsque les tests passent**.
 - **Avant cela** : aucun changement important sur le dépôt GitHub sans l'avoir expliqué au préalable.
-- Renommer le dépôt `Radiotrainer` change l'URL de GitHub Pages, donc casse la liste blanche de redirection Supabase (§ 9.1). À ne pas faire isolément.
+- Renommer le dépôt `Radiotrainer` casse la connexion de Workers Builds au dépôt (Cloudflare › Worker › Settings › Build) : à refaire côté Cloudflare dans la foulée. Le site, lui, ne dépend plus de l'URL GitHub Pages.
 
 ---
 
@@ -925,6 +921,7 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 | 03/10/2026 | **Terrains AFIS : le manuel AFIS de l'UAF & FA (élaboré avec la DGAC, éd. novembre 2022)**, départ et arrivée VFR de Bourges, mot pour mot (Scénarios et Navigation) : « Information, bonjour, F-BX » / « j'écoute », « demandons paramètres pour le départ » → « rappeler pour rouler », « roulons point d'attente », « point d'attente piste 24, prêt au départ », « DR400 en finale, vos intentions » → « maintenons avant piste », « nous alignons », « décollons », « rappellerons en vue de l'aérodrome / vent arrière / finale », « piste engagée… quelles sont vos intentions ? » → « remettrons les gaz », « atterrissons », « au parking, quittons la fréquence ». **Retirés, faute de source** : un agent AFIS qui disait « roulez et entrez aire d'attente », « alignez-vous et attendez », « autorisé atterrissage » ou donnait un numéro dans le circuit. L'organisme AFIS s'appelle « … Information » (et plus « … Info ») | `PHRASEOLOGIE-MANUEL.md § 9` |
 | 03/10/2026 | **Auto-information : l'arrêté du 12 juillet 2019** (utilisation des aérodromes) fixe les moments et le contenu des comptes rendus, pas leur formulation. Le simulateur reprend les comptes rendus du pilote du manuel AFIS, précédés du nom de la station à chaque message (diffusion). Retirés : « je mets en route », « j'entre au point d'attente », « je m'aligne et je décolle piste … » | `PHRASEOLOGIE-MANUEL.md § 10` |
 | 03/10/2026 | Au passage : le cap de départ s'affiche sur trois chiffres (« cap 050 », p. 17) ; « Sortie de circuit, je quitte la fréquence » mot pour mot (p. 153) ; « Je roule parking aviation générale » mot pour mot (p. 160) ; le correcteur flou ne change plus « basse » en « base » | `moteur.js`, `navigation.js`, `2-texte.js` |
+| 03/10/2026 | **Hébergement : Cloudflare Workers sur `albatrosvfr.fr`** (migration faite par le développeur ; audit puis corrections). Mentions légales § 2, confidentialité § 4 et § 6 : Cloudflare, Inc. remplace GitHub Pages comme hébergeur des fichiers. `supabase/poser-reglages.sh` pose désormais `https://albatrosvfr.fr/` (il visait encore github.io : lancé avec `--urls`, il aurait cassé l'inscription). CLAUDE.md § 9.1, INSCRIPTION.md, ADMIN.md et les commentaires mis à jour. **Pas encore retirés, et c'est voulu** : `CNAME`, `.nojekyll` et GitHub Pages (le `www` passe encore par GitHub), l'origine `workers.dev` de voix-atc (adresse encore active) — ordre au § 9.1 | `index.html`, `LEGAL.md`, `supabase/poser-reglages.sh` |
 
 ### En attente de validation
 

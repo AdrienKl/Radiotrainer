@@ -37,8 +37,8 @@
        · elle décide de ce que l'interface MONTRE — l'entrée du menu, l'accès à
          la route #admin (la garde est dans le routeur, index.html) ;
 
-       · elle ne protège AUCUNE donnée. Un site statique servi par GitHub Pages
-         ne contrôle pas qui charge un fichier : le code se lit, l'adresse se
+       · elle ne protège AUCUNE donnée. Un site statique (Cloudflare Workers,
+         GitHub Pages avant le 03/10/2026) ne contrôle pas qui charge un fichier : le code se lit, l'adresse se
          tape, et un navigateur se laisse instrumenter. Rien de ce qui est écrit
          ici n'y change quoi que ce soit.
 

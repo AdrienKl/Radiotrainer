@@ -67,7 +67,7 @@
      n'est pas la, la reponse est « non » — le bon sens du doute pour une porte.
 
      Ce n'est pas pour autant LA protection des donnees : un fichier servi par
-     GitHub Pages se lit de toute facon. La protection des donnees est en base
+     un site statique se lit de toute facon. La protection des donnees est en base
      (RLS). Ceci ferme la porte de l'interface, ce qui restait a faire. */
   function estAdminReel(){
     return !!(window.RTAuth && RTAuth.estAdmin && RTAuth.estAdmin());

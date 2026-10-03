@@ -62,9 +62,9 @@ accepté — c'est justement ce qui permettra de leur demander leur accord).
 > SUPABASE_ACCESS_TOKEN='sbp_…' sh supabase/poser-reglages.sh
 > ```
 >
-> **Ce script ne touche plus au Site URL ni à la liste blanche** — CLAUDE.md
-> § 9.1 les gèle tant que le domaine n'est pas acheté. Ajouter `--urls` pour
-> les poser, le jour venu.
+> **Ce script ne touche au Site URL et à la liste blanche qu'avec `--urls`**
+> (CLAUDE.md § 9.1) : un Site URL faux casse l'inscription sans prévenir.
+> Depuis le 03/10/2026 il pose `https://albatrosvfr.fr/` (Cloudflare).
 
 Ce qui suit décrit l'ancien état à deux gabarits ; le raisonnement reste
 valable, seul le nombre a changé.
@@ -189,8 +189,12 @@ ne tourne pas sur votre machine.
 
 | Champ | Valeur |
 |---|---|
-| **Site URL** | `https://adrienkl.github.io/Radiotrainer/` |
-| **Redirect URLs** | `https://adrienkl.github.io/Radiotrainer/**` |
+| **Site URL** | `https://albatrosvfr.fr/` |
+| **Redirect URLs** | `https://albatrosvfr.fr/**` (et `http://localhost:8000/**` pour le développement) |
+
+> Jusqu'au 03/10/2026, ces deux valeurs étaient l'adresse GitHub Pages
+> (`https://adrienkl.github.io/Radiotrainer/`). Le site est désormais servi par
+> Cloudflare sur `albatrosvfr.fr` (CLAUDE.md § 9.1).
 
 Les deux astérisques sont un joker : ils couvrent `index.html`, les ancres, et
 ce que vous ajouterez demain. Sans eux, seule l'adresse écrite au caractère près

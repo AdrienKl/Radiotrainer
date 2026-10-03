@@ -3,8 +3,8 @@
    -----------------------------------------------------------------------------
    404.html renvoie /login vers /#login, /exercices vers /#exercices… à partir
    d'une liste écrite dans le fichier. Elle ne peut pas lire celle du routeur :
-   c'est une page à part, servie par GitHub Pages quand aucun fichier ne
-   correspond. Deux copies de la même liste, donc — et la copie oubliée ne
+   c'est une page à part, servie par Cloudflare (not_found_handling) quand
+   aucun fichier ne correspond. Deux copies de la même liste, donc — et la copie oubliée ne
    produit AUCUNE erreur : une route ajoutée au routeur et pas ici tombe
    simplement sur « Cette page n'existe pas ». Ce test compare les deux.
    ========================================================================== */

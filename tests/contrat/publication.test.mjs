@@ -4,8 +4,7 @@
    outils/construire-site.mjs copie dans dist/ une LISTE BLANCHE, et Cloudflare
    (wrangler.jsonc) ne publie que dist/. Deux pannes silencieuses à empêcher :
      1. un fichier que le site charge n'est pas dans la liste → il manque en
-        ligne sur Cloudflare, et SEULEMENT là (GitHub Pages sert tout le dépôt,
-        et le serveur local des tests aussi) ;
+        ligne, et SEULEMENT là (le serveur local des tests sert tout le dépôt) ;
      2. un fichier interne y entre → docs, SQL, tests, node_modules publiés.
    Plus les limites de Cloudflare Workers Static Assets : 25 Mio par fichier,
    20 000 fichiers par version (offre gratuite).
@@ -79,7 +78,7 @@ test('dans les limites de Cloudflare : 25 Mio par fichier, 20 000 fichiers', () 
   assert.ok(publies.length < 20000, publies.length + ' fichiers');
 });
 
-test('wrangler.jsonc publie dist/, avec la page 404 comme GitHub Pages', () => {
+test('wrangler.jsonc publie dist/, avec la page 404 pour toute adresse inconnue', () => {
   const brut = lire('wrangler.jsonc').replace(/^\s*\/\/.*$/gm, '').replace(/,\s*([}\]])/g, '$1');
   const cfg = JSON.parse(brut);
   assert.equal(cfg.assets.directory, './dist', 'publier « . » publierait node_modules et tout le dépôt');

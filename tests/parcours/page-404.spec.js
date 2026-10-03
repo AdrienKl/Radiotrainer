@@ -1,9 +1,10 @@
 /* =============================================================================
    Albatros VFR — LA PAGE 404 ET LA REDIRECTION DES ROUTES SANS « # »
    -----------------------------------------------------------------------------
-   GitHub Pages sert 404.html pour toute adresse inconnue. Le serveur de test,
-   lui, ne le fait pas : on intercepte donc les adresses visées et on y répond
-   par le contenu de 404.html, exactement comme GitHub Pages.
+   Cloudflare sert 404.html pour toute adresse inconnue (wrangler.jsonc ›
+   not_found_handling). Le serveur de test, lui, ne le fait pas : on intercepte
+   donc les adresses visées et on y répond par le contenu de 404.html, exactement
+   comme Cloudflare.
    ========================================================================== */
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';

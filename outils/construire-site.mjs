@@ -15,17 +15,18 @@
    décide, le prochain fichier interne posé à la racine. Ici, un fichier
    n'est publié que si on l'ajoute EXPRÈS à PUBLIC.
 
-   POURQUOI PAS UN DOSSIER public/
-   GitHub Pages sert albatrosvfr.fr depuis la RACINE de main, et il ne sait
-   publier que la racine ou /docs. Déplacer le site dans public/ l'aurait
-   cassé. La copie garde la structure à l'identique : tous les chemins
-   relatifs (assets/…, Manuel_Phraseologie.pdf) et absolus (/assets/… dans
-   404.html) restent vrais.
+   POURQUOI UNE COPIE, ET PAS UN DOSSIER public/
+   Jusqu'au 03/10/2026, GitHub Pages servait albatrosvfr.fr depuis la RACINE
+   de main : un dossier public/ l'aurait cassé. Le site est désormais servi
+   par Cloudflare seul ; la copie reste, parce qu'elle garde la structure à
+   l'identique — tous les chemins relatifs (assets/…) et absolus (/assets/…
+   dans 404.html) restent vrais, et le serveur local des tests sert la racine
+   telle quelle.
 
    AJOUTER UN FICHIER AU SITE
    Tout ce qui vit sous assets/ suit déjà, sauf EXCLUS. Un fichier nouveau à
    la RACINE que le site charge doit être ajouté à PUBLIC — sinon il manquera
-   en ligne sur Cloudflare (et seulement là : GitHub Pages sert tout).
+   en ligne (et seulement là : le serveur local des tests sert tout).
    tests/contrat/publication.test.mjs vérifie que rien de ce que index.html
    charge n'est oublié.
 

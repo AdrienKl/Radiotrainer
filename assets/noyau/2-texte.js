@@ -109,6 +109,12 @@ const REF_WORDS = [
   'assistance','premiere','aviation','generale','rappelle','rappelez','attends','aligne',
   'verticale','service','vol','vfr','transpondeur','trafic','vue','convergent','terrain',
   'transitez','transite','maintiens','maintenez','maintenons','meme',
+  /* Circuit et AFIS (03/10/2026) : « basse » devenait « base » (« demande circuit
+     basse hauteur » perdait son sens), et les formes du manuel AFIS (« roulons »,
+     « rappellerons », « atterrissons »…) n'étaient pas toutes connues. */
+  'basse','hauteur','encadrement','exercice','passage','circuit','remets','remettons',
+  'remettrons','rappellerons','atterrissons','demandons','parametres','quittons','engagee',
+  'separation','intentions','aerodrome','ecoute','approuve','option','complet',
   /* Mots courants absents du lexique : sans eux, une faute d'une lettre n'était pas
      rattrapée (« air » restait « air » au lieu de « aire d'attente »). */
   'aire','aires','bord','personne','personnes','navigation','local','locale',

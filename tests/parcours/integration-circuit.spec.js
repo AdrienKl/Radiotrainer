@@ -16,14 +16,22 @@
 import { test, expect } from '@playwright/test';
 import { ouvrir, entrer } from './_aide.js';
 
-async function jouerExact(page, id, icao) {
+async function jouerExact(page, id, icao, choix = ['complet']) {
   const i = await page.evaluate(x => SCENARIOS.findIndex(s => s.id === x), id);
   expect(await page.evaluate(([n, t]) => window.rtRelancerScenario(n, t), [i, icao])).toBe(true);
   await page.waitForTimeout(300);
   const echanges = [];
-  for (let k = 0; k < 30; k++) {
-    const e = await page.evaluate(() => ({ en: window.RT_TEST_SCN.enCours(), rep: window.RT_TEST_SCN.aRepondre() }));
+  for (let k = 0; k < 80; k++) {
+    const e = await page.evaluate(() => ({ en: window.RT_TEST_SCN.enCours(), rep: window.RT_TEST_SCN.aRepondre(),
+                                             choix: window.RT_TEST_SCN.choix() }));
     if (!e.en) break;
+    if (e.choix) {
+      const k = choix.length > 1 ? choix.shift() : choix[0];
+      echanges.push('[choix ' + k + ']');
+      expect(await page.evaluate(x => window.RT_TEST_SCN.choisir(x), k), `option ${k} absente : ${e.choix}`).toBe(true);
+      await page.waitForTimeout(150);
+      continue;
+    }
     if (e.rep) {
       /* Changer de station (Sol → Tour) demande d'afficher sa fréquence, comme
          l'élève le fait au poste : on la pose directement. */
@@ -179,4 +187,41 @@ test('Navigation : la lettre de l\'ATIS d\'arrivée devient un mot-clé noté, u
   const mc = apres[iInteg].motsCles.filter(m => m.label === 'Lettre d\'information')[0];
   expect(mc && mc.n, 'La lettre de l\'ATIS d\'arrivée n\'est pas attendue').toBeGreaterThan(0);
   expect(apres[iAtis].atcBefore, 'Le message ATIS d\'arrivée est vide').toMatch(/^Ici .+, information /);
+});
+
+test('Tour de piste : toucher, remise de gaz, passage bas puis complet — chaque boucle se joue', async ({ page }) => {
+  const { erreurs } = await ouvrir(page);
+  await entrer(page, 'exercices');
+  const e = await jouerExact(page, 'tourdepiste', 'LFBD', ['touchgo', 'remise', 'passagebas', 'complet']);
+  const t = e.join(' | ');
+  expect(t).toMatch(/demande toucher\. \| Piste [^,]+, autorisé toucher/);
+  expect(t).toMatch(/je remets les gaz\./);
+  expect(t).toMatch(/demande passage bas\./);
+  expect(t).toMatch(/\[choix complet\].*j'atterris/);
+  // Après chaque boucle, le tour de piste repart avec « rappelez finale ».
+  expect((t.match(/Je rappelle finale piste/g) || []).length).toBeGreaterThanOrEqual(4);
+  expect(erreurs).toEqual([]);
+});
+
+test('Terrain AFIS : départ, intégration et circuit du manuel AFIS, sans aucune clairance', async ({ page }) => {
+  const { erreurs } = await ouvrir(page);
+  await entrer(page, 'exercices');
+  const afis = await page.evaluate(() => {
+    const L = AERODROMES.filter(a => { const g = a && NAV_AD_GEO[a.icao]; return g && g.freq && g.freq.AFIS && !a.ctrl && /^LF[A-Z]{2}$/.test(a.icao); });
+    return L[0] && L[0].icao;
+  });
+  test.skip(!afis, 'aucun terrain AFIS avec fréquence');
+  const tout = [];
+  for (const id of ['roulage', 'decollage', 'integration']) tout.push(...await jouerExact(page, id, afis));
+  const t = tout.join(' | ');
+  expect(t).toMatch(/Information, bonjour, /);
+  expect(t).toMatch(/demandons paramètres pour le départ/);
+  expect(t).toMatch(/roulons point d'attente piste/);
+  expect(t).toMatch(/point d'attente piste [^,]+, prêt au départ/);
+  expect(t).toMatch(/nous alignons piste/);
+  expect(t).toMatch(/Décollons piste/);
+  expect(t).toMatch(/rappellerons en vue de l'aérodrome/);
+  expect(t).toMatch(/au parking, quittons la fréquence/);
+  expect(t, 'Un agent AFIS ne délivre aucune clairance').not.toMatch(/j'atterris|je décolle|je roule et entre|Numéro \d|toucher/i);
+  expect(erreurs).toEqual([]);
 });

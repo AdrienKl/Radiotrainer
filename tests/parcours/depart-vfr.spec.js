@@ -41,7 +41,7 @@ test('Scénario « Décollage » : « prêt au départ » strict, et le départ 
       variantes: pret.motsCles.filter(m => m.label === 'Prêt au départ')[0].variantes,
       piste: pret.motsCles.some(m => m.ref === 'piste'),
       imm: imm.map(t => ({ atc: t.atc, attendu: t.attendu })),
-      nOrdinaire: s.tours.length
+      nSuite: s.tours.filter(t => t.suiteDepart).length
     };
   });
   expect(r.attendu).toBe('{ADRM} {STN}, {CALL}, prêt au départ.');
@@ -54,7 +54,7 @@ test('Scénario « Décollage » : « prêt au départ » strict, et le départ 
   expect(r.imm[1].atc).toBe('{CALL}, alignez-vous piste {PISTE}, autorisé décollage immédiat, vent {VENT}.');
   expect(r.imm[1].attendu).toBe('Je m\'aligne piste {PISTE} et je décolle, {CALL}.');
   expect(JSON.stringify(r.imm), 'Pas de « alignez-vous et attendez » dans un départ immédiat').not.toContain('attendez');
-  expect(r.imm.length, 'La suite (cap, sortie de fréquence) est celle du départ ordinaire').toBe(r.nOrdinaire - 1);
+  expect(r.imm.length, 'La suite (cap, sortie de fréquence) est celle du départ ordinaire').toBe(2 + r.nSuite);
 });
 
 /* Joue le scénario en rendant mot pour mot la phrase attendue : chaque réponse

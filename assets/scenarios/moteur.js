@@ -680,7 +680,7 @@ function fillDisplay(raw){
             .replace(/\{PISTE\}/g, state.rwy.id)
             .replace(/\{QNH\}/g, state.meteo.qnh)
             .replace(/\{VENT\}/g, state.ventPhrase)
-            .replace(/\{CAPDEP\}/g, state.capDep)
+            .replace(/\{CAPDEP\}/g, String(state.capDep).padStart(3,'0'))   // un cap : TOUJOURS trois chiffres (p. 17)
             .replace(/\{NUM\}/g, state.numCircuit)
             .replace(/\{ALT\}/g, state.altCruise)
             .replace(/\{CAUSE\}/g, state.cause)
@@ -692,8 +692,12 @@ function fillDisplay(raw){
             .replace(/\{DEST\}/g, state.scDest ? state.scDest.nom : '')
             .replace(/\{PROV\}/g, provenance() ? provenance().nom : '')
             .replace(/\{SUIVEZ\}/g, suivezTrafic())
-            .replace(/\{TRAFICVU\}/g, state.numCircuit>1 ? ', trafic en vue' : '');
+            .replace(/\{TRAFICVU\}/g, state.numCircuit>1 ? ', trafic en vue' : '')
+            .replace(/\{TRAFICTYPE\}/g, traficType());
 }
+/* Le type seul, sans article, pour « DR400 en finale, vos intentions » (manuel
+   AFIS p. 33) et « piste engagée par DR400 » (p. 41). */
+function traficType(){ return String(state.traficCircuit||'').replace(/^un\s+/,''); }
 /* Le trafic à suivre dans le circuit (p. 151 : « numéro 3, suivez un Cessna 172,
    en base »). Numéro 1 = personne devant, donc rien à suivre ni à voir : c'est le
    cas de l'avion en urgence (navigation.js › consequencesUrgence). */
@@ -713,7 +717,7 @@ function fillSpeech(raw){
     .replace(/\{PISTE\}/g, state.rwy.id)
     .replace(/\{QNH\}/g, String(state.meteo.qnh))
     .replace(/\{VENT\}/g, state.ventPhrase)
-    .replace(/\{CAPDEP\}/g, String(state.capDep))
+    .replace(/\{CAPDEP\}/g, String(state.capDep).padStart(3,'0'))
     .replace(/\{NUM\}/g, String(state.numCircuit))
     .replace(/\{ALT\}/g, String(state.altCruise))
     .replace(/\{CAUSE\}/g, state.cause)
@@ -725,7 +729,8 @@ function fillSpeech(raw){
     .replace(/\{DEST\}/g, state.scDest ? state.scDest.nom : '')
     .replace(/\{PROV\}/g, provenance() ? provenance().nom : '')
     .replace(/\{SUIVEZ\}/g, suivezTrafic())
-    .replace(/\{TRAFICVU\}/g, state.numCircuit>1 ? ', trafic en vue' : '');
+    .replace(/\{TRAFICVU\}/g, state.numCircuit>1 ? ', trafic en vue' : '')
+    .replace(/\{TRAFICTYPE\}/g, traficType());
   /* Prononciation d'abord (elle travaille sur des MOTS), nombres ensuite. */
   return spokenDigits(prononciationRadio(t));
 }
@@ -739,7 +744,7 @@ function resolveVariants(mc){
     case 'type':     return state.scType ? typeVariants(state.scType) : [];
     case 'piste':    return numVariants(state.rwy.id);
     case 'qnh':      return numVariants(String(state.meteo.qnh));
-    case 'capdep':   return numVariants(String(state.capDep));
+    case 'capdep':   return numVariants(String(state.capDep).padStart(3,'0')).concat(numVariants(String(state.capDep)));
     case 'num':      return numVariants(String(state.numCircuit));
     case 'alt':      return numVariants(String(state.altCruise));
     default:         return (mc.variantes||[]).map(canonPhrase).filter(Boolean);
@@ -812,14 +817,17 @@ function finalizeStep(t){
      circuit (p. 148) : variante du tour, propre au terrain sans ATIS. */
   if(s.sansAtis && !state.atis) s = {...s, ...s.sansAtis};
   const stn = s.stn || 'tour';
-  const word = controlled ? (stn==='sol' ? 'Sol' : 'Tour') : 'Info';
+  /* « Information » et non « Info » : c'est le nom d'un organisme AFIS dans le
+     manuel AFIS (« Bourges Information, bonjour, F B X »). « Info » reste
+     accepté à l'oral. */
+  const word = controlled ? (stn==='sol' ? 'Sol' : 'Tour') : 'Information';
   const sub = v => (typeof v==='string') ? v.replace(/\{STN\}/g, word) : v;
   if(Array.isArray(s.atc)) s.atc = pick(s.atc);          // A : varier la phrase ATC
   if(Array.isArray(s.situation)) s.situation = pick(s.situation);
   s.atc = sub(s.atc); s.attendu = sub(s.attendu); s.situation = sub(s.situation);
   s.consigne = sub(s.consigne); s.station = sub(s.station);
   if(s.motsCles) s.motsCles = s.motsCles.map(mc =>
-    mc.ref==='station' ? { label:mc.label, variantes:[ word.toLowerCase() ] } : mc);
+    mc.ref==='station' ? { label:mc.label, variantes: controlled ? [ word.toLowerCase() ] : ['information','info'] } : mc);
   /* Fréquence de l'organisme appelé. Sans elle, la pile avionique des Scénarios
      restait masquée : le poste ne servait que dans le scénario Navigation. En la
      renseignant, les Scénarios se comportent comme la page Navigation — il faut
@@ -862,8 +870,10 @@ function tourAtis(){
     atc:[a.texte],
     situation:"Avant tout appel, vous écoutez l'ATIS de "+a.nom+".",
     consigne:"Affichez la fréquence ATIS ("+a.freq.toFixed(3)+") sur le poste et écoutez le "+
-             "message. Retenez la lettre d'information : vous l'annoncerez dans votre "+
-             "demande de roulage. N'émettez rien sur cette fréquence." };
+             "message. Retenez la lettre d'information : vous l'annoncerez "+
+             (state.activeSide==='arr' ? "dans votre annonce à la tour" : "dans votre demande de roulage")+
+             ". N'émettez rien sur cette fréquence. « Suivant » s'ouvre "+
+             "quand vous avez entendu le message en entier." };
 }
 
 /* Météo + piste en service (section B & G) */
@@ -1253,8 +1263,8 @@ el.noiseToggle.addEventListener('change', ()=>{
 const SC_DESC={
   roulage:     "Du parking au point d'attente, en VFR : premier contact, puis demande de roulage. Manuel p. 44-45.",
   decollage:   "Prêt au départ, alignement, clairance de décollage et collationnement. Manuel p. 50-60.",
-  integration: "Arrivée sur un terrain : verticale, circuit, finale et atterrissage. Manuel p. 150-160.",
-  tourdepiste: "Un tour complet : vent arrière, base, finale, puis touch-and-go ou complet.",
+  integration: "Arrivée sur un terrain : annonce, circuit, puis à vous de choisir en finale. Manuel p. 148-164.",
+  tourdepiste: "Des tours de piste : en finale, complet, toucher, remise de gaz ou passage bas — vous choisissez.",
   navigation:  "En croisière avec un organisme d'information : contact, position, transit.",
   urgence:     "Détresse et urgence : Mayday et Pan Pan, dans l'ordre imposé. Manuel p. 231.",
   panneradio:  "Quiz de procédure : que faire, et dans quel ordre, en panne de radio. Manuel p. 246.",
@@ -1308,8 +1318,9 @@ function buildQueue(sc){
        désignaient tant que la liste commençait par eux — c'est-à-dire jusqu'au
        jour où l'on insère un scénario avant. Le tour de piste se serait alors
        construit sur les échanges d'un autre exercice, sans rien signaler. */
-    raw = [ ...scParId('roulage').tours, ...scParId('decollage').tours.slice(0,4),
-            tourVentArriere(), tourNumeroATC(), tourBase(), tourRappelFinale(), tourFinale(), circuitChoiceStep() ];
+    raw = [ ...scParId('roulage').tours,
+            ...scParId('decollage').tours.filter(t => !t.quitteFrequence),
+            ...toursCircuit() ];
   } else if(typeof sc.buildTours==='function'){
     // Scénario dont les échanges dépendent de l'espace aérien réel du terrain choisi.
     raw = sc.buildTours() || sc.tours;
@@ -1323,11 +1334,16 @@ function buildQueue(sc){
      l'appeler (p. 214 « Informez Mérignac dès le premier contact que vous avez
      reçu l'information F » ; p. 149 « …estimé E à 05, information I »). */
   if(state.atis && (sc.id==='roulage' || sc.id==='integration' || sc.isCircuit)) raw = [tourAtis()].concat(raw);
-  /* Les échanges marqués `twrSeul` n'existent que face à une TOUR : un agent AFIS
-     ne donne ni numéro dans le circuit ni « rappelez finale » — ce ne sont pas
-     des informations, ce sont des instructions. */
-  if(!ctrlOf(state.activeSide)) raw = raw.filter(t => !t.twrSeul);
-  return marquerPremierContact(raw.map(finalizeStep));   // A + B2 : résolution ATC aléatoire / AFIS / {STN}
+  return marquerPremierContact(preparerTours(raw));   // A + B2 : résolution ATC aléatoire / AFIS / {STN}
+}
+/* Les échanges marqués `twrSeul` n'existent que face à une TOUR : un agent AFIS
+   ne donne ni numéro dans le circuit ni « rappelez finale » — ce ne sont pas des
+   informations, ce sont des instructions. Ceux marqués `afisSeul` n'existent que
+   face à un agent AFIS (manuel AFIS : « roulons », « nous alignons »…).
+   Partout où l'on insère des échanges (construction, choix, aléa) : ici. */
+function preparerTours(raw){
+  const ctrl = ctrlOf(state.activeSide);
+  return raw.filter(t => !(t.twrSeul && !ctrl) && !(t.afisSeul && ctrl)).map(finalizeStep);
 }
 
 /* Même règle que dans le vol Navigation : l'organisme ne se nomme qu'au PREMIER
@@ -1353,7 +1369,7 @@ function marquerPremierContact(steps){
     if(premier || !s.attendu) return;
     s.motsCles = (s.motsCles||[]).filter(mc =>
       mc.label!=='Station appelée' && mc.label!=='Nom du terrain');
-    s.attendu = String(s.attendu).replace(/^\s*\{ADRM\}\s+(?:Sol|Tour|Info)\s*,\s*/,'');
+    s.attendu = String(s.attendu).replace(/^\s*\{ADRM\}\s+(?:Sol|Tour|Information|Info)\s*,\s*/,'');
   });
   return steps;
 }
@@ -1391,7 +1407,7 @@ function maybeInsertAlea(sc){
      abandonne l'atterrissage et on repart pour un tour complet, ce qui est
      exactement ce qui se passe en vol. */
   if(a.id==='goaround'){
-    const lap=[tourVentArriere(),tourNumeroATC(),tourBase(),tourFinale(),circuitChoiceStep()].map(finalizeStep);
+    const lap=preparerTours(toursCircuit());
     state.queue = state.queue.slice(0,lastAns).concat([finalizeStep(aleaGoAround())], lap);
     logRow('sys','Aléa : remise de gaz — vous repartez pour un tour de piste.');
     return;
@@ -1611,9 +1627,12 @@ function renderStep(){
   /* Étape d'ÉCOUTE PURE (ATIS) : rien à transmettre, donc pas de micro ni de zone
      de réponse — mais « Suivant » reste accessible, sans quoi on reste bloqué. */
   const ecoute = !!step.atisStep;
+  /* Un message à ENTENDRE seulement (« passage bas approuvé ») : rien à
+     collationner, donc ni micro ni zone de réponse, et « Suivant » ouvert. */
+  const sansReponse = !ecoute && !step.attendu;
   /* Sur une écoute pure il n'y a pas de phrase attendue : ni micro, ni « Réponse ». */
-  scPanneau({ atc:!!step.atc, situation:!!step.situation, ptt:!ecoute, trans:!ecoute,
-              replay: !!step.atc && !ecoute && !reel, hint: !reel && !ecoute, skip:true });
+  scPanneau({ atc:!!step.atc, situation:!!step.situation, ptt:!ecoute && !sansReponse, trans:!ecoute && !sansReponse,
+              replay: !!step.atc && !ecoute && !reel, hint: !reel && !ecoute && !sansReponse, skip:!sansReponse });
   el.stepLabel.textContent = sc.titre;
   /* Les échanges d'un scénario ne portent pas de renvoi au manuel comme les étapes
      d'un vol : on affiche à la place le rang de l'échange. Le TOTAL n'est pas
@@ -1670,8 +1689,12 @@ function renderStep(){
   el.transText.value=''; el.validerBtn.disabled=true;
   el.feedback.innerHTML='';
   el.hint.classList.add('hidden'); el.hintTxt.textContent='';
-  /* Sur une écoute pure il n'y a rien à valider : « Suivant » est ouvert d'emblée. */
-  el.nextBtn.disabled = !ecoute;
+  /* Sur une écoute pure il n'y a rien à valider, mais l'ATIS doit avoir été
+     ENTENDU (03/10/2026, demande du développeur) : « Suivant » s'ouvre à la fin
+     de la première diffusion complète (scLancerAtis › atisEntendu). Avant, il
+     était ouvert d'emblée — on passait l'ATIS sans l'écouter, et l'on appelait
+     ensuite la tour avec une lettre devinée. */
+  el.nextBtn.disabled = ecoute ? !atisDejaEntendu(step) : !sansReponse;
   el.nextBtn.innerHTML = (isLastAnswerStep() ? 'Voir le récap' : 'Suivant') + ICONS.chevron;
   el.pttBtn.disabled = !RECO_OK;
   el.hintBtn.disabled = false;
@@ -1764,9 +1787,15 @@ function renderChoice(step){
   el.scSrc.textContent='';
   el.stepLabel.textContent='Décision';
   el.choiceBox.classList.remove('hidden');
+  /* Les options d'une TOUR seulement (toucher, remise de gaz, passage bas)
+     disparaissent face à un agent AFIS. S'il ne reste qu'une option, il n'y a
+     pas de décision à prendre : on la suit sans afficher le choix. */
+  const ctrl = ctrlOf(state.activeSide);
+  const options = step.options.filter(o => !(o.twrSeul && !ctrl) && !(o.afisSeul && ctrl));
+  if(options.length===1){ el.choiceBox.classList.add('hidden'); return chooseBranch(step, options[0]); }
   el.choiceQ.textContent = step.question;
   el.choiceOpts.innerHTML='';
-  step.options.forEach(opt=>{
+  options.forEach(opt=>{
     const b=document.createElement('button');
     b.className='opt'; b.type='button';
     b.innerHTML='<b>'+escapeHtml(opt.label)+'</b>'+escapeHtml(opt.desc);
@@ -1778,12 +1807,11 @@ function chooseBranch(step, opt){
   logRow('sys','Décision : '+opt.label);
   // insérer les tours de la branche après le choix (finalisés : ATC aléatoire / AFIS / {STN})
   const rawInsert = opt.tours.slice();
-  if(opt.loop){
-    // touch-and-go : on repart pour un tour → on ré-enchaîne un circuit complet
-    rawInsert.push(tourVentArriere(), tourNumeroATC(), tourBase(), tourFinale(), circuitChoiceStep());
-  }
-  const insert = rawInsert.map(finalizeStep);
+  // toucher, remise de gaz, passage bas : on repart pour un tour de piste complet
+  if(opt.loop) rawInsert.push(...toursCircuit());
+  const insert = preparerTours(rawInsert);
   state.queue.splice(state.stepIndex+1, 0, ...insert);
+  marquerPremierContact(state.queue);   // l'organisme ne se renomme pas en cours de circuit
   state.results.length = state.queue.length; // aligne (les nouveaux = undefined)
   state.stepIndex++;
   renderStep();
@@ -1953,13 +1981,35 @@ function scBonneFreq(){
 var scAtisBoucle=null;
 function scArreterAtis(){
   if(!scAtisBoucle) return;
-  scAtisBoucle.actif=false; clearTimeout(scAtisBoucle.t); scAtisBoucle=null;
+  /* La garde tombe aussi : quitter la fréquence avant la fin, ce n'est pas avoir
+     entendu l'ATIS. */
+  scAtisBoucle.actif=false; clearTimeout(scAtisBoucle.t); clearTimeout(scAtisBoucle.garde); scAtisBoucle=null;
   Voix.stop();
+}
+/* L'ATIS est-il ENTENDU ? Une diffusion complète, une fois le poste accordé.
+   Partagé avec la Navigation (même règle des deux côtés).
+   Trois portes, parce qu'une voix peut ne jamais rendre la main :
+   - la fin de la première diffusion (onFin) ;
+   - une durée de lecture estimée, si onFin ne vient pas (voix en panne,
+     navigateur muet) — on ne bloque pas l'élève pour une panne de synthèse ;
+   - pas de synthèse du tout : le texte affiché tient lieu d'écoute.
+   window.RT_ATIS_IMMEDIAT (tests) : entendu d'office. */
+function atisDejaEntendu(step){ return !!(window.RT_ATIS_IMMEDIAT || (step && step._atisEntendu)); }
+function dureeLectureAtis(texte){
+  var rate = (typeof state!=='undefined' && state.voiceRate) ? state.voiceRate : 1;
+  return Math.round(((String(texte||'').length / 13) / rate + 3) * 1000);
+}
+function scAtisEntendu(step){
+  if(!step || step._atisEntendu) return;
+  step._atisEntendu = true;
+  if(currentStep()===step && el.nextBtn) el.nextBtn.disabled = false;
 }
 function scLancerAtis(texte){
   if(scAtisBoucle) return;                     // déjà en diffusion
   var b={actif:true,t:null}; scAtisBoucle=b;
-  if(!window.speechSynthesis) return;
+  var etape=currentStep();
+  if(!window.speechSynthesis){ scAtisEntendu(etape); return; }
+  b.garde=setTimeout(function(){ scAtisEntendu(etape); }, dureeLectureAtis(texte));
   // L'ATIS a sa propre voix, comme toute station (5-voix.js › une voix par contrôleur).
   var nom='ATIS'; try{ nom=stationLabel(currentStep()); }catch(e){}
   function tour(){
@@ -1971,6 +2021,7 @@ function scLancerAtis(texte){
       onFin:function(){
         stopRadioNoise();
         if(!b.actif || scAtisBoucle!==b) return;
+        scAtisEntendu(etape);                  // une diffusion complète : c'est entendu
         b.t=setTimeout(tour, 2600);            // pause entre deux diffusions
       }
     });
@@ -2218,7 +2269,7 @@ function exempleAttendu(mc){
     case 'qnh':      return 'QNH '+state.meteo.qnh;
     case 'alt':      return state.altCruise+' pieds';
     case 'num':      return 'numéro '+state.numCircuit;
-    case 'capdep':   return 'cap '+state.capDep;
+    case 'capdep':   return 'cap '+String(state.capDep).padStart(3,'0');
     case 'terrain':  return state.activeAd ? state.activeAd.nom : '';
     case 'dest':     return state.scDest ? state.scDest.nom : '';
     case 'type':     return state.scType || '';
@@ -2691,7 +2742,16 @@ window.RT_TEST_SCN = {
   enCours:  function(){ return scenarioEnCours(); },
   /* Le tour courant est-il un tour où l'élève doit parler ? Les tours du
      contrôleur s'enchaînent avec « Suivant », sans rien à dire. */
-  aRepondre:function(){ var s=currentStep(); return !!(s && s.attendu); }
+  aRepondre:function(){ var s=currentStep(); return !!(s && s.attendu); },
+  /* Le choix affiché (clé des options proposées), et le geste de choisir — par
+     le même chemin qu'un clic sur une option. */
+  choix:    function(){ var s=currentStep(); if(!s || s.type!=='choice') return null;
+              var ctrl=ctrlOf(state.activeSide);
+              return s.options.filter(function(o){ return !(o.twrSeul && !ctrl) && !(o.afisSeul && ctrl); })
+                              .map(function(o){ return o.key; }); },
+  choisir:  function(k){ var s=currentStep(); if(!s || s.type!=='choice') return false;
+              var o=s.options.filter(function(x){ return x.key===k; })[0]; if(!o) return false;
+              chooseBranch(s, o); return true; }
 };
 
 function renderBadges(){

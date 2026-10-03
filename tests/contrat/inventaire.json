@@ -125,6 +125,13 @@
       ]
     },
     {
+      "nom": "atisDejaEntendu",
+      "declare": "assets/scenarios/moteur.js",
+      "lu_par": [
+        "assets/modules/navigation.js"
+      ]
+    },
+    {
       "nom": "atisFreqOf",
       "declare": "assets/scenarios/moteur.js",
       "lu_par": [
@@ -183,13 +190,6 @@
       ]
     },
     {
-      "nom": "circuitChoiceStep",
-      "declare": "assets/donnees/phraseologie-scenarios.js",
-      "lu_par": [
-        "assets/scenarios/moteur.js"
-      ]
-    },
-    {
       "nom": "clearLog",
       "declare": "assets/noyau/7-interface.js",
       "lu_par": [
@@ -208,6 +208,7 @@
       "nom": "ctrlOf",
       "declare": "assets/scenarios/moteur.js",
       "lu_par": [
+        "assets/donnees/phraseologie-scenarios.js",
         "assets/noyau/5-voix.js"
       ]
     },
@@ -228,6 +229,13 @@
     },
     {
       "nom": "drawMeteo",
+      "declare": "assets/scenarios/moteur.js",
+      "lu_par": [
+        "assets/modules/navigation.js"
+      ]
+    },
+    {
+      "nom": "dureeLectureAtis",
       "declare": "assets/scenarios/moteur.js",
       "lu_par": [
         "assets/modules/navigation.js"
@@ -703,35 +711,7 @@
       ]
     },
     {
-      "nom": "tourBase",
-      "declare": "assets/donnees/phraseologie-scenarios.js",
-      "lu_par": [
-        "assets/scenarios/moteur.js"
-      ]
-    },
-    {
-      "nom": "tourFinale",
-      "declare": "assets/donnees/phraseologie-scenarios.js",
-      "lu_par": [
-        "assets/scenarios/moteur.js"
-      ]
-    },
-    {
-      "nom": "tourNumeroATC",
-      "declare": "assets/donnees/phraseologie-scenarios.js",
-      "lu_par": [
-        "assets/scenarios/moteur.js"
-      ]
-    },
-    {
-      "nom": "tourRappelFinale",
-      "declare": "assets/donnees/phraseologie-scenarios.js",
-      "lu_par": [
-        "assets/scenarios/moteur.js"
-      ]
-    },
-    {
-      "nom": "tourVentArriere",
+      "nom": "toursCircuit",
       "declare": "assets/donnees/phraseologie-scenarios.js",
       "lu_par": [
         "assets/scenarios/moteur.js"
@@ -776,6 +756,7 @@
   ],
   "lectures_differees": [
     "codeSSR@assets/donnees/phraseologie-scenarios.js",
+    "ctrlOf@assets/donnees/phraseologie-scenarios.js",
     "ctrlOf@assets/noyau/5-voix.js",
     "el@assets/noyau/5-voix.js",
     "el@assets/noyau/6-micro.js",
@@ -843,19 +824,19 @@
     {
       "id": "roulage",
       "titre": "Contact et roulage",
-      "attendus": 3,
+      "attendus": 8,
       "refs_manuel": 5
     },
     {
       "id": "decollage",
       "titre": "Décollage",
-      "attendus": 5,
-      "refs_manuel": 6
+      "attendus": 10,
+      "refs_manuel": 7
     },
     {
       "id": "integration",
       "titre": "Intégration + atterrissage",
-      "attendus": 5,
+      "attendus": 8,
       "refs_manuel": 5
     },
     {

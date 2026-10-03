@@ -84,6 +84,10 @@ export async function ouvrir(page, route = '') {
     if (r.status() >= 400) absents.push(`${r.status()} ${u.replace('http://localhost:8000/', '')}`);
   });
 
+  /* L'ATIS doit être entendu en entier avant « Suivant » (03/10/2026) : une
+     diffusion dure une demi-minute. Les tests qui ne portent pas sur l'ATIS le
+     tiennent pour entendu ; ceux qui le vérifient remettent le drapeau à false. */
+  await page.addInitScript(() => { window.RT_ATIS_IMMEDIAT = true; });
   await page.goto('/index.html' + route);
   await page.waitForFunction(() => typeof window.rtSessionOuverte === 'function');
   return { erreurs, absents };

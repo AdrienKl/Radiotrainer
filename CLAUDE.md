@@ -927,6 +927,13 @@ Ce que le développeur a tranché, avec la date. Ne pas rouvrir une décision de
 ### En attente de validation
 
 
+- **RAPPEL — basculer le `www` sur Cloudflare, puis désactiver GitHub Pages** (reporté par le développeur le 03/10/2026). Aujourd'hui `www.albatrosvfr.fr` est un CNAME vers `adrienkl.github.io` : c'est GitHub Pages qui le redirige vers l'apex. L'ORDRE compte (§ 9.1) :
+  1. Cloudflare › DNS › `www` : CNAME vers `albatrosvfr.fr`, **Proxied** (nuage orange) ;
+  2. Cloudflare › Rules › Redirect Rules : *Hostname equals* `www.albatrosvfr.fr` → *Dynamic* `concat("https://albatrosvfr.fr", http.request.uri.path)`, 301, conserver la query string ;
+  3. vérifier : `curl -sI https://www.albatrosvfr.fr/` → 301 vers `https://albatrosvfr.fr/`, `server: cloudflare` ;
+  4. **ensuite seulement** : GitHub › Settings › Pages › retirer le *Custom domain*, *Branch* = None ;
+  5. dans le dépôt : supprimer `CNAME` et `.nojekyll`, mettre à jour § 9.1 ;
+  6. plus tard : `"workers_dev": false` dans `wrangler.jsonc`, puis retirer `radiotrainer.kermeladrien24.workers.dev` de `ORIGINES_PAR_DEFAUT` (`supabase/functions/voix-atc/logique.ts`) et redéployer la fonction.
 - **Poser `sql/014` sur la PRODUCTION** — renomme l'exercice « roulage » en « Contact et roulage » (une ligne, idempotent). Par `supabase/poser-sql.sh`. Tant qu'il n'est pas posé, `lancer_tout.sh base` signale un titre divergent.
 - **Convention de nommage** (§ 16.2) — proposée, pas appliquée. Aucun renommage de masse avant accord.
 - **Poser `sql/000` et `sql/003` sur la PRODUCTION** (§ 21.4) — ils y seraient sans effet, mais recréent des politiques RLS vivantes. Le no-op de `sql/003` est prouvé ; celui de `sql/000` demande d'abord de lister les politiques d'`app_errors` et `admin_audit_log`, jamais vues. Sans urgence.

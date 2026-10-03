@@ -75,17 +75,41 @@ existant ne se voit redemander son accord, par décision du développeur (voir
 > l'éditeur choisit l'anonymat du non-professionnel (LCEN 6-III-2), c'est à
 > **Cloudflare** qu'il doit avoir communiqué son identité.
 
-## 2. Le point qui ne se règle pas en écrivant du texte
+## 2. La carte OACI — RETIRÉE du site le 03/10/2026
 
-`assets/oaci/` et `assets/oaci2/` contiennent **116 Mo de tuiles de la carte
-OACI-VFR 1:500 000** (SIA / DGAC, édition 2026), servies depuis le site.
+Jusqu'au 03/10/2026, `assets/oaci/` et `assets/oaci2/` contenaient **116 Mo de
+tuiles de la carte OACI-VFR 1:500 000** (SIA / DGAC, édition 2026), servies
+depuis le site, sans qu'aucun document du dépôt dise à quel titre.
 
-Consulter une carte est une chose ; en **rediffuser les images depuis son propre
-serveur** en est une autre, et cela relève du droit du producteur de bases de
-données et du droit d'auteur. Rien dans ce dépôt ne dit sous quel titre ces
-tuiles s'y trouvent. À vérifier auprès du SIA et de l'IGN **avant toute ouverture
-au public** — c'est le seul risque juridique de ce dossier que je ne peux pas
-lever depuis le code.
+Ce qui a été établi :
+
+- la carte OACI numérique (« SCAN OACI ») **n'est pas libre de droits**. L'IGN
+  la met gratuitement à disposition pour un usage **professionnel ou
+  associatif** ; un usage **numérique grand public** demande une **licence
+  spécifique** (conditions de licence de la Géoplateforme, `cartes.gouv.fr`) ;
+- depuis l'**édition 2026**, la carte est produite par le **SIA** et non plus
+  par l'IGN : c'est au SIA qu'une autorisation se demande.
+
+Décision du développeur : **retrait immédiat**, et demande de licence au SIA en
+parallèle. Les tuiles et l'image `carte-oaci-hero.webp` (découpée dans la même
+carte) ont quitté le dépôt ; `outils/construire-site.mjs` refuse en plus de
+publier une tuile qui y reviendrait. La Navigation et la page Carte utilisent le
+fond OpenStreetMap, les espaces aériens (Licence Ouverte) tracés par-dessus.
+`assets/oaci/meta.json` (le géoréférencement) est gardé.
+
+**Si la licence est obtenue** : remettre les tuiles (historique Git, commit
+précédant « Retrait de la carte OACI »), passer `OACI_PUBLIEE` à `true`
+(`assets/modules/tuiles-oaci.js`), retirer l'exclusion de
+`construire-site.mjs` et le test « carte OACI retirée », réafficher le réglage
+« Fond par défaut » des Paramètres, et citer la licence dans les mentions.
+
+**Restent dans l'historique Git** : si le dépôt GitHub est public, les tuiles y
+sont toujours téléchargeables. Le passer en privé règle ce point.
+
+**À surveiller** : le serveur de tuiles public d'OpenStreetMap
+(`tile.openstreetmap.org`) a une politique d'usage qui tolère un petit site,
+pas un fort trafic. À l'ouverture au public, passer par un fournisseur de
+tuiles.
 
 Les autres sources sont claires : OurAirports (domaine public), espaces aériens
 SIA/DGAC via data.gouv.fr (Licence Ouverte 2.0), OpenStreetMap (ODbL), Leaflet

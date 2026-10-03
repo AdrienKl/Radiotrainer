@@ -364,6 +364,7 @@
   /* =========================================================================
      6) LA RELECTURE
      ====================================================================== */
+  var bilanMemoire = null;
   function charger(){
     var c = client(), uid = moi();
     if (!c || !uid) return Promise.resolve(null);
@@ -417,9 +418,33 @@
                  .gte('started_at', debutJour.toISOString());
     if (qcm.length) quotaScen = quotaScen.not('exercise_key', 'in', '(' + qcm.join(',') + ')');
 
-    return Promise.all([seances, jours, profil, quota, quotaScen]).then(function(r){
+    /* Le BILAN de toute la pratique, pour le tableau de bord (03/10/2026).
+       Il se calculait sur le cache, qui ne garde que 40 vols et 50 scénarios :
+       passé le 40e vol, « vols réalisés » restait bloqué à 40 et le taux moyen
+       ne bougeait presque plus — l'élève croyait que ses vols ne comptaient
+       pas. Deux colonnes par séance, sans les échanges : la requête reste
+       légère même avec des centaines de séances. Mêmes séances que l'historique
+       (`completed` seulement). Gardé EN MÉMOIRE, pas dans une clé de stockage
+       de plus (CLAUDE.md § 7.2) : il est relu à chaque connexion. */
+    var bilan = c.from('sessions').select('kind,score_ok,score_total')
+                 .eq('user_id', uid).eq('status', 'completed')
+                 .in('kind', ['flight', 'scenario']).limit(10000);
+    var instantBilan = new Date().toISOString();
+
+    return Promise.all([seances, jours, profil, quota, quotaScen, bilan]).then(function(r){
       if (r[0].error) throw r[0].error;
       var lignes = r[0].data || [];
+
+      /* Un bilan qui n'a pas répondu ne remplace rien : le tableau de bord
+         retombe sur le cache, comme avant. */
+      if (!r[5].error && r[5].data){
+        var B = { vols:0, scenarios:0, ok:0, total:0, le:instantBilan };
+        r[5].data.forEach(function(s){
+          if (s.kind === 'flight') B.vols++; else B.scenarios++;
+          B.ok += s.score_ok || 0; B.total += s.score_total || 0;
+        });
+        bilanMemoire = B;
+      }
 
       return etapesDes(c, lignes.map(function(s){ return s.id; })).then(function(parId){
         var scen = [], vols = [], auj = jourISO(), quotaRepli = 0;
@@ -848,7 +873,7 @@
       return c.from('profiles').update({ etat_vol:null }).eq('id', uid)
               .then(function(){}, function(){});
     }).then(function(){
-      viderCache(); ecrire(K_PROPRIO, uid);
+      viderCache(); bilanMemoire = null; ecrire(K_PROPRIO, uid);
       if (window.RTSync && RTSync.oublierLaFile) RTSync.oublierLaFile();
       annoncer({ scenarios:0, vols:0, jours:0 });
       return { base:true };
@@ -911,6 +936,7 @@
     if (ev.detail.connecte){ synchroniser(); return; }
     /* Déconnexion : le cache s'en va avec la session. Le laisser serait offrir
        l'historique de la personne qui vient de partir à la suivante. */
+    bilanMemoire = null;
     viderCache(); annoncer({ scenarios:0, vols:0, jours:0 });
   });
 
@@ -933,6 +959,10 @@
     effacerTout      : effacerTout,
     viderCache       : viderCache,
     /* Pour la page Paramètres : dire si quelque chose attend encore. */
-    enAttente        : function(){ return lire(K_ATTENTE, {}) || {}; }
+    enAttente        : function(){ return lire(K_ATTENTE, {}) || {}; },
+    /* Pour le tableau de bord : le bilan de TOUTES les séances terminées, tel
+       que la base le donnait à la dernière relecture (null avant la première,
+       ou hors connexion). `le` = l'instant de la relecture. */
+    bilan            : function(){ return bilanMemoire; }
   };
 })();

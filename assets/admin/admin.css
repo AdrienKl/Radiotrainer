@@ -410,6 +410,7 @@ html.no-anim .adm-spin{ animation:none; }
 .adm-bar__track i.bon{ background:var(--ok); }
 .adm-bar__track i.moy{ background:var(--warn); }
 .adm-bar__track i.bas{ background:var(--bad); }
+.adm-bar__track i.nul{ background:var(--ink-2); opacity:.45; }   /* « Sans réponse » (questionnaire) */
 .adm-bar__val{ font-family:var(--mono); font-size:12.5px; font-weight:700; color:var(--ink);
   min-width:44px; text-align:right; }
 

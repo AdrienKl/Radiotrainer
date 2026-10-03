@@ -324,6 +324,26 @@
           return box;
         }, 'Analyse des axes…');
 
+        /* ---- Questionnaire de première connexion (03/10/2026) ----
+           Lu directement dans `profiles` : la source de données n'en remonte pas
+           les colonnes, et ces réponses n'existent qu'en base. Les libellés
+           viennent de questionnaire.js (RT.reponsesQuestionnaire), pour que la
+           fiche et la page Questionnaire disent exactement la même chose. */
+        var cliQ = window.RTAuth && RTAuth.client && RTAuth.client();
+        if (cliQ && RT.reponsesQuestionnaire){
+          var cQ = UI.carte('Questionnaire', { sub:'Réponses données à la première connexion.' });
+          w.appendChild(cQ);
+          UI.charger(cQ.body, Promise.resolve(cliQ.from('profiles')
+              .select('onboarding_le,aerodrome,decouverte,profil_pilote,heures_vol,objectifs,type_avion,niveau_radio')
+              .eq('id', u.id).maybeSingle())
+            .then(function(r){ if (r && r.error) throw r.error; return r && r.data; }),
+          function(p){
+            if (!p || !p.onboarding_le)
+              return UI.etatVide('Questionnaire non terminé', 'Ce compte n\'a pas encore répondu.', I.users);
+            return UI.fiche(RT.reponsesQuestionnaire(p).concat([['Terminé le', F.date(p.onboarding_le)]]));
+          }, 'Lecture des réponses…');
+        }
+
         /* ---- Ligne 3 : activité ---- */
         var cAct = UI.carte('Activité récente',
           { sub:'Chaque ligne ouvre le détail de la séance.' });

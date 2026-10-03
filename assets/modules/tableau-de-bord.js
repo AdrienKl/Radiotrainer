@@ -125,12 +125,27 @@
   function rendre(){
     var V=vols(), S=sessions();
     // Taux moyen : sur les vols ET les sessions de scénarios, pondéré par les éléments.
-    var ok=0, tot=0;
-    V.forEach(function(v){ ok+=v.ok||0; tot+=v.total||0; });
-    S.forEach(function(s){ ok+=s.found||0; tot+=s.total||0; });
+    /* Les totaux viennent du BILAN de la base quand il existe (assets/donnees.js
+       › bilan) : le cache s'arrête à 40 vols et 50 scénarios, et compter sur lui
+       laissait « 40 vols réalisés » et le taux figés pour toujours (03/10/2026).
+       Les séances finies DEPUIS la relecture ne sont que dans le cache : on les
+       ajoute, repérées par leur date de fin. Sans bilan (hors connexion), le
+       cache seul, comme avant. */
+    var B = (window.RTDonnees && RTDonnees.bilan) ? RTDonnees.bilan() : null;
+    var nV=V.length, nS=S.length, ok=0, tot=0;
+    if(B){
+      var apres=function(e){ return e && e.date && e.date > B.le; };
+      var V2=V.filter(apres), S2=S.filter(apres);
+      nV=B.vols+V2.length; nS=B.scenarios+S2.length; ok=B.ok; tot=B.total;
+      V2.forEach(function(v){ ok+=v.ok||0; tot+=v.total||0; });
+      S2.forEach(function(s){ ok+=s.found||0; tot+=s.total||0; });
+    } else {
+      V.forEach(function(v){ ok+=v.ok||0; tot+=v.total||0; });
+      S.forEach(function(s){ ok+=s.found||0; tot+=s.total||0; });
+    }
     var moy = tot ? Math.round(ok/tot*100) : null;
     var serie=serieJours();
-    var nbSeances = V.length + S.length;      // séances réellement terminées
+    var nbSeances = nV + nS;                  // séances réellement terminées
     var rien = nbSeances===0;
 
     $t('tbTitre').textContent = V.length||S.length ? 'Bon retour' : 'Bienvenue';
@@ -144,8 +159,8 @@
                 : (nbSeances===1 ? 'de réussite sur 1 séance' : 'taux de réussite moyen');
     $t('tbStats').innerHTML =
       stat(IC.cible, (rien||moy===null)?'—':(moy+'&nbsp;%'), libTaux) +
-      stat(IC.avion, V.length?V.length:'—', V.length>1?'vols réalisés':'vol réalisé') +
-      stat(IC.micro, S.length?S.length:'—', S.length>1?'sessions de scénarios':'session de scénarios') +
+      stat(IC.avion, nV?nV:'—', nV>1?'vols réalisés':'vol réalisé') +
+      stat(IC.micro, nS?nS:'—', nS>1?'sessions de scénarios':'session de scénarios') +
       stat(IC.feu, serie?serie:'—', rien?'aucune pratique enregistrée'
             :('jour'+(serie>1?'s':'')+' d\'affilée'));
 

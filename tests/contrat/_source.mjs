@@ -54,6 +54,15 @@ function scanner(html) {
       const finBloc = html.indexOf('</script>', finBalise);
       const corps = html.slice(finBalise + 1, finBloc < 0 ? html.length : finBloc);
       const src = /\ssrc\s*=\s*"([^"]+)"/.exec(balise);
+      /* Un <script type="application/ld+json"> (données structurées, 03/10/2026)
+         n'est pas du code : le navigateur ne l'exécute pas. Le compter ici le
+         ferait lire comme du JavaScript (« Unexpected token ':' ») et décalerait
+         le rang de tous les blocs. Seuls les types exécutables sont gardés. */
+      const typ = /\stype\s*=\s*"([^"]+)"/.exec(balise);
+      if (typ && !/^(text\/javascript|module)$/i.test(typ[1])) {
+        i = finBloc < 0 ? html.length : finBloc + 9;
+        continue;
+      }
       morceaux.push({
         type: 'script',
         src: src ? src[1] : null,

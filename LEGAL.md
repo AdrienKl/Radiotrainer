@@ -153,6 +153,11 @@ l'auteur**. Aucune licence tierce, aucune attribution due.
 page). Les deux pilotes sont de dos, casque sur la tête : aucun visage n'est
 visible. Elle remplace la tour découpée (rawpixel, CC0) et la carte OACI.
 
+**L'image de partage** (`assets/images/partage.jpg`, 03/10/2026) : cette même photo,
+recadrée en 1200 × 630, avec le logo et le nom du site. C'est l'aperçu qu'affichent
+les réseaux sociaux et les messageries quand on partage un lien vers le site. Même
+licence Unsplash, qui autorise une œuvre dérivée à usage commercial.
+
 **Les visuels « Sur tous vos appareils »** (`assets/images/appareils-*.webp`, depuis
 le 02/10/2026) : captures d'Albatros VFR mises en scène sur un Mac, un iPad et un
 iPhone, **fournies par le développeur**. Si les cadres d'appareils viennent d'un

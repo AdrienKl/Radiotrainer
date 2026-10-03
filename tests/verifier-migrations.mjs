@@ -988,6 +988,11 @@ if (!problemes) {
   await moi13(null);
   if (pb17.length) { rate('les prononciations ne se comportent pas comme prévu :'); pb17.forEach(m => console.log(rouge('      · ' + m))); }
   else passe('prononciations : lecture publique, écriture par l\'admin plein seul (fonctions journalisées), mot normalisé, graphie bornée et jamais auto-référente');
+
+  /* 18. Le départ VFR sans mise en route (sql/014) : le titre suit le code. */
+  const t18 = await q(`select title from public.exercises where key = 'roulage'`);
+  if (!t18.length || t18[0].title !== 'Contact et roulage') rate(`titre de l'exercice « roulage » : ${JSON.stringify(t18)}`);
+  else passe('l\'exercice « roulage » s\'appelle « Contact et roulage » (départ VFR sans mise en route, p. 45)');
 }
 
 console.log('');

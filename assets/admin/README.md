@@ -485,7 +485,7 @@ est sûre *par construction* — l'admin lit grâce à `admin read all`, et tout
 -- affiché en cours de vol). Mettre une page approximative ici reviendrait à
 -- inventer une source.
 insert into public.exercises (key, title, category, level, station, is_active, sort_order) values
-  ('roulage',    'Mise en route + roulage',      'sol',      'debutant', 'sol',         true, 10),
+  ('roulage',    'Contact et roulage',           'sol',      'debutant', 'sol',         true, 10),
   ('decollage',  'Décollage',                    'depart',   'debutant', 'tour',        true, 20),
   ('tourdepiste','Tour de piste',                'circuit',  'debutant', 'tour',        true, 30),
   ('integration','Intégration + atterrissage',   'arrivee',  'debutant', 'tour',        true, 40),

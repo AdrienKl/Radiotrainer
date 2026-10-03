@@ -413,7 +413,7 @@
   }
 
   /* Barres horizontales — le classement se lit mieux ainsi que debout, et les
-     libellés (« Mise en route + roulage ») tiennent sans être tronqués. */
+     libellés (« Point d'attente et traversée de piste ») tiennent sans être tronqués. */
   function graphBarres(items, opts){
     opts = opts || {};
     var box = el('div', 'adm-bars');

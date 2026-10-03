@@ -169,55 +169,62 @@ function circuitChoiceStep(){ return {
   ]
 };}
 
+/* Le départ IMMÉDIAT de la p. 60, mot pour mot : la tour pose la question, le
+   pilote répond « Affirme », puis l'alignement et l'autorisation tiennent en un
+   seul message, et le collationnement aussi (« Je m'aligne piste 05 gauche et je
+   décolle, Rapidair 3245 »). Pas de « alignez-vous et attendez » dans ce cas.
+   Appelée au lancement du scénario Décollage (buildTours), donc APRÈS que
+   SCENARIOS existe : la suite du départ (cap, sortie de fréquence) est reprise du
+   départ ordinaire, pour qu'il n'y ait qu'un seul endroit où l'écrire. */
+function departImmediat(){
+  const ordinaire = SCENARIOS.filter(s => s.id==='decollage')[0].tours;
+  return [
+    { stn:'tour', station:"{ADRM} {STN}",
+      atc:"{CALL}, êtes-vous prêt pour un départ immédiat ?",                        // Manuel DSNA p.50 et p.60
+      situation:"Vous êtes au point d'attente de la piste {PISTE}, prêt à partir, à l'écoute de la tour.",
+      consigne:"Répondez à la question du contrôleur, puis votre indicatif.",
+      attendu:"Affirme, {CALL}.",                                                     // Manuel DSNA p.60 « Affirme, Rapidair 3245 »
+      motsCles:[ {label:"Affirme",variantes:["affirme"]}, {label:"Votre indicatif",ref:'callsign'} ] },
+    { stn:'tour', station:"{ADRM} {STN}",
+      atc:"{CALL}, alignez-vous piste {PISTE}, autorisé décollage immédiat, vent {VENT}.", // Manuel DSNA p.60
+      consigne:"Collationnez : le pilote dit « je m'aligne … et je décolle » — « autorisé décollage » est réservé au contrôleur.",
+      attendu:"Je m'aligne piste {PISTE} et je décolle, {CALL}.",                     // Manuel DSNA p.60
+      motsCles:[ {label:"Je m'aligne",variantes:["je m aligne","m aligne"]},
+                 {label:"Je décolle",variantes:["je decolle","decolle"]},
+                 {label:"Numéro de piste",ref:'piste'},
+                 {label:"Votre indicatif",ref:'callsign'} ] }
+  ].concat(ordinaire.slice(3));          // cap de départ, puis sortie de fréquence
+}
+
 const SCENARIOS = [
   {
-    id:"roulage", titre:"Mise en route + roulage", station:"{ADRM} {STN}", defaultTerrain:'dep', controllable:true,
+    id:"roulage", titre:"Contact et roulage", station:"{ADRM} {STN}", defaultTerrain:'dep', controllable:true,
+    /* LE DÉPART VFR DE LA P. 45, MOT POUR MOT (03/10/2026, décision du développeur).
+       Le manuel étiquette lui-même cet exemple « Cas d'un vol VFR » : contact et
+       « bonjour », puis directement la demande de roulage — AUCUNE demande de mise
+       en route. La mise en route (p. 39-40) est rangée sous « Mise en route –
+       clairance initiale – SID », et ses deux exemples sont des vols IFR (Rapidair,
+       C-TOT, SID, niveau). Le scénario s'appelait « Mise en route + roulage » et
+       faisait demander puis collationner une mise en route : c'était l'IFR enseigné
+       à des pilotes VFR. La lettre d'information revient donc dans la demande de
+       roulage, là où la p. 45 la place (« …pour vol à destination de Guéret,
+       information B »). Même déroulé que le départ de la Navigation. */
     tours:[
       { role:'pilote', stn:'sol',
-        situation:"Vous êtes au parking, prêt à demander la mise en route.",
-        consigne:"Contactez le contrôle : organisme, indicatif, demande de mise en route{ATISCONS}.",
-        /* L'ordre du manuel : organisme, indicatif, demande, lettre d'information —
-           « Mérignac Prévol, Rapidair 3245, en D 8, demande mise en route pour Lyon,
-           information L » (p. 39) ; sans position : « Saint-Étienne Tour, Rapidair 3245,
-           demande mise en route » (p. 40). {ATISPART} devient « , information Bravo »
-           quand le terrain diffuse un ATIS, et disparaît sinon.
-           24/09 → 27/09/2026 : « bonjour, au parking » retirés, à la demande du
-           développeur — ni l'un ni l'autre n'est dans les deux exemples du manuel ;
-           la position revient dans l'annonce de roulage, où la p. 45 la place. */
-        attendu:"{ADRM} {STN}, {CALL}, demande mise en route{ATISPART}.",  // Manuel DSNA p.39-40 « Demande mise en route »
-        atisMot:true,
-        // AFIS : l'agent d'information ne délivre pas de clairance ; le pilote annonce ses intentions.
-        afis:{ consigne:"Contactez l'agent AFIS : organisme, indicatif, demande de mise en route.",
-               attendu:"{ADRM} {STN}, {CALL}, demande mise en route." },                // Manuel DSNA p.40
+        situation:"Vous êtes au parking, prêt à rouler. Premier appel à l'organisme.",
+        consigne:"Premier contact : organisme, votre indicatif, bonjour.",
+        attendu:"{ADRM} {STN}, {CALL}, bonjour.",                                       // Manuel DSNA p.45 « Chavenay tour, F-BX, bonjour »
         motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
-                   {label:"Votre indicatif",ref:'callsign'},
-                   {label:"Demande de mise en route",variantes:["mise en route","demande mise en route","pour la mise en route","demarrage","je demande la mise en route"]} ] },
-      { stn:'sol', station:"{ADRM} {STN}",                                            // Manuel DSNA p.39
-        /* PAS de QNH ici (retiré le 27/09/2026) : l'approbation de la p. 39 n'en porte
-           pas. Au départ, le manuel ne donne le QNH qu'en réponse à « demande paramètres
-           pour le départ » (p. 38) — ce que l'ATIS remplace. */
-        atc:["{CALL}, mise en route approuvée."],                                     // Manuel DSNA p.39
-        consigne:"Collationnez : mise en route approuvée, puis votre indicatif.",
-        attendu:"Mise en route approuvée, {CALL}.",                                   // Manuel DSNA p.39
-        // AFIS : pas de clairance ; l'agent donne piste en service, vent, QNH (ordre Manuel DSNA p.148).
-        afis:{ atc:["{CALL}, {ADRM} {STN}, piste {PISTE} en service, vent {VENT}, QNH {QNH}."],
-               consigne:"Accusez réception de l'information (piste, QNH), puis votre indicatif.",
-               attendu:"Piste {PISTE}, QNH {QNH}, {CALL}.",
-               motsCles:[ {label:"Piste en service",variantes:["piste","en service"]}, {label:"Numéro de piste",ref:'piste'},
-                          {label:"QNH",variantes:["qnh"]}, {label:"Valeur QNH",ref:'qnh'}, {label:"Votre indicatif",ref:'callsign'} ] },
-        motsCles:[ {label:"Mise en route approuvée",variantes:["mise en route","approuve","approuvee","accordee","autorise","mise en route approuvee"]},
                    {label:"Votre indicatif",ref:'callsign'} ] },
-      { role:'pilote', stn:'sol',
-        situation:"Mise en route effectuée, {TYPE} au parking. Vous demandez le roulage pour un vol à destination de {DEST}.",
-        /* L'ANNONCE COMPLÈTE de l'exemple VFR de Chavenay (p. 45) : « F-BGBX, TB10,
-           parking club, demande consignes de roulage pour vol à destination de Guéret,
-           information B ». Même échange, même phrase que la Navigation (27/09/2026) :
-           le scénario attendait jusque-là la forme courte « demande roulage » (p. 44),
-           et les deux modes n'enseignaient pas la même chose.
-           Pas de « personnes à bord » : le manuel ne le donne nulle part. Pas de lettre
-           d'information non plus : elle vient d'être donnée à la mise en route. */
-        consigne:"Annonce complète : indicatif, type d'avion, position, puis votre demande de consignes de roulage pour un vol à destination de {DEST}.",
-        attendu:"{CALL}, {TYPE}, au parking, demande consignes de roulage pour vol à destination de {DEST}.", // Manuel DSNA p.45
+      { stn:'sol', station:"{ADRM} {STN}",
+        atc:["{CALL}, {ADRM} {STN}, bonjour."],                                          // Manuel DSNA p.45 « F-BX, Chavenay tour, bonjour »
+        situation:"{TYPE} au parking. Vous demandez le roulage pour un vol à destination de {DEST}.",
+        /* L'ANNONCE COMPLÈTE de la p. 45 : « F-BGBX, TB10, parking club, demande
+           consignes de roulage pour vol à destination de Guéret, information B ».
+           Pas de « personnes à bord » : le manuel ne le donne nulle part. */
+        consigne:"Annonce complète : indicatif, type d'avion, position, puis votre demande de consignes de roulage pour un vol à destination de {DEST}{ATISCONS}.",
+        attendu:"{CALL}, {TYPE}, au parking, demande consignes de roulage pour vol à destination de {DEST}{ATISPART}.", // Manuel DSNA p.45
+        atisMot:true,
         motsCles:[ {label:"Votre indicatif",ref:'callsign'},
                    {label:"Type d'avion",ref:'type'},
                    {label:"Position (parking)",variantes:["parking","au parking","parking club","aire de stationnement"]},
@@ -235,13 +242,30 @@ const SCENARIOS = [
   },
   {
     id:"decollage", titre:"Décollage", station:"{ADRM} {STN}", defaultTerrain:'dep', controllable:true,
+    /* Une fois sur trois, la tour prend l'initiative : « êtes-vous prêt pour un
+       départ immédiat ? » (p. 60). Tiré au LANCEMENT, par buildQueue. Le tour de
+       piste, lui, réemploie toujours `tours` (le départ ordinaire). */
+    buildTours: function(){ return Math.random() < 1/3 ? departImmediat() : this.tours; },
     tours:[
-      { role:'pilote', stn:'tour', situation:"Vous arrivez au point d'attente de la piste {PISTE}.",
-        consigne:"Contactez la tour et annoncez-vous prêt au départ.",
-        attendu:"{ADRM} {STN}, {CALL}, point d'attente piste {PISTE}, prêt au départ.", // Manuel DSNA p.50 « Rappelez prêt au départ »
+      { role:'pilote', stn:'tour', situation:"Vous êtes au point d'attente de la piste {PISTE}, prêt à partir.",
+        consigne:"Annoncez-vous prêt au départ.",
+        /* « Prêt au départ » N'EST PAS MOT POUR MOT DANS LE MANUEL — c'est une
+           déduction, assumée et validée par le développeur (03/10/2026), qui la
+           dit en vol. Le manuel ne donne que la demande du contrôleur (« rappelez
+           prêt », p. 45 ; « Rappelez prêt au départ », p. 50) et jamais la réponse
+           du pilote au point d'attente. Mais à chaque « rappelez prêt à … », il
+           fait répondre « Prêt à …, indicatif » : « Prêt à copier, Rapidair 3245 »
+           (p. 83), « Transpondeur 7047, prêt à évoluer, F-BX » (p. 222), « Prêt à
+           reprendre RVSM » (p. 77). Et « prêt au départ » est bien dans la bouche
+           d'un pilote p. 42 (« CDG Prévol, Rapidair 3245, en X 2, prêt au départ,
+           information L »), avec l'organisme devant quand c'est un premier contact.
+           Retiré le même jour : « point d'attente piste {PISTE} », qu'aucune page
+           ne place dans cette annonce. Les variantes acceptées (« prêt à décoller »,
+           « je suis prêt », « prêt » seul…) l'ont été aussi : accepter une
+           formulation, c'est l'enseigner (CLAUDE.md § 2). */
+        attendu:"{ADRM} {STN}, {CALL}, prêt au départ.",
         motsCles:[ {label:"Nom du terrain",ref:'terrain'}, {label:"Station appelée",ref:'station'},
-                   {label:"Votre indicatif",ref:'callsign'}, {label:"Prêt au départ",variantes:["pret au depart","pret depart","pret pour le depart","pret a decoller","je suis pret","nous sommes prets","pret","prets"]},
-                   {label:"Numéro de piste",ref:'piste'} ] },
+                   {label:"Votre indicatif",ref:'callsign'}, {label:"Prêt au départ",variantes:["pret au depart"]} ] },
       { stn:'tour', station:"{ADRM} {STN}", atc:"{CALL}, alignez-vous et attendez piste {PISTE}.", // Manuel DSNA p.53
         consigne:"Collationnez l'instruction d'alignement.",
         attendu:"Je m'aligne et j'attends piste {PISTE}, {CALL}.",                     // Manuel DSNA p.53
@@ -259,7 +283,7 @@ const SCENARIOS = [
       { stn:'tour', station:"{ADRM} {STN}",                                           // Manuel DSNA p.63 ; cap de départ tiré au sort.
         atc:"{CALL}, passant 1000 pieds dans l'axe de piste, tournez à droite cap {CAPDEP}.",
         consigne:"Collationnez les instructions de départ.",
-        attendu:"Passant 1000 pieds dans l'axe, je tourne à droite cap {CAPDEP}, {CALL}.",
+        attendu:"Passant 1000 pieds dans l'axe de piste, je tourne à droite cap {CAPDEP}, {CALL}.", // p.63 « …dans l'axe de piste, je tourne à droite... »
         motsCles:[ {label:"Dans l'axe de piste",variantes:["axe de piste","dans l axe","cap de la piste","axe"]},
                    {label:"Tourne à droite",variantes:["tourne a droite","je tourne a droite","a droite","tournons a droite","droite"]},
                    {label:"Cap",variantes:["cap","au cap"]}, {label:"Valeur de cap",ref:'capdep'},

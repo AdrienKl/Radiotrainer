@@ -31,12 +31,15 @@
 (function(){
   'use strict';
 
-  /* Version des CGU acceptées. Tant que le texte n'existe pas (voir #page-cgu),
-     ce n'est PAS un vrai consentement, et l'enregistrer sous un nom de brouillon
-     est la seule façon honnête de le dire : le jour où la version 1 paraîtra,
-     un simple « where cgu_version = 'brouillon-0' » retrouve tout le monde à qui
-     il faut redemander son accord. */
-  var CGU_VERSION = 'brouillon-1';
+  /* Version des CGU acceptées. « brouillon-1 » jusqu'au 03/10/2026 : le texte
+     n'avait pas encore d'éditeur identifié, ce n'était pas un vrai consentement.
+     Depuis, « 1.0 » (éditeur, contact, offre Premium au § 13).
+     ATTENTION : cette valeur n'est enregistrée qu'À L'INSCRIPTION. Les comptes
+     créés avant gardent « brouillon-1 », et rien dans l'application ne leur
+     redemande leur accord — décision du développeur (03/10/2026 : comptes de
+     personnes connues, Premium ouvert seulement après la micro-entreprise).
+     « where cgu_version = 'brouillon-1' » les retrouve s'il fallait un jour. */
+  var CGU_VERSION = '1.0';
 
   var QUESTIONS = [
     { id:'decouverte', colonne:'decouverte', type:'un', facultative:true,

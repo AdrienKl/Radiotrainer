@@ -4,38 +4,58 @@ Trois pages : `#mentions`, `#cgu`, `#confidentialite`. Elles vivent dans
 `index.html`, avec le reste — pas de fichier séparé, pas de fetch : le site doit
 continuer de fonctionner depuis `file://`.
 
-## 1. Ce que vous devez remplir, et pourquoi ça bloque
+## 1. État au 03/10/2026 — version 1.0
 
-Les textes sont écrits et vous engagent. **Neuf champs restent vides**, et ils
-apparaissent en ambre pointillé sur la page : rien ne doit avoir l'air conforme
-tant que ça ne l'est pas.
+Les champs vides de la version brouillon sont remplis (informations données par
+le développeur) :
 
-| Où | Champ | Pourquoi il est obligatoire |
+| Où | Champ | Valeur |
 |---|---|---|
-| Mentions § 1 | Nom ou dénomination | LCEN art. 6-III : identifier l'éditeur |
-| Mentions § 1 | ~~Statut~~ — **particulier, éditeur non professionnel** (rempli le 03/10/2026) | Détermine les champs suivants |
-| Mentions § 1 | Adresse | idem |
-| Mentions § 1 | Adresse de contact | Recevoir les demandes RGPD et les signalements |
-| Mentions § 1 | Directeur de la publication | LCEN art. 6-III-1 |
-| Mentions § 1 | ~~Forme, capital, RCS, TVA~~ — sans objet pour un particulier (ligne retirée de la page le 03/10/2026) | **Seulement si société** |
-| Mentions § 2 | Région d'hébergement Supabase | Dit si les données quittent l'UE |
-| Confidentialité § 1 | Responsable du traitement | RGPD art. 13.1.a — reprend le § 1 des mentions |
-| Confidentialité § 6 | Région (rappel) | idem |
+| Mentions § 1 | Éditeur, directeur de la publication | Adrien Kermel |
+| Mentions § 1 | Statut | particulier, éditeur non professionnel |
+| Mentions § 1 | Adresse | **non publiée** — LCEN art. 6-III-2 : communiquée à l'hébergeur (Cloudflare) |
+| Mentions § 1 | Contact | contact@albatrosvfr.fr |
+| Mentions § 2, confidentialité § 6 | Région de la base | **Irlande, AWS `eu-west-1`** (voir ci-dessous) |
+| Confidentialité § 1 | Responsable du traitement | Adrien Kermel |
+| CGU § 2, § 13 | Éditeur ; offre Premium | 17,99 €, paiement unique, 3 mois, sans renouvellement, Stripe |
+
+**La région n'a pas été lue dans le tableau de bord, mais établie ainsi :**
+l'adresse du serveur de base (`db.vbziwjeuzcbvrbrihhrg.supabase.co`,
+`2a05:d018:175d:b600:…`) appartient au bloc `2a05:d018::/35`, que la liste
+officielle des adresses d'Amazon (`ip-ranges.amazonaws.com`, 03/10/2026) attribue
+à `eu-west-1` — Irlande. À recouper un jour dans Project Settings → General → Region.
+
+**Restent ouverts** (en ambre sur les pages) :
+- **CGU § 13 — médiateur de la consommation** : à désigner AVANT l'ouverture du
+  Premium (L.612-1). Ne s'invente pas.
+- **Confidentialité § 2 — conservation des paiements** : la durée dépend du
+  statut de l'éditeur au moment des ventes (obligations comptables d'une
+  micro-entreprise).
+- **Vendre le Premium, c'est une activité professionnelle.** À son ouverture :
+  l'anonymat de l'adresse tombe (mentions § 1), il faut l'immatriculation
+  (micro-entreprise), la mention de TVA applicable, et le médiateur ci-dessus.
+  Les pages le disent déjà ; les CGU repasseront en version suivante.
+- **Les comptes existants ne sont pas réinterrogés — décision du développeur
+  (03/10/2026)** : ce sont des personnes qu'il connaît, et le Premium n'ouvrira
+  qu'après la création de la micro-entreprise. `CGU_VERSION` = `'1.0'` ne vaut
+  que pour les nouvelles inscriptions ; les comptes antérieurs gardent
+  `brouillon-1`. L'identité de l'éditeur est bien déclarée chez Cloudflare
+  (confirmé par le développeur).
 
 **Particulier ou professionnel, ça change les obligations.** Un éditeur *non
 professionnel* peut, au titre de l'article 6-III-2 de la LCEN, ne pas publier son
 nom et son adresse — à condition de les avoir communiqués à son hébergeur et de
 publier l'identité de celui-ci (déjà fait, § 2 des mentions). Un éditeur
-*professionnel*, ou dès qu'une formule payante existe, doit tout publier. Le
-texte dit les deux cas ; à vous de trancher.
+*professionnel*, ou dès qu'une formule payante existe, doit tout publier.
+**Choix du 03/10/2026 : nom publié, adresse non publiée.**
 
-**La région Supabase** se lit dans Project Settings → General → Region. Je ne
-l'ai pas devinée : l'en-tête `cf-ray` que renvoie l'API indique le point d'entrée
-Cloudflare le plus proche de *qui interroge*, pas où vivent les données.
+**La région Supabase** : l'en-tête `cf-ray` que renvoie l'API n'en dit rien (il
+indique le point d'entrée Cloudflare le plus proche de *qui interroge*) ; c'est
+l'adresse du serveur de base qui l'a établie (ci-dessus).
 
-Une fois les neuf champs remplis, passez `CGU_VERSION` de `'brouillon-1'` à
-`'1.0'` dans `assets/inscription.js` : chaque compte se verra redemander son
-accord sur le texte définitif.
+`CGU_VERSION` est passé de `'brouillon-1'` à `'1.0'` le 03/10/2026. Aucun compte
+existant ne se voit redemander son accord, par décision du développeur (voir
+« Restent ouverts » ci-dessus).
 
 > **Les deux renommages (AVIERO le 20/09/2026, Albatros VFR le 21/09/2026) n'ont PAS fait bouger `CGU_VERSION`**, et
 > c'est volontaire. Le service change de nom, pas de nature : ni l'objet, ni
